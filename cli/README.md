@@ -1,6 +1,6 @@
 # Somnio CLI
 
-CLI tool that installs AI agent skills from the technology-tools repository into Claude Code, Cursor, and Antigravity.
+CLI tool that installs AI agent skills from the technology-tools repository into any supported AI agent. Supports 16 agents out of the box via an extensible agent registry.
 
 ## Installation
 
@@ -10,137 +10,139 @@ dart pub global activate --source git https://github.com/somnio-software/technol
 
 ## Quick Start
 
-First-time setup — the wizard detects your CLIs, helps install missing ones, and lets you choose technologies:
+First-time setup — the wizard detects your CLIs, helps install missing ones, and installs skills:
 
 ```bash
 somnio setup
 ```
 
-Or if you already have your CLIs installed:
+Already have your CLIs installed? Skip the CLI detection/installation step:
 
 ```bash
-somnio init
+somnio setup --skip-cli
 ```
+
+Suppress the banner on any command with `--quiet` / `-q`:
+
+```bash
+somnio -q status
+somnio -q run fh
+```
+
+## Supported Agents
+
+Somnio uses a data-driven agent registry. Adding a new agent requires a single `AgentConfig` entry — no other files change.
+
+### CLI Agents (for `somnio run`)
+
+These agents have a CLI binary that can execute audits step-by-step:
+
+| Agent | Binary | Prompt Style | Auto-approve | Output |
+|-------|--------|-------------|--------------|--------|
+| Claude Code | `claude` | `-p "prompt"` | `--allowedTools Read,Bash,Glob,Grep,Write` | `--output-format json` |
+| Cursor | `agent` | `... "prompt"` | `--print --force` | `--output-format json` |
+| Gemini CLI | `gemini` | `-p "prompt"` | `--yolo` | `-o json` |
+| Codex | `codex` | `exec "prompt"` | `--dangerously-bypass-approvals-and-sandbox` | `--json` |
+| Augment Code | `auggie` | `... "prompt"` | `--print` | `--output-format json` |
+| Amp | `amp` | `-x "prompt"` | - | `--stream-json` |
+| Aider | `aider` | `--message "prompt"` | `--yes-always` | - |
+| Cline | `cline` | `... "prompt"` | `-y` | `--json` |
+| OpenCode | `opencode` | `-p "prompt"` | - | `-f json` |
+| CodeBuddy | `codebuddy` | `-p "prompt"` | `--dangerously-skip-permissions` | `--output-format json` |
+| Qwen CLI | `qwen` | `-p "prompt"` | `--yolo` | `--output-format json` |
+
+### IDE-Only Agents (for `somnio install`)
+
+These agents receive skill files but cannot execute audits:
+
+| Agent | Install Path | Scope |
+|-------|-------------|-------|
+| GitHub Copilot | `.github/agents/` | Project |
+| Windsurf | `.windsurf/workflows/` | Project |
+| Roo Code | `.roo/rules/` | Project |
+| Kilo Code | `.kilocode/rules/` | Project |
+| Amazon Q | `.amazonq/prompts/` | Project |
 
 ## Commands
 
 ### `somnio setup`
 
-Full guided setup wizard designed for first-time users. Walks through everything needed to get started with zero prior knowledge.
+Full guided setup wizard. The primary entry point for new and existing users.
 
 ```bash
-somnio setup          # Interactive wizard
-somnio setup --force  # Skip all prompts, install everything
+somnio setup              # Full wizard (detect CLIs + install missing + install skills)
+somnio setup --skip-cli   # Skip CLI detection/install, just detect agents and install skills
+somnio setup --force      # Skip all prompts, install everything
 ```
 
 | Flag | Short | Description |
 |------|-------|-------------|
-| `--force` | `-f` | Skip all prompts, install all CLIs and technologies |
+| `--force` | `-f` | Skip all confirmation prompts, auto-install missing CLIs |
+| `--skip-cli` | | Skip CLI detection and installation (go straight to skill install) |
 
 **What it does:**
 
-1. **Detects installed CLIs** — checks for Claude Code (`claude`), Cursor CLI (`agent`), and Gemini CLI (`gemini`)
-2. **Installs missing CLIs** — for npm-based CLIs (Claude Code, Gemini), offers auto-install via `npm install -g`. For Cursor, shows download instructions
-3. **Technology selection** — choose which skill sets to install: `All`, `Flutter`, or `NestJS`
-4. **Installs skills** — detects agent targets and installs selected skills to all available agents automatically
+1. **Step 1/3: Detect CLIs** — checks PATH for all registered CLI agent binaries *(skipped with `--skip-cli`)*
+2. **Step 2/3: Install missing CLIs** — offers `npm install -g` for npm-based CLIs, shows manual instructions for others *(skipped with `--skip-cli`)*
+3. **Step 3/3: Install skills** — detects all available agents and installs all skill bundles to each
 
-Example output:
+> **Note:** `somnio init` still works as a hidden alias for `somnio setup --skip-cli`.
 
-```
-Step 1/4  Checking installed CLIs...
+### `somnio install`
 
-  ✓ Claude Code  (/usr/local/bin/claude)
-  ✗ Cursor CLI   (not found)
-  ✓ Gemini CLI   (/opt/homebrew/bin/gemini)
-
-Step 2/4  Install missing CLIs
-
-? Install Cursor CLI? (Y/n)
-  1. Download Cursor from https://cursor.com
-  2. Open Cursor and enable the CLI:
-     Settings > General > Enable "agent" CLI command
-
-Step 3/4  Select technologies
-
-? Which technologies do you want to install?
-  ❯ All
-    Flutter
-    NestJS
-
-Step 4/4  Installing skills...
-
-  Claude Code:
-    ✓ Installed /somnio-fh
-    ✓ Installed /somnio-nh
-
-Setup complete! Installed 2 commands.
-```
-
-### `somnio init`
-
-Auto-detect agents, select targets, choose technologies, and install skills.
+Install skills to any supported agent. This is the primary installation command.
 
 ```bash
-somnio init          # Interactive agent and technology selection
-somnio init --force  # Overwrite existing skills, install all technologies
+somnio install --agent claude      # Install to Claude Code
+somnio install --agent copilot     # Install to GitHub Copilot
+somnio install --agent windsurf    # Install to Windsurf
+somnio install --agent roo         # Install to Roo Code
+somnio install --all               # Install to all detected agents
 ```
 
 | Flag | Short | Description |
 |------|-------|-------------|
+| `--agent` | `-a` | Target agent ID (see supported agents table) |
+| `--all` | | Install to all detected agents |
 | `--force` | `-f` | Overwrite existing skills without prompting |
 
-Unlike `setup`, `init` does not help install CLIs — it assumes they are already available. Use `setup` for first-time onboarding.
+**How install formats work:**
+
+Each agent has a specific install format that determines how skill files are structured:
+
+| Format | Agents | Structure |
+|--------|--------|-----------|
+| `skillDir` | Claude Code | Directory per skill: `SKILL.md` + `rules/*.md` + `templates/` |
+| `singleFile` | Cursor | One self-contained `.md` per skill (plan + rules embedded) |
+| `workflow` | Gemini/Antigravity | Workflow file + `somnio_rules/` directory |
+| `markdown` | Copilot, Windsurf, Roo, Kilo, Amazon Q, new CLIs | Single `.md` per skill with header + plan + rules |
 
 ### `somnio claude`
 
-Install skills into Claude Code as slash commands in `~/.claude/skills/`.
+Install skills into Claude Code. Alias for `somnio install --agent claude`.
 
 ```bash
-somnio claude              # Install globally
-somnio claude --project    # Install to .claude/skills/ in current directory
-somnio claude --force      # Overwrite existing
+somnio claude
+somnio claude --force
 ```
-
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--project` | | Install to project-level `.claude/skills/` instead of global |
-| `--force` | `-f` | Overwrite existing skills without prompting |
 
 ### `somnio cursor`
 
-Install commands and rule files into Cursor. This sets up both Cursor IDE commands (`.md` files in `~/.cursor/commands/`) and transformed rule files for the Cursor CLI (`agent`) in `~/.cursor/somnio_rules/`.
+Install commands into Cursor. Alias for `somnio install --agent cursor`.
 
 ```bash
 somnio cursor
 somnio cursor --force
 ```
 
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--force` | `-f` | Overwrite existing commands without prompting |
-
-**What gets installed:**
-
-- **Commands** (`~/.cursor/commands/`) — one `.md` file per skill, usable as `/somnio-fh`, `/somnio-fp`, etc. in the Cursor IDE chat
-- **Rule files** (`~/.cursor/somnio_rules/`) — transformed `.md` rules organized by technology, used by the Cursor CLI (`agent`) when running audits via `somnio run --agent cursor`
-
-The Cursor CLI (`agent` binary) is bundled with the Cursor IDE. To enable it: **Cursor > Settings > General > Enable "agent" CLI command**.
-
 ### `somnio antigravity`
 
-Install workflows into Antigravity in `.agent/workflows/` and `.agent/somnio_rules/`.
+Install workflows into Antigravity/Gemini. Alias for `somnio install --agent gemini`.
 
 ```bash
 somnio antigravity
 somnio antigravity --force
 ```
-
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--project` | | Install to project-level directory (default: true) |
-| `--force` | `-f` | Overwrite existing workflows without prompting |
-
-Skills without Antigravity workflow support are skipped with a message.
 
 ### `somnio update`
 
@@ -158,23 +160,31 @@ Show CLI availability and installed skills.
 
 ```bash
 somnio status
+somnio -q status    # Without the banner
 ```
 
 Displays two tables:
-- **CLI Availability** — whether `claude`, `agent` (Cursor CLI), and `gemini` binaries are found on PATH
-- **Installed Skills** — per-agent breakdown of installed skills, rules, and their locations
+- **CLI Availability** — checks all registered CLI agents for binary availability on PATH
+- **Installed Skills** — registry-driven scan of all 17 agents showing installed skills, rules, and locations
 
 ### `somnio uninstall`
 
 Remove all Somnio skills, commands, and workflows from all agents.
 
 ```bash
-somnio uninstall
+somnio uninstall          # Prompts for confirmation before deleting
+somnio uninstall --force  # Skip confirmation prompt
 ```
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip confirmation prompt |
+
+Shows what will be removed and asks for confirmation before proceeding. Scans all registered agents and removes files matching the somnio prefix.
 
 ### `somnio run`
 
-Execute a health audit step-by-step from the target project's terminal. Each rule runs in a fresh AI context (Claude or Gemini), saving findings as artifacts and generating a final report.
+Execute a health audit step-by-step from the target project's terminal. Each rule runs in a fresh AI context, saving findings as artifacts and generating a final report.
 
 **Must be run from the project root** (e.g., inside a Flutter or NestJS repo).
 
@@ -187,6 +197,7 @@ somnio run nh
 
 # Force a specific AI CLI
 somnio run fh --agent gemini
+somnio run fh --agent codex
 
 # Skip project type validation
 somnio run fh --skip-validation
@@ -197,7 +208,7 @@ somnio run fh --no-preflight
 
 | Flag | Short | Description |
 |------|-------|-------------|
-| `--agent` | `-a` | AI CLI to use: `claude`, `cursor`, or `gemini` (auto-detected if omitted) |
+| `--agent` | `-a` | AI CLI to use (auto-detected if omitted). Any registered CLI agent ID works |
 | `--model` | `-m` | Model to use (skips interactive selection) |
 | `--skip-validation` | | Skip project type check (e.g., pubspec.yaml for Flutter) |
 | `--no-preflight` | | Skip CLI pre-flight and send all steps to AI |
@@ -206,20 +217,20 @@ somnio run fh --no-preflight
 
 When `--model` is not provided, the CLI presents an interactive menu with the available models for the resolved agent. Each agent has a default model optimized for cost and speed:
 
-| Agent | Default | Available models |
-|-------|---------|------------------|
+| Agent | Default | Example models |
+|-------|---------|----------------|
 | Claude | `haiku` | `haiku`, `sonnet`, `opus` |
-| Cursor | `auto` | `auto`, `opus-4.6-thinking`, `gpt-5.2`, `composer-1`, ... |
-| Gemini | `gemini-3-flash-preview` | `gemini-3-flash-preview`, `gemini-2.5-flash`, `gemini-2.5-pro`, `gemini-3-pro-preview`, `gemini-3.1-pro-preview` |
+| Cursor | `auto` | `auto`, `claude-4.6-opus`, `gpt-5.3-codex`, `composer-1.5`, ... |
+| Gemini | `gemini-3-flash` | `gemini-3-flash`, `gemini-3.1-pro-preview`, `gemini-2.5-pro` |
+| Codex | `gpt-5.3-codex` | `gpt-5.3-codex`, `gpt-5.2-codex`, `gpt-5.1-codex-max`, `gpt-5.1-codex-mini` |
+| Auggie | `claude-sonnet-4-5` | `claude-opus-4-6`, `claude-sonnet-4-5`, `gpt-5.3` |
+| Qwen | `qwen3-coder-plus` | `qwen3-coder-plus`, `qwen3-coder-next`, `qwen3-5-plus` |
 
 Press Enter at the prompt to accept the default, or pass `--model` to skip the prompt entirely:
 
 ```bash
-# Use the default model (haiku for Claude, gemini-3-flash for Gemini)
-somnio run fh
-
-# Specify a model explicitly (skips interactive selection)
-somnio run fh --model opus
+somnio run fh                       # Interactive model selection
+somnio run fh --model opus           # Skip prompt, use opus
 somnio run nh --agent gemini -m gemini-3-pro
 ```
 
@@ -228,14 +239,16 @@ somnio run nh --agent gemini -m gemini-3-pro
 | Code | Audit | Technology |
 |------|-------|------------|
 | `fh` | Flutter Project Health Audit | Flutter |
+| `fp` | Flutter Best Practices Check | Flutter |
 | `nh` | NestJS Project Health Audit | NestJS |
+| `np` | NestJS Best Practices Check | NestJS |
 | `sa` | Security Audit | Any |
 
 **How it works:**
 
 1. **Validates** the current directory is the correct project type
 2. **Pre-flight** — the CLI handles tool installation, version alignment, version validation, and test coverage directly (no AI needed). These steps complete in seconds instead of minutes
-3. **AI steps** — analysis rules (architecture, security, code quality, etc.) each run in a fresh AI context
+3. **AI steps** — analysis rules (architecture, security, code quality, etc.) each run in a fresh AI context via `agentConfig.buildArgs()`
 4. **Report** — the final step reads all artifacts and generates a Google Docs-ready audit report
 
 Pre-flight artifacts and the previous report are automatically cleaned before each run. Use `--no-preflight` to send all steps to AI (useful for debugging or when running as a skill in an IDE).
@@ -251,7 +264,7 @@ Each AI step displays real-time token consumption and cost when it completes:
 
 - **IT** — Input tokens (includes cache)
 - **OT** — Output tokens
-- **Cost** — USD cost (Claude only; Gemini does not report cost)
+- **Cost** — USD cost (Claude only; agents without token parsers show time only)
 
 A summary is printed at the end of the run:
 
@@ -310,7 +323,37 @@ After installation, invoke skills as slash commands:
 
 - **Claude Code**: `/somnio-fh`, `/somnio-fp`, `/somnio-nh`, `/somnio-np`, `/somnio-sa`
 - **Cursor**: Available as commands in the command palette
-- **Antigravity**: Available as workflows
+- **Other agents**: Varies by agent (check agent documentation)
+
+## Architecture
+
+### Agent Registry
+
+The core of the multi-agent system is the `AgentRegistry` in `lib/src/agents/agent_registry.dart`. Each agent is defined as an `AgentConfig` with:
+
+- **Identity**: `id`, `displayName`
+- **Execution**: `binary`, `promptStyle`, `promptFlag`, `autoApproveFlags`, `outputFlags`, `models`
+- **Installation**: `installFormat`, `installScope`, `installPath`, `ruleExtension`
+- **Escape hatches**: `readInstructionTemplate`, `tokenUsageParser` (for agent-specific quirks)
+
+Adding a new agent requires only adding one `AgentConfig(...)` entry to `agent_registry.dart`. No other files need to change.
+
+### Install Formats
+
+| Format | Transformer | Description |
+|--------|-------------|-------------|
+| `skillDir` | `SkillDirTransformer` | Directory with SKILL.md + rules/ + templates/ (Claude) |
+| `singleFile` | `SingleFileTransformer` | Single self-contained .md file (Cursor) |
+| `workflow` | `WorkflowTransformer` | Workflow + somnio_rules/ (Gemini/Antigravity) |
+| `markdown` | `MarkdownTransformer` | Generic single .md per skill (all new agents) |
+
+### Prompt Styles
+
+| Style | Example | Agents |
+|-------|---------|--------|
+| `flag` | `claude -p "prompt"` | Claude, Gemini, Aider, Amp, OpenCode, CodeBuddy, Qwen |
+| `subcommand` | `codex exec "prompt"` | Codex |
+| `positionalLast` | `agent --print "prompt"` | Cursor, Augment, Cline |
 
 ## Adding New Technologies
 
@@ -336,8 +379,39 @@ dart run bin/somnio.dart --help
 # Run tests
 dart test
 
+# Static analysis
+dart analyze
+
 # Install your local version globally
 dart pub global activate --source path .
 ```
 
-The CLI entry point is `bin/somnio.dart`. Commands live in `lib/src/commands/`, installers in `lib/src/installers/`, and transformers in `lib/src/transformers/`.
+### Project Structure
+
+```
+cli/lib/src/
+├── agents/                  # Agent registry (NEW)
+│   ├── agent_config.dart    # AgentConfig data model
+│   ├── agent_registry.dart  # All 17 agent definitions
+│   └── token_parsers.dart   # Claude/Gemini token parsing
+├── commands/                # CLI commands
+│   ├── install_command.dart # somnio install --agent <id>
+│   ├── run_command.dart     # somnio run <code>
+│   ├── claude_command.dart  # Alias: somnio install --agent claude
+│   ├── cursor_command.dart  # Alias: somnio install --agent cursor
+│   └── ...
+├── content/                 # Skill bundles and content loading
+├── installers/              # File writers
+│   └── agent_installer.dart # Generic installer (uses AgentConfig)
+├── runner/                  # Audit execution engine
+│   ├── agent_resolver.dart  # Registry-driven agent detection
+│   ├── step_executor.dart   # Spawns AI CLIs via buildArgs()
+│   └── ...
+├── transformers/            # Format converters
+│   ├── transformer.dart     # Interface + factory
+│   ├── markdown_transformer.dart  # Generic format (NEW)
+│   └── ...
+└── utils/                   # Utilities
+    ├── command_helpers.dart  # Shared helpers (DRY across commands)
+    └── ...
+```

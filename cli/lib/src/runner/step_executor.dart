@@ -48,7 +48,7 @@ class StepResult {
 
 /// Executes individual plan steps by invoking an AI CLI in a fresh context.
 ///
-/// Each step spawns a separate process (`claude -p` or `gemini -p`),
+/// Each step spawns a separate process using [AgentConfig.buildArgs],
 /// which ensures a fresh context window per step. The AI reads the
 /// rule file and saves findings as an artifact on disk.
 class StepExecutor {
@@ -310,10 +310,6 @@ class StepExecutor {
   // --- Private helpers ---
 
   /// Produces a human-readable error message from a failed AI CLI process.
-  ///
-  /// Inspects stderr for known patterns (model not found, capacity exhausted,
-  /// auth failures) and returns a targeted message instead of a generic
-  /// "Process exited with code N".
   String _describeProcessError(ProcessResult result) {
     final stderr = (result.stderr as String? ?? '').toLowerCase();
     final stdout = (result.stdout as String? ?? '').toLowerCase();
@@ -340,7 +336,8 @@ class StepExecutor {
         combined.contains('401') ||
         combined.contains('403')) {
       return 'Authentication failed. '
-          'Verify you are logged in to the ${config.agent.name} CLI.';
+          'Verify you are logged in to the '
+          '${config.agentConfig.displayName} CLI.';
     }
 
     return 'Process exited with code ${result.exitCode}';
@@ -360,10 +357,9 @@ class StepExecutor {
   }
 
   String _ruleFilePath(String ruleName) {
-    final ext = config.agent == RunAgent.gemini ? '.yaml' : '.md';
+    final ext = config.agentConfig.ruleExtension;
     return p.join(config.ruleBasePath, '$ruleName$ext');
   }
-
 
   String _artifactPath(ExecutionStep step) {
     final paddedIndex = step.index.toString().padLeft(2, '0');
@@ -378,9 +374,8 @@ class StepExecutor {
     String ruleFile,
     String artifactPath,
   ) {
-    final readInstruction = config.agent == RunAgent.gemini
-        ? 'Read $ruleFile and follow ALL instructions in the prompt field'
-        : 'Read and follow ALL instructions in $ruleFile';
+    final readInstruction =
+        config.agentConfig.formatReadInstruction(ruleFile);
 
     return 'You are executing step ${step.index} of ${config.steps.length} '
         'in the ${config.displayName}.\n\n'
@@ -398,9 +393,8 @@ class StepExecutor {
     String ruleFile,
     String reportPath,
   ) {
-    final readInstruction = config.agent == RunAgent.gemini
-        ? 'Read $ruleFile and follow ALL instructions in the prompt field.'
-        : 'Read and follow ALL instructions in $ruleFile';
+    final readInstruction =
+        config.agentConfig.formatReadInstruction(ruleFile);
 
     final reportDir = p.dirname(reportPath);
 
@@ -436,9 +430,8 @@ class StepExecutor {
   }
 
   String _buildFormatEnforcerPrompt(String ruleFile, String reportPath) {
-    final readInstruction = config.agent == RunAgent.gemini
-        ? 'Read $ruleFile and follow ALL instructions in the prompt field.'
-        : 'Read and follow ALL instructions in $ruleFile';
+    final readInstruction =
+        config.agentConfig.formatReadInstruction(ruleFile);
 
     return 'You are validating and enforcing formatting on the '
         '${config.displayName} report.\n\n'
@@ -469,103 +462,27 @@ class StepExecutor {
 
   Future<ProcessResult> _runProcess(String prompt, {String? modelOverride}) {
     final model = modelOverride ?? config.model;
-    switch (config.agent) {
-      case RunAgent.claude:
-        return Process.run(
-          'claude',
-          [
-            '-p',
-            prompt,
-            '--allowedTools',
-            'Read,Bash,Glob,Grep,Write',
-            '--output-format',
-            'json',
-            if (model != null) ...['--model', model],
-          ],
-          workingDirectory: Directory.current.path,
-        );
-      case RunAgent.cursor:
-        return Process.run(
-          'agent',
-          [
-            '--print',
-            '--output-format',
-            'json',
-            '--force',
-            if (model != null) ...['--model', model],
-            prompt,
-          ],
-          workingDirectory: Directory.current.path,
-        );
-      case RunAgent.gemini:
-        return Process.run(
-          'gemini',
-          [
-            '-p',
-            prompt,
-            '--yolo',
-            '-o',
-            'json',
-            if (model != null) ...['--model', model],
-          ],
-          workingDirectory: Directory.current.path,
-        );
-    }
+    final agent = config.agentConfig;
+    final args = agent.buildArgs(prompt, model: model);
+    return Process.run(
+      agent.binary!,
+      args,
+      workingDirectory: Directory.current.path,
+    );
   }
 
   /// Parses token usage from the JSON stdout of an AI CLI invocation.
   ///
-  /// Returns `null` if parsing fails or the agent doesn't expose token data
-  /// (e.g., Cursor CLI).
+  /// Returns `null` if parsing fails or the agent doesn't expose token data.
   TokenUsage? _parseTokenUsage(String stdout) {
+    final parser = config.agentConfig.tokenUsageParser;
+    if (parser == null) return null;
+
     try {
       final json = jsonDecode(stdout) as Map<String, dynamic>;
-
-      switch (config.agent) {
-        case RunAgent.claude:
-          return _parseClaudeUsage(json);
-        case RunAgent.cursor:
-          // Cursor CLI does not expose token usage in its JSON output.
-          return null;
-        case RunAgent.gemini:
-          return _parseGeminiUsage(json);
-      }
+      return parser(json);
     } catch (_) {
       return null;
     }
-  }
-
-  TokenUsage _parseClaudeUsage(Map<String, dynamic> json) {
-    final usage = json['usage'] as Map<String, dynamic>? ?? {};
-    return TokenUsage(
-      inputTokens: (usage['input_tokens'] as num?)?.toInt() ?? 0,
-      outputTokens: (usage['output_tokens'] as num?)?.toInt() ?? 0,
-      cacheReadTokens:
-          (usage['cache_read_input_tokens'] as num?)?.toInt() ?? 0,
-      cacheCreationTokens:
-          (usage['cache_creation_input_tokens'] as num?)?.toInt() ?? 0,
-      costUsd: (json['total_cost_usd'] as num?)?.toDouble(),
-    );
-  }
-
-  TokenUsage _parseGeminiUsage(Map<String, dynamic> json) {
-    final stats = json['stats'] as Map<String, dynamic>? ?? {};
-    final models = stats['models'] as Map<String, dynamic>? ?? {};
-
-    var promptTokens = 0;
-    var candidateTokens = 0;
-
-    for (final model in models.values) {
-      if (model is Map<String, dynamic>) {
-        final tokens = model['tokens'] as Map<String, dynamic>? ?? {};
-        promptTokens += (tokens['prompt'] as num?)?.toInt() ?? 0;
-        candidateTokens += (tokens['candidates'] as num?)?.toInt() ?? 0;
-      }
-    }
-
-    return TokenUsage(
-      inputTokens: promptTokens,
-      outputTokens: candidateTokens,
-    );
   }
 }

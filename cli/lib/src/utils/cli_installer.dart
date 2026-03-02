@@ -2,85 +2,40 @@ import 'dart:io';
 
 import 'package:mason_logger/mason_logger.dart';
 
+import '../agents/agent_config.dart';
+import '../agents/agent_registry.dart';
 import 'platform_utils.dart';
-
-/// Information about a CLI tool that can be detected and installed.
-class CliInfo {
-  const CliInfo({
-    required this.displayName,
-    required this.binary,
-    this.npmPackage,
-    this.installUrl,
-    this.installInstructions,
-  });
-
-  /// Human-readable name (e.g., 'Claude Code').
-  final String displayName;
-
-  /// Binary name to check on PATH (e.g., 'claude').
-  final String binary;
-
-  /// npm package name, if installable via npm.
-  final String? npmPackage;
-
-  /// URL for manual installation.
-  final String? installUrl;
-
-  /// Multi-line instructions for manual installation.
-  final String? installInstructions;
-}
 
 /// Result of checking a CLI's availability.
 class CliCheck {
   const CliCheck({
-    required this.cli,
+    required this.agent,
     required this.installed,
     this.path,
   });
 
-  final CliInfo cli;
+  final AgentConfig agent;
   final bool installed;
   final String? path;
 }
 
 /// Handles detection and installation of AI CLI tools.
+///
+/// All CLI definitions come from [AgentRegistry] — adding a new agent
+/// there automatically makes it detectable and installable here.
 class CliInstaller {
   CliInstaller({required Logger logger}) : _logger = logger;
 
   final Logger _logger;
 
-  /// All known CLI tools.
-  static const List<CliInfo> knownClis = [
-    CliInfo(
-      displayName: 'Claude Code',
-      binary: 'claude',
-      npmPackage: '@anthropic-ai/claude-code',
-      installUrl: 'https://claude.ai/download',
-    ),
-    CliInfo(
-      displayName: 'Cursor CLI',
-      binary: 'agent',
-      installUrl: 'https://cursor.com',
-      installInstructions:
-          '  1. Download Cursor from https://cursor.com\n'
-          '  2. Open Cursor and enable the CLI:\n'
-          '     Settings > General > Enable "agent" CLI command',
-    ),
-    CliInfo(
-      displayName: 'Gemini CLI',
-      binary: 'gemini',
-      npmPackage: '@google/gemini-cli',
-      installUrl: 'https://github.com/google-gemini/gemini-cli',
-    ),
-  ];
-
-  /// Detect all known CLIs.
+  /// Detect all executable CLI agents.
   Future<List<CliCheck>> detectAll() async {
     final results = <CliCheck>[];
-    for (final cli in knownClis) {
-      final path = await PlatformUtils.whichBinary(cli.binary);
+    for (final agent in AgentRegistry.executableAgents) {
+      if (agent.binary == null) continue;
+      final path = await PlatformUtils.whichBinary(agent.binary!);
       results.add(CliCheck(
-        cli: cli,
+        agent: agent,
         installed: path != null,
         path: path,
       ));
@@ -101,25 +56,25 @@ class CliInstaller {
   /// Attempt to install a CLI via npm.
   ///
   /// Returns true if installation succeeded.
-  Future<bool> installViaNpm(CliInfo cli) async {
-    if (cli.npmPackage == null) return false;
+  Future<bool> installViaNpm(AgentConfig agent) async {
+    if (agent.npmPackage == null) return false;
 
     final progress = _logger.progress(
-      'Installing ${cli.displayName} via npm',
+      'Installing ${agent.displayName} via npm',
     );
 
     try {
       final result = await Process.run(
         'npm',
-        ['install', '-g', cli.npmPackage!],
+        ['install', '-g', agent.npmPackage!],
         runInShell: true,
       );
 
       if (result.exitCode == 0) {
-        progress.complete('${cli.displayName} installed');
+        progress.complete('${agent.displayName} installed');
         return true;
       } else {
-        progress.fail('${cli.displayName} installation failed');
+        progress.fail('${agent.displayName} installation failed');
         final stderr = (result.stderr as String).trim();
         if (stderr.isNotEmpty) {
           _logger.warn(stderr);
@@ -127,23 +82,23 @@ class CliInstaller {
         return false;
       }
     } catch (e) {
-      progress.fail('${cli.displayName} installation failed: $e');
+      progress.fail('${agent.displayName} installation failed: $e');
       return false;
     }
   }
 
   /// Show manual installation instructions for a CLI.
-  void showManualInstructions(CliInfo cli) {
+  void showManualInstructions(AgentConfig agent) {
     _logger.info('');
-    _logger.info('  ${cli.displayName}:');
-    if (cli.installInstructions != null) {
-      _logger.info(cli.installInstructions!);
+    _logger.info('  ${agent.displayName}:');
+    if (agent.installInstructions != null) {
+      _logger.info(agent.installInstructions!);
     } else {
-      if (cli.npmPackage != null) {
-        _logger.info('  npm install -g ${cli.npmPackage}');
+      if (agent.npmPackage != null) {
+        _logger.info('  npm install -g ${agent.npmPackage}');
       }
-      if (cli.installUrl != null) {
-        _logger.info('  Or visit: ${cli.installUrl}');
+      if (agent.installUrl != null) {
+        _logger.info('  Or visit: ${agent.installUrl}');
       }
     }
   }

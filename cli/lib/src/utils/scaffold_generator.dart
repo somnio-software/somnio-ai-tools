@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import 'command_helpers.dart';
+
 /// Generates the folder structure and template files for a new
 /// technology skill bundle.
 class ScaffoldGenerator {
@@ -17,7 +19,7 @@ class ScaffoldGenerator {
     required String tech,
     required String displayName,
   }) async {
-    final techTitle = _titleCase(tech);
+    final techTitle = CommandHelpers.titleCase(tech);
     final baseDir = p.join(
       repoRoot,
       '$tech-plans',
@@ -60,7 +62,7 @@ class ScaffoldGenerator {
     required String tech,
     required String displayName,
   }) async {
-    final techTitle = _titleCase(tech);
+    final techTitle = CommandHelpers.titleCase(tech);
     final baseDir = p.join(
       repoRoot,
       '$tech-plans',
@@ -98,7 +100,7 @@ class ScaffoldGenerator {
 
   /// Generates a README.md for the top-level {tech}-plans/ directory.
   Future<void> generateReadme(String tech) async {
-    final techTitle = _titleCase(tech);
+    final techTitle = CommandHelpers.titleCase(tech);
     final readmePath = p.join(repoRoot, '$tech-plans', 'README.md');
     await _writeFile(readmePath, _readmeTemplate(tech, techTitle));
   }
@@ -473,11 +475,6 @@ Example:
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
-
-  String _titleCase(String text) {
-    if (text.isEmpty) return text;
-    return text[0].toUpperCase() + text.substring(1);
-  }
 
   Future<void> _createDir(String path) async {
     final dir = Directory(path);

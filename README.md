@@ -24,16 +24,33 @@ dart pub global activate --source git https://github.com/somnio-software/technol
 
 ### 🚀 Quick Start
 
-For first-time users, run the guided setup wizard. It checks which AI CLIs you have installed (Claude Code, Cursor, Gemini), helps install missing ones, and lets you choose which technologies to set up:
+For first-time users, run the guided setup wizard. It checks which AI CLIs you have installed, helps install missing ones, and lets you choose which technologies to set up:
 
 ```bash
 somnio setup
 ```
 
-Already have your CLIs installed? Use `init` to detect agents and install skills directly:
+Already have your CLIs installed? Skip the CLI installation step:
 
 ```bash
-somnio init
+somnio setup --skip-cli
+```
+
+### 🤖 Supported Agents
+
+Somnio supports **12 CLI agents** for running audits and **5 IDE-only agents** for skill installation — all driven by a single agent registry.
+
+**CLI agents** (for `somnio run`): Claude Code, Cursor, Gemini CLI, Codex, Augment Code, Amp, Aider, Cline, OpenCode, CodeBuddy, Qwen
+
+**IDE-only agents** (for `somnio install`): GitHub Copilot, Windsurf, Roo Code, Kilo Code, Amazon Q
+
+Install skills to any agent:
+
+```bash
+somnio install --agent claude      # Install to Claude Code
+somnio install --agent copilot     # Install to GitHub Copilot
+somnio install --agent windsurf    # Install to Windsurf
+somnio install --all               # Install to all detected agents
 ```
 
 ### 📚 CLI Documentation
@@ -41,20 +58,20 @@ somnio init
 For detailed CLI usage, commands, and advanced options, see the [CLI README](cli/README.md).
 
 **Available CLI Commands:**
-- `somnio setup` - Full guided setup: install CLIs, select technologies, install skills
-- `somnio init` - Auto-detect agents, select technologies, and install skills
-- `somnio claude` - Install skills to Claude Code
-- `somnio cursor` - Install commands and rule files to Cursor (IDE + Cursor CLI)
-- `somnio antigravity` - Install workflows to Antigravity
-- `somnio status` - Show CLI availability and installed skills status
-- `somnio run <code>` - Run a health or security audit step-by-step from the project terminal (with per-step token usage tracking)
-- `somnio quote` (or `somnio q`) - Display a random Somnio team quote
-- `somnio update` - Update CLI and reinstall skills
-- `somnio add` - Add new technology skill bundles
+- `somnio setup` — Full guided setup: install CLIs, detect agents, install skills
+- `somnio setup --skip-cli` — Skip CLI installation, just detect agents and install skills
+- `somnio install --agent <id>` — Install skills to a specific agent
+- `somnio install --all` — Install to all detected agents
+- `somnio run <code>` — Run a health or security audit step-by-step
+- `somnio status` — Show CLI availability and installed skills
+- `somnio update` — Update CLI and reinstall skills
+- `somnio uninstall` — Remove all installed skills (with confirmation)
+- `somnio add <tech>` — Add new technology skill bundles
+- `somnio -q <command>` — Suppress the banner on any command
 
 ### 🏃 Running Audits from the Terminal
 
-Use `somnio run` from the target project's root to execute a health or security audit. The CLI handles setup steps (tool installation, version alignment, test coverage) directly via pre-flight, then delegates analysis steps to an AI CLI (Claude or Gemini) in fresh contexts.
+Use `somnio run` from the target project's root to execute a health or security audit. The CLI handles setup steps (tool installation, version alignment, test coverage) directly via pre-flight, then delegates analysis steps to an AI CLI in fresh contexts.
 
 ```bash
 # From a Flutter project root
@@ -73,12 +90,13 @@ somnio run sa
 | `nh` | NestJS Project Health Audit |
 | `sa` | Security Audit (framework-agnostic) |
 
-You can specify a model with `--model` (`-m`) or select one interactively. Each CLI has a sensible default: **haiku** for Claude and **gemini-3-flash-preview** for Gemini.
+You can specify an agent and model explicitly, or let the CLI auto-detect and prompt interactively:
 
 ```bash
-somnio run fh --model opus          # Use a specific Claude model
-somnio run nh --agent gemini -m gemini-3-pro  # Gemini with a specific model
-somnio run sa                       # Security audit (auto-detects project type)
+somnio run fh --agent claude --model opus
+somnio run nh --agent gemini -m gemini-3-pro
+somnio run fh --agent codex             # Use OpenAI Codex CLI
+somnio run sa                           # Auto-detect agent, interactive model
 ```
 
 After a health audit completes, the CLI will ask if you want to run a security audit as well.
@@ -247,6 +265,7 @@ All YAML rule files follow strict formatting standards:
 - [x] Flutter Best Practices Check
 - [x] NestJS Project Health Audit (Backend)
 - [x] Framework-Agnostic Security Audit
+- [x] Multi-agent registry (17 agents supported)
 - [ ] NestJS Project Health Audit (Cloud Functions)
 - [ ] Tools for React/Next.js project analysis
 - [ ] Deployment automation

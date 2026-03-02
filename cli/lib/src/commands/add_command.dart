@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
 import '../utils/bundle_detector.dart';
+import '../utils/command_helpers.dart';
 import '../utils/package_resolver.dart';
 import '../utils/registry_modifier.dart';
 import '../utils/scaffold_generator.dart';
@@ -112,7 +113,7 @@ class AddCommand extends Command<int> {
     String repoRoot,
     bool force,
   ) async {
-    final techTitle = _titleCase(tech);
+    final techTitle = CommandHelpers.titleCase(tech);
 
     _logger.info('');
     _logger.info(
@@ -161,93 +162,87 @@ class AddCommand extends Command<int> {
       suffixes['practices'] = suffix;
     }
 
-    // Step 3: Collect display names
+    // Step 3: Generate defaults and confirm (or edit)
     final displayNames = <String, String>{};
-
-    if (createHealth) {
-      final defaultName = '$techTitle Project Health Audit';
-      if (force) {
-        displayNames['health'] = defaultName;
-      } else {
-        displayNames['health'] = _logger.prompt(
-          'Display name for health audit',
-          defaultValue: defaultName,
-        );
-      }
-    }
-
-    if (createPractices) {
-      final defaultName = '$techTitle Best Practices Check';
-      if (force) {
-        displayNames['practices'] = defaultName;
-      } else {
-        displayNames['practices'] = _logger.prompt(
-          'Display name for best practices',
-          defaultValue: defaultName,
-        );
-      }
-    }
-
-    // Step 4: Collect descriptions
     final descriptions = <String, String>{};
 
     if (createHealth) {
-      final defaultDesc =
+      displayNames['health'] = '$techTitle Project Health Audit';
+      descriptions['health'] =
           'Execute a comprehensive $techTitle Project Health Audit. '
           'Analyzes tech stack, architecture, testing, code quality, '
           'security, CI/CD, and documentation. Produces a detailed '
           'report with section scores and weighted overall score.';
-      if (force) {
-        descriptions['health'] = defaultDesc;
-      } else {
-        descriptions['health'] = _logger.prompt(
-          'Description for health audit',
-          defaultValue: defaultDesc,
-        );
-      }
     }
 
     if (createPractices) {
-      final defaultDesc =
+      displayNames['practices'] = '$techTitle Best Practices Check';
+      descriptions['practices'] =
           'Execute a micro-level $techTitle code quality audit. '
           'Validates code against best practices for testing, '
           'architecture, and code implementation. Produces a '
           'detailed violations report with prioritized action plan.';
-      if (force) {
-        descriptions['practices'] = defaultDesc;
-      } else {
-        descriptions['practices'] = _logger.prompt(
-          'Description for best practices',
-          defaultValue: defaultDesc,
-        );
-      }
     }
 
-    // Step 5: Confirm
     if (!force) {
       _logger.info('');
       _logger.info('Will create:');
       if (createHealth) {
         _logger.info(
-          '  somnio-${suffixes['health']}: '
-          '${displayNames['health']}',
+          '  somnio-${suffixes['health']}  ${displayNames['health']}',
+        );
+        _logger.info(
+          '${lightGray.wrap('               ${descriptions['health']}')}',
         );
       }
       if (createPractices) {
         _logger.info(
-          '  somnio-${suffixes['practices']}: '
+          '  somnio-${suffixes['practices']}  '
           '${displayNames['practices']}',
         );
+        _logger.info(
+          '${lightGray.wrap('               ${descriptions['practices']}')}',
+        );
       }
+      _logger.info('');
       _logger.info('  Directory: $tech-plans/');
       _logger.info('');
 
-      final confirm = _logger.confirm(
-        'Create skill bundles for $techTitle?',
-      );
-      if (!confirm) {
+      final answer = _logger
+          .prompt(
+            'Confirm (yes/edit/cancel)',
+            defaultValue: 'yes',
+          )
+          .toLowerCase()
+          .trim();
+
+      if (answer == 'cancel' || answer == 'c' || answer == 'n' ||
+          answer == 'no') {
         _logger.info('Cancelled.');
         return ExitCode.success.code;
+      }
+
+      if (answer == 'edit' || answer == 'e') {
+        if (createHealth) {
+          displayNames['health'] = _logger.prompt(
+            'Display name for health audit',
+            defaultValue: displayNames['health'],
+          );
+          descriptions['health'] = _logger.prompt(
+            'Description for health audit',
+            defaultValue: descriptions['health'],
+          );
+        }
+        if (createPractices) {
+          displayNames['practices'] = _logger.prompt(
+            'Display name for best practices',
+            defaultValue: displayNames['practices'],
+          );
+          descriptions['practices'] = _logger.prompt(
+            'Description for best practices',
+            defaultValue: descriptions['practices'],
+          );
+        }
       }
     }
 
@@ -343,7 +338,7 @@ class AddCommand extends Command<int> {
     String repoRoot,
     bool force,
   ) async {
-    final techTitle = _titleCase(tech);
+    final techTitle = CommandHelpers.titleCase(tech);
 
     _logger.info('');
     _logger.info(
@@ -401,8 +396,14 @@ class AddCommand extends Command<int> {
       return ExitCode.software.code;
     }
 
-    // Generate short names and build SkillBundles
-    final bundles = <SkillBundle>[];
+    // Generate short names and build bundle data
+    final bundleData = <({
+      String id,
+      String shortSuffix,
+      String displayName,
+      String description,
+      BundleDetectionResult result,
+    })>[];
 
     for (final result in registrable) {
       final suffix = result.bundleType == 'health_audit' ? 'h' : 'p';
@@ -429,51 +430,78 @@ class AddCommand extends Command<int> {
               'detailed violations report with prioritized action '
               'plan.';
 
-      // Allow user to customize display name and description
-      String finalDisplayName;
-      String finalDescription;
-      if (force) {
-        finalDisplayName = displayName;
-        finalDescription = description;
-      } else {
-        finalDisplayName = _logger.prompt(
-          'Display name',
-          defaultValue: displayName,
-        );
-        finalDescription = _logger.prompt(
-          'Description',
-          defaultValue: description,
-        );
-      }
-
-      bundles.add(SkillBundle(
+      bundleData.add((
         id: id,
-        name: 'somnio-$shortSuffix',
-        displayName: finalDisplayName,
-        description: finalDescription,
-        planRelativePath: result.planFile!,
-        rulesDirectory: result.rulesDirectory!,
-        workflowPath: result.workflowPath,
-        templatePath: result.templatePath,
+        shortSuffix: shortSuffix,
+        displayName: displayName,
+        description: description,
+        result: result,
       ));
     }
 
-    // Confirm registration
+    // Editable display names and descriptions
+    final editableNames = {
+      for (final d in bundleData) d.id: d.displayName,
+    };
+    final editableDescs = {
+      for (final d in bundleData) d.id: d.description,
+    };
+
+    // Confirm with preview (or edit)
     if (!force) {
       _logger.info('');
       _logger.info('Will register:');
-      for (final bundle in bundles) {
-        _logger.info('  ${bundle.name}: ${bundle.displayName}');
+      for (final d in bundleData) {
+        _logger.info(
+          '  somnio-${d.shortSuffix}  ${editableNames[d.id]}',
+        );
+        _logger.info(
+          '${lightGray.wrap('               ${editableDescs[d.id]}')}',
+        );
       }
       _logger.info('');
 
-      final confirm = _logger.confirm(
-        'Register ${bundles.length} bundle(s) to the skill registry?',
-      );
-      if (!confirm) {
+      final answer = _logger
+          .prompt(
+            'Confirm (yes/edit/cancel)',
+            defaultValue: 'yes',
+          )
+          .toLowerCase()
+          .trim();
+
+      if (answer == 'cancel' || answer == 'c' || answer == 'n' ||
+          answer == 'no') {
         _logger.info('Cancelled.');
         return ExitCode.success.code;
       }
+
+      if (answer == 'edit' || answer == 'e') {
+        for (final d in bundleData) {
+          editableNames[d.id] = _logger.prompt(
+            'Display name',
+            defaultValue: editableNames[d.id],
+          );
+          editableDescs[d.id] = _logger.prompt(
+            'Description',
+            defaultValue: editableDescs[d.id],
+          );
+        }
+      }
+    }
+
+    // Build final SkillBundle objects
+    final bundles = <SkillBundle>[];
+    for (final d in bundleData) {
+      bundles.add(SkillBundle(
+        id: d.id,
+        name: 'somnio-${d.shortSuffix}',
+        displayName: editableNames[d.id]!,
+        description: editableDescs[d.id]!,
+        planRelativePath: d.result.planFile!,
+        rulesDirectory: d.result.rulesDirectory!,
+        workflowPath: d.result.workflowPath,
+        templatePath: d.result.templatePath,
+      ));
     }
 
     return _registerBundles(bundles, repoRoot);
@@ -660,8 +688,4 @@ class AddCommand extends Command<int> {
     return !SkillRegistry.skills.any((s) => s.name == fullName);
   }
 
-  String _titleCase(String text) {
-    if (text.isEmpty) return text;
-    return text[0].toUpperCase() + text.substring(1);
-  }
 }

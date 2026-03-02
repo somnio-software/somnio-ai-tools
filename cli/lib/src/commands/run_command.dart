@@ -4,6 +4,8 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_config.dart';
+import '../agents/agent_registry.dart';
 import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
@@ -13,7 +15,7 @@ import '../runner/preflight.dart';
 import '../runner/project_validator.dart';
 import '../runner/run_config.dart';
 import '../runner/step_executor.dart';
-import '../utils/package_resolver.dart';
+import '../utils/command_helpers.dart';
 
 /// Executes a health audit or security audit step-by-step using an AI CLI.
 ///
@@ -31,15 +33,12 @@ class RunCommand extends Command<int> {
       'agent',
       abbr: 'a',
       help: 'AI CLI to use (auto-detected if not specified).',
-      allowed: ['claude', 'cursor', 'gemini'],
+      allowed: AgentRegistry.executableAgents.map((a) => a.id).toList(),
     );
     argParser.addOption(
       'model',
       abbr: 'm',
-      help: 'Model to use (skips interactive selection).\n'
-          'Claude: haiku (default), sonnet, opus\n'
-          'Cursor: auto (default), opus-4.6-thinking, gpt-5.2, composer-1, ...\n'
-          'Gemini: gemini-3-flash (default), gemini-2.5-flash, gemini-2.5-pro, gemini-3-pro',
+      help: 'Model to use (skips interactive selection).',
     );
     argParser.addFlag(
       'skip-validation',
@@ -51,42 +50,14 @@ class RunCommand extends Command<int> {
     );
   }
 
-  static const _claudeModels = ['haiku', 'sonnet', 'opus'];
-  static const _cursorModels = [
-    'auto',
-    'opus-4.6-thinking',
-    'opus-4.6',
-    'opus-4.5',
-    'opus-4.5-thinking',
-    'sonnet-4.5',
-    'sonnet-4.5-thinking',
-    'composer-1',
-    'gpt-5.2',
-    'gpt-5.2-high',
-    'gpt-5.2-codex',
-    'gpt-5.2-codex-high',
-    'gpt-5.2-codex-low',
-    'gpt-5.2-codex-xhigh',
-    'gpt-5.2-codex-fast',
-    'gpt-5.2-codex-high-fast',
-    'gpt-5.2-codex-low-fast',
-    'gpt-5.2-codex-xhigh-fast',
-    'gpt-5.1-codex-max',
-    'gpt-5.1-codex-max-high',
-    'gpt-5.1-high',
-    'gemini-3-pro-preview',
-    'gemini-3-flash-preview',
-    'grok',
-  ];
-  static const _geminiModels = ['gemini-3-flash-preview', 'gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3-pro-preview', 'gemini-3.1-pro-preview'];
-
   final Logger _logger;
 
   @override
   String get name => 'run';
 
   @override
-  String get description => 'Execute a health or security audit from the project terminal.\n'
+  String get description =>
+      'Execute a health or security audit from the project terminal.\n'
       '\n'
       'Run from the target project root (e.g., inside a Flutter or NestJS repo).\n'
       'The CLI handles setup steps (tool install, version alignment, tests)\n'
@@ -112,25 +83,17 @@ class RunCommand extends Command<int> {
 
   /// Derives the short code from a bundle name.
   ///
-  /// `somnio-fh` → `fh`, `somnio-nh` → `nh`
+  /// `somnio-fh` -> `fh`, `somnio-nh` -> `nh`
   String _codeFromBundle(SkillBundle bundle) =>
       bundle.name.replaceFirst('somnio-', '');
 
-  // techPrefix, planSubDir, and templateFile are derived from
-  // SkillBundle getters — no local helpers needed.
-
   /// Derives the template file name from the bundle's template path.
-  ///
-  /// `.../flutter_report_template.txt` → `flutter_report_template.txt`
   String _templateFileFromBundle(SkillBundle bundle) {
     if (bundle.templatePath == null) return '';
     return bundle.templatePath!.split('/').last;
   }
 
   /// Derives the report file name from the bundle.
-  ///
-  /// Health/audit: `flutter_audit.txt`, `security_audit.txt`
-  /// Plan (best practices): `flutter_best_practices.txt`
   String _reportFileFromBundle(SkillBundle bundle) {
     if (bundle.id.endsWith('_plan')) {
       return '${bundle.techPrefix}_best_practices.txt';
@@ -138,9 +101,7 @@ class RunCommand extends Command<int> {
     return '${bundle.techPrefix}_audit.txt';
   }
 
-  /// Derives the artifacts directory for a bundle (per-bundle to avoid overwrite).
-  ///
-  /// `reports/.artifacts/flutter_health/`, `reports/.artifacts/flutter_plan/`, etc.
+  /// Derives the artifacts directory for a bundle.
   String _artifactsDirFromBundle(String cwd, SkillBundle bundle) =>
       p.join(cwd, 'reports', '.artifacts', bundle.id);
 
@@ -196,7 +157,7 @@ class RunCommand extends Command<int> {
         return ExitCode.usage.code;
       }
       _logger.info(
-        '${lightGreen.wrap('OK')} ${bundle.displayName.split(' ').first} '
+        '${lightGreen.wrap('✓')} ${bundle.displayName.split(' ').first} '
         'project detected.',
       );
     }
@@ -212,36 +173,22 @@ class RunCommand extends Command<int> {
     // 4. Resolve AI agent
     final agentFlag = argResults!['agent'] as String?;
     final agentResolver = AgentResolver();
-    RunAgent agent;
+    AgentConfig agent;
 
     if (agentFlag != null) {
       // Explicit --agent flag: validate it exists
-      RunAgent? preferredAgent;
-      switch (agentFlag) {
-        case 'claude':
-          preferredAgent = RunAgent.claude;
-        case 'cursor':
-          preferredAgent = RunAgent.cursor;
-        case 'gemini':
-          preferredAgent = RunAgent.gemini;
+      final preferredAgent = AgentRegistry.findById(agentFlag);
+      if (preferredAgent == null || !preferredAgent.canExecute) {
+        _logger.err('Unknown or non-executable agent: "$agentFlag".');
+        return ExitCode.usage.code;
       }
       final resolved = await agentResolver.resolve(preferred: preferredAgent);
       if (resolved == null) {
-        final String target;
-        switch (preferredAgent!) {
-          case RunAgent.claude:
-            target = 'claude';
-          case RunAgent.cursor:
-            target = 'agent (Cursor CLI)';
-          case RunAgent.gemini:
-            target = 'gemini';
-        }
         _logger.err(
-          'No AI CLI found. Please install $target.\n'
-          '  Claude Code:  https://claude.ai/download\n'
-          '  Cursor CLI:   https://docs.cursor.com/cli\n'
-          '  Gemini CLI:   npm install -g @google/gemini-cli',
+          '${preferredAgent.displayName} CLI '
+          '(${preferredAgent.binary ?? preferredAgent.id}) not found.',
         );
+        CommandHelpers.printNoAgentsError(_logger);
         return ExitCode.software.code;
       }
       agent = resolved;
@@ -249,12 +196,7 @@ class RunCommand extends Command<int> {
       // No flag: detect all available, prompt if more than one
       final available = await agentResolver.detectAll();
       if (available.isEmpty) {
-        _logger.err(
-          'No AI CLI found. Please install claude, agent (Cursor CLI), or gemini.\n'
-          '  Claude Code:  https://claude.ai/download\n'
-          '  Cursor CLI:   https://docs.cursor.com/cli\n'
-          '  Gemini CLI:   npm install -g @google/gemini-cli',
-        );
+        CommandHelpers.printNoAgentsError(_logger);
         return ExitCode.software.code;
       }
       if (available.length == 1) {
@@ -264,8 +206,7 @@ class RunCommand extends Command<int> {
         _logger.info('');
         _logger.info('Available AI CLIs:');
         for (var i = 0; i < available.length; i++) {
-          final name = agentResolver.agentDisplayName(available[i]);
-          _logger.info('  ${i + 1}. $name');
+          _logger.info('  ${i + 1}. ${available[i].displayName}');
         }
         final input = _logger.prompt(
           'Select CLI (1-${available.length})',
@@ -277,33 +218,32 @@ class RunCommand extends Command<int> {
         } else {
           agent = available.first;
           _logger.warn(
-            'Invalid selection, using '
-            '${agentResolver.agentDisplayName(available.first)}.',
+            'Invalid selection, using ${available.first.displayName}.',
           );
         }
       }
     }
-    final agentName = agentResolver.agentDisplayName(agent);
-    _logger.info('${lightGreen.wrap('OK')} Using $agentName CLI.');
+    _logger.info(
+      '${lightGreen.wrap('✓')} Using ${agent.displayName} CLI.',
+    );
 
     // 4b. Resolve model
     final modelFlag = argResults!['model'] as String?;
     String? model;
 
     if (modelFlag != null) {
-      final validModels = _modelsForAgent(agent);
-      if (!validModels.contains(modelFlag)) {
+      if (agent.models.isNotEmpty && !agent.models.contains(modelFlag)) {
         _logger.err(
-          'Model "$modelFlag" is not valid for $agentName CLI.\n'
-          'Valid models: ${validModels.join(", ")}',
+          'Model "$modelFlag" is not valid for ${agent.displayName} CLI.\n'
+          'Valid models: ${agent.models.join(", ")}',
         );
         return ExitCode.usage.code;
       }
       model = modelFlag;
-    } else {
-      final choices = _modelsForAgent(agent);
+    } else if (agent.models.isNotEmpty) {
+      final choices = agent.models;
       _logger.info('');
-      _logger.info('Available $agentName models:');
+      _logger.info('Available ${agent.displayName} models:');
       for (var i = 0; i < choices.length; i++) {
         final tag = i == 0 ? ' (default)' : '';
         _logger.info('  ${i + 1}. ${choices[i]}$tag');
@@ -320,13 +260,14 @@ class RunCommand extends Command<int> {
         _logger.warn('Invalid selection, using ${choices.first}.');
       }
     }
-    _logger.info('${lightGreen.wrap('OK')} Model: $model');
+    if (model != null) {
+      _logger.info('${lightGreen.wrap('✓')} Model: $model');
+    }
 
     // 5. Resolve repo root
-    final resolver = PackageResolver();
-    final String repoRoot;
+    final ResolvedContent resolvedContent;
     try {
-      repoRoot = await resolver.resolveRepoRoot();
+      resolvedContent = await CommandHelpers.resolveContent();
     } catch (e) {
       _logger.err('$e');
       return ExitCode.software.code;
@@ -338,7 +279,7 @@ class RunCommand extends Command<int> {
       agent: agent,
       model: model,
       cwd: cwd,
-      repoRoot: repoRoot,
+      repoRoot: resolvedContent.repoRoot,
       skipValidation: skipValidation,
       noPreflight: noPreflight,
       agentResolver: agentResolver,
@@ -375,7 +316,7 @@ class RunCommand extends Command<int> {
               agent: agent,
               model: model,
               cwd: cwd,
-              repoRoot: repoRoot,
+              repoRoot: resolvedContent.repoRoot,
               skipValidation: true,
               noPreflight: noPreflight,
               agentResolver: agentResolver,
@@ -389,10 +330,10 @@ class RunCommand extends Command<int> {
     return aborted ? ExitCode.software.code : ExitCode.success.code;
   }
 
-  /// Executes a single audit bundle. Used for the main run and follow-up audits.
+  /// Executes a single audit bundle.
   Future<_ExecuteBundleResult> _executeBundle({
     required SkillBundle bundle,
-    required RunAgent agent,
+    required AgentConfig agent,
     required String? model,
     required String cwd,
     required String repoRoot,
@@ -412,7 +353,7 @@ class RunCommand extends Command<int> {
         return _ExecuteBundleResult(aborted: true);
       }
       _logger.info(
-        '${lightGreen.wrap('OK')} ${bundle.displayName.split(' ').first} '
+        '${lightGreen.wrap('✓')} ${bundle.displayName.split(' ').first} '
         'project detected.',
       );
     }
@@ -468,7 +409,7 @@ class RunCommand extends Command<int> {
         return _ExecuteBundleResult(aborted: true);
       }
     }
-    _logger.info('${lightGreen.wrap('OK')} Skills verified at: $ruleBase');
+    _logger.info('${lightGreen.wrap('✓')} Skills verified at: $ruleBase');
 
     final artifactsDir = _artifactsDirFromBundle(cwd, bundle);
     final reportPath = p.join(cwd, 'reports', reportFile);
@@ -478,7 +419,7 @@ class RunCommand extends Command<int> {
       bundleName: bundle.name,
       displayName: bundle.displayName,
       techPrefix: techPrefix,
-      agent: agent,
+      agentConfig: agent,
       steps: steps,
       ruleBasePath: ruleBase,
       templatePath: templatePath,
@@ -490,7 +431,7 @@ class RunCommand extends Command<int> {
     _cleanPreviousRun(artifactsDir, reportPath);
     Directory(artifactsDir).createSync(recursive: true);
 
-    final agentName = agentResolver.agentDisplayName(agent);
+    final agentName = agent.displayName;
     final preflightCount = steps
         .where((s) => preflightResultForSteps.artifacts.containsKey(s.ruleName))
         .length;
@@ -508,7 +449,7 @@ class RunCommand extends Command<int> {
     _logger.info('');
 
     final executor = StepExecutor(config: config, logger: _logger)
-      ..fallbackModel = _fallbackModelForAgent(agent);
+      ..fallbackModel = agent.fallbackModel;
     final results = <StepResult>[];
     var aborted = false;
 
@@ -652,14 +593,12 @@ class RunCommand extends Command<int> {
     return '${minutes}m ${remaining}s';
   }
 
-  /// Formats token count in K notation (e.g., 38200 → "38.2K").
   String _formatTokens(int tokens) {
     if (tokens < 1000) return '$tokens';
     final k = tokens / 1000;
     return '${k.toStringAsFixed(1)}K';
   }
 
-  /// Formats per-step stats line: IT, OT, Time, and Cost (Claude only).
   String _formatStepStats(StepResult result) {
     final usage = result.tokenUsage;
     if (usage == null) return _formatDuration(result.durationSeconds);
@@ -675,7 +614,6 @@ class RunCommand extends Command<int> {
     return buffer.toString();
   }
 
-  /// Prints aggregated token usage summary after all steps.
   void _printUsageSummary(
     List<StepResult> results,
     int totalTime,
@@ -719,31 +657,6 @@ class RunCommand extends Command<int> {
     _logger.info(divider);
   }
 
-  /// Returns the valid model list for the given agent.
-  List<String> _modelsForAgent(RunAgent agent) {
-    switch (agent) {
-      case RunAgent.claude:
-        return _claudeModels;
-      case RunAgent.cursor:
-        return _cursorModels;
-      case RunAgent.gemini:
-        return _geminiModels;
-    }
-  }
-
-  /// Returns the cheapest model for the given agent, used as fallback
-  /// when the selected model hits quota or capacity limits.
-  String? _fallbackModelForAgent(RunAgent agent) {
-    switch (agent) {
-      case RunAgent.claude:
-        return 'haiku';
-      case RunAgent.cursor:
-        return 'auto';
-      case RunAgent.gemini:
-        return 'gemini-2.5-flash';
-    }
-  }
-
   /// Removes previous run artifacts and report to prevent stale data.
   void _cleanPreviousRun(String artifactsDir, String reportPath) {
     final artifactsDirObj = Directory(artifactsDir);
@@ -755,7 +668,7 @@ class RunCommand extends Command<int> {
           .toList();
       if (files.isNotEmpty) {
         _logger.info(
-          '${lightGreen.wrap('OK')} Cleaned ${files.length} '
+          '${lightGreen.wrap('✓')} Cleaned ${files.length} '
           'previous artifact(s).',
         );
         for (final file in files) {
@@ -768,7 +681,7 @@ class RunCommand extends Command<int> {
     if (reportFile.existsSync()) {
       reportFile.deleteSync();
       _logger.info(
-        '${lightGreen.wrap('OK')} Cleaned previous report.',
+        '${lightGreen.wrap('✓')} Cleaned previous report.',
       );
     }
   }

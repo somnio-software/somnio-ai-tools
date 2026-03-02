@@ -2,8 +2,10 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_config.dart';
 import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
+import 'transformer.dart';
 
 /// Result of transforming content for Antigravity.
 class AntigravityOutput {
@@ -37,9 +39,9 @@ class AntigravityOutput {
 /// Antigravity stores workflows in `~/.gemini/antigravity/global_workflows/`
 /// and supporting files in `~/.gemini/antigravity/somnio_rules/`. The
 /// transformer copies files and rewrites paths in workflow content.
-class AntigravityTransformer {
+class AntigravityTransformer implements Transformer {
   /// Transforms a skill bundle into Antigravity format.
-  AntigravityOutput transform(
+  AntigravityOutput transformBundle(
     SkillBundle bundle,
     ContentLoader loader,
   ) {
@@ -80,6 +82,37 @@ class AntigravityTransformer {
       planContent: planContent,
       planRelativePath: planRelPath,
     );
+  }
+
+  @override
+  TransformOutput transform(
+    SkillBundle bundle,
+    ContentLoader loader,
+    AgentConfig agent,
+  ) {
+    // Soft-skip bundles without workflow files
+    if (bundle.workflowPath == null) {
+      return const TransformOutput(files: {}, skipped: true);
+    }
+
+    final output = transformBundle(bundle, loader);
+    final files = <String, String>{};
+
+    // Workflow file goes under global_workflows/
+    files['global_workflows/${output.workflowFileName}'] =
+        output.workflowContent;
+
+    // Rule files go under somnio_rules/
+    for (final entry in output.ruleFiles.entries) {
+      files['somnio_rules/${entry.key}'] = entry.value;
+    }
+
+    // Plan file
+    if (output.planContent != null && output.planRelativePath != null) {
+      files['somnio_rules/${output.planRelativePath!}'] = output.planContent!;
+    }
+
+    return TransformOutput(files: files);
   }
 
   String _rewritePaths(String content) {
@@ -124,3 +157,6 @@ class AntigravityTransformer {
 
   // planSubDir is now a getter on SkillBundle — no local helper needed.
 }
+
+/// Alias for [AntigravityTransformer] used by the unified transformer interface.
+typedef WorkflowTransformer = AntigravityTransformer;

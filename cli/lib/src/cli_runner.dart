@@ -3,10 +3,8 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 import 'commands/add_command.dart';
-import 'commands/antigravity_command.dart';
-import 'commands/claude_command.dart';
-import 'commands/cursor_command.dart';
 import 'commands/init_command.dart';
+import 'commands/install_command.dart';
 import 'commands/quote_command.dart';
 import 'commands/run_command.dart';
 import 'commands/setup_command.dart';
@@ -31,13 +29,17 @@ class SomnioCliRunner extends CommandRunner<int> {
       negatable: false,
       help: 'Print the current version.',
     );
+    argParser.addFlag(
+      'quiet',
+      abbr: 'q',
+      negatable: false,
+      help: 'Suppress the banner.',
+    );
 
     addCommand(AddCommand(logger: _logger));
     addCommand(InitCommand(logger: _logger));
+    addCommand(InstallCommand(logger: _logger));
     addCommand(UpdateCommand(logger: _logger));
-    addCommand(ClaudeCommand(logger: _logger));
-    addCommand(CursorCommand(logger: _logger));
-    addCommand(AntigravityCommand(logger: _logger));
     addCommand(QuoteCommand());
     addCommand(RunCommand(logger: _logger));
     addCommand(SetupCommand(logger: _logger));
@@ -78,7 +80,9 @@ class SomnioCliRunner extends CommandRunner<int> {
       _logger.info('somnio v$version');
       return ExitCode.success.code;
     }
-    _printBanner();
+    if (!(topLevelResults['quiet'] as bool)) {
+      _printBanner();
+    }
     return super.runCommand(topLevelResults);
   }
 

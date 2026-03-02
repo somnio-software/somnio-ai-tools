@@ -1,6 +1,8 @@
+import '../agents/agent_config.dart';
 import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
+import 'transformer.dart';
 
 /// Result of transforming content for Claude Code.
 class ClaudeSkillOutput {
@@ -30,9 +32,9 @@ class ClaudeSkillOutput {
 /// - SKILL.md (orchestration plan with frontmatter)
 /// - rules/ (individual rule files as markdown)
 /// - templates/ (report templates, copied as-is)
-class ClaudeTransformer {
+class ClaudeTransformer implements Transformer {
   /// Transforms a skill bundle into Claude Code format.
-  ClaudeSkillOutput transform(SkillBundle bundle, ContentLoader loader) {
+  ClaudeSkillOutput transformBundle(SkillBundle bundle, ContentLoader loader) {
     final plan = loader.loadPlan(bundle);
     final rules = loader.loadRules(bundle);
     final template = loader.loadTemplate(bundle);
@@ -152,9 +154,40 @@ class ClaudeTransformer {
     return frontmatter + content;
   }
 
+  @override
+  TransformOutput transform(
+    SkillBundle bundle,
+    ContentLoader loader,
+    AgentConfig agent,
+  ) {
+    final output = transformBundle(bundle, loader);
+    final files = <String, String>{};
+
+    // SKILL.md in skill directory
+    files['${bundle.name}/SKILL.md'] = output.skillMd;
+
+    // Rule files in rules/ subdirectory
+    for (final entry in output.ruleFiles.entries) {
+      files['${bundle.name}/rules/${entry.key}'] = entry.value;
+    }
+
+    // Template file
+    if (output.templateContent != null && output.templateFileName != null) {
+      files['${bundle.name}/templates/${output.templateFileName!}'] =
+          output.templateContent!;
+    }
+
+    return TransformOutput(files: files);
+  }
+
   // techPrefix is now a getter on SkillBundle — no local helper needed.
 
-  String _ruleToMarkdown(ParsedRule rule) {
+  /// Converts a parsed YAML rule into a markdown file.
+  ///
+  /// Shared by multiple transformers.
+  static String ruleToMarkdown(ParsedRule rule) => _ruleToMarkdown(rule);
+
+  static String _ruleToMarkdown(ParsedRule rule) {
     final buffer = StringBuffer();
     buffer.writeln('# ${rule.name}');
     buffer.writeln();
@@ -171,3 +204,6 @@ class ClaudeTransformer {
     return buffer.toString();
   }
 }
+
+/// Alias for [ClaudeTransformer] used by the unified transformer interface.
+typedef SkillDirTransformer = ClaudeTransformer;
