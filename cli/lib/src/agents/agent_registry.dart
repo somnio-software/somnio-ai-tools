@@ -114,11 +114,8 @@ class AgentRegistry {
     executionRulesPath: '{home}/.cursor/somnio_rules',
     ruleExtension: '.md',
     filePrefix: 'somnio-',
-    installUrl: 'https://cursor.com',
-    installInstructions:
-        '  1. Download Cursor from https://cursor.com\n'
-        '  2. Open Cursor and enable the CLI:\n'
-        '     Settings > General > Enable "agent" CLI command',
+    npmPackage: 'cursor-agent',
+    installUrl: 'https://cursor.com/cli',
     detectionPaths: [
       '/Applications/Cursor.app',
     ],
@@ -206,6 +203,9 @@ class AgentRegistry {
     installPath: '{home}/.augment/skills',
     filePrefix: 'somnio',
     installUrl: 'https://www.augmentcode.com',
+    installInstructions:
+        '  Download from https://www.augmentcode.com/product/CLI\n'
+        '  Or install the VS Code extension and enable CLI access',
   );
 
   static const _amp = AgentConfig(
@@ -220,6 +220,7 @@ class AgentRegistry {
     installScope: InstallScope.project,
     installPath: '{home}/.amp/skills',
     filePrefix: 'somnio',
+    npmPackage: 'amp',
     installUrl: 'https://ampcode.com',
   );
 
@@ -236,6 +237,9 @@ class AgentRegistry {
     installPath: '{home}/.aider/skills',
     filePrefix: 'somnio',
     installUrl: 'https://aider.chat',
+    installInstructions:
+        '  pip install aider-chat\n'
+        '  Or visit: https://aider.chat/docs/install.html',
   );
 
   static const _cline = AgentConfig(
@@ -250,6 +254,7 @@ class AgentRegistry {
     installScope: InstallScope.project,
     installPath: '{home}/.cline/skills',
     filePrefix: 'somnio',
+    npmPackage: 'cline',
     installUrl: 'https://cline.bot',
   );
 
@@ -266,6 +271,9 @@ class AgentRegistry {
     installPath: '{home}/.opencode/skills',
     filePrefix: 'somnio',
     installUrl: 'https://opencode.ai',
+    installInstructions:
+        '  go install github.com/opencode-ai/opencode@latest\n'
+        '  Or visit: https://opencode.ai',
   );
 
   static const _codebuddy = AgentConfig(
@@ -282,6 +290,9 @@ class AgentRegistry {
     installPath: '{home}/.codebuddy/skills',
     filePrefix: 'somnio',
     installUrl: 'https://codebuddy.dev',
+    installInstructions:
+        '  Download from https://codebuddy.dev\n'
+        '  Or: npm install -g @anthropic-ai/codebuddy (if available)',
   );
 
   static const _qwen = AgentConfig(
@@ -304,6 +315,7 @@ class AgentRegistry {
     installScope: InstallScope.project,
     installPath: '{home}/.qwen/skills',
     filePrefix: 'somnio',
+    npmPackage: 'qwen-code',
     installUrl: 'https://qwen.ai',
   );
 
