@@ -10,16 +10,23 @@ dart pub global activate --source git https://github.com/somnio-software/technol
 
 ## Quick Start
 
-First-time setup — the wizard detects your CLIs, helps install missing ones, and lets you choose technologies:
+First-time setup — the wizard detects your CLIs, helps install missing ones, and installs skills:
 
 ```bash
 somnio setup
 ```
 
-Or if you already have your CLIs installed:
+Already have your CLIs installed? Skip the CLI detection/installation step:
 
 ```bash
-somnio init
+somnio setup --skip-cli
+```
+
+Suppress the banner on any command with `--quiet` / `-q`:
+
+```bash
+somnio -q status
+somnio -q run fh
 ```
 
 ## Supported Agents
@@ -60,38 +67,26 @@ These agents receive skill files but cannot execute audits:
 
 ### `somnio setup`
 
-Full guided setup wizard designed for first-time users. Walks through everything needed to get started with zero prior knowledge.
+Full guided setup wizard. The primary entry point for new and existing users.
 
 ```bash
-somnio setup          # Interactive wizard
-somnio setup --force  # Skip all prompts, install everything
+somnio setup              # Full wizard (detect CLIs + install missing + install skills)
+somnio setup --skip-cli   # Skip CLI detection/install, just detect agents and install skills
+somnio setup --force      # Skip all prompts, install everything
 ```
 
 | Flag | Short | Description |
 |------|-------|-------------|
-| `--force` | `-f` | Skip all prompts, install all CLIs and technologies |
+| `--force` | `-f` | Skip all confirmation prompts, auto-install missing CLIs |
+| `--skip-cli` | | Skip CLI detection and installation (go straight to skill install) |
 
 **What it does:**
 
-1. **Detects installed CLIs** — checks for all registered CLI agents
-2. **Installs missing CLIs** — for npm-based CLIs (Claude Code, Gemini), offers auto-install via `npm install -g`. For others, shows download instructions
-3. **Technology selection** — choose which skill sets to install: `All`, `Flutter`, `NestJS`, or `Security`
-4. **Installs skills** — detects agent targets and installs selected skills to all available agents automatically
+1. **Step 1/3: Detect CLIs** — checks PATH for all registered CLI agent binaries *(skipped with `--skip-cli`)*
+2. **Step 2/3: Install missing CLIs** — offers `npm install -g` for npm-based CLIs, shows manual instructions for others *(skipped with `--skip-cli`)*
+3. **Step 3/3: Install skills** — detects all available agents and installs all skill bundles to each
 
-### `somnio init`
-
-Auto-detect agents, select targets, choose technologies, and install skills.
-
-```bash
-somnio init          # Interactive agent and technology selection
-somnio init --force  # Overwrite existing skills, install all technologies
-```
-
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--force` | `-f` | Overwrite existing skills without prompting |
-
-Unlike `setup`, `init` does not help install CLIs — it assumes they are already available. Use `setup` for first-time onboarding.
+> **Note:** `somnio init` still works as a hidden alias for `somnio setup --skip-cli`.
 
 ### `somnio install`
 
@@ -165,21 +160,27 @@ Show CLI availability and installed skills.
 
 ```bash
 somnio status
+somnio -q status    # Without the banner
 ```
 
 Displays two tables:
 - **CLI Availability** — checks all registered CLI agents for binary availability on PATH
-- **Installed Skills** — per-agent breakdown of installed skills, rules, and their locations
+- **Installed Skills** — registry-driven scan of all 17 agents showing installed skills, rules, and locations
 
 ### `somnio uninstall`
 
 Remove all Somnio skills, commands, and workflows from all agents.
 
 ```bash
-somnio uninstall
+somnio uninstall          # Prompts for confirmation before deleting
+somnio uninstall --force  # Skip confirmation prompt
 ```
 
-Scans all registered agents and removes files matching the somnio prefix.
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip confirmation prompt |
+
+Shows what will be removed and asks for confirmation before proceeding. Scans all registered agents and removes files matching the somnio prefix.
 
 ### `somnio run`
 
@@ -391,7 +392,7 @@ dart pub global activate --source path .
 cli/lib/src/
 ├── agents/                  # Agent registry (NEW)
 │   ├── agent_config.dart    # AgentConfig data model
-│   ├── agent_registry.dart  # All 16 agent definitions
+│   ├── agent_registry.dart  # All 17 agent definitions
 │   └── token_parsers.dart   # Claude/Gemini token parsing
 ├── commands/                # CLI commands
 │   ├── install_command.dart # somnio install --agent <id>
@@ -401,10 +402,7 @@ cli/lib/src/
 │   └── ...
 ├── content/                 # Skill bundles and content loading
 ├── installers/              # File writers
-│   ├── agent_installer.dart # Generic installer (uses AgentConfig)
-│   ├── claude_installer.dart    # Legacy (backward compat)
-│   ├── cursor_installer.dart    # Legacy (backward compat)
-│   └── antigravity_installer.dart # Legacy (backward compat)
+│   └── agent_installer.dart # Generic installer (uses AgentConfig)
 ├── runner/                  # Audit execution engine
 │   ├── agent_resolver.dart  # Registry-driven agent detection
 │   ├── step_executor.dart   # Spawns AI CLIs via buildArgs()
@@ -414,4 +412,6 @@ cli/lib/src/
 │   ├── markdown_transformer.dart  # Generic format (NEW)
 │   └── ...
 └── utils/                   # Utilities
+    ├── command_helpers.dart  # Shared helpers (DRY across commands)
+    └── ...
 ```

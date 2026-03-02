@@ -15,7 +15,7 @@ import '../runner/preflight.dart';
 import '../runner/project_validator.dart';
 import '../runner/run_config.dart';
 import '../runner/step_executor.dart';
-import '../utils/package_resolver.dart';
+import '../utils/command_helpers.dart';
 
 /// Executes a health audit or security audit step-by-step using an AI CLI.
 ///
@@ -157,7 +157,7 @@ class RunCommand extends Command<int> {
         return ExitCode.usage.code;
       }
       _logger.info(
-        '${lightGreen.wrap('OK')} ${bundle.displayName.split(' ').first} '
+        '${lightGreen.wrap('✓')} ${bundle.displayName.split(' ').first} '
         'project detected.',
       );
     }
@@ -185,12 +185,10 @@ class RunCommand extends Command<int> {
       final resolved = await agentResolver.resolve(preferred: preferredAgent);
       if (resolved == null) {
         _logger.err(
-          'No AI CLI found. Please install '
-          '${preferredAgent.binary ?? preferredAgent.id}.\n'
-          '  Claude Code:  https://claude.ai/download\n'
-          '  Cursor CLI:   https://docs.cursor.com/cli\n'
-          '  Gemini CLI:   npm install -g @google/gemini-cli',
+          '${preferredAgent.displayName} CLI '
+          '(${preferredAgent.binary ?? preferredAgent.id}) not found.',
         );
+        CommandHelpers.printNoAgentsError(_logger);
         return ExitCode.software.code;
       }
       agent = resolved;
@@ -198,12 +196,7 @@ class RunCommand extends Command<int> {
       // No flag: detect all available, prompt if more than one
       final available = await agentResolver.detectAll();
       if (available.isEmpty) {
-        _logger.err(
-          'No AI CLI found. Please install one of the supported CLIs.\n'
-          '  Claude Code:  https://claude.ai/download\n'
-          '  Cursor CLI:   https://docs.cursor.com/cli\n'
-          '  Gemini CLI:   npm install -g @google/gemini-cli',
-        );
+        CommandHelpers.printNoAgentsError(_logger);
         return ExitCode.software.code;
       }
       if (available.length == 1) {
@@ -231,7 +224,7 @@ class RunCommand extends Command<int> {
       }
     }
     _logger.info(
-      '${lightGreen.wrap('OK')} Using ${agent.displayName} CLI.',
+      '${lightGreen.wrap('✓')} Using ${agent.displayName} CLI.',
     );
 
     // 4b. Resolve model
@@ -268,14 +261,13 @@ class RunCommand extends Command<int> {
       }
     }
     if (model != null) {
-      _logger.info('${lightGreen.wrap('OK')} Model: $model');
+      _logger.info('${lightGreen.wrap('✓')} Model: $model');
     }
 
     // 5. Resolve repo root
-    final resolver = PackageResolver();
-    final String repoRoot;
+    final ResolvedContent resolvedContent;
     try {
-      repoRoot = await resolver.resolveRepoRoot();
+      resolvedContent = await CommandHelpers.resolveContent();
     } catch (e) {
       _logger.err('$e');
       return ExitCode.software.code;
@@ -287,7 +279,7 @@ class RunCommand extends Command<int> {
       agent: agent,
       model: model,
       cwd: cwd,
-      repoRoot: repoRoot,
+      repoRoot: resolvedContent.repoRoot,
       skipValidation: skipValidation,
       noPreflight: noPreflight,
       agentResolver: agentResolver,
@@ -324,7 +316,7 @@ class RunCommand extends Command<int> {
               agent: agent,
               model: model,
               cwd: cwd,
-              repoRoot: repoRoot,
+              repoRoot: resolvedContent.repoRoot,
               skipValidation: true,
               noPreflight: noPreflight,
               agentResolver: agentResolver,
@@ -361,7 +353,7 @@ class RunCommand extends Command<int> {
         return _ExecuteBundleResult(aborted: true);
       }
       _logger.info(
-        '${lightGreen.wrap('OK')} ${bundle.displayName.split(' ').first} '
+        '${lightGreen.wrap('✓')} ${bundle.displayName.split(' ').first} '
         'project detected.',
       );
     }
@@ -417,7 +409,7 @@ class RunCommand extends Command<int> {
         return _ExecuteBundleResult(aborted: true);
       }
     }
-    _logger.info('${lightGreen.wrap('OK')} Skills verified at: $ruleBase');
+    _logger.info('${lightGreen.wrap('✓')} Skills verified at: $ruleBase');
 
     final artifactsDir = _artifactsDirFromBundle(cwd, bundle);
     final reportPath = p.join(cwd, 'reports', reportFile);
@@ -676,7 +668,7 @@ class RunCommand extends Command<int> {
           .toList();
       if (files.isNotEmpty) {
         _logger.info(
-          '${lightGreen.wrap('OK')} Cleaned ${files.length} '
+          '${lightGreen.wrap('✓')} Cleaned ${files.length} '
           'previous artifact(s).',
         );
         for (final file in files) {
@@ -689,7 +681,7 @@ class RunCommand extends Command<int> {
     if (reportFile.existsSync()) {
       reportFile.deleteSync();
       _logger.info(
-        '${lightGreen.wrap('OK')} Cleaned previous report.',
+        '${lightGreen.wrap('✓')} Cleaned previous report.',
       );
     }
   }

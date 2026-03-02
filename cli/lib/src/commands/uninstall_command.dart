@@ -10,7 +10,13 @@ import '../utils/platform_utils.dart';
 
 /// Removes all Somnio-installed skills, commands, and workflows.
 class UninstallCommand extends Command<int> {
-  UninstallCommand({required Logger logger}) : _logger = logger;
+  UninstallCommand({required Logger logger}) : _logger = logger {
+    argParser.addFlag(
+      'force',
+      abbr: 'f',
+      help: 'Skip confirmation prompt.',
+    );
+  }
 
   final Logger _logger;
 
@@ -23,7 +29,26 @@ class UninstallCommand extends Command<int> {
 
   @override
   Future<int> run() async {
+    final force = argResults!['force'] as bool;
+
     _logger.info('');
+
+    if (!force) {
+      _logger.warn(
+        'This will remove all Somnio skills from all agents.',
+      );
+      _logger.info('');
+      final confirmed = _logger.confirm(
+        'Proceed with uninstall?',
+        defaultValue: false,
+      );
+      if (!confirmed) {
+        _logger.info('');
+        _logger.info('Uninstall cancelled.');
+        return ExitCode.success.code;
+      }
+      _logger.info('');
+    }
 
     var removedAnything = false;
 

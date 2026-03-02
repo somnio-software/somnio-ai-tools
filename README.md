@@ -30,15 +30,15 @@ For first-time users, run the guided setup wizard. It checks which AI CLIs you h
 somnio setup
 ```
 
-Already have your CLIs installed? Use `init` to detect agents and install skills directly:
+Already have your CLIs installed? Skip the CLI installation step:
 
 ```bash
-somnio init
+somnio setup --skip-cli
 ```
 
 ### 🤖 Supported Agents
 
-Somnio supports **11 CLI agents** for running audits and **5 IDE-only agents** for skill installation — all driven by a single agent registry.
+Somnio supports **12 CLI agents** for running audits and **5 IDE-only agents** for skill installation — all driven by a single agent registry.
 
 **CLI agents** (for `somnio run`): Claude Code, Cursor, Gemini CLI, Codex, Augment Code, Amp, Aider, Cline, OpenCode, CodeBuddy, Qwen
 
@@ -58,17 +58,16 @@ somnio install --all               # Install to all detected agents
 For detailed CLI usage, commands, and advanced options, see the [CLI README](cli/README.md).
 
 **Available CLI Commands:**
-- `somnio setup` - Full guided setup: install CLIs, select technologies, install skills
-- `somnio init` - Auto-detect agents, select technologies, and install skills
-- `somnio install` - Install skills to any supported agent
-- `somnio run <code>` - Run a health or security audit step-by-step from the project terminal
-- `somnio status` - Show CLI availability and installed skills status
-- `somnio update` - Update CLI and reinstall skills
-- `somnio uninstall` - Remove all installed skills
-- `somnio add` - Add new technology skill bundles
-- `somnio quote` (or `somnio q`) - Display a random Somnio team quote
-
-Legacy aliases (`somnio claude`, `somnio cursor`, `somnio antigravity`) still work and map to `somnio install --agent <id>`.
+- `somnio setup` — Full guided setup: install CLIs, detect agents, install skills
+- `somnio setup --skip-cli` — Skip CLI installation, just detect agents and install skills
+- `somnio install --agent <id>` — Install skills to a specific agent
+- `somnio install --all` — Install to all detected agents
+- `somnio run <code>` — Run a health or security audit step-by-step
+- `somnio status` — Show CLI availability and installed skills
+- `somnio update` — Update CLI and reinstall skills
+- `somnio uninstall` — Remove all installed skills (with confirmation)
+- `somnio add <tech>` — Add new technology skill bundles
+- `somnio -q <command>` — Suppress the banner on any command
 
 ### 🏃 Running Audits from the Terminal
 
@@ -266,7 +265,7 @@ All YAML rule files follow strict formatting standards:
 - [x] Flutter Best Practices Check
 - [x] NestJS Project Health Audit (Backend)
 - [x] Framework-Agnostic Security Audit
-- [x] Multi-agent registry (16 agents supported)
+- [x] Multi-agent registry (17 agents supported)
 - [ ] NestJS Project Health Audit (Cloud Functions)
 - [ ] Tools for React/Next.js project analysis
 - [ ] Deployment automation

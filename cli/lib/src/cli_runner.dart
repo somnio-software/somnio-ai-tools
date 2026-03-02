@@ -29,6 +29,12 @@ class SomnioCliRunner extends CommandRunner<int> {
       negatable: false,
       help: 'Print the current version.',
     );
+    argParser.addFlag(
+      'quiet',
+      abbr: 'q',
+      negatable: false,
+      help: 'Suppress the banner.',
+    );
 
     addCommand(AddCommand(logger: _logger));
     addCommand(InitCommand(logger: _logger));
@@ -74,7 +80,9 @@ class SomnioCliRunner extends CommandRunner<int> {
       _logger.info('somnio v$version');
       return ExitCode.success.code;
     }
-    _printBanner();
+    if (!(topLevelResults['quiet'] as bool)) {
+      _printBanner();
+    }
     return super.runCommand(topLevelResults);
   }
 

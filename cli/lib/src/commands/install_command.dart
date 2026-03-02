@@ -6,7 +6,7 @@ import '../agents/agent_registry.dart';
 import '../content/content_loader.dart';
 import '../content/skill_registry.dart';
 import '../installers/agent_installer.dart';
-import '../utils/package_resolver.dart';
+import '../utils/command_helpers.dart';
 import '../utils/platform_utils.dart';
 
 /// Installs skills to a specific agent or all detected agents.
@@ -60,20 +60,16 @@ class InstallCommand extends Command<int> {
     }
 
     // Resolve repo root
-    final resolver = PackageResolver();
-    final String repoRoot;
+    final ResolvedContent content;
     try {
-      repoRoot = await resolver.resolveRepoRoot();
+      content = await CommandHelpers.resolveContent();
     } catch (e) {
       _logger.err('$e');
       return ExitCode.software.code;
     }
 
-    final loader = ContentLoader(repoRoot);
-    final bundles = SkillRegistry.skills;
-
     if (installAll) {
-      return _installToAll(loader, bundles, force);
+      return _installToAll(content.loader, content.bundles, force);
     }
 
     final agent = AgentRegistry.findById(agentId!);
@@ -82,7 +78,7 @@ class InstallCommand extends Command<int> {
       return ExitCode.usage.code;
     }
 
-    return _installToAgent(agent, loader, bundles, force);
+    return _installToAgent(agent, content.loader, content.bundles, force);
   }
 
   Future<int> _installToAgent(

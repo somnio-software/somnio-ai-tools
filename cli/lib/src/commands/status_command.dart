@@ -4,6 +4,7 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_config.dart';
 import '../agents/agent_registry.dart';
 import '../content/skill_registry.dart';
 import '../utils/platform_utils.dart';
@@ -13,6 +14,9 @@ import '../utils/platform_utils.dart';
 /// All technology detection is driven by [SkillRegistry] — adding a new
 /// tech bundle there automatically makes it visible here without any
 /// code changes.
+///
+/// Agent scanning is driven by [AgentRegistry] — adding a new agent there
+/// automatically makes it visible in the installed skills table.
 class StatusCommand extends Command<int> {
   StatusCommand({required Logger logger}) : _logger = logger {
     _buildRegistryMaps();
@@ -70,6 +74,14 @@ class StatusCommand extends Command<int> {
     final wfPrefix = stripped.split('_').first;
     for (final entry in _dirToTech.entries) {
       if (entry.key.startsWith(wfPrefix)) return entry.value;
+    }
+
+    // Also try stripping 'somnio-' prefix (for skillDir/singleFile formats)
+    final dashStripped = identifier
+        .replaceFirst('somnio-', '')
+        .replaceFirst(RegExp(r'\.md$'), '');
+    if (_nameToTech.containsKey(dashStripped)) {
+      return _nameToTech[dashStripped]!;
     }
 
     // Fallback: title-case the first segment.
@@ -147,11 +159,16 @@ class StatusCommand extends Command<int> {
   // ── Installed skills table ───────────────────────────────────────────
 
   void _printSkillsTable() {
-    final agents = [
-      _collectClaudeData(),
-      _collectCursorData(),
-      _collectAntigravityData(),
-    ];
+    final agents = <_AgentData>[];
+    for (final agent in AgentRegistry.installableAgents) {
+      final data = _collectAgentData(agent);
+      if (data != null) agents.add(data);
+    }
+
+    if (agents.isEmpty) {
+      _logger.info('  No skills installed. Run: somnio setup');
+      return;
+    }
 
     final headers = ['Agent', 'Status', 'Tech', 'Items', 'Rules', 'Location'];
 
@@ -184,7 +201,14 @@ class StatusCommand extends Command<int> {
   List<List<String>> _agentToRows(_AgentData agent) {
     if (agent.techs.isEmpty) {
       return [
-        [agent.name, 'Not found', '-', '-', '-', 'Run: ${agent.installCmd}'],
+        [
+          agent.name,
+          'Not found',
+          '-',
+          '-',
+          '-',
+          'Run: somnio install --agent ${agent.agentId}',
+        ],
       ];
     }
 
@@ -205,122 +229,133 @@ class StatusCommand extends Command<int> {
     return rows;
   }
 
-  // ── Data collectors ──────────────────────────────────────────────────
+  // ── Registry-driven data collector ────────────────────────────────────
 
-  _AgentData _collectClaudeData() {
-    final dir = Directory(PlatformUtils.claudeGlobalSkillsDir);
+  /// Collects installed skill data for any agent, driven by [AgentConfig].
+  ///
+  /// Returns null if the agent's install directory does not exist or has
+  /// no somnio files — meaning the agent is not shown in the table at all.
+  _AgentData? _collectAgentData(AgentConfig agent) {
+    final home = PlatformUtils.homeDirectory;
+    final installDir = agent.resolvedInstallPath(home: home);
+    final dir = Directory(installDir);
+
+    if (!dir.existsSync()) return null;
+
     final techMap = <String, List<int>>{};
+    final prefix = agent.filePrefix;
 
-    if (dir.existsSync()) {
-      for (final entity in dir.listSync()) {
-        if (entity is Directory &&
-            p.basename(entity.path).startsWith('somnio-')) {
-          final skillName = p.basename(entity.path);
-          final tech = _resolveTech(skillName);
-          techMap.putIfAbsent(tech, () => [0, 0]);
-          techMap[tech]![0]++;
-          final rulesDir = Directory(p.join(entity.path, 'rules'));
+    switch (agent.installFormat) {
+      case InstallFormat.skillDir:
+        // Claude-style: each skill is a directory, rules in rules/ subdir
+        for (final entity in dir.listSync()) {
+          if (entity is Directory &&
+              p.basename(entity.path).startsWith(prefix)) {
+            final skillName = p.basename(entity.path);
+            final tech = _resolveTech(skillName);
+            techMap.putIfAbsent(tech, () => [0, 0]);
+            techMap[tech]![0]++;
+            final rulesDir = Directory(p.join(entity.path, 'rules'));
+            if (rulesDir.existsSync()) {
+              techMap[tech]![1] += rulesDir
+                  .listSync()
+                  .whereType<File>()
+                  .where((f) => f.path.endsWith(agent.ruleExtension))
+                  .length;
+            }
+          }
+        }
+
+      case InstallFormat.singleFile:
+        // Cursor-style: single .md command files + separate rules dir
+        for (final f in dir.listSync().whereType<File>()) {
+          if (f.path.endsWith('.md') &&
+              p.basename(f.path).startsWith(prefix)) {
+            final tech = _resolveTech(p.basenameWithoutExtension(f.path));
+            techMap.putIfAbsent(tech, () => [0, 0]);
+            techMap[tech]![0]++;
+          }
+        }
+        // Count rules from executionRulesPath if it exists
+        if (agent.executionRulesPath != null) {
+          final rulesDir = Directory(
+            agent.executionRulesPath!.replaceAll('{home}', home),
+          );
           if (rulesDir.existsSync()) {
-            techMap[tech]![1] += rulesDir
-                .listSync()
+            for (final sub in rulesDir.listSync().whereType<Directory>()) {
+              final tech = _resolveTech(p.basename(sub.path));
+              techMap.putIfAbsent(tech, () => [0, 0]);
+              techMap[tech]![1] += sub
+                  .listSync(recursive: true)
+                  .whereType<File>()
+                  .where((f) =>
+                      f.path.endsWith(agent.ruleExtension) &&
+                      !f.path.contains('/templates/'))
+                  .length;
+            }
+          }
+        }
+
+      case InstallFormat.workflow:
+        // Antigravity-style: workflow files + sibling somnio_rules/ dir
+        for (final f in dir.listSync().whereType<File>()) {
+          if (p.basename(f.path).startsWith(prefix)) {
+            final tech = _resolveTech(p.basename(f.path));
+            techMap.putIfAbsent(tech, () => [0, 0]);
+            techMap[tech]![0]++;
+          }
+        }
+        // Rules are in a sibling somnio_rules/ directory
+        final rulesDir = Directory(
+          p.join(p.dirname(installDir), 'somnio_rules'),
+        );
+        if (rulesDir.existsSync()) {
+          for (final sub in rulesDir.listSync().whereType<Directory>()) {
+            final tech = _resolveTech(p.basename(sub.path));
+            techMap.putIfAbsent(tech, () => [0, 0]);
+            techMap[tech]![1] += sub
+                .listSync(recursive: true)
                 .whereType<File>()
-                .where((f) => f.path.endsWith('.md'))
+                .where((f) =>
+                    f.path.endsWith(agent.ruleExtension) &&
+                    !f.path.contains('/templates/'))
                 .length;
           }
         }
-      }
-    }
 
-    return _AgentData(
-      name: 'Claude Code',
-      location: '~/.claude/skills/',
-      installCmd: 'somnio claude',
-      techs: _buildTechList(techMap, 'skill', 'skills', '.md'),
-    );
-  }
-
-  _AgentData _collectCursorData() {
-    final commandsDir = Directory(PlatformUtils.cursorGlobalCommandsDir);
-    final techCmds = <String, int>{};
-    if (commandsDir.existsSync()) {
-      for (final f in commandsDir.listSync().whereType<File>()) {
-        if (f.path.endsWith('.md') &&
-            p.basename(f.path).startsWith('somnio-')) {
-          final tech = _resolveTech(p.basenameWithoutExtension(f.path));
-          techCmds[tech] = (techCmds[tech] ?? 0) + 1;
+      case InstallFormat.markdown:
+        // Generic: single .md files per skill, no separate rules
+        for (final entity in dir.listSync()) {
+          if (entity is File &&
+              p.basename(entity.path).startsWith(prefix)) {
+            final tech = _resolveTech(p.basenameWithoutExtension(entity.path));
+            techMap.putIfAbsent(tech, () => [0, 0]);
+            techMap[tech]![0]++;
+          } else if (entity is Directory &&
+              p.basename(entity.path).startsWith(prefix)) {
+            final tech = _resolveTech(p.basename(entity.path));
+            techMap.putIfAbsent(tech, () => [0, 0]);
+            techMap[tech]![0]++;
+          }
         }
-      }
     }
 
-    final rulesDir = Directory(PlatformUtils.cursorGlobalRulesDir);
-    final techRules = <String, int>{};
-    if (rulesDir.existsSync()) {
-      for (final sub in rulesDir.listSync().whereType<Directory>()) {
-        final tech = _resolveTech(p.basename(sub.path));
-        final count = sub
-            .listSync(recursive: true)
-            .whereType<File>()
-            .where((f) =>
-                f.path.endsWith('.md') && !f.path.contains('/templates/'))
-            .length;
-        techRules[tech] = (techRules[tech] ?? 0) + count;
-      }
-    }
+    if (techMap.isEmpty) return null;
 
-    final allTechs = {...techCmds.keys, ...techRules.keys};
-    final techMap = <String, List<int>>{};
-    for (final tech in allTechs) {
-      techMap[tech] = [techCmds[tech] ?? 0, techRules[tech] ?? 0];
-    }
+    final label = agent.contentLabel;
+    final pluralLabel = '${label}s';
+    final location = installDir.replaceFirst(home, '~');
 
     return _AgentData(
-      name: 'Cursor',
-      location: '~/.cursor/',
-      installCmd: 'somnio cursor',
-      techs: _buildTechList(techMap, 'command', 'commands', '.md'),
-    );
-  }
-
-  _AgentData _collectAntigravityData() {
-    final baseDir = PlatformUtils.antigravityGlobalDir;
-
-    final wfDir = Directory(p.join(baseDir, 'global_workflows'));
-    final techWf = <String, int>{};
-    if (wfDir.existsSync()) {
-      for (final f in wfDir.listSync().whereType<File>()) {
-        if (p.basename(f.path).startsWith('somnio_')) {
-          final tech = _resolveTech(p.basename(f.path));
-          techWf[tech] = (techWf[tech] ?? 0) + 1;
-        }
-      }
-    }
-
-    final rulesDir = Directory(p.join(baseDir, 'somnio_rules'));
-    final techRules = <String, int>{};
-    if (rulesDir.existsSync()) {
-      for (final sub in rulesDir.listSync().whereType<Directory>()) {
-        final tech = _resolveTech(p.basename(sub.path));
-        final count = sub
-            .listSync(recursive: true)
-            .whereType<File>()
-            .where((f) =>
-                f.path.endsWith('.yaml') && !f.path.contains('/templates/'))
-            .length;
-        techRules[tech] = (techRules[tech] ?? 0) + count;
-      }
-    }
-
-    final allTechs = {...techWf.keys, ...techRules.keys};
-    final techMap = <String, List<int>>{};
-    for (final tech in allTechs) {
-      techMap[tech] = [techWf[tech] ?? 0, techRules[tech] ?? 0];
-    }
-
-    return _AgentData(
-      name: 'Gemini',
-      location: '~/.gemini/antigravity/',
-      installCmd: 'somnio antigravity',
-      techs: _buildTechList(techMap, 'workflow', 'workflows', '.yaml'),
+      name: agent.displayName,
+      agentId: agent.id,
+      location: '$location/',
+      techs: _buildTechList(
+        techMap,
+        label,
+        pluralLabel,
+        agent.ruleExtension,
+      ),
     );
   }
 
@@ -407,14 +442,14 @@ class _CliCheck {
 class _AgentData {
   const _AgentData({
     required this.name,
+    required this.agentId,
     required this.location,
-    required this.installCmd,
     required this.techs,
   });
 
   final String name;
+  final String agentId;
   final String location;
-  final String installCmd;
   final List<_TechData> techs;
 }
 

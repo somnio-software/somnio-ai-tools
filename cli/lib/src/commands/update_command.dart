@@ -4,10 +4,8 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 import '../agents/agent_registry.dart';
-import '../content/content_loader.dart';
-import '../content/skill_registry.dart';
 import '../installers/agent_installer.dart';
-import '../utils/package_resolver.dart';
+import '../utils/command_helpers.dart';
 
 /// Updates the CLI and reinstalls all skills.
 class UpdateCommand extends Command<int> {
@@ -56,17 +54,13 @@ class UpdateCommand extends Command<int> {
     }
 
     // Step 2: Resolve repo root
-    final resolver = PackageResolver();
-    final String repoRoot;
+    final ResolvedContent content;
     try {
-      repoRoot = await resolver.resolveRepoRoot();
+      content = await CommandHelpers.resolveContent();
     } catch (e) {
       _logger.err('$e');
       return ExitCode.software.code;
     }
-
-    final loader = ContentLoader(repoRoot);
-    final bundles = SkillRegistry.skills;
 
     _logger.info('');
 
@@ -76,20 +70,18 @@ class UpdateCommand extends Command<int> {
     for (final agent in AgentRegistry.installableAgents) {
       final installer = AgentInstaller(
         logger: _logger,
-        loader: loader,
+        loader: content.loader,
         agentConfig: agent,
       );
       if (installer.isInstalled()) {
         final progress = _logger.progress(agent.displayName);
         final result = await installer.install(
-          bundles: bundles,
+          bundles: content.bundles,
           force: true,
         );
-        final label = agent.contentLabel;
-        final plural = result.skillCount == 1 ? label : '${label}s';
         progress.complete(
           '${agent.displayName}  '
-          '${result.skillCount} $plural updated',
+          '${CommandHelpers.installSummary(result, agent)} updated',
         );
         updated++;
       }
