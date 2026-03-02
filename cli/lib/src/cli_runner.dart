@@ -7,6 +7,7 @@ import 'commands/antigravity_command.dart';
 import 'commands/claude_command.dart';
 import 'commands/cursor_command.dart';
 import 'commands/init_command.dart';
+import 'commands/install_command.dart';
 import 'commands/quote_command.dart';
 import 'commands/run_command.dart';
 import 'commands/setup_command.dart';
@@ -34,6 +35,7 @@ class SomnioCliRunner extends CommandRunner<int> {
 
     addCommand(AddCommand(logger: _logger));
     addCommand(InitCommand(logger: _logger));
+    addCommand(InstallCommand(logger: _logger));
     addCommand(UpdateCommand(logger: _logger));
     addCommand(ClaudeCommand(logger: _logger));
     addCommand(CursorCommand(logger: _logger));

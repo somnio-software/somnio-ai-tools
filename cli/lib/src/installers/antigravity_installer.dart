@@ -12,6 +12,9 @@ import 'installer.dart';
 ///
 /// Antigravity uses `~/.gemini/antigravity/global_workflows/` for workflow
 /// files and `~/.gemini/antigravity/somnio_rules/` for supporting rule files.
+///
+/// Prefer using [AgentInstaller] with the Gemini [AgentConfig] instead.
+/// This class is kept for backward compatibility.
 class AntigravityInstaller extends Installer {
   AntigravityInstaller({required super.logger, required super.loader});
 
@@ -73,7 +76,7 @@ class AntigravityInstaller extends Installer {
       );
 
       try {
-        final output = _transformer.transform(bundle, loader);
+        final output = _transformer.transformBundle(bundle, loader);
 
         // Write workflow file
         _writeFile(

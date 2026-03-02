@@ -4,6 +4,8 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_config.dart';
+import '../agents/agent_registry.dart';
 import '../utils/platform_utils.dart';
 
 /// Removes all Somnio-installed skills, commands, and workflows.
@@ -36,6 +38,13 @@ class UninstallCommand extends Command<int> {
     // Antigravity: ~/.gemini/antigravity/global_workflows/somnio_* + somnio_rules/
     final antigravityRemoved = _removeAntigravity();
     removedAnything |= antigravityRemoved;
+
+    // Remove files for any other registered agents
+    for (final agent in AgentRegistry.installableAgents) {
+      if (['claude', 'cursor', 'gemini'].contains(agent.id)) continue;
+      final removed = _removeGenericAgent(agent);
+      removedAnything |= removed;
+    }
 
     _logger.info('');
     if (removedAnything) {
@@ -117,6 +126,32 @@ class UninstallCommand extends Command<int> {
       removed = true;
     }
 
+    return removed;
+  }
+
+  bool _removeGenericAgent(AgentConfig agent) {
+    final home = PlatformUtils.homeDirectory;
+    final installDir = agent.installScope == InstallScope.global
+        ? agent.resolvedInstallPath(home: home)
+        : agent.installPath;
+    final dir = Directory(installDir);
+    if (!dir.existsSync()) return false;
+
+    final prefix = agent.filePrefix;
+    var removed = false;
+    for (final entity in dir.listSync()) {
+      if (p.basename(entity.path).startsWith(prefix)) {
+        if (entity is File) {
+          entity.deleteSync();
+        } else if (entity is Directory) {
+          entity.deleteSync(recursive: true);
+        }
+        _logger.info(
+          '  Removed ${agent.displayName}: ${p.basename(entity.path)}',
+        );
+        removed = true;
+      }
+    }
     return removed;
   }
 }

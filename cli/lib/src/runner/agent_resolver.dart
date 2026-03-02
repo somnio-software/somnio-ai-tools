@@ -2,32 +2,31 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_config.dart';
+import '../agents/agent_registry.dart';
 import '../utils/platform_utils.dart';
-import 'run_config.dart';
 
 /// Resolves the AI CLI agent and verifies skill installation paths.
 class AgentResolver {
-  /// Auto-detects available AI CLI, preferring Claude > Cursor > Gemini.
+  /// Auto-detects available AI CLI, preferring the registry order
+  /// (Claude > Cursor > Gemini > ...).
   ///
   /// If [preferred] is provided, only checks for that specific agent.
-  /// Returns the resolved [RunAgent], or `null` if none found.
-  Future<RunAgent?> resolve({RunAgent? preferred}) async {
+  /// Returns the resolved [AgentConfig], or `null` if none found.
+  Future<AgentConfig?> resolve({AgentConfig? preferred}) async {
     if (preferred != null) {
-      final binary = _binaryName(preferred);
-      final path = await PlatformUtils.whichBinary(binary);
+      if (preferred.binary == null) return null;
+      final path = await PlatformUtils.whichBinary(preferred.binary!);
       if (path != null) return preferred;
       return null;
     }
 
-    // Auto-detect: try claude first, then cursor, then gemini
-    if (await PlatformUtils.whichBinary('claude') != null) {
-      return RunAgent.claude;
-    }
-    if (await PlatformUtils.whichBinary('agent') != null) {
-      return RunAgent.cursor;
-    }
-    if (await PlatformUtils.whichBinary('gemini') != null) {
-      return RunAgent.gemini;
+    // Auto-detect: try each executable agent in registry order
+    for (final agent in AgentRegistry.executableAgents) {
+      if (agent.binary == null) continue;
+      if (await PlatformUtils.whichBinary(agent.binary!) != null) {
+        return agent;
+      }
     }
     return null;
   }
@@ -37,66 +36,59 @@ class AgentResolver {
   /// - Claude: `~/.claude/skills/{bundleName}/rules/`
   /// - Cursor: `~/.cursor/somnio_rules/{planSubDir}/cursor_rules/`
   /// - Gemini: `~/.gemini/antigravity/somnio_rules/{planSubDir}/cursor_rules/`
-  String ruleBasePath(RunAgent agent, String bundleName, String planSubDir) {
-    switch (agent) {
-      case RunAgent.claude:
-        return p.join(
-          PlatformUtils.claudeGlobalSkillsDir,
-          bundleName,
-          'rules',
+  /// - Others: derived from [AgentConfig.resolvedExecutionRulesPath]
+  String ruleBasePath(
+    AgentConfig agent,
+    String bundleName,
+    String planSubDir,
+  ) {
+    final home = PlatformUtils.homeDirectory;
+
+    // Agent-specific paths for the original three agents
+    switch (agent.id) {
+      case 'claude':
+        return p.join(home, '.claude', 'skills', bundleName, 'rules');
+      case 'cursor':
+        return p.join(home, '.cursor', 'somnio_rules', planSubDir,
+            'cursor_rules');
+      case 'gemini':
+        return p.join(home, '.gemini', 'antigravity', 'somnio_rules',
+            planSubDir, 'cursor_rules');
+      default:
+        // New agents: derive from the execution rules path
+        final basePath = agent.resolvedExecutionRulesPath(
+          home: home,
+          name: bundleName,
         );
-      case RunAgent.cursor:
-        return p.join(
-          PlatformUtils.cursorGlobalRulesDir,
-          planSubDir,
-          'cursor_rules',
-        );
-      case RunAgent.gemini:
-        return p.join(
-          PlatformUtils.antigravityGlobalDir,
-          'somnio_rules',
-          planSubDir,
-          'cursor_rules',
-        );
+        return basePath;
     }
   }
 
   /// Returns the template file path for the given agent and bundle.
-  ///
-  /// - Claude: `~/.claude/skills/{bundleName}/templates/{templateFile}`
-  /// - Cursor: `~/.cursor/somnio_rules/{planSubDir}/cursor_rules/templates/{templateFile}`
-  /// - Gemini: `~/.gemini/antigravity/somnio_rules/{planSubDir}/cursor_rules/templates/{templateFile}`
   String templatePath(
-    RunAgent agent,
+    AgentConfig agent,
     String bundleName,
     String planSubDir,
     String templateFile,
   ) {
-    switch (agent) {
-      case RunAgent.claude:
-        return p.join(
-          PlatformUtils.claudeGlobalSkillsDir,
-          bundleName,
-          'templates',
-          templateFile,
+    final home = PlatformUtils.homeDirectory;
+
+    switch (agent.id) {
+      case 'claude':
+        return p.join(home, '.claude', 'skills', bundleName, 'templates',
+            templateFile);
+      case 'cursor':
+        return p.join(home, '.cursor', 'somnio_rules', planSubDir,
+            'cursor_rules', 'templates', templateFile);
+      case 'gemini':
+        return p.join(home, '.gemini', 'antigravity', 'somnio_rules',
+            planSubDir, 'cursor_rules', 'templates', templateFile);
+      default:
+        final basePath = agent.resolvedExecutionRulesPath(
+          home: home,
+          name: bundleName,
         );
-      case RunAgent.cursor:
-        return p.join(
-          PlatformUtils.cursorGlobalRulesDir,
-          planSubDir,
-          'cursor_rules',
-          'templates',
-          templateFile,
-        );
-      case RunAgent.gemini:
-        return p.join(
-          PlatformUtils.antigravityGlobalDir,
-          'somnio_rules',
-          planSubDir,
-          'cursor_rules',
-          'templates',
-          templateFile,
-        );
+        return p.join(basePath, 'templates', templateFile);
     }
   }
 
@@ -104,32 +96,23 @@ class AgentResolver {
   ///
   /// Returns `null` if OK, or an error message describing the issue.
   String? verifyInstallation(
-    RunAgent agent,
+    AgentConfig agent,
     String ruleBasePath,
     List<String> ruleNames,
   ) {
     final dir = Directory(ruleBasePath);
     if (!dir.existsSync()) {
-      final String agentName;
-      final String installCmd;
-      switch (agent) {
-        case RunAgent.claude:
-          agentName = 'Claude';
-          installCmd = 'somnio claude';
-        case RunAgent.cursor:
-          agentName = 'Cursor CLI';
-          installCmd = 'somnio cursor';
-        case RunAgent.gemini:
-          agentName = 'Antigravity';
-          installCmd = 'somnio antigravity';
-      }
+      final installCmd = 'somnio install --agent ${agent.id}';
       return 'Skills not found at: $ruleBasePath\n'
-          'Run "$installCmd" first to install skills for $agentName.';
+          'Run "$installCmd" first to install skills for '
+          '${agent.displayName}.';
     }
 
     // Check that the first rule file exists
-    final extension = _ruleExtension(agent);
-    final firstRule = File(p.join(ruleBasePath, '${ruleNames.first}$extension'));
+    final ext = agent.ruleExtension;
+    final firstRule = File(
+      p.join(ruleBasePath, '${ruleNames.first}$ext'),
+    );
     if (!firstRule.existsSync()) {
       return 'Rule file not found: ${firstRule.path}\n'
           'Skills may be outdated. Run "somnio update" to reinstall.';
@@ -139,56 +122,20 @@ class AgentResolver {
   }
 
   /// Returns the file extension for rule files per agent.
-  ///
-  /// Claude and Cursor rules are `.md` (transformed from YAML).
-  /// Gemini rules are `.yaml` (copied as-is).
-  String ruleExtension(RunAgent agent) => _ruleExtension(agent);
-
-  String _ruleExtension(RunAgent agent) {
-    switch (agent) {
-      case RunAgent.claude:
-      case RunAgent.cursor:
-        return '.md';
-      case RunAgent.gemini:
-        return '.yaml';
-    }
-  }
+  String ruleExtension(AgentConfig agent) => agent.ruleExtension;
 
   /// Returns all AI CLIs found in PATH.
-  Future<List<RunAgent>> detectAll() async {
-    final available = <RunAgent>[];
-    if (await PlatformUtils.whichBinary('claude') != null) {
-      available.add(RunAgent.claude);
-    }
-    if (await PlatformUtils.whichBinary('agent') != null) {
-      available.add(RunAgent.cursor);
-    }
-    if (await PlatformUtils.whichBinary('gemini') != null) {
-      available.add(RunAgent.gemini);
+  Future<List<AgentConfig>> detectAll() async {
+    final available = <AgentConfig>[];
+    for (final agent in AgentRegistry.executableAgents) {
+      if (agent.binary == null) continue;
+      if (await PlatformUtils.whichBinary(agent.binary!) != null) {
+        available.add(agent);
+      }
     }
     return available;
   }
 
   /// Returns a human-readable display name for the given agent.
-  String agentDisplayName(RunAgent agent) {
-    switch (agent) {
-      case RunAgent.claude:
-        return 'Claude';
-      case RunAgent.cursor:
-        return 'Cursor';
-      case RunAgent.gemini:
-        return 'Gemini';
-    }
-  }
-
-  String _binaryName(RunAgent agent) {
-    switch (agent) {
-      case RunAgent.claude:
-        return 'claude';
-      case RunAgent.cursor:
-        return 'agent';
-      case RunAgent.gemini:
-        return 'gemini';
-    }
-  }
+  String agentDisplayName(AgentConfig agent) => agent.displayName;
 }

@@ -1,11 +1,10 @@
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
+import '../agents/agent_registry.dart';
 import '../content/content_loader.dart';
 import '../content/skill_registry.dart';
-import '../installers/antigravity_installer.dart';
-import '../installers/claude_installer.dart';
-import '../installers/cursor_installer.dart';
+import '../installers/agent_installer.dart';
 import '../utils/agent_detector.dart';
 import '../utils/package_resolver.dart';
 
@@ -144,44 +143,28 @@ class InitCommand extends Command<int> {
     var totalSkills = 0;
     var totalRules = 0;
 
-    for (final agent in selectedAgents) {
-      _logger.info('  ${AgentDetector.displayName(agent)}:');
+    for (final agentType in selectedAgents) {
+      final agentId = switch (agentType) {
+        AgentType.claude => 'claude',
+        AgentType.cursor => 'cursor',
+        AgentType.antigravity => 'gemini',
+      };
+      final agentConfig = AgentRegistry.findById(agentId);
+      if (agentConfig == null) continue;
 
-      switch (agent) {
-        case AgentType.claude:
-          final installer = ClaudeInstaller(
-            logger: _logger,
-            loader: loader,
-          );
-          final result = await installer.install(
-            bundles: bundles,
-            force: force,
-          );
-          totalSkills += result.skillCount;
+      _logger.info('  ${AgentDetector.displayName(agentType)}:');
 
-        case AgentType.cursor:
-          final installer = CursorInstaller(
-            logger: _logger,
-            loader: loader,
-          );
-          final result = await installer.install(
-            bundles: bundles,
-            force: force,
-          );
-          totalSkills += result.skillCount;
-
-        case AgentType.antigravity:
-          final installer = AntigravityInstaller(
-            logger: _logger,
-            loader: loader,
-          );
-          final result = await installer.install(
-            bundles: bundles,
-            force: force,
-          );
-          totalSkills += result.skillCount;
-          totalRules += result.ruleCount;
-      }
+      final installer = AgentInstaller(
+        logger: _logger,
+        loader: loader,
+        agentConfig: agentConfig,
+      );
+      final result = await installer.install(
+        bundles: bundles,
+        force: force,
+      );
+      totalSkills += result.skillCount;
+      totalRules += result.ruleCount;
 
       _logger.info('');
     }

@@ -1,5 +1,7 @@
+import '../agents/agent_config.dart';
 import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
+import 'transformer.dart';
 
 /// Result of transforming content for Cursor.
 class CursorOutput {
@@ -14,9 +16,9 @@ class CursorOutput {
 /// Cursor commands are plain `.md` files stored in `.cursor/commands/`.
 /// Each skill becomes a single command file that includes the plan
 /// content and all rule prompts inline, so the command is self-contained.
-class CursorTransformer {
+class CursorTransformer implements Transformer {
   /// Transforms a skill bundle into a Cursor command file.
-  CursorOutput transform(SkillBundle bundle, ContentLoader loader) {
+  CursorOutput transformBundle(SkillBundle bundle, ContentLoader loader) {
     final plan = loader.loadPlan(bundle);
     final rules = loader.loadRules(bundle);
     final commandFiles = <String, String>{};
@@ -49,4 +51,17 @@ class CursorTransformer {
 
     return CursorOutput(commandFiles: commandFiles);
   }
+
+  @override
+  TransformOutput transform(
+    SkillBundle bundle,
+    ContentLoader loader,
+    AgentConfig agent,
+  ) {
+    final output = transformBundle(bundle, loader);
+    return TransformOutput(files: output.commandFiles);
+  }
 }
+
+/// Alias for [CursorTransformer] used by the unified transformer interface.
+typedef SingleFileTransformer = CursorTransformer;

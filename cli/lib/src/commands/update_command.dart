@@ -3,11 +3,10 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
+import '../agents/agent_registry.dart';
 import '../content/content_loader.dart';
 import '../content/skill_registry.dart';
-import '../installers/antigravity_installer.dart';
-import '../installers/claude_installer.dart';
-import '../installers/cursor_installer.dart';
+import '../installers/agent_installer.dart';
 import '../utils/package_resolver.dart';
 
 /// Updates the CLI and reinstalls all skills.
@@ -75,53 +74,22 @@ class UpdateCommand extends Command<int> {
     // Step 3: Detect previously installed agents and reinstall
     var updated = 0;
 
-    // Check Claude
-    final claudeInstaller = ClaudeInstaller(
-      logger: _logger,
-      loader: loader,
-    );
-    if (claudeInstaller.isInstalled()) {
-      final result = await claudeInstaller.install(
-        bundles: bundles,
-        force: true,
+    for (final agent in AgentRegistry.installableAgents) {
+      final installer = AgentInstaller(
+        logger: _logger,
+        loader: loader,
+        agentConfig: agent,
       );
-      _logger.info(
-        '  Claude Code: ${result.skillCount} skills updated',
-      );
-      updated++;
-    }
-
-    // Check Cursor
-    final cursorInstaller = CursorInstaller(
-      logger: _logger,
-      loader: loader,
-    );
-    if (cursorInstaller.isInstalled()) {
-      final result = await cursorInstaller.install(
-        bundles: bundles,
-        force: true,
-      );
-      _logger.info(
-        '  Cursor: ${result.skillCount} commands updated',
-      );
-      updated++;
-    }
-
-    // Check Antigravity
-    final antigravityInstaller = AntigravityInstaller(
-      logger: _logger,
-      loader: loader,
-    );
-    if (antigravityInstaller.isInstalled()) {
-      final result = await antigravityInstaller.install(
-        bundles: bundles,
-        force: true,
-      );
-      _logger.info(
-        '  Antigravity: ${result.skillCount} workflows, '
-        '${result.ruleCount} rules updated',
-      );
-      updated++;
+      if (installer.isInstalled()) {
+        final result = await installer.install(
+          bundles: bundles,
+          force: true,
+        );
+        _logger.info(
+          '  ${agent.displayName}: ${result.skillCount} skills updated',
+        );
+        updated++;
+      }
     }
 
     if (updated == 0) {

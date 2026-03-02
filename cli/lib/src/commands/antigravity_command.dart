@@ -1,12 +1,15 @@
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
+import '../agents/agent_registry.dart';
 import '../content/content_loader.dart';
 import '../content/skill_registry.dart';
-import '../installers/antigravity_installer.dart';
+import '../installers/agent_installer.dart';
 import '../utils/package_resolver.dart';
 
 /// Installs workflows into Antigravity.
+///
+/// Thin alias for `somnio install --agent gemini`.
 class AntigravityCommand extends Command<int> {
   AntigravityCommand({required Logger logger}) : _logger = logger {
     argParser.addFlag(
@@ -38,9 +41,11 @@ class AntigravityCommand extends Command<int> {
     }
 
     final loader = ContentLoader(repoRoot);
-    final installer = AntigravityInstaller(
+    final agent = AgentRegistry.findById('gemini')!;
+    final installer = AgentInstaller(
       logger: _logger,
       loader: loader,
+      agentConfig: agent,
     );
 
     final result = await installer.install(

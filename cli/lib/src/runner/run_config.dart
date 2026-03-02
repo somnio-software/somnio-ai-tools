@@ -1,4 +1,8 @@
+import '../agents/agent_config.dart';
+
 /// Supported AI CLI agents for chunked execution.
+///
+/// Deprecated: use [AgentConfig] from the agent registry instead.
 enum RunAgent { claude, cursor, gemini }
 
 /// A single parsed execution step from the plan's "Rule Execution Order".
@@ -30,7 +34,7 @@ class RunConfig {
     required this.bundleName,
     required this.displayName,
     required this.techPrefix,
-    required this.agent,
+    required this.agentConfig,
     required this.steps,
     required this.ruleBasePath,
     required this.templatePath,
@@ -51,8 +55,8 @@ class RunConfig {
   /// Technology prefix (e.g., 'flutter', 'nestjs').
   final String techPrefix;
 
-  /// Which AI CLI to invoke.
-  final RunAgent agent;
+  /// Agent configuration for the AI CLI to invoke.
+  final AgentConfig agentConfig;
 
   /// Ordered list of execution steps.
   final List<ExecutionStep> steps;

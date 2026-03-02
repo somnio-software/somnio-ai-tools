@@ -14,6 +14,9 @@ import 'installer.dart';
 /// in chat. Each skill becomes a single command file.
 ///
 /// Location: `~/.cursor/commands/`
+///
+/// Prefer using [AgentInstaller] with the Cursor [AgentConfig] instead.
+/// This class is kept for backward compatibility.
 class CursorInstaller extends Installer {
   CursorInstaller({required super.logger, required super.loader});
 
@@ -62,7 +65,7 @@ class CursorInstaller extends Installer {
       );
 
       try {
-        final output = _transformer.transform(bundle, loader);
+        final output = _transformer.transformBundle(bundle, loader);
 
         for (final entry in output.commandFiles.entries) {
           _writeFile(p.join(targetDir, entry.key), entry.value);

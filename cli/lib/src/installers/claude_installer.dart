@@ -10,6 +10,9 @@ import 'installer.dart';
 /// Installs skills into Claude Code's global skill directory.
 ///
 /// Location: `~/.claude/skills/<skill-name>/`
+///
+/// Prefer using [AgentInstaller] with the Claude [AgentConfig] instead.
+/// This class is kept for backward compatibility.
 class ClaudeInstaller extends Installer {
   ClaudeInstaller({required super.logger, required super.loader});
 
@@ -54,7 +57,7 @@ class ClaudeInstaller extends Installer {
       );
 
       try {
-        final output = _transformer.transform(bundle, loader);
+        final output = _transformer.transformBundle(bundle, loader);
 
         // Create skill directory
         final skillDir = p.join(baseDir, bundle.name);

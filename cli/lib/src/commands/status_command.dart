@@ -4,6 +4,7 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_registry.dart';
 import '../content/skill_registry.dart';
 import '../utils/platform_utils.dart';
 
@@ -103,14 +104,19 @@ class StatusCommand extends Command<int> {
   // ── CLI availability table ───────────────────────────────────────────
 
   Future<void> _printCliTable() async {
-    final results = await Future.wait([
-      _checkCli('Claude Code', 'claude'),
-      _checkCli('Cursor CLI', 'agent'),
-      _checkCli('Gemini CLI', 'gemini'),
-    ]);
+    final checks = <_CliCheck>[];
+    for (final agent in AgentRegistry.executableAgents) {
+      if (agent.binary == null) continue;
+      final path = await PlatformUtils.whichBinary(agent.binary!);
+      checks.add(_CliCheck(
+        name: agent.displayName,
+        installed: path != null,
+        path: path,
+      ));
+    }
 
     final rows = <List<String>>[];
-    for (final r in results) {
+    for (final r in checks) {
       rows.add([
         r.name,
         r.installed ? 'Found' : 'Not found',
@@ -136,11 +142,6 @@ class StatusCommand extends Command<int> {
       );
     }
     _printBorder(colWidths, _BorderType.bot);
-  }
-
-  Future<_CliCheck> _checkCli(String name, String binary) async {
-    final path = await PlatformUtils.whichBinary(binary);
-    return _CliCheck(name: name, installed: path != null, path: path);
   }
 
   // ── Installed skills table ───────────────────────────────────────────
