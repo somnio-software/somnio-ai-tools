@@ -155,7 +155,7 @@ class AgentRegistry {
     id: 'antigravity',
     displayName: 'Antigravity',
     installFormat: InstallFormat.workflow,
-    installPath: '{home}/.gemini/antigravity/global_workflows',
+    installPath: '{home}/.gemini/antigravity',
     ruleExtension: '.yaml',
     readInstructionTemplate:
         'Read {file} and follow ALL instructions in the prompt field',

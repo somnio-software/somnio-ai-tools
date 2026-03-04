@@ -189,7 +189,11 @@ class AgentInstaller extends Installer {
 
   /// Counts existing somnio files in the given directory.
   int _findExistingFiles(String baseDir) {
-    final dir = Directory(baseDir);
+    // For workflow format, somnio files live in global_workflows/ subdirectory
+    final searchDir = agentConfig.installFormat == InstallFormat.workflow
+        ? p.join(baseDir, 'global_workflows')
+        : baseDir;
+    final dir = Directory(searchDir);
     if (!dir.existsSync()) return 0;
 
     final prefix = agentConfig.filePrefix;
