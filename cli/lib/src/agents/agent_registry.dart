@@ -145,6 +145,7 @@ class AgentRegistry {
     fallbackModel: 'gemini-2.5-flash',
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.gemini/skills',
+    executionRulesPath: '{home}/.gemini/somnio_rules',
     tokenUsageParser: parseGeminiUsage,
     filePrefix: 'somnio_',
     npmPackage: '@google/gemini-cli',

@@ -35,8 +35,7 @@ class AgentResolver {
   ///
   /// - Claude: `~/.claude/skills/{bundleName}/rules/`
   /// - Cursor: `~/.cursor/somnio_rules/{planSubDir}/cursor_rules/`
-  /// - Gemini: `~/.gemini/antigravity/somnio_rules/{planSubDir}/cursor_rules/`
-  /// - Others: derived from [AgentConfig.resolvedExecutionRulesPath]
+  /// - Others (incl. Gemini): derived from [AgentConfig.resolvedExecutionRulesPath]
   String ruleBasePath(
     AgentConfig agent,
     String bundleName,
@@ -51,15 +50,16 @@ class AgentResolver {
       case 'cursor':
         return p.join(home, '.cursor', 'somnio_rules', planSubDir,
             'cursor_rules');
-      case 'gemini':
-        return p.join(home, '.gemini', 'antigravity', 'somnio_rules',
-            planSubDir, 'cursor_rules');
       default:
-        // New agents: derive from the execution rules path
+        // Agents with executionRulesPath use the same subdirectory layout
+        // as Cursor: {rulesPath}/{planSubDir}/cursor_rules/
         final basePath = agent.resolvedExecutionRulesPath(
           home: home,
           name: bundleName,
         );
+        if (agent.executionRulesPath != null) {
+          return p.join(basePath, planSubDir, 'cursor_rules');
+        }
         return basePath;
     }
   }
@@ -80,14 +80,15 @@ class AgentResolver {
       case 'cursor':
         return p.join(home, '.cursor', 'somnio_rules', planSubDir,
             'cursor_rules', 'templates', templateFile);
-      case 'gemini':
-        return p.join(home, '.gemini', 'antigravity', 'somnio_rules',
-            planSubDir, 'cursor_rules', 'templates', templateFile);
       default:
         final basePath = agent.resolvedExecutionRulesPath(
           home: home,
           name: bundleName,
         );
+        if (agent.executionRulesPath != null) {
+          return p.join(basePath, planSubDir, 'cursor_rules', 'templates',
+              templateFile);
+        }
         return p.join(basePath, 'templates', templateFile);
     }
   }
