@@ -33,8 +33,8 @@ class AgentResolver {
 
   /// Returns the base path where rule files are installed for the given agent.
   ///
-  /// - Claude: `~/.claude/skills/{bundleName}/rules/`
-  /// - Cursor: `~/.cursor/somnio_rules/{planSubDir}/cursor_rules/`
+  /// - Claude: `~/.claude/skills/{bundleName}/references/`
+  /// - Cursor: `~/.cursor/somnio_rules/{planSubDir}/references/`
   /// - Others (incl. Gemini): derived from [AgentConfig.resolvedExecutionRulesPath]
   String ruleBasePath(
     AgentConfig agent,
@@ -46,19 +46,19 @@ class AgentResolver {
     // Agent-specific paths for the original three agents
     switch (agent.id) {
       case 'claude':
-        return p.join(home, '.claude', 'skills', bundleName, 'rules');
+        return p.join(home, '.claude', 'skills', bundleName, 'references');
       case 'cursor':
         return p.join(home, '.cursor', 'somnio_rules', planSubDir,
-            'cursor_rules');
+            'references');
       default:
         // Agents with executionRulesPath use the same subdirectory layout
-        // as Cursor: {rulesPath}/{planSubDir}/cursor_rules/
+        // as Cursor: {rulesPath}/{planSubDir}/references/
         final basePath = agent.resolvedExecutionRulesPath(
           home: home,
           name: bundleName,
         );
         if (agent.executionRulesPath != null) {
-          return p.join(basePath, planSubDir, 'cursor_rules');
+          return p.join(basePath, planSubDir, 'references');
         }
         return basePath;
     }
@@ -75,21 +75,21 @@ class AgentResolver {
 
     switch (agent.id) {
       case 'claude':
-        return p.join(home, '.claude', 'skills', bundleName, 'templates',
+        return p.join(home, '.claude', 'skills', bundleName, 'assets',
             templateFile);
       case 'cursor':
         return p.join(home, '.cursor', 'somnio_rules', planSubDir,
-            'cursor_rules', 'templates', templateFile);
+            'assets', templateFile);
       default:
         final basePath = agent.resolvedExecutionRulesPath(
           home: home,
           name: bundleName,
         );
         if (agent.executionRulesPath != null) {
-          return p.join(basePath, planSubDir, 'cursor_rules', 'templates',
+          return p.join(basePath, planSubDir, 'assets',
               templateFile);
         }
-        return p.join(basePath, 'templates', templateFile);
+        return p.join(basePath, 'assets', templateFile);
     }
   }
 

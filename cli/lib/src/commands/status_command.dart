@@ -255,7 +255,7 @@ class StatusCommand extends Command<int> {
             final tech = _resolveTech(skillName);
             techMap.putIfAbsent(tech, () => [0, 0]);
             techMap[tech]![0]++;
-            final rulesDir = Directory(p.join(entity.path, 'rules'));
+            final rulesDir = Directory(p.join(entity.path, 'references'));
             if (rulesDir.existsSync()) {
               techMap[tech]![1] += rulesDir
                   .listSync()
@@ -290,7 +290,7 @@ class StatusCommand extends Command<int> {
                   .whereType<File>()
                   .where((f) =>
                       f.path.endsWith(agent.ruleExtension) &&
-                      !f.path.contains('/templates/'))
+                      !f.path.contains('/assets/'))
                   .length;
             }
           }
@@ -318,7 +318,7 @@ class StatusCommand extends Command<int> {
                 .whereType<File>()
                 .where((f) =>
                     f.path.endsWith(agent.ruleExtension) &&
-                    !f.path.contains('/templates/'))
+                    !f.path.contains('/assets/'))
                 .length;
           }
         }

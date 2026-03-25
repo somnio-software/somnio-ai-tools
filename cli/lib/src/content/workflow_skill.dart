@@ -15,7 +15,7 @@ class WorkflowSkill {
   /// Internal identifier.
   final String id;
 
-  /// Skill name used as slash command (e.g., 'workflow-plan').
+  /// Skill name used as slash command (e.g., 'workflow-builder').
   final String name;
 
   /// Human-readable name.

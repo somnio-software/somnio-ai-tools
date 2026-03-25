@@ -1,341 +1,183 @@
-# Somnio Technology Tools
+# Somnio
 
-A centralized repository for Somnio Software's technology department containing all tools developed to accelerate project analysis, improve code quality, and optimize development processes.
+AI-powered audit skills for Claude Code, Cursor, and 40+ other agents. Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, and more — directly from your AI coding assistant.
 
-## 🎯 Purpose
+## Installation
 
-This repository's main objectives are:
+### Option 1: skills.sh (recommended)
 
-- **Centralize tools**: Keep all analysis and development tools in one place
-- **Accelerate analysis**: Provide automated tools to evaluate project health
-- **Improve quality**: Establish consistent development standards and processes
-- **Optimize processes**: Automate repetitive analysis and auditing tasks
-- **Facilitate maintenance**: Create reusable and scalable tools
-
-## ⚡ Getting Started
-
-### 📦 Install the CLI
-
-Before using any tools, install the Somnio CLI to easily install and manage AI agent skills:
+Works with Claude Code, Cursor, Windsurf, Copilot, and [40+ other agents](https://agentskills.io).
 
 ```bash
-dart pub global activate --source git https://github.com/somnio-software/technology-tools --git-path cli
+npx skills add somnio-software/technology-tools
 ```
 
-### 🚀 Quick Start
+### Option 2: Claude Code plugin
 
-For first-time users, run the guided setup wizard. It checks which AI CLIs you have installed, helps install missing ones, and lets you choose which technologies to set up:
+```
+/plugin install somnio
+```
+
+### Option 3: Somnio CLI
+
+The Dart CLI includes a multi-step audit runner that orchestrates analysis across fresh AI contexts. Install it globally:
 
 ```bash
-somnio setup
+dart pub global activate -sgit https://github.com/somnio-software/technology-tools.git --git-path cli
 ```
 
-Already have your CLIs installed? Skip the CLI installation step:
+See the [CLI README](cli/README.md) for full usage and commands.
 
-```bash
-somnio setup --skip-cli
+## Available Skills
+
+### Flutter Health Audit
+
+Comprehensive Flutter project health audit with 13 analysis steps covering architecture, state management, testing, CI/CD, and more. Produces a weighted score and a Google Docs-ready report.
+
+**Use when:**
+- Onboarding to an existing Flutter codebase
+- Preparing a technical debt remediation plan
+- Running a periodic project health check
+
+**Example prompt:**
 ```
-
-### 🤖 Supported Agents
-
-Somnio supports **12 CLI agents** for running audits and **5 IDE-only agents** for skill installation — all driven by a single agent registry.
-
-**CLI agents** (for `somnio run`): Claude Code, Cursor, Gemini CLI, Codex, Augment Code, Amp, Aider, Cline, OpenCode, CodeBuddy, Qwen
-
-**IDE-only agents** (for `somnio install`): GitHub Copilot, Windsurf, Roo Code, Kilo Code, Amazon Q
-
-Install skills to any agent:
-
-```bash
-somnio install --agent claude      # Install to Claude Code
-somnio install --agent copilot     # Install to GitHub Copilot
-somnio install --agent windsurf    # Install to Windsurf
-somnio install --all               # Install to all detected agents
+Run a full Flutter health audit on this project and generate a report.
 ```
-
-### 📚 CLI Documentation
-
-For detailed CLI usage, commands, and advanced options, see the [CLI README](cli/README.md).
-
-**Available CLI Commands:**
-- `somnio setup` — Full guided setup: install CLIs, detect agents, install skills
-- `somnio setup --skip-cli` — Skip CLI installation, just detect agents and install skills
-- `somnio install --agent <id>` — Install skills to a specific agent
-- `somnio install --all` — Install to all detected agents
-- `somnio run <code>` — Run a health or security audit step-by-step
-- `somnio status` — Show CLI availability and installed skills
-- `somnio update` — Update CLI and reinstall skills
-- `somnio uninstall` — Remove all installed skills (with confirmation)
-- `somnio add <tech>` — Add new technology skill bundles
-- `somnio workflow plan <name>` — Create a custom workflow via AI-guided planning
-- `somnio workflow run <name>` — Execute a workflow step by step
-- `somnio workflow config <name>` — Configure per-step model assignments
-- `somnio workflow list` — List all available workflows
-- `somnio -q <command>` — Suppress the banner on any command
-
-### 🏃 Running Audits from the Terminal
-
-Use `somnio run` from the target project's root to execute a health or security audit. The CLI handles setup steps (tool installation, version alignment, test coverage) directly via pre-flight, then delegates analysis steps to an AI CLI in fresh contexts.
-
-```bash
-# From a Flutter project root
-somnio run fh
-
-# From a NestJS project root
-somnio run nh
-
-# From any project root (framework-agnostic security audit)
-somnio run sa
-```
-
-| Code | Audit |
-|------|-------|
-| `fh` | Flutter Project Health Audit |
-| `nh` | NestJS Project Health Audit |
-| `sa` | Security Audit (framework-agnostic) |
-
-You can specify an agent and model explicitly, or let the CLI auto-detect and prompt interactively:
-
-```bash
-somnio run fh --agent claude --model opus
-somnio run nh --agent gemini -m gemini-3-pro
-somnio run fh --agent codex             # Use OpenAI Codex CLI
-somnio run sa                           # Auto-detect agent, interactive model
-```
-
-After a health audit completes, the CLI will ask if you want to run a security audit as well.
-
-Artifacts are saved to `./reports/.artifacts/` and the final report to `./reports/`. See the [CLI README](cli/README.md) for all flags (`--agent`, `--model`, `--skip-validation`, `--no-preflight`).
-
-## 🛠️ Available Tools
-
-This repository contains technology-specific auditing and analysis tools organized by technology stack:
-
-### Flutter Plans
-Comprehensive auditing and best practices validation tools for Flutter/Dart projects.
-
-**Location**: `flutter-plans/`
-
-**Documentation**: See `flutter-plans/README.md` for detailed information about available Flutter tools and usage instructions.
-
-### NestJS Plans
-Auditing system for NestJS backend and cloud functions projects.
-
-**Location**: `nestjs-plans/`
-
-**Documentation**: See `nestjs-plans/README.md` for current status and TODO items.
-
-### NestJS Project Health Audit
-Complete auditing system for NestJS/Node.js backend projects that includes:
-
-- **Automated analysis**: 8 analysis categories with scoring (Tech Stack, Architecture, API Design, Data Layer, Testing, Code Quality, Documentation, CI/CD)
-- **Monorepo support**: Handles single-app and monorepo structures (nx, turborepo, lerna, custom)
-- **Standardized reports**: 15-section format ready for Google Docs
-- **API design analysis**: REST/GraphQL validation, DTOs, OpenAPI/Swagger documentation
-- **Test coverage**: Execution, aggregation, and 70% minimum threshold validation
-- **ChatGPT integration**: Specialized prompt for generating executive summaries
-
-**Location**: `nestjs-plans/nestjs_project_health_audit/`
-
-**Documentation**: See `nestjs-plans/nestjs_project_health_audit/README.md` for detailed instructions.
-
-### Security Audit
-Standalone, framework-agnostic security audit that detects the project type at runtime and adapts checks accordingly. Can be run independently or after a health audit.
-
-- **Framework-agnostic**: Auto-detects Flutter, NestJS, Node.js, Go, Rust, Python, or generic projects
-- **Sensitive file analysis**: Scans for exposed credentials, API keys, keystores, and checks .gitignore coverage
-- **Source code secret scanning**: Detects hardcoded secrets, tokens, passwords, and cloud credentials in source code
-- **Dependency vulnerability audit**: Runs native package manager scans (`npm audit`, `pub outdated`, `pip audit`, `cargo audit`, etc.)
-- **Gemini AI analysis (optional)**: Leverages Gemini CLI with the security extension for advanced vulnerability detection - works with API key or Google subscription
-- **Severity-classified reports**: Findings categorized as HIGH, MEDIUM, LOW with a remediation priority matrix
-
-**Location**: `security-plans/security_audit/`
-
-**Documentation**: See `security-plans/README.md` for detailed information about available security tools and usage instructions.
-
-**CLI command**: `somnio run sa`
-
-**IDE skill**: `/somnio-sa`
-
-### Custom Workflows
-
-Create your own repeatable, multi-step task pipelines where each step can use a different AI model. Works with any supported agent. The orchestrator stays context-light, spawning a fresh process or subagent per step.
-
-```bash
-# Create a workflow (AI helps you design the steps)
-somnio workflow plan dependency-cleanup
-
-# Configure which model each step uses
-somnio workflow config dependency-cleanup
-
-# Run it — each step executes with its assigned model
-somnio workflow run dependency-cleanup
-
-# Run with a specific agent
-somnio workflow run dependency-cleanup --agent gemini
-```
-
-Steps are tagged as `research`, `planning`, or `execution` — each maps to a model tier you can override per-role or per-step. Workflows support progress tracking, resume on failure, and can live at project level (`.somnio/workflows/`) or globally (`~/.somnio/workflows/`).
-
-IDEs with subagent support (Claude Code, Cursor, Antigravity) can also run workflows natively via the `/workflow:plan` and `/workflow:run` skills.
-
-**Location**: `workflow-skills/`
-
-**Documentation**: See [workflow-skills/README.md](workflow-skills/README.md) for file formats, full examples, and detailed usage.
-
-## 📁 Repository Structure
-
-```
-technology-tools/
-├── flutter-plans/                        # Flutter tools
-│   ├── flutter_project_health_audit/    # Health audit system
-│   ├── flutter_best_practices_check/     # Code quality checker
-│   └── README.md
-├── nestjs-plans/                        # NestJS tools
-│   ├── nestjs_project_health_audit/    # Health audit system
-│   ├── nestjs_best_practices_check/     # Code quality checker
-│   └── README.md
-├── security-plans/                      # Security tools
-│   ├── security_audit/                  # Framework-agnostic security audit
-│   │   ├── plan/                        # Execution plan
-│   │   ├── cursor_rules/                # Analysis rules (YAML)
-│   │   │   └── templates/               # Report template
-│   │   ├── .agent/workflows/            # Antigravity workflow
-│   │   └── env/                         # Environment variable template
-│   └── README.md
-├── workflow-skills/                     # Custom workflow skills
-│   ├── workflow_plan/                   # /workflow:plan skill
-│   ├── workflow_run/                    # /workflow:run skill
-│   └── README.md
-├── cli/                                 # Somnio CLI tool
-└── README.md                            # This file
-```
-
-Each tool directory contains:
-- `cursor_rules/` - Analysis rules (YAML files)
-- `plan/` - Execution plans
-- `cursor_rules/templates/` - Report templates
-- `.agent/workflows/` - Antigravity workflow definitions
-
-## 🚀 Quick Start
-
-### For Flutter projects
-
-Navigate to the Flutter plans directory and follow the instructions in the Flutter README:
-
-```bash
-cd flutter-plans/
-# See flutter-plans/README.md for detailed instructions
-```
-
-### For NestJS projects
-
-Navigate to the NestJS plans directory and check the current status:
-
-```bash
-cd nestjs-plans/
-# See nestjs-plans/README.md for current status and TODO items
-```
-
-### For NestJS Health Audit
-```bash
-# Navigate to the specific tool
-cd nestjs-plans/nestjs_project_health_audit/
-
-# Follow instructions in the specific README
-# See nestjs-plans/nestjs_project_health_audit/README.md
-```
-
-### For Security Audits
-
-Run the standalone security audit from any project root. It auto-detects the project type:
-
-```bash
-# Via CLI (from the target project root)
-somnio run sa
-
-# Via IDE skill
-/somnio-sa
-```
-
-The security audit can also be triggered after completing a health audit - the CLI will prompt you automatically.
-
-To use the optional Gemini AI analysis, either set `GEMINI_API_KEY` in your environment or sign in with `gemini auth login` (Google One AI Premium subscription).
-
-### For new tools
-
-1. Create new folder with descriptive name (e.g., `react/`, `nodejs/`)
-2. Include complete documentation in README.md within the folder
-3. Update this main README with the new tool category
-
-## 🔧 Development
-
-### Adding new tools
-
-1. Create folder with descriptive name
-2. Include complete documentation in README.md within the folder
-3. Update this main README with the new tool category
-4. Follow established documentation standards
-
-### Documentation standards
-
-- Complete README.md in each technology folder
-- Clear usage instructions
-- Practical examples
-- Documented file structure
-- Tool-specific details should be in the technology folder's README
-
-### Code Quality Standards
-
-All YAML rule files follow strict formatting standards:
-- **Line Length**: Maximum 80 characters per line
-- **Formatting**: Commands split using shell continuation (`\`)
-- **Descriptions**: Use folded scalar format (`>`) for multi-line text
-- **Readability**: Optimized for maintainability and consistency
-
-## 📈 Roadmap
-
-- [x] Flutter Project Health Audit
-- [x] Flutter Best Practices Check
-- [x] NestJS Project Health Audit (Backend)
-- [x] Framework-Agnostic Security Audit
-- [x] Multi-agent registry (17 agents supported)
-- [x] Custom workflow system (per-step model selection)
-- [ ] NestJS Project Health Audit (Cloud Functions)
-- [ ] Tools for React/Next.js project analysis
-- [ ] Deployment automation
-- [ ] Performance and quality metrics
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch: `git checkout -b feature/new-tool`
-3. Commit changes: `git commit -m 'Add new tool'`
-4. Push to branch: `git push origin feature/new-tool`
-5. Open Pull Request
-
-### Development guidelines
-
-- Follow established folder structure
-- Document each tool completely in its technology folder
-- Include usage examples
-- Maintain backward compatibility
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-For questions, issues, or contributions:
-- **Issues**: [GitHub Issues](https://github.com/somnio-software/technology-tools/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/somnio-software/technology-tools/discussions)
-- **Pull Requests**: [GitHub Pull Requests](https://github.com/somnio-software/technology-tools/pulls)
-
-## 🏢 About Somnio Software
-
-This project is maintained by [Somnio Software](https://github.com/somnio-software), a company focused on delivering high-quality software solutions and development tools.
 
 ---
 
-**Made with ❤️ by the Somnio Software team**
+### Flutter Best Practices
+
+Micro-level Flutter code quality validation against live GitHub standards. Checks naming conventions, widget structure, state management patterns, and Dart idioms.
+
+**Use when:**
+- Reviewing a pull request for Flutter code quality
+- Enforcing team-wide coding standards
+- Validating a module before release
+
+**Example prompt:**
+```
+Check this Flutter project against current best practices and flag any violations.
+```
+
+---
+
+### NestJS Health Audit
+
+Comprehensive NestJS project health audit with 13 analysis steps. Evaluates architecture, API design, data layer, testing, documentation, and CI/CD with weighted scoring.
+
+**Use when:**
+- Assessing a NestJS backend before a major refactor
+- Auditing API design and module organization
+- Evaluating test coverage and deployment readiness
+
+**Example prompt:**
+```
+Run a full NestJS health audit and summarize the findings.
+```
+
+---
+
+### NestJS Best Practices
+
+Micro-level NestJS code quality validation covering DTOs, error handling, module architecture, dependency injection patterns, and API conventions.
+
+**Use when:**
+- Reviewing NestJS service or controller code
+- Checking DTO validation and error handling patterns
+- Ensuring consistent module structure across a monorepo
+
+**Example prompt:**
+```
+Validate this NestJS project against best practices for DTOs, error handling, and architecture.
+```
+
+---
+
+### Security Audit
+
+Framework-agnostic security audit with 11 analysis steps. Scans for hardcoded secrets, runs SAST checks, audits dependencies, and integrates with Trivy and Gitleaks. Auto-detects Flutter, NestJS, Node.js, Go, Rust, Python, and generic projects.
+
+**Use when:**
+- Preparing for a security review or compliance check
+- Scanning for leaked credentials and API keys
+- Auditing third-party dependency vulnerabilities
+
+**Example prompt:**
+```
+Run a security audit on this project. Check for secrets, vulnerable dependencies, and misconfigurations.
+```
+
+---
+
+### Workflow Builder
+
+Create and execute custom multi-step AI workflows with parallel wave execution. Each step can target a different AI model. Steps are tagged by role (research, planning, execution) and map to configurable model tiers.
+
+**Use when:**
+- Automating a repeatable multi-step task (e.g., dependency cleanup, migration)
+- Orchestrating work across different model strengths (fast model for research, strong model for execution)
+- Building team-shared analysis pipelines
+
+**Example prompt:**
+```
+Create a workflow called "dependency-cleanup" that audits outdated packages, plans upgrades, and executes the migration.
+```
+
+## Commands
+
+| Command | Description |
+|---------|-------------|
+| `/somnio:audit` | Main entry point. Auto-detects the project type, selects the appropriate audit, and runs it end to end. |
+| `/somnio:quick-check` | Fast 2-3 minute lightweight assessment. Good for a quick pulse check before diving deeper. |
+
+## CLI Runner
+
+The Somnio CLI (`somnio run`) orchestrates multi-step audits from the terminal. It handles pre-flight setup (tool installation, version alignment, test execution) directly, then delegates each analysis step to a fresh AI CLI process.
+
+```bash
+somnio run fh    # Flutter health audit
+somnio run nh    # NestJS health audit
+somnio run sa    # Security audit (any project)
+```
+
+The CLI supports 19 agent definitions, automatic agent detection, per-step model selection, and resume-on-failure. See the [CLI README](cli/README.md) for all options.
+
+## Directory Structure
+
+```
+technology-tools/
+├── .claude-plugin/
+│   └── plugin.json              # Claude Code plugin manifest
+├── skills/
+│   ├── flutter-health-audit/    # SKILL.md + agents/ + references/ + assets/
+│   ├── flutter-best-practices/  # SKILL.md + references/ + assets/
+│   ├── nestjs-health-audit/     # SKILL.md + agents/ + references/ + assets/
+│   ├── nestjs-best-practices/   # SKILL.md + references/ + assets/
+│   ├── security-audit/          # SKILL.md + agents/ + references/ + assets/
+│   └── workflow-builder/        # SKILL.md + references/
+├── commands/
+│   ├── audit.md                 # /somnio:audit command
+│   └── quick-check.md           # /somnio:quick-check command
+├── cli/                         # Dart CLI (audit runner)
+├── docs/
+├── CLAUDE.md
+├── LICENSE
+└── README.md
+```
+
+Each skill directory contains a `SKILL.md` entry point with detailed instructions. Health and security audit skills include `agents/` directories with 19 agent definitions for parallel execution, plus 50+ reference files with analysis instructions.
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Commit your changes: `git commit -m 'Add your feature'`
+4. Push to the branch: `git push origin feature/your-feature`
+5. Open a pull request
+
+For CLI development, see `cli/CLAUDE.md` and the [CLI README](cli/README.md) for build and test commands.
+
+## License
+
+MIT -- see [LICENSE](LICENSE) for details.

@@ -46,7 +46,7 @@ class RunConfig {
   /// Bundle identifier (e.g., 'flutter_health').
   final String bundleId;
 
-  /// Skill name (e.g., 'somnio-fh').
+  /// Bundle name (e.g., 'flutter-health-audit').
   final String bundleName;
 
   /// Human-readable name (e.g., 'Flutter Project Health Audit').
@@ -63,9 +63,9 @@ class RunConfig {
 
   /// Base directory where rule files are installed.
   ///
-  /// Claude: `~/.claude/skills/somnio-fh/rules/`
-  /// Cursor: `~/.cursor/somnio_rules/{planSubDir}/cursor_rules/`
-  /// Gemini: `~/.gemini/antigravity/somnio_rules/{planSubDir}/cursor_rules/`
+  /// Claude: `~/.claude/skills/flutter-health-audit/references/`
+  /// Cursor: `~/.cursor/somnio_rules/{planSubDir}/references/`
+  /// Gemini: `~/.gemini/antigravity/somnio_rules/{planSubDir}/references/`
   final String ruleBasePath;
 
   /// Path to the report template file.

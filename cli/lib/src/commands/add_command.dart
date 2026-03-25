@@ -15,9 +15,9 @@ import '../utils/scaffold_generator.dart';
 /// Add a new technology skill bundle to the repository.
 ///
 /// Two modes (auto-detected):
-/// - **Wizard**: When `{tech}-plans/` doesn't exist, scaffolds the
+/// - **Wizard**: When `skills/{tech}-*` doesn't exist, scaffolds the
 ///   folder structure and registers the bundles.
-/// - **Auto-detect**: When `{tech}-plans/` exists, scans for content,
+/// - **Auto-detect**: When `skills/{tech}-*` exists, scans for content,
 ///   validates it, and registers valid bundles.
 class AddCommand extends Command<int> {
   AddCommand({required Logger logger}) : _logger = logger {
@@ -96,8 +96,10 @@ class AddCommand extends Command<int> {
     }
 
     // Mode detection: wizard vs auto-detect
-    final techPlansDir = p.join(repoRoot, '$tech-plans');
-    if (Directory(techPlansDir).existsSync()) {
+    final healthDir = Directory(p.join(repoRoot, 'skills', '$tech-health-audit'));
+    final practicesDir =
+        Directory(p.join(repoRoot, 'skills', '$tech-best-practices'));
+    if (healthDir.existsSync() || practicesDir.existsSync()) {
       return _handleAutoDetectMode(tech, repoRoot, force);
     } else {
       return _handleWizardMode(tech, repoRoot, force);
@@ -117,7 +119,7 @@ class AddCommand extends Command<int> {
 
     _logger.info('');
     _logger.info(
-      'No existing $tech-plans/ directory found. '
+      'No existing skills/$tech-* directories found. '
       'Starting wizard to create a new skill bundle.',
     );
     _logger.info('');
@@ -189,7 +191,7 @@ class AddCommand extends Command<int> {
       _logger.info('Will create:');
       if (createHealth) {
         _logger.info(
-          '  somnio-${suffixes['health']}  ${displayNames['health']}',
+          '  $tech-health-audit  ${displayNames['health']}',
         );
         _logger.info(
           '${lightGray.wrap('               ${descriptions['health']}')}',
@@ -197,7 +199,7 @@ class AddCommand extends Command<int> {
       }
       if (createPractices) {
         _logger.info(
-          '  somnio-${suffixes['practices']}  '
+          '  $tech-best-practices  '
           '${displayNames['practices']}',
         );
         _logger.info(
@@ -205,7 +207,7 @@ class AddCommand extends Command<int> {
         );
       }
       _logger.info('');
-      _logger.info('  Directory: $tech-plans/');
+      _logger.info('  Directory: skills/');
       _logger.info('');
 
       final answer = _logger
@@ -247,7 +249,7 @@ class AddCommand extends Command<int> {
     }
 
     // Step 6: Scaffold directory structure
-    final scaffoldProgress = _logger.progress('Scaffolding $tech-plans/');
+    final scaffoldProgress = _logger.progress('Scaffolding skills/$tech-*');
     final scaffold = ScaffoldGenerator(
       repoRoot: repoRoot,
       logger: _logger,
@@ -276,15 +278,25 @@ class AddCommand extends Command<int> {
       _logger.err('$e');
 
       // Attempt cleanup
-      final techPlansDir = Directory(p.join(repoRoot, '$tech-plans'));
-      if (techPlansDir.existsSync()) {
+      final healthCleanup =
+          Directory(p.join(repoRoot, 'skills', '$tech-health-audit'));
+      final practicesCleanup =
+          Directory(p.join(repoRoot, 'skills', '$tech-best-practices'));
+      final hasPartial =
+          healthCleanup.existsSync() || practicesCleanup.existsSync();
+      if (hasPartial) {
         final cleanup = force ||
             _logger.confirm(
               'Delete partially created files?',
               defaultValue: true,
             );
         if (cleanup) {
-          techPlansDir.deleteSync(recursive: true);
+          if (healthCleanup.existsSync()) {
+            healthCleanup.deleteSync(recursive: true);
+          }
+          if (practicesCleanup.existsSync()) {
+            practicesCleanup.deleteSync(recursive: true);
+          }
           _logger.info('Cleaned up partial scaffolding.');
         }
       }
@@ -297,32 +309,27 @@ class AddCommand extends Command<int> {
     if (createHealth) {
       bundles.add(SkillBundle(
         id: '${tech}_health',
-        name: 'somnio-${suffixes['health']}',
+        name: '$tech-health-audit',
+        aliases: ['somnio-${suffixes['health']}', suffixes['health']!],
         displayName: displayNames['health']!,
         description: descriptions['health']!,
-        planRelativePath: '$tech-plans/${tech}_project_health_audit/plan/'
-            '$tech-health.plan.md',
-        rulesDirectory: '$tech-plans/${tech}_project_health_audit/cursor_rules',
-        workflowPath: '$tech-plans/${tech}_project_health_audit/.agent/'
-            'workflows/${tech}_health_audit.md',
-        templatePath: '$tech-plans/${tech}_project_health_audit/cursor_rules/'
-            'templates/${tech}_report_template.txt',
+        planRelativePath: 'skills/$tech-health-audit/SKILL.md',
+        rulesDirectory: 'skills/$tech-health-audit/references',
+        templatePath: 'skills/$tech-health-audit/assets/report-template.txt',
       ));
     }
 
     if (createPractices) {
       bundles.add(SkillBundle(
         id: '${tech}_plan',
-        name: 'somnio-${suffixes['practices']}',
+        name: '$tech-best-practices',
+        aliases: ['somnio-${suffixes['practices']}', suffixes['practices']!],
         displayName: displayNames['practices']!,
         description: descriptions['practices']!,
-        planRelativePath: '$tech-plans/${tech}_best_practices_check/plan/'
-            'best_practices.plan.md',
-        rulesDirectory: '$tech-plans/${tech}_best_practices_check/cursor_rules',
-        workflowPath: '$tech-plans/${tech}_best_practices_check/.agent/'
-            'workflows/${tech}_best_practices.md',
-        templatePath: '$tech-plans/${tech}_best_practices_check/cursor_rules/'
-            'templates/best_practices_report_template.txt',
+        planRelativePath: 'skills/$tech-best-practices/SKILL.md',
+        rulesDirectory: 'skills/$tech-best-practices/references',
+        templatePath:
+            'skills/$tech-best-practices/assets/report-template.txt',
       ));
     }
 
@@ -342,7 +349,7 @@ class AddCommand extends Command<int> {
 
     _logger.info('');
     _logger.info(
-      'Found existing $tech-plans/ directory. '
+      'Found existing skills/$tech-* directories. '
       'Scanning for skill bundles...',
     );
 
@@ -356,16 +363,16 @@ class AddCommand extends Command<int> {
     if (results.isEmpty) {
       _logger.info('');
       _logger.warn(
-        'No recognizable skill bundles found in $tech-plans/.',
+        'No recognizable skill bundles found in skills/.',
       );
       _logger.info(
-        'Expected subdirectories matching:',
+        'Expected directories matching:',
       );
       _logger.info(
-        '  ${tech}_project_health_audit/',
+        '  skills/$tech-health-audit/',
       );
       _logger.info(
-        '  ${tech}_best_practices_check/',
+        '  skills/$tech-best-practices/',
       );
       _logger.info('');
 
@@ -452,8 +459,11 @@ class AddCommand extends Command<int> {
       _logger.info('');
       _logger.info('Will register:');
       for (final d in bundleData) {
+        final bundleName = d.result.bundleType == 'health_audit'
+            ? '$tech-health-audit'
+            : '$tech-best-practices';
         _logger.info(
-          '  somnio-${d.shortSuffix}  ${editableNames[d.id]}',
+          '  $bundleName  ${editableNames[d.id]}',
         );
         _logger.info(
           '${lightGray.wrap('               ${editableDescs[d.id]}')}',
@@ -492,14 +502,17 @@ class AddCommand extends Command<int> {
     // Build final SkillBundle objects
     final bundles = <SkillBundle>[];
     for (final d in bundleData) {
+      final bundleName = d.result.bundleType == 'health_audit'
+          ? '$tech-health-audit'
+          : '$tech-best-practices';
       bundles.add(SkillBundle(
         id: d.id,
-        name: 'somnio-${d.shortSuffix}',
+        name: bundleName,
+        aliases: ['somnio-${d.shortSuffix}', d.shortSuffix],
         displayName: editableNames[d.id]!,
         description: editableDescs[d.id]!,
         planRelativePath: d.result.planFile!,
         rulesDirectory: d.result.rulesDirectory!,
-        workflowPath: d.result.workflowPath,
         templatePath: d.result.templatePath,
       ));
     }
@@ -566,11 +579,11 @@ class AddCommand extends Command<int> {
 
     _logger.info('');
     _logger.info('Next steps:');
-    _logger.info('  1. Fill in plan files with execution steps');
+    _logger.info('  1. Fill in SKILL.md files with execution steps');
     _logger.info(
-      '  2. Add YAML rules to cursor_rules/ directories',
+      '  2. Add reference .md files to references/ directories',
     );
-    _logger.info('  3. Customize report templates');
+    _logger.info('  3. Customize report templates in assets/');
     _logger.info('  4. Test: somnio claude --force');
     _logger.info('  5. Commit and open a PR');
 
@@ -685,7 +698,12 @@ class AddCommand extends Command<int> {
   bool _isShortNameAvailable(String suffix) {
     if (_claimedSuffixes.contains(suffix)) return false;
     final fullName = 'somnio-$suffix';
-    return !SkillRegistry.skills.any((s) => s.name == fullName);
+    return !SkillRegistry.skills.any(
+      (s) =>
+          s.name == fullName ||
+          s.aliases.contains(fullName) ||
+          s.aliases.contains(suffix),
+    );
   }
 
 }
