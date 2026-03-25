@@ -23,8 +23,8 @@ class UpdateCommand extends Command<int> {
   final Logger _logger;
 
   static const _repoUrl =
-      'https://github.com/somnio-software/technology-tools';
-  static const _skillsRepo = 'somnio-software/technology-tools';
+      'https://github.com/somnio-software/somnio-ai-tools';
+  static const _skillsRepo = 'somnio-software/somnio-ai-tools';
 
   /// All skill directory names to clean up (old + new naming conventions).
   static const _skillNames = [

@@ -21,7 +21,7 @@ class SomnioCliRunner extends CommandRunner<int> {
       : _logger = logger ?? Logger(),
         super(
           'somnio',
-          'Install Somnio AI agent skills from technology-tools.',
+          'Install Somnio AI agent skills from somnio-ai-tools.',
         ) {
     argParser.addFlag(
       'version',

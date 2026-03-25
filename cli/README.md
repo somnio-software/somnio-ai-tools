@@ -5,7 +5,7 @@ A Dart CLI that installs AI-powered audit skills into supported agents and execu
 ## Installation
 
 ```bash
-dart pub global activate -sgit https://github.com/somnio-software/technology-tools.git --git-path cli
+dart pub global activate -sgit https://github.com/somnio-software/somnio-ai-tools.git --git-path cli
 ```
 
 Requires Dart SDK 3.0+.
@@ -169,8 +169,8 @@ cli/lib/src/
 ## Development
 
 ```bash
-git clone https://github.com/somnio-software/technology-tools
-cd technology-tools/cli
+git clone https://github.com/somnio-software/somnio-ai-tools
+cd somnio-ai-tools/cli
 
 dart pub get                              # Install dependencies
 dart analyze                              # Run static analysis

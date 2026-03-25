@@ -3,13 +3,13 @@ import 'dart:isolate';
 
 import 'package:path/path.dart' as p;
 
-/// Resolves the technology-tools repo root at runtime.
+/// Resolves the somnio-ai-tools repo root at runtime.
 ///
 /// When installed via `dart pub global activate --source git`, the repo is
 /// cached in `~/.pub-cache/git/`. This resolver finds the repo root
 /// so the CLI can access `skills/`.
 class PackageResolver {
-  /// Resolves the technology-tools repo root directory.
+  /// Resolves the somnio-ai-tools repo root directory.
   ///
   /// The CLI package lives at `<repo-root>/cli/`, so we navigate up
   /// one level from the package root.
@@ -20,7 +20,7 @@ class PackageResolver {
       final resolved = await Isolate.resolvePackageUri(packageUri);
       if (resolved != null) {
         // resolved = file:///<repo-root>/cli/lib/somnio.dart
-        // Go up: lib/ -> cli/ -> technology-tools/
+        // Go up: lib/ -> cli/ -> somnio-ai-tools/
         final repoRoot = resolved.resolve('../../').toFilePath();
         if (_validateRepoRoot(repoRoot)) return p.normalize(repoRoot);
       }
@@ -48,11 +48,11 @@ class PackageResolver {
     }
 
     throw StateError(
-      'Cannot find technology-tools repo root.\n'
+      'Cannot find somnio-ai-tools repo root.\n'
       'The skills/ directory was not found at the expected location.\n\n'
       'Solutions:\n'
       '  1. Set SOMNIO_ROOT environment variable:\n'
-      '     export SOMNIO_ROOT=/path/to/technology-tools\n\n'
+      '     export SOMNIO_ROOT=/path/to/somnio-ai-tools\n\n'
       '  2. Reinstall the CLI:\n'
       '     dart pub global activate --source git <repo-url> --git-path cli',
     );

@@ -28,7 +28,7 @@ class ParsedRule {
 class ContentLoader {
   const ContentLoader(this.repoRoot);
 
-  /// Absolute path to the technology-tools repo root.
+  /// Absolute path to the somnio-ai-tools repo root.
   final String repoRoot;
 
   /// Reads the SKILL.md file for a skill bundle.

@@ -9,7 +9,7 @@ AI-powered audit skills for Claude Code, Cursor, and 40+ other agents. Run compr
 Works with Claude Code, Cursor, Windsurf, Copilot, and [40+ other agents](https://agentskills.io).
 
 ```bash
-npx skills add somnio-software/technology-tools
+npx skills add somnio-software/somnio-ai-tools
 ```
 
 ### Option 2: Claude Code plugin
@@ -23,7 +23,7 @@ npx skills add somnio-software/technology-tools
 The Dart CLI includes a multi-step audit runner that orchestrates analysis across fresh AI contexts. It also installs skills via skills.sh under the hood.
 
 ```bash
-dart pub global activate -sgit https://github.com/somnio-software/technology-tools.git --git-path cli
+dart pub global activate -sgit https://github.com/somnio-software/somnio-ai-tools.git --git-path cli
 somnio setup
 ```
 
@@ -147,7 +147,7 @@ The CLI supports 19 agent definitions, automatic agent detection, per-step model
 ## Directory Structure
 
 ```
-technology-tools/
+somnio-ai-tools/
 ├── .claude-plugin/
 │   └── plugin.json              # Claude Code plugin manifest
 ├── skills/

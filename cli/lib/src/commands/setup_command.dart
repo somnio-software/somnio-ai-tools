@@ -32,7 +32,7 @@ class SetupCommand extends Command<int> {
   final Logger _logger;
 
   /// GitHub repo for skills.sh installation.
-  static const _skillsRepo = 'somnio-software/technology-tools';
+  static const _skillsRepo = 'somnio-software/somnio-ai-tools';
 
   @override
   String get name => 'setup';
