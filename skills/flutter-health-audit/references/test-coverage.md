@@ -260,6 +260,39 @@ if [ $total_lines -gt 0 ]; then
 else
   echo "Overall aggregated coverage: 0%"
 fi
+
+# Per-component coverage breakdown
+project_name=$(basename "$(pwd)")
+echo "COVERAGE BREAKDOWN:"
+
+if [ -f "coverage/app/lcov.info" ]; then
+  bd_lines=$(grep -c "^DA:" coverage/app/lcov.info || echo "0")
+  bd_covered=$(grep "^DA:" coverage/app/lcov.info | \
+    grep -c ",[1-9]" || echo "0")
+  if [ $bd_lines -gt 0 ]; then
+    bd_pct=$((bd_covered * 100 / bd_lines))
+    echo "  $project_name/lib: $bd_pct%"
+  else
+    echo "  $project_name/lib: 0%"
+  fi
+fi
+
+if [ -d "coverage/packages/" ]; then
+  for pkg_cov in coverage/packages/*/lcov.info; do
+    if [ -f "$pkg_cov" ]; then
+      pkg_name=$(basename $(dirname "$pkg_cov"))
+      bd_lines=$(grep -c "^DA:" "$pkg_cov" || echo "0")
+      bd_covered=$(grep "^DA:" "$pkg_cov" | \
+        grep -c ",[1-9]" || echo "0")
+      if [ $bd_lines -gt 0 ]; then
+        bd_pct=$((bd_covered * 100 / bd_lines))
+        echo "  $project_name/packages/$pkg_name: $bd_pct%"
+      else
+        echo "  $project_name/packages/$pkg_name: 0%"
+      fi
+    fi
+  done
+fi
 ```
 
 MULTI-APP AGGREGATION:
@@ -279,7 +312,7 @@ for app_dir in apps/*/; do
     total_lines=$((total_lines + app_lines))
     covered_lines=$((covered_lines + app_covered))
   fi
-  
+
   # Add app-specific packages coverage
   if [ -d "coverage/apps/$app_name/packages/" ]; then
     for package_coverage in \
@@ -315,6 +348,63 @@ if [ $total_lines -gt 0 ]; then
 else
   echo "Overall aggregated coverage: 0%"
 fi
+
+# Per-component coverage breakdown
+echo "COVERAGE BREAKDOWN:"
+
+for app_dir in apps/*/; do
+  app_name=$(basename "$app_dir")
+
+  # App lib coverage
+  if [ -f "coverage/apps/$app_name/lcov.info" ]; then
+    bd_lines=$(grep -c "^DA:" coverage/apps/$app_name/lcov.info || \
+      echo "0")
+    bd_covered=$(grep "^DA:" coverage/apps/$app_name/lcov.info | \
+      grep -c ",[1-9]" || echo "0")
+    if [ $bd_lines -gt 0 ]; then
+      bd_pct=$((bd_covered * 100 / bd_lines))
+      echo "  $app_name/lib: $bd_pct%"
+    else
+      echo "  $app_name/lib: 0%"
+    fi
+  fi
+
+  # App-specific packages coverage
+  if [ -d "coverage/apps/$app_name/packages/" ]; then
+    for pkg_cov in coverage/apps/$app_name/packages/*/lcov.info; do
+      if [ -f "$pkg_cov" ]; then
+        pkg_name=$(basename $(dirname "$pkg_cov"))
+        bd_lines=$(grep -c "^DA:" "$pkg_cov" || echo "0")
+        bd_covered=$(grep "^DA:" "$pkg_cov" | \
+          grep -c ",[1-9]" || echo "0")
+        if [ $bd_lines -gt 0 ]; then
+          bd_pct=$((bd_covered * 100 / bd_lines))
+          echo "  $app_name/packages/$pkg_name: $bd_pct%"
+        else
+          echo "  $app_name/packages/$pkg_name: 0%"
+        fi
+      fi
+    done
+  fi
+done
+
+# Shared packages coverage
+if [ -d "coverage/packages/" ]; then
+  for pkg_cov in coverage/packages/*/lcov.info; do
+    if [ -f "$pkg_cov" ]; then
+      pkg_name=$(basename $(dirname "$pkg_cov"))
+      bd_lines=$(grep -c "^DA:" "$pkg_cov" || echo "0")
+      bd_covered=$(grep "^DA:" "$pkg_cov" | \
+        grep -c ",[1-9]" || echo "0")
+      if [ $bd_lines -gt 0 ]; then
+        bd_pct=$((bd_covered * 100 / bd_lines))
+        echo "  packages/$pkg_name: $bd_pct%"
+      else
+        echo "  packages/$pkg_name: 0%"
+      fi
+    fi
+  done
+fi
 ```
 
 Step 4: Generate Coverage Summary
@@ -326,6 +416,10 @@ COVERAGE OVERVIEW).
 
 SINGLE APP SUMMARY:
 - Code Coverage: [X]% (overall: lib + packages) — MANDATORY
+- Coverage Breakdown: — MANDATORY (one line per component)
+  [ProjectName]/lib: [X]%
+  [ProjectName]/packages/[package_name]: [X]%
+  (list every package found)
 - App test count and coverage percentage
 - Packages test counts and coverage percentages (if packages/ exists)
 - Overall aggregated coverage percentage
@@ -337,6 +431,13 @@ SINGLE APP SUMMARY:
 
 MULTI-APP SUMMARY:
 - Code Coverage: App [name]: [X]%, App [name2]: [Y]% — MANDATORY
+- Coverage Breakdown: — MANDATORY (one line per component)
+  [AppName1]/lib: [X]%
+  [AppName1]/packages/[package_name]: [X]%
+  packages/[shared_package_name]: [X]%
+  [AppName2]/lib: [X]%
+  [AppName2]/packages/[package_name]: [X]%
+  (list every app, app-package, and shared package found)
 - Per-app test counts and coverage percentages
 - Per-app packages test counts and coverage percentages
 - Shared packages test counts and coverage percentages
@@ -392,6 +493,19 @@ Provide the following structured output:
    - Multi-app monorepo: Code Coverage: App [name]: [X]%, App
      [name2]: [Y]% (per-app overall including lib + app packages +
      shared packages)
+   MANDATORY: Include per-component "Coverage Breakdown:" immediately
+   after "Code Coverage:". One line per component:
+   - Single app:
+     Coverage Breakdown:
+       [ProjectName]/lib: [X]%
+       [ProjectName]/packages/[package_name]: [X]%
+   - Multi-app monorepo:
+     Coverage Breakdown:
+       [AppName1]/lib: [X]%
+       [AppName1]/packages/[package_name]: [X]%
+       packages/[shared_package_name]: [X]%
+       [AppName2]/lib: [X]%
+       [AppName2]/packages/[package_name]: [X]%
    - App coverage percentage (per app if multi-app)
    - Packages coverage percentage (per package if applicable)
    - Overall aggregated coverage percentage
