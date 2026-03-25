@@ -1,7 +1,7 @@
 {
   "name": "somnio-operations",
-  "version": "0.1.0",
-  "description": "AI-powered operations tools — infrastructure audits, monitoring, and DevOps automation.",
+  "version": "1.0.0",
+  "description": "Define user stories, manage backlogs, and streamline project workflows. Connect to Jira, Linear, or Slack to turn ideas into actionable tickets.",
   "author": {
     "name": "Somnio Software"
   },
@@ -9,9 +9,10 @@
   "license": "MIT",
   "keywords": [
     "operations",
-    "devops",
-    "infrastructure",
-    "monitoring",
-    "ci-cd"
+    "project-management",
+    "stories",
+    "jira",
+    "linear",
+    "backlog"
   ]
 }
