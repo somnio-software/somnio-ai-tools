@@ -4,26 +4,24 @@
     "name": "Somnio Software"
   },
   "metadata": {
-    "description": "AI-powered audit skills for Flutter, NestJS, and security.",
+    "description": "AI-powered tools for developers, marketing, and operations by Somnio Software.",
     "version": "1.0.0"
   },
   "plugins": [
     {
-      "name": "somnio",
-      "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, and more.",
-      "source": "./plugins/somnio",
-      "version": "2.0.0",
-      "homepage": "https://github.com/somnio-software/somnio-ai-tools",
-      "license": "MIT",
-      "keywords": [
-        "flutter",
-        "nestjs",
-        "audit",
-        "security",
-        "health-check",
-        "best-practices"
-      ],
-      "category": "development"
+      "name": "somnio-developer",
+      "source": "./plugins/developer",
+      "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, and more."
+    },
+    {
+      "name": "somnio-marketing",
+      "source": "./plugins/marketing",
+      "description": "AI-powered marketing tools — content strategy, ASO audits, and campaign analysis."
+    },
+    {
+      "name": "somnio-operations",
+      "source": "./plugins/operations",
+      "description": "AI-powered operations tools — infrastructure audits, monitoring, and DevOps automation."
     }
   ]
 }

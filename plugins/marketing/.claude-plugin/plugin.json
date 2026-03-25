@@ -1,0 +1,17 @@
+{
+  "name": "somnio-marketing",
+  "version": "0.1.0",
+  "description": "AI-powered marketing tools — content strategy, ASO audits, and campaign analysis.",
+  "author": {
+    "name": "Somnio Software"
+  },
+  "repository": "https://github.com/somnio-software/somnio-ai-tools",
+  "license": "MIT",
+  "keywords": [
+    "marketing",
+    "content-strategy",
+    "aso",
+    "seo",
+    "campaigns"
+  ]
+}

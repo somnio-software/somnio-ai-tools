@@ -1,0 +1,17 @@
+{
+  "name": "somnio-operations",
+  "version": "0.1.0",
+  "description": "AI-powered operations tools — infrastructure audits, monitoring, and DevOps automation.",
+  "author": {
+    "name": "Somnio Software"
+  },
+  "repository": "https://github.com/somnio-software/somnio-ai-tools",
+  "license": "MIT",
+  "keywords": [
+    "operations",
+    "devops",
+    "infrastructure",
+    "monitoring",
+    "ci-cd"
+  ]
+}
