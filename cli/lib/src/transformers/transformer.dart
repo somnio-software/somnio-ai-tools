@@ -15,7 +15,7 @@ class TransformOutput {
 
   /// Map of relative path -> file content.
   ///
-  /// For skillDir: `{name}/SKILL.md`, `{name}/rules/rule.md`, etc.
+  /// For skillDir: `{name}/SKILL.md`, `{name}/references/rule.md`, etc.
   /// For singleFile: `somnio-fh.md`
   /// For workflow: `global_workflows/somnio_x.md`, `somnio_rules/x/...`
   /// For markdown: `somnio_fh.md`

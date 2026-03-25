@@ -82,7 +82,7 @@ class AgentInstaller extends Installer {
   /// Installs transformed .md rule files for CLI execution (e.g., Cursor).
   void _installExecutionRules(SkillBundle bundle, String rulesBaseDir) {
     final planSubDir = bundle.planSubDir;
-    final rulesDir = p.join(rulesBaseDir, planSubDir, 'cursor_rules');
+    final rulesDir = p.join(rulesBaseDir, planSubDir, 'references');
 
     // Transform YAML rules into .md files
     final rules = loader.loadRules(bundle);
@@ -96,7 +96,7 @@ class AgentInstaller extends Installer {
     // Copy template files as-is
     final allFiles = loader.listAllRuleFiles(bundle);
     for (final relativePath in allFiles) {
-      if (relativePath.startsWith('templates/')) {
+      if (relativePath.startsWith('assets/')) {
         final absPath = loader.rulesFilePath(bundle, relativePath);
         final content = File(absPath).readAsStringSync();
         _writeFile(p.join(rulesDir, relativePath), content);

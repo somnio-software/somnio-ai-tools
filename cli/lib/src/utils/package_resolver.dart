@@ -7,7 +7,7 @@ import 'package:path/path.dart' as p;
 ///
 /// When installed via `dart pub global activate --source git`, the repo is
 /// cached in `~/.pub-cache/git/`. This resolver finds the repo root
-/// so the CLI can access `flutter-plans/`.
+/// so the CLI can access `skills/`.
 class PackageResolver {
   /// Resolves the technology-tools repo root directory.
   ///
@@ -49,7 +49,7 @@ class PackageResolver {
 
     throw StateError(
       'Cannot find technology-tools repo root.\n'
-      'The flutter-plans/ directory was not found at the expected location.\n\n'
+      'The skills/ directory was not found at the expected location.\n\n'
       'Solutions:\n'
       '  1. Set SOMNIO_ROOT environment variable:\n'
       '     export SOMNIO_ROOT=/path/to/technology-tools\n\n'
@@ -59,6 +59,6 @@ class PackageResolver {
   }
 
   bool _validateRepoRoot(String path) {
-    return Directory(p.join(path, 'flutter-plans')).existsSync();
+    return Directory(p.join(path, 'skills')).existsSync();
   }
 }

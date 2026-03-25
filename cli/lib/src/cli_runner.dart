@@ -3,7 +3,6 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 import 'commands/add_command.dart';
-import 'commands/init_command.dart';
 import 'commands/install_command.dart';
 import 'commands/quote_command.dart';
 import 'commands/run_command.dart';
@@ -38,7 +37,6 @@ class SomnioCliRunner extends CommandRunner<int> {
     );
 
     addCommand(AddCommand(logger: _logger));
-    addCommand(InitCommand(logger: _logger));
     addCommand(InstallCommand(logger: _logger));
     addCommand(UpdateCommand(logger: _logger));
     addCommand(QuoteCommand());

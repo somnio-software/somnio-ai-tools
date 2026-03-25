@@ -70,3 +70,4 @@ security_analysis_prompt.txt
 cli/.dart_tool/
 cli/pubspec.lock
 cli/.packages
+docs

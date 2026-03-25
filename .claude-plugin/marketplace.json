@@ -1,0 +1,29 @@
+{
+  "name": "somnio-software",
+  "owner": {
+    "name": "Somnio Software"
+  },
+  "metadata": {
+    "description": "AI-powered audit skills for Flutter, NestJS, and security.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "somnio",
+      "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, and more.",
+      "source": "./",
+      "version": "2.0.0",
+      "homepage": "https://github.com/somnio-software/technology-tools",
+      "license": "MIT",
+      "keywords": [
+        "flutter",
+        "nestjs",
+        "audit",
+        "security",
+        "health-check",
+        "best-practices"
+      ],
+      "category": "development"
+    }
+  ]
+}

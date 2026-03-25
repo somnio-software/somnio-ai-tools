@@ -3,9 +3,8 @@ import 'workflow_skill.dart';
 
 /// Static registry of all available skill bundles.
 ///
-/// Each bundle maps to a set of source files in `flutter-plans/`,
-/// `nestjs-plans/`, or `security-plans/` and defines how they are
-/// installed into each agent.
+/// Each bundle maps to a set of source files in `skills/` and defines
+/// how they are installed into each agent.
 class SkillRegistry {
   SkillRegistry._();
 
@@ -13,7 +12,8 @@ class SkillRegistry {
   static const List<SkillBundle> skills = [
     SkillBundle(
       id: 'flutter_health',
-      name: 'somnio-fh',
+      name: 'flutter-health-audit',
+      aliases: ['somnio-fh', 'fh'],
       displayName: 'Flutter Project Health Audit',
       description:
           'Execute a comprehensive Flutter Project Health Audit. '
@@ -22,17 +22,16 @@ class SkillRegistry {
           'Google Docs-ready report with section scores and weighted '
           'overall score.',
       planRelativePath:
-          'flutter-plans/flutter_project_health_audit/plan/flutter-health.plan.md',
+          'skills/flutter-health-audit/SKILL.md',
       rulesDirectory:
-          'flutter-plans/flutter_project_health_audit/cursor_rules',
-      workflowPath:
-          'flutter-plans/flutter_project_health_audit/.agent/workflows/flutter_health_audit.md',
+          'skills/flutter-health-audit/references',
       templatePath:
-          'flutter-plans/flutter_project_health_audit/cursor_rules/templates/flutter_report_template.txt',
+          'skills/flutter-health-audit/assets/report-template.txt',
     ),
     SkillBundle(
       id: 'flutter_plan',
-      name: 'somnio-fp',
+      name: 'flutter-best-practices',
+      aliases: ['somnio-fp', 'fp'],
       displayName: 'Flutter Best Practices Check',
       description:
           'Execute a micro-level Flutter code quality audit. '
@@ -40,17 +39,16 @@ class SkillRegistry {
           'architecture, and code implementation. Produces a detailed '
           'violations report with prioritized action plan.',
       planRelativePath:
-          'flutter-plans/flutter_best_practices_check/plan/best_practices.plan.md',
+          'skills/flutter-best-practices/SKILL.md',
       rulesDirectory:
-          'flutter-plans/flutter_best_practices_check/cursor_rules',
-      workflowPath:
-          'flutter-plans/flutter_best_practices_check/.agent/workflows/flutter_best_practices.md',
+          'skills/flutter-best-practices/references',
       templatePath:
-          'flutter-plans/flutter_best_practices_check/cursor_rules/templates/best_practices_report_template.txt',
+          'skills/flutter-best-practices/assets/report-template.txt',
     ),
     SkillBundle(
       id: 'nestjs_health',
-      name: 'somnio-nh',
+      name: 'nestjs-health-audit',
+      aliases: ['somnio-nh', 'nh'],
       displayName: 'NestJS Project Health Audit',
       description:
           'Execute a comprehensive NestJS Project Health Audit. '
@@ -59,17 +57,16 @@ class SkillRegistry {
           'Produces a Google Docs-ready report with section scores and '
           'weighted overall score.',
       planRelativePath:
-          'nestjs-plans/nestjs_project_health_audit/plan/nestjs-health.plan.md',
+          'skills/nestjs-health-audit/SKILL.md',
       rulesDirectory:
-          'nestjs-plans/nestjs_project_health_audit/cursor_rules',
-      workflowPath:
-          'nestjs-plans/nestjs_project_health_audit/.agent/workflows/nestjs_health_audit.md',
+          'skills/nestjs-health-audit/references',
       templatePath:
-          'nestjs-plans/nestjs_project_health_audit/cursor_rules/templates/nestjs_report_template.txt',
+          'skills/nestjs-health-audit/assets/report-template.txt',
     ),
     SkillBundle(
       id: 'nestjs_plan',
-      name: 'somnio-np',
+      name: 'nestjs-best-practices',
+      aliases: ['somnio-np', 'np'],
       displayName: 'NestJS Best Practices Check',
       description:
           'Execute a micro-level NestJS code quality audit. '
@@ -78,17 +75,16 @@ class SkillRegistry {
           'implementation. Produces a detailed violations report with '
           'prioritized action plan.',
       planRelativePath:
-          'nestjs-plans/nestjs_best_practices_check/plan/best_practices.plan.md',
+          'skills/nestjs-best-practices/SKILL.md',
       rulesDirectory:
-          'nestjs-plans/nestjs_best_practices_check/cursor_rules',
-      workflowPath:
-          'nestjs-plans/nestjs_best_practices_check/.agent/workflows/nestjs_best_practices.md',
+          'skills/nestjs-best-practices/references',
       templatePath:
-          'nestjs-plans/nestjs_best_practices_check/cursor_rules/templates/best_practices_report_template.txt',
+          'skills/nestjs-best-practices/assets/report-template.txt',
     ),
     SkillBundle(
       id: 'security_audit',
-      name: 'somnio-sa',
+      name: 'security-audit',
+      aliases: ['somnio-sa', 'sa'],
       displayName: 'Security Audit',
       description:
           'Execute a comprehensive, framework-agnostic Security Audit. '
@@ -97,39 +93,28 @@ class SkillRegistry {
           'dependency vulnerabilities, and optionally uses Gemini AI '
           'for advanced analysis. Produces a severity-classified report.',
       planRelativePath:
-          'security-plans/security_audit/plan/security.plan.md',
+          'skills/security-audit/SKILL.md',
       rulesDirectory:
-          'security-plans/security_audit/cursor_rules',
-      workflowPath:
-          'security-plans/security_audit/.agent/workflows/security_audit.md',
+          'skills/security-audit/references',
       templatePath:
-          'security-plans/security_audit/cursor_rules/templates/security_report_template.txt',
+          'skills/security-audit/assets/report-template.txt',
     ),
   ];
 
   /// Workflow skill bundles (standalone markdown, no YAML rules).
   ///
-  /// Installed to all agents as `/workflow:plan` and `/workflow:run`.
+  /// Installed to all agents as `/workflow-builder`.
   static const List<WorkflowSkill> workflowSkills = [
     WorkflowSkill(
-      id: 'workflow_plan',
-      name: 'workflow-plan',
-      displayName: 'Workflow Planner',
+      id: 'workflow_builder',
+      name: 'workflow-builder',
+      displayName: 'Workflow Builder',
       description:
-          'Create a custom, repeatable workflow with multiple steps '
-          'that can each use different AI models.',
+          'Create and execute custom, repeatable workflows with multiple '
+          'steps that can each use different AI models and run in '
+          'parallel waves.',
       planRelativePath:
-          'workflow-skills/workflow_plan/plan/workflow-plan.skill.md',
-    ),
-    WorkflowSkill(
-      id: 'workflow_run',
-      name: 'workflow-run',
-      displayName: 'Workflow Runner',
-      description:
-          'Execute a custom workflow step by step, spawning a '
-          'subagent for each step with the appropriate model.',
-      planRelativePath:
-          'workflow-skills/workflow_run/plan/workflow-run.skill.md',
+          'skills/workflow-builder/SKILL.md',
     ),
   ];
 
@@ -141,10 +126,11 @@ class SkillRegistry {
     return null;
   }
 
-  /// Find a skill bundle by its name.
+  /// Find a skill bundle by its name or alias.
   static SkillBundle? findByName(String name) {
     for (final skill in skills) {
       if (skill.name == name) return skill;
+      if (skill.aliases.contains(name)) return skill;
     }
     return null;
   }

@@ -81,11 +81,17 @@ class RunCommand extends Command<int> {
               b.id.endsWith('_audit'))
           .toList();
 
-  /// Derives the short code from a bundle name.
+  /// Derives a display code from a bundle for listing.
   ///
-  /// `somnio-fh` -> `fh`, `somnio-nh` -> `nh`
-  String _codeFromBundle(SkillBundle bundle) =>
-      bundle.name.replaceFirst('somnio-', '');
+  /// Shows the primary name and short alias if available.
+  /// `flutter-health-audit` (fh)
+  String _codeFromBundle(SkillBundle bundle) {
+    final shortAlias = bundle.aliases.where(
+      (a) => !a.startsWith('somnio-'),
+    ).firstOrNull;
+    if (shortAlias != null) return shortAlias;
+    return bundle.name;
+  }
 
   /// Derives the template file name from the bundle's template path.
   String _templateFileFromBundle(SkillBundle bundle) {
@@ -105,10 +111,13 @@ class RunCommand extends Command<int> {
   String _artifactsDirFromBundle(String cwd, SkillBundle bundle) =>
       p.join(cwd, 'reports', '.artifacts', bundle.id);
 
-  /// Finds an audit bundle by its short code.
+  /// Finds an audit bundle by name, alias, or short code.
   SkillBundle? _findBundleByCode(String code) {
     for (final bundle in _runnableBundles) {
-      if (_codeFromBundle(bundle) == code) return bundle;
+      // Match by primary name
+      if (bundle.name == code) return bundle;
+      // Match by any alias (includes legacy somnio-fh and short fh)
+      if (bundle.aliases.contains(code)) return bundle;
     }
     return null;
   }
@@ -128,17 +137,21 @@ class RunCommand extends Command<int> {
             : 'Unknown audit code: "$code".',
       );
       _logger.info('');
-      _logger.info('Available codes:');
+      _logger.info('Available audits:');
       for (final b in bundles) {
+        final shortAlias = _codeFromBundle(b);
         _logger.info(
-          '  ${_codeFromBundle(b).padRight(4)} — ${b.displayName}',
+          '  ${b.name.padRight(26)} (${shortAlias.padRight(2)}) — ${b.displayName}',
         );
       }
       _logger.info('');
-      _logger.info('Usage: somnio run <code>');
+      _logger.info('Usage: somnio run <name-or-alias>');
       if (bundles.isNotEmpty) {
         _logger.info(
-          'Example: somnio run ${_codeFromBundle(bundles.first)}',
+          'Example: somnio run ${bundles.first.name}',
+        );
+        _logger.info(
+          '     or: somnio run ${_codeFromBundle(bundles.first)}',
         );
       }
       return ExitCode.usage.code;

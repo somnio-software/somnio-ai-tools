@@ -26,12 +26,12 @@ class ClaudeSkillOutput {
   final String? templateFileName;
 }
 
-/// Transforms plan.md + YAML rules into Claude Code skill format.
+/// Transforms SKILL.md + references into Claude Code skill format.
 ///
 /// Claude Code skills are stored as directories containing:
 /// - SKILL.md (orchestration plan with frontmatter)
-/// - rules/ (individual rule files as markdown)
-/// - templates/ (report templates, copied as-is)
+/// - references/ (individual reference files as markdown)
+/// - assets/ (report templates, copied as-is)
 class ClaudeTransformer implements Transformer {
   /// Transforms a skill bundle into Claude Code format.
   ClaudeSkillOutput transformBundle(SkillBundle bundle, ContentLoader loader) {
@@ -84,7 +84,7 @@ class ClaudeTransformer implements Transformer {
       (match) {
         final ruleName = match.group(1)!;
         return 'Read and follow the instructions in '
-            '`rules/$ruleName.md`';
+            '`references/$ruleName.md`';
       },
     );
 
@@ -109,7 +109,7 @@ class ClaudeTransformer implements Transformer {
       (match) {
         final ruleName = match.group(1)!;
         return 'Read and follow the instructions in '
-            '`rules/$ruleName.md`';
+            '`references/$ruleName.md`';
       },
     );
 
@@ -146,7 +146,7 @@ class ClaudeTransformer implements Transformer {
         final prefix = match.group(1)!;
         final ruleName = match.group(2)!;
         final targetSkill = SkillRegistry.findById('${prefix}_plan');
-        return '`rules/$ruleName.md` (from '
+        return '`references/$ruleName.md` (from '
             '`/${targetSkill?.name ?? bundle.name}`)';
       },
     );
@@ -166,14 +166,14 @@ class ClaudeTransformer implements Transformer {
     // SKILL.md in skill directory
     files['${bundle.name}/SKILL.md'] = output.skillMd;
 
-    // Rule files in rules/ subdirectory
+    // Reference files in references/ subdirectory
     for (final entry in output.ruleFiles.entries) {
-      files['${bundle.name}/rules/${entry.key}'] = entry.value;
+      files['${bundle.name}/references/${entry.key}'] = entry.value;
     }
 
-    // Template file
+    // Template file in assets/ subdirectory
     if (output.templateContent != null && output.templateFileName != null) {
-      files['${bundle.name}/templates/${output.templateFileName!}'] =
+      files['${bundle.name}/assets/${output.templateFileName!}'] =
           output.templateContent!;
     }
 

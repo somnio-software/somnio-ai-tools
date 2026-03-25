@@ -14,7 +14,7 @@ enum PromptStyle {
 
 /// How skill files are organized on disk.
 enum InstallFormat {
-  /// Directory with SKILL.md + rules/ + templates/ (Claude Code).
+  /// Directory with SKILL.md + references/ + assets/ (Claude Code).
   skillDir,
 
   /// Single self-contained .md file (Cursor).

@@ -43,7 +43,7 @@ class PreflightResult {
 ///
 /// When running via CLI (`somnio run`), these steps are handled directly
 /// by the CLI — the AI only runs the analysis steps. When running as a
-/// skill in an IDE (`/somnio-fh`), all steps run via AI as before.
+/// skill in an agent (`/somnio-fh`), all steps run via AI as before.
 class PreflightRunner {
   PreflightRunner({required this.logger});
 

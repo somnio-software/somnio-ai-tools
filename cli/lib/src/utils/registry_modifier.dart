@@ -87,6 +87,14 @@ class RegistryModifier {
     buf.writeln('    SkillBundle(');
     buf.writeln("      id: '${bundle.id}',");
     buf.writeln("      name: '${bundle.name}',");
+
+    // Aliases
+    if (bundle.aliases.isNotEmpty) {
+      final aliasLiterals =
+          bundle.aliases.map((a) => "'$a'").join(', ');
+      buf.writeln('      aliases: [$aliasLiterals],');
+    }
+
     buf.writeln("      displayName: '${bundle.displayName}',");
 
     // Description: use adjacent string literals to match existing style

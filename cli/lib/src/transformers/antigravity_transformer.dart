@@ -65,7 +65,7 @@ class AntigravityTransformer implements Transformer {
     for (final relativePath in allFiles) {
       final absPath = loader.rulesFilePath(bundle, relativePath);
       final content = File(absPath).readAsStringSync();
-      ruleFiles['$planSubDir/cursor_rules/$relativePath'] = content;
+      ruleFiles['$planSubDir/references/$relativePath'] = content;
     }
 
     // Determine plan relative path under somnio_rules

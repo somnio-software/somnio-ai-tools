@@ -20,40 +20,28 @@ class ScaffoldGenerator {
     required String displayName,
   }) async {
     final techTitle = CommandHelpers.titleCase(tech);
-    final baseDir = p.join(
-      repoRoot,
-      '$tech-plans',
-      '${tech}_project_health_audit',
-    );
+    final baseDir = p.join(repoRoot, 'skills', '$tech-health-audit');
 
     // Create directories
-    await _createDir(p.join(baseDir, 'plan'));
-    await _createDir(p.join(baseDir, 'cursor_rules', 'templates'));
-    await _createDir(p.join(baseDir, '.agent', 'workflows'));
+    await _createDir(p.join(baseDir, 'references'));
+    await _createDir(p.join(baseDir, 'assets'));
 
-    // Plan file
+    // SKILL.md plan file
     await _writeFile(
-      p.join(baseDir, 'plan', '$tech-health.plan.md'),
+      p.join(baseDir, 'SKILL.md'),
       _healthPlanTemplate(tech, techTitle, displayName),
     );
 
-    // Sample YAML rule
+    // Sample reference file
     await _writeFile(
-      p.join(baseDir, 'cursor_rules', '${tech}_repository_inventory.yaml'),
-      _sampleRuleTemplate(tech, techTitle),
+      p.join(baseDir, 'references', '${tech}_repository_inventory.md'),
+      _sampleReferenceTemplate(tech, techTitle),
     );
 
     // Report template
     await _writeFile(
-      p.join(baseDir, 'cursor_rules', 'templates',
-          '${tech}_report_template.txt'),
+      p.join(baseDir, 'assets', 'report-template.txt'),
       _reportTemplate(techTitle, displayName),
-    );
-
-    // Antigravity workflow
-    await _writeFile(
-      p.join(baseDir, '.agent', 'workflows', '${tech}_health_audit.md'),
-      _healthWorkflowTemplate(tech, techTitle),
     );
   }
 
@@ -63,46 +51,33 @@ class ScaffoldGenerator {
     required String displayName,
   }) async {
     final techTitle = CommandHelpers.titleCase(tech);
-    final baseDir = p.join(
-      repoRoot,
-      '$tech-plans',
-      '${tech}_best_practices_check',
-    );
+    final baseDir = p.join(repoRoot, 'skills', '$tech-best-practices');
 
     // Create directories
-    await _createDir(p.join(baseDir, 'plan'));
-    await _createDir(p.join(baseDir, 'cursor_rules', 'templates'));
-    await _createDir(p.join(baseDir, '.agent', 'workflows'));
+    await _createDir(p.join(baseDir, 'references'));
+    await _createDir(p.join(baseDir, 'assets'));
 
-    // Plan file
+    // SKILL.md plan file
     await _writeFile(
-      p.join(baseDir, 'plan', 'best_practices.plan.md'),
+      p.join(baseDir, 'SKILL.md'),
       _bestPracticesPlanTemplate(tech, techTitle, displayName),
     );
 
     // Report template
     await _writeFile(
-      p.join(
-        baseDir,
-        'cursor_rules',
-        'templates',
-        'best_practices_report_template.txt',
-      ),
+      p.join(baseDir, 'assets', 'report-template.txt'),
       _bestPracticesReportTemplate(techTitle, displayName),
-    );
-
-    // Antigravity workflow
-    await _writeFile(
-      p.join(baseDir, '.agent', 'workflows', '${tech}_best_practices.md'),
-      _bestPracticesWorkflowTemplate(tech, techTitle),
     );
   }
 
-  /// Generates a README.md for the top-level {tech}-plans/ directory.
+  /// Generates a README.md for the skills/ directory (if not present).
   Future<void> generateReadme(String tech) async {
     final techTitle = CommandHelpers.titleCase(tech);
-    final readmePath = p.join(repoRoot, '$tech-plans', 'README.md');
-    await _writeFile(readmePath, _readmeTemplate(tech, techTitle));
+    final readmePath = p.join(repoRoot, 'skills', 'README.md');
+    // Only create if not already present (shared by all skills)
+    if (!File(readmePath).existsSync()) {
+      await _writeFile(readmePath, _readmeTemplate(tech, techTitle));
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -127,18 +102,18 @@ analysis:
 Install via Somnio CLI:
 
 ```bash
-somnio init
+somnio setup
 ```
 
 Then use in your $techTitle project:
 
-- `/somnio-${tech[0]}h` - Health audit
-- `/somnio-${tech[0]}p` - Best practices check
+- `/$tech-health-audit` - Health audit
+- `/$tech-best-practices` - Best practices check
 
 ## Structure
 
-- `${tech}_project_health_audit/` - Health audit skill bundle
-- `${tech}_best_practices_check/` - Best practices skill bundle
+- `$tech-health-audit/` - Health audit skill bundle
+- `$tech-best-practices/` - Best practices skill bundle
 
 ## Contributing
 
@@ -151,12 +126,17 @@ See the main repository README for contribution guidelines.
     String displayName,
   ) =>
       '''
-<!-- TODO: Add UUID line -->
+---
+name: $tech-health-audit
+description: $displayName
+---
+
 # $displayName - Modular Execution Plan
 
 This plan executes the $displayName through sequential,
-modular rules. Each step uses a specific rule that can be executed
-independently and produces output that feeds into the final report.
+modular references. Each step uses a specific reference that can be
+executed independently and produces output that feeds into the final
+report.
 
 ## Agent Role & Context
 
@@ -171,13 +151,13 @@ You are a master at:
 - **Evidence-Based Analysis**: Analyzing repository evidence objectively
   without inventing data or making assumptions
 - **Modular Rule Execution**: Coordinating sequential execution of
-  specialized analysis rules
+  specialized analysis references
 - **Score Calculation**: Calculating section scores (0-100) and weighted
   overall scores accurately
 - **Technical Risk Assessment**: Identifying technical risks, technical
   debt, and project maturity indicators
 - **Report Integration**: Synthesizing findings from multiple analysis
-  rules into unified reports
+  references into unified reports
 
 **Responsibilities**:
 - Execute technical audits following the plan steps sequentially
@@ -202,7 +182,7 @@ You are a master at:
 ## Plan Steps
 
 TODO: Add your execution steps below. Reference rules using
-the \`@rule_name\` syntax (without the .yaml extension).
+the \`@rule_name\` syntax (without the .md extension).
 
 ### Step 1. Repository Inventory
 
@@ -212,90 +192,99 @@ Purpose: Analyze repository structure and organization.
 
 ### Step 2. Configuration Analysis
 
-TODO: Create \`${tech}_config_analysis.yaml\` rule and reference it here.
+TODO: Create \`${tech}_config_analysis.md\` reference and reference it
+here.
 
 ### Step 3. Testing Analysis
 
-TODO: Create \`${tech}_testing_analysis.yaml\` rule and reference it here.
+TODO: Create \`${tech}_testing_analysis.md\` reference and reference it
+here.
 
 ### Step 4. Code Quality
 
-TODO: Create \`${tech}_code_quality.yaml\` rule and reference it here.
+TODO: Create \`${tech}_code_quality.md\` reference and reference it here.
 
 ### Step 5. Security Analysis
 
-TODO: Create \`${tech}_security_analysis.yaml\` rule and reference it here.
+TODO: Create \`${tech}_security_analysis.md\` reference and reference it
+here.
 
 ### Step 6. Documentation Analysis
 
-TODO: Create \`${tech}_documentation_analysis.yaml\` rule and reference
-it here.
+TODO: Create \`${tech}_documentation_analysis.md\` reference and
+reference it here.
 
 ### Step 7. CI/CD Analysis
 
-TODO: Create \`${tech}_cicd_analysis.yaml\` rule and reference it here.
+TODO: Create \`${tech}_cicd_analysis.md\` reference and reference it
+here.
 
 ### Step 8. Generate Report
 
-TODO: Create \`${tech}_report_generator.yaml\` rule and reference it here.
+TODO: Create \`${tech}_report_generator.md\` reference and reference it
+here.
 
 Output: Save report to \`./reports/${tech}_audit.txt\`
 ''';
 
-  String _sampleRuleTemplate(String tech, String techTitle) => '''
-rules:
-  - name: $techTitle Repository Inventory
-    description: >
-      Analyze $techTitle repository structure and organization
-      patterns.
-    match: "*"
-    prompt: |
-      You are an elite repository structure analyst with deep expertise
-      in $techTitle project organization patterns.
+  String _sampleReferenceTemplate(String tech, String techTitle) => '''
+# $techTitle Repository Inventory
 
-      ## Your Core Expertise
+> Analyze $techTitle repository structure and organization patterns.
 
-      You are a master at:
-      - **Repository Type Detection**: Identifying project structures
-        (monorepo, single-app, micro-services, etc.)
-      - **Package Analysis**: Analyzing module dependencies and
-        relationships
-      - **Feature Organization**: Evaluating code organization patterns
-        and separation of concerns
+---
 
-      ## Task
+Goal: Identify the repository structure, modules, and code organization
+patterns for a $techTitle project.
 
-      Analyze the $techTitle repository structure:
+Instructions:
 
-      1. **Repository Type**
-         - Identify project structure (monorepo, single-app, etc.)
-         - Document directory organization
+You are an elite repository structure analyst with deep expertise
+in $techTitle project organization patterns.
 
-      2. **Module Analysis**
-         - List all modules/packages
-         - Analyze dependencies between modules
+## Your Core Expertise
 
-      3. **Code Organization**
-         - Evaluate feature folder structure
-         - Assess separation of concerns
+You are a master at:
+- **Repository Type Detection**: Identifying project structures
+  (monorepo, single-app, micro-services, etc.)
+- **Package Analysis**: Analyzing module dependencies and
+  relationships
+- **Feature Organization**: Evaluating code organization patterns
+  and separation of concerns
 
-      ## Output Format
+## Task
 
-      Provide findings in structured sections:
+Analyze the $techTitle repository structure:
 
-      ### Repository Structure
-      - Type: [structure type]
-      - Organization: [description]
+1. **Repository Type**
+   - Identify project structure (monorepo, single-app, etc.)
+   - Document directory organization
 
-      ### Modules/Packages
-      - List all modules with brief descriptions
+2. **Module Analysis**
+   - List all modules/packages
+   - Analyze dependencies between modules
 
-      ### Code Organization
-      - Evaluation of organization patterns
-      - Recommendations for improvements
+3. **Code Organization**
+   - Evaluate feature folder structure
+   - Assess separation of concerns
 
-      TODO: Customize this rule for $techTitle-specific patterns
-      and conventions.
+## Output Format
+
+Provide findings in structured sections:
+
+### Repository Structure
+- Type: [structure type]
+- Organization: [description]
+
+### Modules/Packages
+- List all modules with brief descriptions
+
+### Code Organization
+- Evaluation of organization patterns
+- Recommendations for improvements
+
+TODO: Customize this reference for $techTitle-specific patterns
+and conventions.
 ''';
 
   String _reportTemplate(String techTitle, String displayName) => '''
@@ -353,38 +342,22 @@ Recommendations:
 - [Recommendation 2]
 ''';
 
-  String _healthWorkflowTemplate(String tech, String techTitle) => '''
----
-description: Automated $techTitle Project Health Audit
----
-
-# $techTitle Project Health Audit Workflow
-
-// turbo-all
-
-1. **Repository Inventory**
-   Read \`${tech}_project_health_audit/cursor_rules/${tech}_repository_inventory.yaml\` and execute the instructions.
-
-TODO: Add more workflow steps as you create additional YAML rules.
-Each step should reference a rule file and describe what it does.
-
-Example:
-2. **Configuration Analysis**
-   Read \`${tech}_project_health_audit/cursor_rules/${tech}_config_analysis.yaml\` and execute the instructions.
-''';
-
   String _bestPracticesPlanTemplate(
     String tech,
     String techTitle,
     String displayName,
   ) =>
       '''
-<!-- TODO: Add UUID line -->
+---
+name: $tech-best-practices
+description: $displayName
+---
+
 # $displayName - Modular Execution Plan
 
 This plan executes the $displayName through sequential,
-modular rules. Each rule validates code against $techTitle best
-practices and produces a violations report.
+modular references. Each reference validates code against $techTitle
+best practices and produces a violations report.
 
 ## Agent Role & Context
 
@@ -408,24 +381,24 @@ You are a master at:
 ## Plan Steps
 
 TODO: Add your execution steps below. Reference rules using
-the \`@rule_name\` syntax (without the .yaml extension).
+the \`@rule_name\` syntax (without the .md extension).
 
 ### Step 1. Testing Quality
 
-TODO: Create \`testing_quality.yaml\` rule and reference it here.
+TODO: Create \`testing_quality.md\` reference and reference it here.
 
 ### Step 2. Architecture Compliance
 
-TODO: Create \`architecture_compliance.yaml\` rule and reference it
+TODO: Create \`architecture_compliance.md\` reference and reference it
 here.
 
 ### Step 3. Code Standards
 
-TODO: Create \`code_standards.yaml\` rule and reference it here.
+TODO: Create \`code_standards.md\` reference and reference it here.
 
 ### Step 4. Generate Report
 
-TODO: Create \`best_practices_generator.yaml\` rule and reference it
+TODO: Create \`best_practices_generator.md\` reference and reference it
 here.
 
 Output: Save report to \`./reports/${tech}_best_practices.txt\`
@@ -454,22 +427,6 @@ TODO: Add category sections (Testing, Architecture, Code Standards).
 1. [Action 1] - [Severity]
 2. [Action 2] - [Severity]
 3. [Action 3] - [Severity]
-''';
-
-  String _bestPracticesWorkflowTemplate(String tech, String techTitle) => '''
----
-description: Automated $techTitle Best Practices Check
----
-
-# $techTitle Best Practices Check Workflow
-
-// turbo-all
-
-TODO: Add workflow steps as you create YAML rules.
-
-Example:
-1. **Testing Quality**
-   Read \`${tech}_best_practices_check/cursor_rules/testing_quality.yaml\` and execute the instructions.
 ''';
 
   // ---------------------------------------------------------------------------
