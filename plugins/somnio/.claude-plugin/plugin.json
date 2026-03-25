@@ -3,8 +3,7 @@
   "version": "2.0.0",
   "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, and more.",
   "author": {
-    "name": "Somnio Software",
-    "url": "https://github.com/somnio-software/somnio-ai-tools"
+    "name": "Somnio Software"
   },
   "repository": "https://github.com/somnio-software/somnio-ai-tools",
   "license": "MIT",
