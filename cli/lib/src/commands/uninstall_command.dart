@@ -81,24 +81,52 @@ class UninstallCommand extends Command<int> {
     return ExitCode.success.code;
   }
 
+  /// All skill names to clean up (old v1.x + new v2.x naming).
+  static const _allSkillNames = [
+    'somnio-fh', 'somnio-fp', 'somnio-nh', 'somnio-np', 'somnio-sa',
+    'workflow-plan', 'workflow-run',
+    'flutter-health-audit', 'flutter-best-practices',
+    'nestjs-health-audit', 'nestjs-best-practices',
+    'security-audit', 'workflow-builder',
+  ];
+
   bool _removeClaude() {
     final globalDir = Directory(PlatformUtils.claudeGlobalSkillsDir);
     if (!globalDir.existsSync()) return false;
 
-    final dirs = globalDir
-        .listSync()
-        .whereType<Directory>()
-        .where((d) => p.basename(d.path).startsWith('somnio-'))
-        .toList();
-
-    if (dirs.isEmpty) return false;
-
-    for (final dir in dirs) {
-      final name = p.basename(dir.path);
-      dir.deleteSync(recursive: true);
-      _logger.info('  Removed Claude skill: $name');
+    var removed = false;
+    for (final name in _allSkillNames) {
+      // Remove directories (built-in installer)
+      final dir = Directory(p.join(globalDir.path, name));
+      if (dir.existsSync()) {
+        dir.deleteSync(recursive: true);
+        _logger.info('  Removed Claude skill: $name');
+        removed = true;
+      }
+      // Remove symlinks (skills.sh installer)
+      final link = Link(p.join(globalDir.path, name));
+      if (link.existsSync()) {
+        link.deleteSync();
+        _logger.info('  Removed Claude symlink: $name');
+        removed = true;
+      }
     }
-    return true;
+
+    // Also clean ~/.agents/skills/ (skills.sh canonical location)
+    final home = PlatformUtils.homeDirectory;
+    final agentsDir = Directory(p.join(home, '.agents', 'skills'));
+    if (agentsDir.existsSync()) {
+      for (final name in _allSkillNames) {
+        final dir = Directory(p.join(agentsDir.path, name));
+        if (dir.existsSync()) {
+          dir.deleteSync(recursive: true);
+          _logger.info('  Removed agents registry: $name');
+          removed = true;
+        }
+      }
+    }
+
+    return removed;
   }
 
   bool _removeCursor() {

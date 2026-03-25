@@ -102,7 +102,7 @@ analysis:
 Install via Somnio CLI:
 
 ```bash
-somnio init
+somnio setup
 ```
 
 Then use in your $techTitle project:
