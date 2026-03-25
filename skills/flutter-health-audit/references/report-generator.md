@@ -78,6 +78,9 @@ Score: [Score]/100 ([Label])
 Section 7 (Testing) EXCEPTION: MUST include "Code Coverage:" on a line
 immediately after Score, before Key Findings. Extract from
 @flutter_test_coverage artifact (line starting with "Code Coverage:").
+MUST also include "Coverage Breakdown:" immediately after "Code Coverage:",
+listing per-component coverage (one line per lib/package). Extract from
+@flutter_test_coverage artifact (lines under "COVERAGE BREAKDOWN:").
 
 Key Findings:
 - [Bullet point 1]
@@ -138,6 +141,10 @@ Priority Recommendations:
 - Number of feature folders: [Count] ([App breakdown if multi-app])
 - Packages count: [Count]
 - Coverage %: [Percentage or status] (per app if multi-app)
+- Coverage breakdown by component:
+  [Component/lib: X%]
+  [Component/packages/package_name: X%]
+  [Continue for each component]
 - Overall aggregated coverage %: [Total percentage combining all
   apps and packages]
 - State management detected: [Pattern]

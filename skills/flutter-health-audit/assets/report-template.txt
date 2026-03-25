@@ -181,6 +181,11 @@ Score: [Score]/100 ([Label])
 Code Coverage: [Value from @flutter_test_coverage artifact: overall % or
   per-app for monorepo]
 
+Coverage Breakdown:
+  [Component/lib: X%]
+  [Component/packages/package_name: X%]
+  [Continue for each component — see @flutter_test_coverage artifact]
+
 Key Findings:
 - [Finding 1]
 - [Finding 2]
@@ -309,6 +314,10 @@ Counts & Metrics:
 - Number of feature folders: [Count] ([App breakdown if multi-app])
 - Packages count: [Count]
 - Coverage %: [Percentage or status] (per app if multi-app)
+- Coverage breakdown by component:
+  [Component/lib: X%]
+  [Component/packages/package_name: X%]
+  [Continue for each component]
 - Overall aggregated coverage %: [Total percentage combining all apps and packages]
 - State management detected: [Pattern]
 - Force-upgrade/maintenance mode: [Status]
