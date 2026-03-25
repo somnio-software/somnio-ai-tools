@@ -8,8 +8,9 @@ class PlanParser {
   /// Expects a section like:
   /// ```
   /// **Rule Execution Order**:
-  /// 1. `@flutter_tool_installer`
-  /// 2. `@flutter_version_alignment` (MANDATORY - stops if FVM global fails)
+  /// 1. Read and follow the instructions in `references/tool-installer.md`
+  /// 2. `references/version-alignment.md` (MANDATORY - stops if FVM global fails)
+  /// 3. `@legacy_rule_name`
   /// ```
   ///
   /// Returns an empty list if no "Rule Execution Order" section is found.
@@ -25,9 +26,13 @@ class PlanParser {
     final afterSection = planContent.substring(sectionMatch.end);
     final lines = afterSection.split('\n');
 
-    // Parse numbered step lines
+    // Parse numbered step lines.
+    // Supports three formats:
+    //   1. `@rule_name`                              (legacy)
+    //   2. `references/rule-name.md`                 (short)
+    //   3. Read and follow ... `references/rule.md`  (verbose)
     final stepPattern = RegExp(
-      r'^\s*(\d+)\.\s+`@(\w+)`\s*(.*?)$',
+      r'^\s*(\d+)\.\s+(?:.*?`references/([\w-]+)\.md`|`@(\w+)`)\s*(.*?)$',
     );
 
     final steps = <ExecutionStep>[];
@@ -38,8 +43,9 @@ class PlanParser {
       if (match != null) {
         foundFirstStep = true;
         final index = int.parse(match.group(1)!);
-        final ruleName = match.group(2)!;
-        final remainder = match.group(3)?.trim() ?? '';
+        // Group 2 = references/ format, Group 3 = legacy @format
+        final ruleName = match.group(2) ?? match.group(3)!;
+        final remainder = match.group(4)?.trim() ?? '';
 
         // Check for MANDATORY annotation
         final isMandatory = remainder.toUpperCase().contains('MANDATORY');
