@@ -2,6 +2,8 @@
 
 AI-powered audit skills for Claude Code, Cursor, and 40+ other agents. Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, and more — directly from your AI coding assistant.
 
+[![Install Somnio Skills](https://img.shields.io/badge/skills.sh-Install%20Somnio%20Skills-blue?style=for-the-badge)](https://skills.sh/somnio-software/somnio-ai-tools)
+
 ## Installation
 
 ### Option 1: skills.sh (recommended)
