@@ -34,7 +34,7 @@ somnio -q run fh
 
 | Command | Description |
 |---------|-------------|
-| `somnio setup` | Detect AI CLIs, install missing ones, install skills to all detected agents |
+| `somnio setup` | Detect AI CLIs, install missing ones, install skills via skills.sh |
 | `somnio run <name-or-alias>` | Execute a multi-step audit from the target project directory |
 | `somnio add <tech>` | Add a new technology's audit skills (scaffolds + registers) |
 | `somnio status` | Show installed skills across all agents |
@@ -44,18 +44,20 @@ somnio -q run fh
 
 ### somnio setup
 
-Full guided setup wizard. The primary entry point for new and existing users.
+Primary installation command. Detects AI CLIs, installs missing ones, then installs all skills via `npx skills add` (skills.sh). Falls back to the built-in installer if npx is unavailable.
 
 ```bash
-somnio setup              # Full wizard
+somnio setup              # Full wizard (detect CLIs + install via skills.sh)
 somnio setup --skip-cli   # Skip CLI detection, go straight to skill install
 somnio setup --force      # Skip all prompts, install everything
+somnio setup --legacy     # Use built-in installer instead of skills.sh
 ```
 
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--force` | `-f` | Skip all confirmation prompts |
 | `--skip-cli` | | Skip CLI detection and installation |
+| `--legacy` | | Use built-in installer instead of skills.sh |
 
 ### somnio run
 
@@ -116,7 +118,7 @@ somnio add react       # Scaffold new skills/react-* directories (wizard mode)
 somnio add flutter     # Auto-detect existing skills/flutter-* bundles
 ```
 
-Two modes: **wizard** (when `{tech}-plans/` does not exist, scaffolds a new skill bundle) and **auto-detect** (when `{tech}-plans/` exists, scans and registers valid bundles).
+Two modes: **wizard** (when `skills/{tech}-*` does not exist, scaffolds new skill directories) and **auto-detect** (when `skills/{tech}-*` exists, scans and registers valid bundles).
 
 ### somnio status
 
@@ -161,7 +163,7 @@ cli/lib/src/
 
 - **Skill Registry** (`content/skill_registry.dart`) -- Static registry of all audit skill bundles. Each `SkillBundle` defines paths to its plan, rules, workflow, and template.
 - **Agent Registry** (`agents/agent_registry.dart`) -- Data-driven definitions for all supported agents. Each `AgentConfig` declares binary, prompt style, install format, models, and token parser.
-- **Transformers** -- Convert plans and YAML rules into agent-specific formats: `skillDir` (Claude), `singleFile` (Cursor), `workflow` (Gemini), `markdown` (generic).
+- **Transformers** -- Convert SKILL.md and references into agent-specific formats: `skillDir` (Claude), `singleFile` (Cursor), `workflow` (Gemini), `markdown` (generic).
 - **Runner** -- Executes audits step-by-step, spawning a fresh AI CLI process per step via `AgentConfig.buildArgs()`.
 
 ## Development

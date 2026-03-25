@@ -20,13 +20,14 @@ npx skills add somnio-software/technology-tools
 
 ### Option 3: Somnio CLI
 
-The Dart CLI includes a multi-step audit runner that orchestrates analysis across fresh AI contexts. Install it globally:
+The Dart CLI includes a multi-step audit runner that orchestrates analysis across fresh AI contexts. It also installs skills via skills.sh under the hood.
 
 ```bash
 dart pub global activate -sgit https://github.com/somnio-software/technology-tools.git --git-path cli
+somnio setup
 ```
 
-See the [CLI README](cli/README.md) for full usage and commands.
+`somnio setup` detects installed AI CLIs, offers to install missing ones, then runs `npx skills add` to install all skills globally. See the [CLI README](cli/README.md) for full usage.
 
 ## Available Skills
 
