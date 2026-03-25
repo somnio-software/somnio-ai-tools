@@ -9,7 +9,7 @@
   },
   "plugins": [
     {
-      "name": "somnio-developer",
+      "name": "somnio-development",
       "source": "./plugins/developer",
       "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, and more."
     },
@@ -22,6 +22,11 @@
       "name": "somnio-operations",
       "source": "./plugins/operations",
       "description": "Define user stories, manage backlogs, and streamline project workflows. Connect to Jira, Linear, or Slack to turn ideas into actionable tickets."
+    },
+    {
+      "name": "somnio-engineering-management",
+      "source": "./plugins/engineering-management",
+      "description": "AI-powered engineering management tools — performance reviews, HandShake acknowledgement generation, and career path evaluation."
     }
   ]
 }
