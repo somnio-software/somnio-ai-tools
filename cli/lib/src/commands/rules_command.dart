@@ -101,17 +101,22 @@ class _RulesInstallCommand extends Command<int> {
     // ── Detect agents ───────────────────────────────────────────────
     _logger.info('');
     _logger.info('Detecting agents on your machine...');
-    _logger.info('');
 
     final checks = await _detectAgents();
 
-    for (final check in checks) {
-      final mark = check.detected
-          ? lightGreen.wrap('✓')
-          : lightRed.wrap('✗');
-      final suffix = check.detected ? '  (${check.path})' : '  (not found)';
-      _logger.info('  $mark ${check.rule.displayName}$suffix');
+    _logger.info('');
+    final detected = checks.where((c) => c.detected).length;
+    for (var i = 0; i < checks.length; i++) {
+      final check = checks[i];
+      final mark =
+          check.detected ? lightGreen.wrap('✓') : lightRed.wrap('✗');
+      final suffix =
+          check.detected ? '  (${check.path})' : '  (not found)';
+      _logger.info('  ${i + 1}) $mark ${check.rule.displayName}$suffix');
     }
+    _logger.info(
+      '  ${checks.length + 1}) All detected agents ($detected)',
+    );
     _logger.info('');
 
     // ── Select agents ───────────────────────────────────────────────
@@ -140,28 +145,26 @@ class _RulesInstallCommand extends Command<int> {
         ),
       ];
     } else {
-      // Interactive: let user choose
-      final choices = checks
-          .map((c) => c.detected
-              ? c.rule.displayName
-              : '${c.rule.displayName} (not found)')
-          .toList()
-        ..add('All detected agents');
-
-      final selection = _logger.chooseOne(
-        'Select agent:',
-        choices: choices,
+      // Interactive: numbered prompt avoids ANSI redraw flicker
+      // that chooseOne causes on each keystroke.
+      final input = _logger.prompt(
+        'Select agent (1-${checks.length + 1})',
       );
+      final choice = int.tryParse(input.trim());
 
-      if (selection == 'All detected agents') {
+      if (choice == null || choice < 1 || choice > checks.length + 1) {
+        _logger.err('Invalid selection: $input');
+        return ExitCode.usage.code;
+      }
+
+      if (choice == checks.length + 1) {
         targets = checks.where((c) => c.detected).toList();
         if (targets.isEmpty) {
           _logger.warn('No supported agents detected.');
           return ExitCode.success.code;
         }
       } else {
-        final selectedIndex = choices.indexOf(selection);
-        targets = [checks[selectedIndex]];
+        targets = [checks[choice - 1]];
       }
     }
 
@@ -173,13 +176,19 @@ class _RulesInstallCommand extends Command<int> {
     } else if (forceProject) {
       scope = RulesInstallScope.project;
     } else {
-      final scopeChoice = _logger.chooseOne(
-        'Install scope:',
-        choices: ['global (agent config dir)', 'project (current directory)'],
-      );
-      scope = scopeChoice.startsWith('global')
-          ? RulesInstallScope.global
-          : RulesInstallScope.project;
+      _logger.info('  1) global (agent config dir)');
+      _logger.info('  2) project (current directory)');
+      _logger.info('');
+      final scopeInput = _logger.prompt('Install scope (1-2)');
+      final scopeChoice = int.tryParse(scopeInput.trim());
+      if (scopeChoice == 1) {
+        scope = RulesInstallScope.global;
+      } else if (scopeChoice == 2) {
+        scope = RulesInstallScope.project;
+      } else {
+        _logger.err('Invalid selection: $scopeInput');
+        return ExitCode.usage.code;
+      }
     }
 
     // ── Install ─────────────────────────────────────────────────────
@@ -228,6 +237,9 @@ class _RulesInstallCommand extends Command<int> {
   }
 
   /// Detects which supported agents are available on the machine.
+  ///
+  /// Mirrors [AgentDetector._detectAgent] logic: checks binary, then
+  /// detectionBinaries, then detectionPaths, then installPath fallback.
   Future<List<_AgentRuleCheck>> _detectAgents() async {
     final results = <_AgentRuleCheck>[];
 
@@ -235,18 +247,40 @@ class _RulesInstallCommand extends Command<int> {
       final agentConfig = AgentRegistry.findById(rule.agentId);
       String? path;
 
-      if (agentConfig?.binary != null) {
-        path = await PlatformUtils.whichBinary(agentConfig!.binary!);
-      } else if (agentConfig?.detectionPaths.isNotEmpty == true) {
-        // IDE-only agents: check filesystem paths
-        for (final detPath in agentConfig!.detectionPaths) {
-          final resolved = detPath.replaceAll(
-            '{home}',
-            PlatformUtils.homeDirectory,
-          );
-          if (await _pathExists(resolved)) {
-            path = resolved;
-            break;
+      if (agentConfig != null) {
+        // 1. Check primary binary on PATH
+        if (agentConfig.binary != null) {
+          path = await PlatformUtils.whichBinary(agentConfig.binary!);
+        }
+
+        // 2. Check additional detection binaries
+        if (path == null) {
+          for (final bin in agentConfig.detectionBinaries) {
+            path = await PlatformUtils.whichBinary(bin);
+            if (path != null) break;
+          }
+        }
+
+        // 3. Check detection paths (app bundles, etc.)
+        if (path == null) {
+          for (final detPath in agentConfig.detectionPaths) {
+            final resolved = detPath.replaceAll(
+              '{home}',
+              PlatformUtils.homeDirectory,
+            );
+            if (await _pathExists(resolved)) {
+              path = resolved;
+              break;
+            }
+          }
+        }
+
+        // 4. Check install directory (installed but binary not in PATH)
+        if (path == null) {
+          final home = PlatformUtils.homeDirectory;
+          final installDir = agentConfig.resolvedInstallPath(home: home);
+          if (await _pathExists(installDir)) {
+            path = installDir;
           }
         }
       }
