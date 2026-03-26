@@ -4,14 +4,15 @@
 
 **AI-powered audit skills for Claude Code, Cursor, and 40+ other agents.**
 
-Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, and more — directly from your AI coding assistant.
+Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, React, and more — directly from your AI coding assistant.
 
 [![Install Somnio Skills](https://img.shields.io/badge/skills.sh-Install%20Somnio%20Skills-blue?style=for-the-badge)](https://skills.sh/somnio-software/somnio-ai-tools)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white)](#)
-[![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white)](#)
 [![Dart](https://img.shields.io/badge/Dart-0175C2?style=flat-square&logo=dart&logoColor=white)](#)
+[![React](https://img.shields.io/badge/React-61DAFB?style=flat-square&logo=react&logoColor=black)](#)
+[![NestJS](https://img.shields.io/badge/NestJS-E0234E?style=flat-square&logo=nestjs&logoColor=white)](#)
 [![Security](https://img.shields.io/badge/Security-Agnostic-orange?style=flat-square)](#)
 
 </div>
@@ -59,6 +60,8 @@ somnio setup
 | [Flutter Best Practices](docs/skills.md#flutter-best-practices) | `fp` | Code quality validation against live GitHub standards |
 | [NestJS Health Audit](docs/skills.md#nestjs-health-audit) | `nh` | 13-step backend health audit with weighted scoring |
 | [NestJS Best Practices](docs/skills.md#nestjs-best-practices) | `np` | DTO, architecture, and error handling validation |
+| [React Health Audit](docs/skills.md#react-health-audit) | `rh` | 13-step frontend health audit with weighted scoring |
+| [React Best Practices](docs/skills.md#react-best-practices) | `rp` | Component, hooks, state management, and TypeScript validation |
 | [Security Audit](docs/skills.md#security-audit) | `sa` | Framework-agnostic security scan (secrets, deps, SAST) |
 
 ### Workflows & Utilities
@@ -82,6 +85,7 @@ Global coding standards for NestJS and Flutter — automatically applied by your
 |:-----------|:---------|
 | NestJS Rules | DTOs, services, controllers, repositories, testing, error handling, TypeScript |
 | Flutter Rules | Layered architecture, BLoC patterns, testing, JSON models |
+| React Rules | Components, hooks, state management, performance, testing, TypeScript |
 
 Install via the Somnio CLI:
 

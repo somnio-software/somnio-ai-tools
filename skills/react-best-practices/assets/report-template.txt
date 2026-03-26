@@ -1,0 +1,320 @@
+================================================================================
+                     REACT BEST PRACTICES AUDIT REPORT
+================================================================================
+
+Project: [PROJECT_NAME]
+Date: [AUDIT_DATE]
+Auditor: AI-Assisted Analysis
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+Overall Score: [XX]/100 ([Strong/Fair/Weak])
+
+Description:
+[One paragraph summary of the codebase quality and key findings]
+
+Top Strengths:
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+Critical Issues:
+- [Critical Issue 1]
+- [Critical Issue 2]
+- [Critical Issue 3]
+
+Immediate Action Items:
+1. [Most urgent action]
+2. [Second priority action]
+3. [Third priority action]
+
+================================================================================
+2. SCORE BREAKDOWN
+================================================================================
+
+Testing Quality:            [XX]/100  ([Label])
+Component Architecture:     [XX]/100  ([Label])
+Hooks Patterns:             [XX]/100  ([Label])
+State Management:           [XX]/100  ([Label])
+Performance:                [XX]/100  ([Label])
+TypeScript Standards:       [XX]/100  ([Label])
+
+Weighted Overall:           [XX]/100  ([Label])
+
+Score Labels:
+- Strong: 85-100
+- Fair: 70-84
+- Weak: 0-69
+
+================================================================================
+3. TESTING QUALITY
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of testing quality findings]
+
+RTL Query Analysis:
+- Semantic queries used: [XX]%
+- getByRole usage: [Good/Needs Improvement]
+- getByTestId overuse: [Yes/No]
+
+Async Testing:
+- findBy query usage: [Good/Needs Improvement]
+- waitFor usage: [Correct/Misused]
+- userEvent vs fireEvent: [userEvent/fireEvent/Mixed]
+
+Custom Hook Testing:
+- renderHook used for hooks: [Yes/No]
+- Hook isolation: [Good/Needs Improvement]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+- [Finding 4]
+
+Violations:
+- "[path/to/file.test.tsx:XX]" - [Issue description]
+- "[path/to/file.test.tsx:XX]" - [Issue description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+4. COMPONENT ARCHITECTURE
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of component architecture findings]
+
+Folder Structure:
+- Feature-based organization: [Yes/Partial/No]
+- Barrel exports present: [Yes/No]
+- Max nesting depth: [XX] levels
+
+Component Design:
+- Average file size: [XX] lines
+- Files over 300 lines: [XX]
+- Container/Presenter separation: [Used/Not Used]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/Component.tsx:XX]" - [Architecture Issue]: [Description]
+- "[path/to/Component.tsx:XX]" - [Size Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+5. HOOKS PATTERNS
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of hooks patterns findings]
+
+Rules of Hooks:
+- Conditional hook calls: [None/Found - list files]
+- Hooks in non-components: [None/Found - list files]
+- eslint-plugin-react-hooks: [Configured/Missing]
+
+Custom Hooks:
+- Extracted hooks count: [XX]
+- Naming compliance (use* prefix): [XX]% compliant
+- Stability patterns: [Good/Needs Improvement]
+
+Effect Management:
+- Missing dependency arrays: [XX] occurrences
+- Incorrect dependencies: [XX] occurrences
+- Cleanup functions present: [XX]% where needed
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/file.tsx:XX]" - [Hook Issue]: [Description]
+- "[path/to/hooks/useX.ts:XX]" - [Effect Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+6. STATE MANAGEMENT
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of state management findings]
+
+State Distribution:
+- Local state (useState): [Appropriate/Overused]
+- Context API usage: [Present/Missing/Overused]
+- Server state library: [TanStack Query/SWR/None]
+- Client state library: [Zustand/Redux/None]
+
+Pattern Compliance:
+- State scope decisions: [Good/Needs Improvement]
+- Zustand slice patterns: [Used/Not Used/N/A]
+- Context splitting: [Good/Monolithic/N/A]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/store.ts:XX]" - [State Issue]: [Description]
+- "[path/to/Context.tsx:XX]" - [Context Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+7. PERFORMANCE
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of performance findings]
+
+Memoization:
+- React.memo usage: [Appropriate/Premature/Missing]
+- useCallback coverage: [XX]% where needed
+- useMemo coverage: [XX]% where needed
+
+Code Splitting:
+- React.lazy used: [Yes/No]
+- Suspense boundaries: [Present/Missing]
+- Route-level splitting: [Yes/No]
+
+List Rendering:
+- Array index as key: [XX] occurrences
+- Virtualization used: [Yes/No/N/A]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/Component.tsx:XX]" - [Performance Issue]: [Description]
+- "[path/to/list.tsx:XX]" - [Key Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+8. TYPESCRIPT STANDARDS
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of TypeScript standards findings]
+
+TypeScript Configuration:
+- Strict mode: [Enabled/Disabled]
+- Any usage: [XX] occurrences
+- Proper typing: [XX]% coverage
+
+Component Typing:
+- Props via interfaces: [XX]% compliant
+- HTML element extension: [Used/Not Used]
+- forwardRef typed: [XX]% compliant
+- Generic components: [Present/Missing/N/A]
+
+React Type Utilities:
+- ReactNode/ReactElement usage: [Correct/Misused]
+- Event handler types: [Correct/Misused]
+- CSSProperties usage: [Present/N/A]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/Component.tsx:XX]" - [Type Issue]: [Description]
+- "[path/to/types.ts:XX]" - [Naming Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+9. PRIORITIZED RECOMMENDATIONS
+================================================================================
+
+CRITICAL (Must Fix Immediately):
+1. [Critical recommendation with file reference]
+2. [Critical recommendation with file reference]
+
+HIGH PRIORITY:
+1. [High priority recommendation]
+2. [High priority recommendation]
+3. [High priority recommendation]
+
+MEDIUM PRIORITY:
+1. [Medium priority recommendation]
+2. [Medium priority recommendation]
+3. [Medium priority recommendation]
+
+LOW PRIORITY (Nice to Have):
+1. [Low priority recommendation]
+2. [Low priority recommendation]
+
+================================================================================
+10. EVIDENCE INDEX
+================================================================================
+
+Test Files Analyzed:
+- "[path/to/file.test.tsx]"
+- "[path/to/file.test.tsx]"
+
+Component Files Analyzed:
+- "[path/to/Component.tsx]"
+- "[path/to/Component.tsx]"
+
+Hook Files Analyzed:
+- "[path/to/useHook.ts]"
+- "[path/to/useHook.ts]"
+
+Store/Context Files Analyzed:
+- "[path/to/store.ts]"
+- "[path/to/Context.tsx]"
+
+================================================================================
+                              END OF REPORT
+================================================================================
+
+Generated by: [Plugin Name] v[Plugin Version]
+Skill: react-best-practices
+Date: [YYYY-MM-DD]
+Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools
+Standards Source: https://github.com/somnio-software/somnio-ai-tools

@@ -86,6 +86,46 @@ Validate this NestJS project against best practices for DTOs, error handling, an
 
 ---
 
+## React Health Audit
+
+**Aliases:** `rh`, `somnio-rh`
+
+Comprehensive React project health audit with 13 analysis steps covering tech stack, architecture, state management, testing, code quality, performance, CI/CD, and documentation. Supports CRA, Vite, Next.js, and Remix. Produces a weighted score and a Google Docs-ready report.
+
+**Use when:**
+- Onboarding to an existing React or Next.js codebase
+- Preparing a frontend technical debt remediation plan
+- Running a periodic project health check
+
+**Example prompt:**
+```
+Run a full React health audit on this project and generate a report.
+```
+
+**Output:** Weighted score report saved to `./reports/`
+
+---
+
+## React Best Practices
+
+**Aliases:** `rp`, `somnio-rp`
+
+Micro-level React code quality validation against local GitHub standards. Checks component architecture, hooks patterns, state management, performance optimizations, and TypeScript usage.
+
+**Use when:**
+- Reviewing a pull request for React code quality
+- Enforcing team-wide React coding standards
+- Validating a feature module before release
+
+**Example prompt:**
+```
+Check this React project against current best practices and flag any violations.
+```
+
+**Output:** Violations report with prioritized action plan
+
+---
+
 ## Security Audit
 
 **Aliases:** `sa`, `somnio-sa`

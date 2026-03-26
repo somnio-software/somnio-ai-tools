@@ -1,0 +1,389 @@
+================================================================================
+                      REACT PROJECT HEALTH AUDIT REPORT
+================================================================================
+
+Project: [PROJECT_NAME]
+Date: [AUDIT_DATE]
+Auditor: AI-Assisted Analysis
+Framework: [React/Next.js/Remix/Vite]
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+Description: [Comprehensive analysis description]
+
+Overall Score: [XX]/100 ([Label])
+
+Top Strengths:
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+Top Risks:
+- [Risk 1]
+- [Risk 2]
+- [Risk 3]
+
+Priority Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+2. AT-A-GLANCE SCORECARD
+================================================================================
+
+- Tech Stack: [XX]/100 ([Label])
+- Architecture: [XX]/100 ([Label])
+- State Management: [XX]/100 ([Label])
+- Testing: [XX]/100 ([Label])
+- Code Quality (Linter & Warnings): [XX]/100 ([Label])
+- Performance: [XX]/100 ([Label])
+- Documentation & Operations: [XX]/100 ([Label])
+- CI/CD (Configs Found in Repo): [XX]/100 ([Label])
+- Overall: [XX]/100 ([Label])
+
+================================================================================
+3. TECH STACK
+================================================================================
+
+Description: Analysis of technology versions, dependencies, and tooling setup.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Node.js version: [Version]
+- React version: [Version]
+- TypeScript version: [Version or N/A]
+- Package manager: [npm/yarn/pnpm]
+- Framework: [CRA/Vite/Next.js/Remix/Other]
+- Total dependencies: [XX]
+- Outdated dependencies: [XX]
+
+================================================================================
+4. ARCHITECTURE
+================================================================================
+
+Description: Analysis of component organization, folder structure, and separation of concerns.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Total components: [XX]
+- Feature modules: [XX]
+- Files over 300 lines: [XX]
+- Barrel export files: [XX]
+
+================================================================================
+5. STATE MANAGEMENT
+================================================================================
+
+Description: Analysis of state management approach, library usage, and server/client state separation.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- State management approach: [useState-only/Context/Zustand/Redux/Mixed]
+- Server state library: [TanStack Query/SWR/None]
+- Context providers count: [XX]
+- Store files count: [XX]
+
+================================================================================
+6. TESTING
+================================================================================
+
+Description: Analysis of test coverage, testing libraries, and test quality.
+
+Score: [XX]/100 ([Label])
+Code Coverage: [XX]% (lines) / [XX]% (branches) / [XX]% (functions)
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Total test files: [XX]
+- Components with tests: [XX]%
+- Hooks with tests: [XX]%
+- Testing library: [Jest/Vitest/Other]
+- RTL version: [Version or N/A]
+- E2E tests present: [Yes/No]
+
+================================================================================
+7. CODE QUALITY (LINTER & WARNINGS)
+================================================================================
+
+Description: Analysis of ESLint configuration, Prettier setup, TypeScript strict mode, and code quality enforcement.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- ESLint configured: [Yes/No]
+- react-hooks/rules-of-hooks enabled: [Yes/No]
+- Prettier configured: [Yes/No]
+- TypeScript strict mode: [Yes/No]
+- Any type occurrences: [XX]
+
+================================================================================
+8. PERFORMANCE
+================================================================================
+
+Description: Analysis of memoization usage, code splitting, bundle optimization, and render patterns.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- React.memo usage: [XX] components
+- React.lazy usage: [XX] components
+- Array index as key: [XX] occurrences
+- Suspense boundaries: [XX]
+
+================================================================================
+9. DOCUMENTATION & OPERATIONS
+================================================================================
+
+Description: Analysis of README quality, component documentation, Storybook presence, and setup instructions.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- README present: [Yes/No]
+- Setup instructions: [Present/Partial/Missing]
+- Storybook present: [Yes/No]
+- JSDoc/TSDoc coverage: [XX]%
+
+================================================================================
+10. CI/CD (CONFIGS FOUND IN REPO)
+================================================================================
+
+Description: Analysis of GitHub Actions workflows, lint/test/build automation, and deployment pipelines found in repository.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Workflow files found: [XX]
+- Lint step present: [Yes/No]
+- Test step present: [Yes/No]
+- Build step present: [Yes/No]
+- Deploy step present: [Yes/No]
+
+================================================================================
+11. ADDITIONAL METRICS
+================================================================================
+
+- Node.js version: [Version]
+- React version: [Version]
+- TypeScript version: [Version or Not used]
+- Package manager: [npm/yarn/pnpm]
+- Framework: [CRA/Vite/Next.js/Remix/Other]
+- Monorepo tool: [nx/turborepo/lerna/none]
+- Total components count: [Count]
+- Total hooks count: [Count]
+- Coverage %: [Percentage or status]
+- State management: [useState/Context/Zustand/Redux/Mixed]
+- Server state library: [TanStack Query/SWR/None]
+- Rendering strategy: [CSR/SSR/SSG/ISR/Mixed]
+- Styling approach: [CSS Modules/Styled Components/Tailwind/Other]
+
+================================================================================
+12. QUALITY INDEX
+================================================================================
+
+Section Summary with Scores:
+- Tech Stack: [XX]/100 ([Label])
+- Architecture: [XX]/100 ([Label])
+- State Management: [XX]/100 ([Label])
+- Testing: [XX]/100 ([Label])
+- Code Quality: [XX]/100 ([Label])
+- Performance: [XX]/100 ([Label])
+- Documentation & Operations: [XX]/100 ([Label])
+- CI/CD: [XX]/100 ([Label])
+Overall Score: [XX]/100 ([Label])
+[One-sentence interpretation]
+
+================================================================================
+13. RISKS & OPPORTUNITIES
+================================================================================
+
+- [Risk/Opportunity 1]
+- [Risk/Opportunity 2]
+- [Risk/Opportunity 3]
+- [Risk/Opportunity 4]
+- [Risk/Opportunity 5]
+
+================================================================================
+14. RECOMMENDATIONS
+================================================================================
+
+1. [Priority Level]: [Recommendation 1]
+2. [Priority Level]: [Recommendation 2]
+3. [Priority Level]: [Recommendation 3]
+4. [Priority Level]: [Recommendation 4]
+5. [Priority Level]: [Recommendation 5]
+6. [Priority Level]: [Recommendation 6]
+
+================================================================================
+15. APPENDIX: EVIDENCE INDEX
+================================================================================
+
+File Paths and Configs by Area:
+
+Configuration:
+- [File path or config reference]
+
+Components:
+- [File path or config reference]
+
+Hooks:
+- [File path or config reference]
+
+Tests:
+- [File path or config reference]
+
+Stores/State:
+- [File path or config reference]
+
+CI/CD Workflows:
+- [File path or config reference]
+
+================================================================================
+                              END OF REPORT
+================================================================================
+
+Generated by: [Plugin Name] v[Plugin Version]
+Skill: react-health-audit
+Date: [YYYY-MM-DD]
+Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools

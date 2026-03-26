@@ -2,7 +2,7 @@
 
 # Agent Rules
 
-Agent rules are coding standards for NestJS and Flutter that are automatically applied by your AI coding agent in every session. They are written once in `agent-rules/rules/` and compiled into agent-specific adapters for Claude Code, Cursor, Windsurf, Copilot, Codex, and Antigravity.
+Agent rules are coding standards for NestJS, Flutter, and React that are automatically applied by your AI coding agent in every session. They are written once in `agent-rules/rules/` and compiled into agent-specific adapters for Claude Code, Cursor, Windsurf, Copilot, Codex, and Antigravity.
 
 ---
 
@@ -14,7 +14,8 @@ Rules live in `agent-rules/rules/` and are the single source of truth. Running t
 agent-rules/
 ├── rules/            ← edit here
 │   ├── nestjs/
-│   └── flutter/
+│   ├── flutter/
+│   └── react/
 └── adapters/         ← never edit directly, auto-generated
     ├── antigravity/
     ├── claude/
@@ -78,6 +79,17 @@ somnio rules status                           # check what is installed
 | `bloc-test` | BLoC test structure and patterns |
 | `testing` | Testing best practices: mocking, matchers, grouping |
 | `dart-model-from-json` | JSON model generation with json_serializable and equatable |
+
+### React
+
+| Rule | Purpose |
+|:-----|:--------|
+| `component-architecture` | Feature-based folder structure, naming, and composition patterns |
+| `hooks-patterns` | Rules of Hooks, custom hook design, useCallback/useMemo stability |
+| `performance` | React.memo, code splitting, list virtualization, anti-patterns |
+| `state-management` | useState/Context/Zustand/TanStack Query decision guide |
+| `testing` | RTL queries, AAA patterns, renderHook, async testing |
+| `typescript` | Strict config, prop interfaces, generic components, no `any` |
 
 ---
 
