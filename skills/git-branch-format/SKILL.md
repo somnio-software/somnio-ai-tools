@@ -23,7 +23,7 @@ Generates a **branch name** from a description of changes.
 ```
 
 - `TICKET_NUMBER` is uppercase as provided by the user (e.g. `PROJ-548`)
-- `short_description` is `snake_case`, brief (2–5 words)
+- `short_description` is `snake_case`, max 3 words — prefer 1–2
 - Example: `feat/TICKET-548_flutter_upgrade`
 
 ### Without ticket number
@@ -32,7 +32,7 @@ Generates a **branch name** from a description of changes.
 {type}/{short_description}
 ```
 
-- `short_description` is `snake_case`, brief (2–5 words)
+- `short_description` is `snake_case`, max 3 words — prefer 1–2
 - Example: `feat/flutter_upgrade`
 
 Never use placeholders like `NO-TICKET`. If there's no ticket, just omit that part entirely.

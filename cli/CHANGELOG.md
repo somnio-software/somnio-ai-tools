@@ -5,6 +5,42 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2026-03-25
+
+### Added
+
+- **Agent Rules**: New `somnio rules` CLI command with `install` and `status` subcommands for multi-agent coding rules management
+- **Agent Rules**: Coding standards for NestJS, Flutter, and React with adapters for Claude, Cursor, Windsurf, Copilot, Codex, and Antigravity
+- **Clockify Tracker**: New `clockify-tracker` skill with Clockify REST API integration for time tracking
+- **Clockify Tracker**: New `clockify-tracker` command to expose the skill via CLI
+
+### Changed
+
+- **Plugins**: Renamed `plugins/developer` to `plugins/development` across all references and documentation
+
+### Fixed
+
+- **CLI**: Fixed `plan_parser` command handling and improved argument resolution
+- **CLI**: Added `plan_parser` unit and integration tests for better reliability
+
+## [2.0.0] - 2026-03-25
+
+### Added
+
+- **Plugin Architecture**: Native Claude Code plugin support with `.claude-plugin/` structure and `plugin.json` manifests
+- **Workflow System**: Custom workflow system for multi-step, multi-model AI task orchestration
+- **Git Skills**: New git-related skills including `git-commit-format` and `git-branch-format`
+- **Marketing Plugin**: New `somnio-marketing` plugin with content strategy, ASO audits, and campaign analysis skills
+- **Operations Plugin**: New `somnio-operations` plugin for user stories, backlog management, and project workflows
+- **Engineering Management Plugin**: New `somnio-engineering-management` plugin with performance reviews and HandShake acknowledgement generation
+- **Report Metadata**: Metadata fields (model, timestamp, agent version) injected into health audit reports
+
+### Changed
+
+- **Architecture**: Complete refactor to Agent Skills plugin architecture — skills are now distributed as Claude Code plugins (breaking change)
+- **CLI**: Migrated from `skills.sh` shell scripts to structured Dart-based plugin installer
+- **Multi-Agent Registry**: Data-driven multi-agent registry supporting 17 agents across all audit types
+
 ## [1.0.9] - 2026-02-27
 
 ### Added

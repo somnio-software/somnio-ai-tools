@@ -82,6 +82,42 @@ class SkillRegistry {
           'skills/nestjs-best-practices/assets/report-template.txt',
     ),
     SkillBundle(
+      id: 'react_health',
+      name: 'react-health-audit',
+      aliases: ['somnio-rh', 'rh'],
+      displayName: 'React Project Health Audit',
+      description:
+          'Execute a comprehensive React Project Health Audit. '
+          'Analyzes tech stack, architecture, state management, testing, '
+          'code quality, CI/CD, and documentation. Produces a '
+          'Google Docs-ready report with section scores and weighted '
+          'overall score.',
+      planRelativePath:
+          'skills/react-health-audit/SKILL.md',
+      rulesDirectory:
+          'skills/react-health-audit/references',
+      templatePath:
+          'skills/react-health-audit/assets/report-template.txt',
+    ),
+    SkillBundle(
+      id: 'react_plan',
+      name: 'react-best-practices',
+      aliases: ['somnio-rp', 'rp'],
+      displayName: 'React Best Practices Check',
+      description:
+          'Execute a micro-level React code quality audit. '
+          'Validates code against live GitHub standards for testing, '
+          'component architecture, hooks patterns, state management, '
+          'and TypeScript. Produces a detailed violations report with '
+          'prioritized action plan.',
+      planRelativePath:
+          'skills/react-best-practices/SKILL.md',
+      rulesDirectory:
+          'skills/react-best-practices/references',
+      templatePath:
+          'skills/react-best-practices/assets/report-template.txt',
+    ),
+    SkillBundle(
       id: 'security_audit',
       name: 'security-audit',
       aliases: ['somnio-sa', 'sa'],
