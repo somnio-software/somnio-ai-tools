@@ -46,6 +46,7 @@ Bullet list using past tense action words:
 - Keep each bullet concise and specific
 - Allowed verbs: `Fixed`, `Added`, `Changed`, `Removed`, `Updated`, `Refactored`, `Migrated`, `Deprecated`
 - Always in **English**
+- **Never** include `Co-Authored-By`, `Signed-off-by`, or any trailer attributing the commit to an AI agent or tool
 
 ---
 
@@ -79,6 +80,8 @@ feat(flutter): upgrade Flutter SDK to v3.19
 * Fixed deprecated API usages after upgrade
 * Removed unused legacy plugins
 ```
+
+> The commit message must end after the bullet list. Do **not** append any `Co-Authored-By`, `Signed-off-by`, or AI attribution trailers.
 
 ---
 

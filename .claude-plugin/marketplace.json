@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "somnio-development",
-      "source": "./plugins/developer",
+      "source": "./plugins/development",
       "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, and more."
     },
     {
