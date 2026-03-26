@@ -6,6 +6,8 @@ import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
 import '../agents/agent_registry.dart';
+import '../content/agent_rule.dart';
+import '../content/agent_rule_registry.dart';
 import '../utils/platform_utils.dart';
 
 /// Removes all Somnio-installed skills, commands, and workflows.
@@ -25,7 +27,7 @@ class UninstallCommand extends Command<int> {
 
   @override
   String get description =>
-      'Remove all Somnio skills, commands, and workflows.';
+      'Remove all Somnio skills, commands, workflows, and rules.';
 
   @override
   Future<int> run() async {
@@ -35,7 +37,7 @@ class UninstallCommand extends Command<int> {
 
     if (!force) {
       _logger.warn(
-        'This will remove all Somnio skills from all agents.',
+        'This will remove all Somnio skills and rules from all agents.',
       );
       _logger.info('');
       final confirmed = _logger.confirm(
@@ -70,6 +72,10 @@ class UninstallCommand extends Command<int> {
       final removed = _removeGenericAgent(agent);
       removedAnything |= removed;
     }
+
+    // Remove agent rules (installed via `somnio rules install`)
+    final rulesRemoved = _removeRules();
+    removedAnything |= rulesRemoved;
 
     _logger.info('');
     if (removedAnything) {
@@ -202,6 +208,95 @@ class UninstallCommand extends Command<int> {
         );
         removed = true;
       }
+    }
+    return removed;
+  }
+
+  /// Somnio block markers used by the rules installer for single-file formats.
+  static const _beginMarker =
+      '<!-- BEGIN SOMNIO RULES — do not edit this block manually -->';
+  static const _endMarker = '<!-- END SOMNIO RULES -->';
+
+  /// Removes all agent rules installed via `somnio rules install`.
+  ///
+  /// For single-file rules (Claude, Windsurf, Copilot, Codex): strips the
+  /// somnio block from the file, or deletes the file if it only contains the
+  /// block.
+  ///
+  /// For directory rules (Cursor, Antigravity): removes files prefixed with
+  /// `somnio-`.
+  bool _removeRules() {
+    final home = PlatformUtils.homeDirectory;
+    var removed = false;
+
+    for (final rule in AgentRuleRegistry.rules) {
+      // Try global path
+      if (rule.supportsGlobal) {
+        final globalPath = rule.resolvedGlobalPath(home);
+        final result = _removeRuleAt(rule, globalPath);
+        removed |= result;
+      }
+
+      // Try project path (relative to cwd)
+      final projectPath = p.join(Directory.current.path, rule.projectPath);
+      final result = _removeRuleAt(rule, projectPath);
+      removed |= result;
+    }
+
+    return removed;
+  }
+
+  /// Removes a single rule installation at [targetPath].
+  bool _removeRuleAt(AgentRule rule, String targetPath) {
+    switch (rule.format) {
+      case RulesInstallFormat.singleFile:
+        return _removeRuleSingleFile(rule, targetPath);
+      case RulesInstallFormat.directory:
+        return _removeRuleDirectory(rule, targetPath);
+    }
+  }
+
+  /// Strips the somnio block from a single-file rule. Deletes the file if
+  /// only the block remains.
+  bool _removeRuleSingleFile(AgentRule rule, String filePath) {
+    final file = File(filePath);
+    if (!file.existsSync()) return false;
+
+    final content = file.readAsStringSync();
+    final begin = content.indexOf(_beginMarker);
+    final end = content.indexOf(_endMarker);
+    if (begin == -1 || end == -1 || end <= begin) return false;
+
+    final before = content.substring(0, begin);
+    final after = content.substring(end + _endMarker.length);
+    final remaining = '$before$after'.trim();
+
+    if (remaining.isEmpty) {
+      file.deleteSync();
+      _logger.info('  Removed ${rule.displayName} rules: ${p.basename(filePath)}');
+    } else {
+      file.writeAsStringSync('$remaining\n');
+      _logger.info(
+        '  Stripped Somnio rules block from ${p.basename(filePath)}',
+      );
+    }
+    return true;
+  }
+
+  /// Removes somnio-prefixed files from a directory rule installation.
+  bool _removeRuleDirectory(AgentRule rule, String dirPath) {
+    final dir = Directory(dirPath);
+    if (!dir.existsSync()) return false;
+
+    var removed = false;
+    for (final entity in dir.listSync(recursive: true)) {
+      if (entity is! File) continue;
+      if (!p.basename(entity.path).startsWith('somnio-')) continue;
+      entity.deleteSync();
+      _logger.info(
+        '  Removed ${rule.displayName} rule: ${p.relative(entity.path, from: dirPath)}',
+      );
+      removed = true;
     }
     return removed;
   }
