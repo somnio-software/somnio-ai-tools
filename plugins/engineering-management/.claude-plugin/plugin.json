@@ -1,7 +1,7 @@
 {
   "name": "somnio-engineering-management",
-  "version": "1.0.0",
-  "description": "AI-powered engineering management tools — performance reviews, HandShake acknowledgement generation, and career path evaluation.",
+  "version": "1.1.0",
+  "description": "AI-powered engineering management tools — performance reviews, HandShake acknowledgement generation, career path evaluation, with connectors for Slack, Gmail, GitHub, Notion, Datadog, Google Calendar, Atlassian, Figma, ClickUp, and Stitch by Google.",
   "author": {
     "name": "Somnio Software"
   },
@@ -13,6 +13,18 @@
     "handshake",
     "career-path",
     "evaluation",
-    "pdf-generation"
+    "pdf-generation",
+    "slack",
+    "gmail",
+    "github",
+    "notion",
+    "datadog",
+    "google-calendar",
+    "atlassian",
+    "jira",
+    "figma",
+    "clickup",
+    "stitch",
+    "connectors"
   ]
 }
