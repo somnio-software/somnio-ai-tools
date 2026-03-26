@@ -72,6 +72,23 @@ You are a master at:
 - **ALWAYS execute comprehensive dependency management** - root,
   packages, and apps must have dependencies installed
 
+**Execution Discipline (NON-NEGOTIABLE)**:
+- **NEVER skip, combine, or abbreviate any step** — each step in this plan
+  MUST be executed individually and completely
+- **NEVER summarize a reference file instead of executing it** — you MUST
+  read each reference file AND follow its instructions fully
+- **NEVER take shortcuts** — even if you believe you already know the answer,
+  you MUST execute the analysis commands and collect real evidence
+- **ALWAYS read the reference file first** — before executing any step, read
+  the referenced .md file completely, then follow its instructions
+- **ALWAYS log step completion** — after completing each step, output:
+  "STEP N COMPLETED: [brief result summary]" before proceeding to the next
+- **NEVER proceed to the next step without completing the current one** —
+  partial execution of a step is not acceptable
+- **If a step fails**: document the failure, attempt recovery, and only skip
+  if recovery is impossible (with explicit documentation of what was skipped
+  and why)
+
 ## REQUIREMENT - NODE.JS VERSION ALIGNMENT
 
 **MANDATORY STEP 0**: Before executing any React project analysis,
@@ -124,6 +141,40 @@ the final audit report.
 
 **Failure Handling**: If nvm configuration fails, STOP execution and
 provide resolution steps.
+
+## Parallel Execution Strategy
+
+Steps 1-7 can be partially parallelized using the Agent tool to launch
+multiple analysis agents simultaneously. Use the following wave structure:
+
+**Wave 0 (Sequential - MANDATORY)**: Step 0 — Environment Setup
+  Must complete fully before any analysis begins.
+
+**Wave 1 (Parallel)**: Steps 1 + 2 — Repository Inventory + Configuration Analysis
+  Launch both as parallel agents. Both read from the filesystem independently.
+
+**Wave 2 (Parallel)**: Steps 3 + 4 + 5 — CI/CD + Testing + Code Quality
+  Launch all three as parallel agents. Independent read-only analyses.
+
+**Wave 3 (Parallel)**: Steps 6 + 7 — State Management + Documentation
+  Launch both as parallel agents. Independent analyses.
+
+**Wave 4 (Sequential)**: Step 8 — Report Format Enforcement
+  Can run after all analysis waves complete.
+
+**Wave 5 (Sequential)**: Steps 9 + 10 — Report Generation + Export
+  Must run last — requires ALL previous results.
+
+**Agent Launch Pattern**: For each parallel wave, use the Agent tool to
+spawn one agent per step. Each agent MUST:
+1. Read the referenced .md file completely
+2. Execute ALL instructions in that file
+3. Return the complete analysis results
+4. Never abbreviate or summarize — return full evidence
+
+Example for Wave 1:
+- Agent 1: "Read references/repository-inventory.md and execute ALL instructions. Return complete findings."
+- Agent 2: "Read references/config-analysis.md and execute ALL instructions. Return complete findings."
 
 ## Step 1. Repository Inventory
 
@@ -195,7 +246,16 @@ integration, and environment setup.
 **Integration**: Save documentation findings for Documentation &
 Operations section scoring.
 
-## Step 8. Generate Final Report
+## Step 8. Report Format Enforcement
+
+Goal: Enforce the standardized report format structure before final
+report generation.
+
+**Rule to Execute**: Read and follow the instructions in `references/report-format-enforcer.md`
+
+**Integration**: Apply format constraints for the final report generation.
+
+## Step 9. Generate Final Report
 
 Goal: Generate the final React Project Health Audit report by
 integrating all analysis results.
@@ -217,7 +277,7 @@ generates the final report.
 - Recommendations (6-10 prioritized actions)
 - Appendix: Evidence Index
 
-## Step 9. Export Final Report
+## Step 10. Export Final Report
 
 Goal: Save the final Google Docs-ready plain-text report to the reports
 directory.
@@ -256,12 +316,21 @@ mkdir -p reports
 12. `references/report-format-enforcer.md`
 13. `references/report-generator.md`
 
+**Wave-Based Parallel Execution**:
+- Wave 0 (Sequential): Step 0 — Environment Setup (rules 1-4)
+- Wave 1 (Parallel): Steps 1 + 2 — Repository Inventory + Configuration (rules 5-6)
+- Wave 2 (Parallel): Steps 3 + 4 + 5 — CI/CD + Testing + Code Quality (rules 7-9)
+- Wave 3 (Parallel): Steps 6 + 7 — State Management + Documentation (rules 10-11)
+- Wave 4 (Sequential): Step 8 — Report Format Enforcement (rule 12)
+- Wave 5 (Sequential): Steps 9 + 10 — Report Generation + Export (rule 13)
+
 **Benefits of Modular Approach**:
 - Each rule can be executed independently
 - Outputs can be saved and reused
 - Easier debugging and maintenance
-- Parallel execution possible for some rules
+- Wave-based parallelization accelerates analysis using the Agent tool
 - Clear separation of concerns
+- Strict no-shortcuts enforcement ensures complete, evidence-based analysis
 - Comprehensive dependency management for monorepos
 - Complete nvm configuration enforcement
 - Full project environment setup with all dependencies

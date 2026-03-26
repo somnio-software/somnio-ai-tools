@@ -4,8 +4,16 @@
 
 ---
 
-MANDATORY STEP: Install all required tools before any React project
-analysis can proceed.
+Goal: Verify required tools are present and properly configured. Only
+install tools that are genuinely missing — never reinstall tools that
+are already available.
+
+INSTALLATION PHILOSOPHY:
+- CHECK FIRST: Always verify if a tool is already installed before attempting installation
+- CONFIGURE, DON'T REINSTALL: If a tool exists, configure it for the project — do not reinstall
+- MINIMAL CHANGES: Only install what is genuinely missing
+- VERSION PRESERVATION: Do not change globally installed tool versions unless required by version-alignment step
+- IDEMPOTENT: Running this installer multiple times must produce the same result without side effects
 
 TOOLS TO INSTALL AND VERIFY:
 
@@ -22,10 +30,34 @@ TOOLS TO INSTALL AND VERIFY:
    - Install LTS version as fallback: `nvm install --lts`
    - Verify: `node --version`
 
-3. **Package Managers**:
+3. **Package Managers** (install only if project uses them):
    - npm is bundled with Node.js — verify: `npm --version`
-   - If yarn.lock present: `npm install -g yarn > /dev/null 2>&1`
-   - If pnpm-lock.yaml present: `npm install -g pnpm > /dev/null 2>&1`
+   - Only install yarn if `yarn.lock` exists AND yarn is not already installed:
+     ```bash
+     if [ -f "yarn.lock" ]; then
+       if ! command -v yarn &> /dev/null; then
+         echo "yarn.lock found but yarn not installed. Installing..."
+         npm install -g yarn > /dev/null 2>&1
+       else
+         echo "yarn is already installed and configured."
+       fi
+     else
+       echo "No yarn.lock found — skipping yarn installation."
+     fi
+     ```
+   - Only install pnpm if `pnpm-lock.yaml` exists AND pnpm is not already installed:
+     ```bash
+     if [ -f "pnpm-lock.yaml" ]; then
+       if ! command -v pnpm &> /dev/null; then
+         echo "pnpm-lock.yaml found but pnpm not installed. Installing..."
+         npm install -g pnpm > /dev/null 2>&1
+       else
+         echo "pnpm is already installed and configured."
+       fi
+     else
+       echo "No pnpm-lock.yaml found — skipping pnpm installation."
+     fi
+     ```
 
 4. **React-Specific Analysis Tools**:
    - Check for `npx` availability: `npx --version`

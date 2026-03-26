@@ -4,8 +4,16 @@
 
 ---
 
-Goal: Ensure all required tools are installed and configured before
-running the audit.
+Goal: Verify required tools are present and properly configured. Only
+install tools that are genuinely missing — never reinstall tools that
+are already available.
+
+INSTALLATION PHILOSOPHY:
+- CHECK FIRST: Always verify if a tool is already installed before attempting installation
+- CONFIGURE, DON'T REINSTALL: If a tool exists, configure it for the project — do not reinstall
+- MINIMAL CHANGES: Only install what is genuinely missing
+- VERSION PRESERVATION: Do not change globally installed tool versions unless required by version-alignment step
+- IDEMPOTENT: Running this installer multiple times must produce the same result without side effects
 
 TOOLS TO INSTALL:
 1. Node.js & npm (via Homebrew if missing)
@@ -34,7 +42,7 @@ EXECUTION STEPS:
        exit 1
      fi
    else
-     echo "Node.js and npm are installed."
+     echo "Node.js and npm are already installed and configured."
      node --version > /dev/null 2>&1
      npm --version > /dev/null 2>&1
    fi
@@ -54,7 +62,7 @@ EXECUTION STEPS:
      export PATH="$PATH":"$HOME/.pub-cache/bin"
      echo "FVM installed successfully."
    else
-     echo "FVM is installed."
+     echo "FVM is already installed and configured."
      fvm --version > /dev/null 2>&1
    fi
    ```

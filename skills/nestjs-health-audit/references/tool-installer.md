@@ -4,8 +4,16 @@
 
 ---
 
-Goal: Ensure all required tools are installed and configured before
-running the audit.
+Goal: Verify required tools are present and properly configured. Only
+install tools that are genuinely missing — never reinstall tools that
+are already available.
+
+INSTALLATION PHILOSOPHY:
+- CHECK FIRST: Always verify if a tool is already installed before attempting installation
+- CONFIGURE, DON'T REINSTALL: If a tool exists, configure it for the project — do not reinstall
+- MINIMAL CHANGES: Only install what is genuinely missing
+- VERSION PRESERVATION: Do not change globally installed tool versions unless required by version-alignment step
+- IDEMPOTENT: Running this installer multiple times must produce the same result without side effects
 
 TOOLS TO INSTALL:
 1. Node.js & npm
@@ -38,7 +46,7 @@ EXECUTION STEPS:
        exit 1
      fi
    else
-     echo "nvm is installed."
+     echo "nvm is already installed and configured."
    fi
    ```
 
@@ -62,45 +70,53 @@ EXECUTION STEPS:
        exit 1
      fi
    else
-     echo "Node.js and npm are installed."
+     echo "Node.js and npm are already installed and configured."
      node --version > /dev/null 2>&1
      npm --version > /dev/null 2>&1
    fi
    ```
 
-3. Check/Install yarn (optional):
+3. Check/Install yarn (only if project uses it):
    ```bash
    echo "Checking yarn..."
-   if ! command -v yarn &> /dev/null; then
-     echo "yarn not found. Installing yarn globally..."
-     npm install -g yarn > /dev/null 2>&1
-     if [ $? -ne 0 ]; then
-       echo "WARNING: Failed to install yarn. Continuing with npm."
+   if [ -f "yarn.lock" ]; then
+     if ! command -v yarn &> /dev/null; then
+       echo "yarn.lock found but yarn not installed. Installing yarn globally..."
+       npm install -g yarn > /dev/null 2>&1
+       if [ $? -ne 0 ]; then
+         echo "WARNING: Failed to install yarn. Continuing with npm."
+       else
+         echo "yarn installed successfully."
+         yarn --version > /dev/null 2>&1
+       fi
      else
-       echo "yarn installed successfully."
+       echo "yarn is already installed and configured."
        yarn --version > /dev/null 2>&1
      fi
    else
-     echo "yarn is installed."
-     yarn --version > /dev/null 2>&1
+     echo "No yarn.lock found — skipping yarn installation."
    fi
    ```
 
-4. Check/Install pnpm (optional):
+4. Check/Install pnpm (only if project uses it):
    ```bash
    echo "Checking pnpm..."
-   if ! command -v pnpm &> /dev/null; then
-     echo "pnpm not found. Installing pnpm globally..."
-     npm install -g pnpm > /dev/null 2>&1
-     if [ $? -ne 0 ]; then
-       echo "WARNING: Failed to install pnpm. Continuing with npm."
+   if [ -f "pnpm-lock.yaml" ]; then
+     if ! command -v pnpm &> /dev/null; then
+       echo "pnpm-lock.yaml found but pnpm not installed. Installing pnpm globally..."
+       npm install -g pnpm > /dev/null 2>&1
+       if [ $? -ne 0 ]; then
+         echo "WARNING: Failed to install pnpm. Continuing with npm."
+       else
+         echo "pnpm installed successfully."
+         pnpm --version > /dev/null 2>&1
+       fi
      else
-       echo "pnpm installed successfully."
+       echo "pnpm is already installed and configured."
        pnpm --version > /dev/null 2>&1
      fi
    else
-     echo "pnpm is installed."
-     pnpm --version > /dev/null 2>&1
+     echo "No pnpm-lock.yaml found — skipping pnpm installation."
    fi
    ```
 

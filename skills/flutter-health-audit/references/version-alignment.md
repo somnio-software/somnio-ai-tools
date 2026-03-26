@@ -38,7 +38,16 @@ SINGLE APP VERSION ALIGNMENT:
    - If FVM is configured but not installed: Error, FVM should be
      installed by @flutter_tool_installer
 
-4. **Execute Version Alignment** (MANDATORY FVM GLOBAL CONFIGURATION):
+4. **Smart Dependency Check** (SKIP REINSTALL IF ALIGNED):
+   - If version ALREADY MATCHES the project requirement:
+     * Check if `.dart_tool/` directory exists in the project
+     * Check if `pubspec.lock` exists
+     * If BOTH exist: SKIP `flutter clean` and `pub get` — dependencies are already in place
+     * If either is missing: proceed with dependency installation ONLY (no version change needed)
+     * Log: "Version aligned, dependencies intact — skipping reinstall"
+   - If version DOES NOT MATCH: proceed with full version alignment (step 5)
+
+5. **Execute Version Alignment** (MANDATORY FVM GLOBAL CONFIGURATION):
    - Verify FVM is present (installed by @flutter_tool_installer)
    - Install required Flutter version via FVM: `fvm install <version>`
    - Set Flutter version as GLOBAL using FVM: `fvm global <version>`
@@ -84,7 +93,18 @@ MULTI-APP MONOREPO VERSION ALIGNMENT:
      installed by @flutter_tool_installer
    - Note any version inconsistencies between apps/packages
 
-5. **Execute Version Alignment** (MANDATORY FVM GLOBAL CONFIGURATION):
+5. **Smart Dependency Check** (SKIP REINSTALL IF ALIGNED):
+   - If version ALREADY MATCHES the target requirement:
+     * Check if root `.dart_tool/` exists
+     * Check if root `pubspec.lock` exists
+     * For each app in apps/: check if `.dart_tool/` and `pubspec.lock` exist
+     * For each package in packages/: check if `.dart_tool/` and `pubspec.lock` exist
+     * If ALL `.dart_tool/` directories exist AND all `pubspec.lock` files exist: SKIP clean and reinstall
+     * If any are missing: run `pub get` ONLY in missing locations (no clean needed)
+     * Log: "Version aligned, dependencies intact — skipping reinstall"
+   - If version DOES NOT MATCH: proceed with full version alignment (step 6)
+
+6. **Execute Version Alignment** (MANDATORY FVM GLOBAL CONFIGURATION):
    - Verify FVM is present (installed by @flutter_tool_installer)
    - Install required Flutter version via FVM: `fvm install <version>`
    - Set Flutter version as GLOBAL using FVM: `fvm global <version>`
@@ -102,7 +122,7 @@ MULTI-APP MONOREPO VERSION ALIGNMENT:
    - Execute pub get in ALL apps:
      `find apps/ -name "pubspec.yaml" -execdir fvm flutter pub get \;`
 
-6. **Documentation**:
+7. **Documentation**:
    - Log the version change process
    - Document any alignment issues or failures
    - Document version consistency across apps/packages
@@ -128,26 +148,61 @@ After setting FVM global version, execute comprehensive dependency
 management:
 
  ```bash
- # Root project dependencies
- echo "Installing root project dependencies..."
- fvm flutter pub get > /dev/null 2>&1
- 
- # All packages dependencies (if packages/ directory exists)
+ # Smart dependency check - skip if already aligned
+ NEEDS_INSTALL=false
+
+ if [ ! -f "pubspec.lock" ]; then
+   NEEDS_INSTALL=true
+   echo "pubspec.lock missing — pub get required"
+ fi
+
+ if [ ! -d ".dart_tool" ]; then
+   NEEDS_INSTALL=true
+   echo ".dart_tool missing — pub get required"
+ fi
+
  if [ -d "packages" ]; then
-   echo "Installing dependencies for all packages..."
-   find packages/ -name "pubspec.yaml" -execdir sh -c \
-     'fvm flutter pub get > /dev/null 2>&1' \;
-   echo "Packages dependencies installed successfully"
+   for dir in packages/*/; do
+     if [ -f "$dir/pubspec.yaml" ] && { [ ! -f "$dir/pubspec.lock" ] || [ ! -d "$dir/.dart_tool" ]; }; then
+       NEEDS_INSTALL=true
+       echo "Dependencies missing in $dir — pub get required"
+     fi
+   done
  fi
- 
- # All apps dependencies (if apps/ directory exists)
+
  if [ -d "apps" ]; then
-   echo "Installing dependencies for all apps..."
-   find apps/ -name "pubspec.yaml" -execdir sh -c \
-     'fvm flutter pub get > /dev/null 2>&1' \;
-   echo "Apps dependencies installed successfully"
+   for dir in apps/*/; do
+     if [ -f "$dir/pubspec.yaml" ] && { [ ! -f "$dir/pubspec.lock" ] || [ ! -d "$dir/.dart_tool" ]; }; then
+       NEEDS_INSTALL=true
+       echo "Dependencies missing in $dir — pub get required"
+     fi
+   done
  fi
- 
+
+ if [ "$NEEDS_INSTALL" = false ]; then
+   echo "Dependencies already resolved — skipping pub get"
+ else
+   # Root project dependencies
+   echo "Installing root project dependencies..."
+   fvm flutter pub get > /dev/null 2>&1
+
+   # All packages dependencies (if packages/ directory exists)
+   if [ -d "packages" ]; then
+     echo "Installing dependencies for all packages..."
+     find packages/ -name "pubspec.yaml" -execdir sh -c \
+       'fvm flutter pub get > /dev/null 2>&1' \;
+     echo "Packages dependencies installed successfully"
+   fi
+
+   # All apps dependencies (if apps/ directory exists)
+   if [ -d "apps" ]; then
+     echo "Installing dependencies for all apps..."
+     find apps/ -name "pubspec.yaml" -execdir sh -c \
+       'fvm flutter pub get > /dev/null 2>&1' \;
+     echo "Apps dependencies installed successfully"
+   fi
+ fi
+
  # Verify all dependencies are resolved
  echo "Verifying dependency resolution..."
  fvm flutter pub deps > /dev/null 2>&1

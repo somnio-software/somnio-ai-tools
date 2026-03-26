@@ -68,7 +68,7 @@ Overall Score = round(
   State Management × 0.15 +
   Testing × 0.15 +
   Code Quality × 0.15 +
-  Performance × 0.10 +
+  Performance × 0.08 +
   Documentation × 0.035 +
   CI/CD × 0.035
 )

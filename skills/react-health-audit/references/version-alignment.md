@@ -37,7 +37,16 @@ SINGLE APP VERSION ALIGNMENT:
    - If nvm is not installed: Error, nvm should be installed by
      @react_tool_installer
 
-4. **Execute Version Alignment** (MANDATORY nvm CONFIGURATION):
+4. **Smart Dependency Check** (SKIP REINSTALL IF ALIGNED):
+   - If version ALREADY MATCHES the project requirement:
+     * Check if `node_modules/` directory exists at root
+     * Check if the lock file (package-lock.json, yarn.lock, or pnpm-lock.yaml) exists
+     * If BOTH exist: SKIP clean and reinstall — dependencies are already in place
+     * If either is missing: proceed with dependency installation ONLY (no version change needed)
+     * Log: "Version aligned, dependencies intact — skipping reinstall"
+   - If version DOES NOT MATCH: proceed with full version alignment (step 5)
+
+5. **Execute Version Alignment** (MANDATORY nvm CONFIGURATION):
    - Verify nvm is present (installed by @react_tool_installer)
    - Install required Node.js version via nvm:
      `nvm install <version> > /dev/null 2>&1`
@@ -87,7 +96,18 @@ MONOREPO VERSION ALIGNMENT:
      @react_tool_installer
    - Note any version inconsistencies between apps/packages
 
-5. **Execute Version Alignment** (MANDATORY nvm CONFIGURATION):
+5. **Smart Dependency Check** (SKIP REINSTALL IF ALIGNED):
+   - If version ALREADY MATCHES the target requirement:
+     * Check if root `node_modules/` exists
+     * Check if root lock file exists
+     * For each app in apps/: check if `node_modules/` exists
+     * For each package in packages/: check if `node_modules/` exists
+     * If ALL node_modules exist AND root lock file exists: SKIP clean and reinstall
+     * If any are missing: install ONLY in missing locations (no clean needed)
+     * Log: "Version aligned, dependencies intact — skipping reinstall"
+   - If version DOES NOT MATCH: proceed with full version alignment (step 6)
+
+6. **Execute Version Alignment** (MANDATORY nvm CONFIGURATION):
    - Verify nvm is present (installed by @react_tool_installer)
    - Install required Node.js version via nvm:
      `nvm install <version> > /dev/null 2>&1`
@@ -95,7 +115,7 @@ MONOREPO VERSION ALIGNMENT:
    - Verify alignment with `node --version 2>/dev/null`
    - Clean and reinstall dependencies across all apps and packages
 
-6. **Documentation**:
+7. **Documentation**:
    - Log the version change process
    - Document any alignment issues or failures
    - Document version consistency across apps/packages
@@ -119,22 +139,57 @@ fi
 
 echo "Detected package manager: $PKG_MANAGER"
 
-# Root project dependencies
-echo "Installing root project dependencies..."
-$INSTALL_CMD > /dev/null 2>&1
+# Smart dependency check - skip if already aligned
+NEEDS_INSTALL=false
 
-# All packages dependencies (if packages/ directory exists)
-if [ -d "packages" ]; then
-  echo "Installing dependencies for all packages..."
-  find packages/ -name "package.json" -execdir sh -c \
-    '$INSTALL_CMD > /dev/null 2>&1' \;
+if [ ! -d "node_modules" ]; then
+  NEEDS_INSTALL=true
+  echo "Root node_modules missing — installation required"
 fi
 
-# All apps dependencies (if apps/ directory exists)
+if [ ! -f "package-lock.json" ] && [ ! -f "yarn.lock" ] && [ ! -f "pnpm-lock.yaml" ]; then
+  NEEDS_INSTALL=true
+  echo "Lock file missing — installation required"
+fi
+
+if [ -d "packages" ]; then
+  for dir in packages/*/; do
+    if [ -f "$dir/package.json" ] && [ ! -d "$dir/node_modules" ]; then
+      NEEDS_INSTALL=true
+      echo "node_modules missing in $dir — installation required"
+    fi
+  done
+fi
+
 if [ -d "apps" ]; then
-  echo "Installing dependencies for all apps..."
-  find apps/ -name "package.json" -execdir sh -c \
-    '$INSTALL_CMD > /dev/null 2>&1' \;
+  for dir in apps/*/; do
+    if [ -f "$dir/package.json" ] && [ ! -d "$dir/node_modules" ]; then
+      NEEDS_INSTALL=true
+      echo "node_modules missing in $dir — installation required"
+    fi
+  done
+fi
+
+if [ "$NEEDS_INSTALL" = false ]; then
+  echo "Dependencies already installed — skipping reinstall"
+else
+  # Root project dependencies
+  echo "Installing root project dependencies..."
+  $INSTALL_CMD > /dev/null 2>&1
+
+  # All packages dependencies (if packages/ directory exists)
+  if [ -d "packages" ]; then
+    echo "Installing dependencies for all packages..."
+    find packages/ -name "package.json" -execdir sh -c \
+      '"$INSTALL_CMD"' > /dev/null 2>&1 \;
+  fi
+
+  # All apps dependencies (if apps/ directory exists)
+  if [ -d "apps" ]; then
+    echo "Installing dependencies for all apps..."
+    find apps/ -name "package.json" -execdir sh -c \
+      '"$INSTALL_CMD"' > /dev/null 2>&1 \;
+  fi
 fi
 ```
 
