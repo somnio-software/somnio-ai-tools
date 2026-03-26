@@ -69,8 +69,8 @@ Encontré X fichas. Antes de generar, confirmá o corregí los datos:
 
 | # | Somnier | Líder | Fecha | Rol |
 |---|---------|-------|-------|-----|
-| 1 | Gonzalo Sosa | Ariel Martinez | [?] | Sr Flutter Developer |
-| 2 | Juan Pérez | [?] | [?] | Sr Backend Engineer |
+| 1 | John Doe | Jane Smith | [?] | Sr Flutter Developer |
+| 2 | Bob Johnson | [?] | [?] | Sr Backend Engineer |
 
 Completá los [?] y avisame si hay algo para corregir. Una vez confirmado, genero todos los PDFs.
 ```
@@ -85,7 +85,7 @@ Once the EM confirms (even partially, e.g. "el resto está bien"), generate all 
 For each dev:
 1. Build the content JSON from the ficha notes
 2. Run the generation script
-3. Report progress: "✅ 1/3 — Gonzalo Sosa.pdf generado"
+3. Report progress: "✅ 1/3 — John Doe.pdf generado"
 
 Deliver all files at the end together.
 
