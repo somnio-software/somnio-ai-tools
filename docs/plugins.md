@@ -10,7 +10,7 @@ The root manifest at `.claude-plugin/marketplace.json` registers four plugins un
 
 | Plugin | Directory | Description |
 |--------|-----------|-------------|
-| `somnio-development` | `plugins/developer/` | Project health audits, security scans, best practices validation |
+| `somnio-development` | `plugins/development/` | Project health audits, security scans, best practices validation |
 | `somnio-marketing` | `plugins/marketing/` | Content strategy, ASO audits, campaign analysis |
 | `somnio-operations` | `plugins/operations/` | Story definition, backlog management, workflow automation |
 | `somnio-engineering-management` | `plugins/engineering-management/` | Performance reviews, career path evaluation |
@@ -59,18 +59,18 @@ plugins/<name>/
 
 ---
 
-## Developer Plugin
+## Development Plugin
 
-The developer plugin uses **symlinks** to share the main skills and commands:
+The development plugin uses **symlinks** to share the main skills and commands:
 
 ```
-plugins/developer/
+plugins/development/
 ├── .claude-plugin/plugin.json
 ├── commands -> ../../commands        # symlink
 └── skills -> ../../skills            # symlink
 ```
 
-This means the developer plugin always reflects the current state of the root `skills/` and `commands/` directories. Changes to skills are immediately available through the plugin.
+This means the development plugin always reflects the current state of the root `skills/` and `commands/` directories. Changes to skills are immediately available through the plugin.
 
 ---
 

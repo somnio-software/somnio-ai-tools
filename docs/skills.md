@@ -124,6 +124,32 @@ See the [Workflow Guide](workflows.md) for full documentation.
 
 ---
 
+## Clockify Tracker
+
+Log time and manage time entries in Clockify directly from your AI assistant using the Clockify REST API.
+
+**Use when:**
+- Logging hours for a project in Clockify
+- Creating time entries for multiple days at once
+- Checking your Clockify workspaces and projects
+
+**Example prompts:**
+```
+Log 8 hours today on project "Backend API" in Clockify, starting at 09:00. I'm in UTC-3.
+```
+```
+Track 6 hours on "Mobile App" from March 23 to 27, 10:00–16:00, timezone UTC-3.
+```
+```
+Add a Clockify time entry for yesterday on "Frontend" project, 9:00 to 18:00, Buenos Aires time.
+```
+
+**Requires:** `CLOCKIFY_API_KEY` environment variable (Profile → API in Clockify). Optionally set `CLOCKIFY_TZ_OFFSET` (e.g. `-3`) to avoid specifying timezone in each prompt.
+
+**Output:** Confirmed time entry (or entries) created via Clockify API
+
+---
+
 ## Git Branch Format
 
 Generates properly formatted Git branch names following project conventions.

@@ -98,6 +98,17 @@ See the [CLI Reference](cli.md) for full usage.
 
 ---
 
+## Environment Variables
+
+Some skills require environment variables to be configured before use:
+
+| Skill | Variable | Required | Purpose |
+|-------|----------|----------|---------|
+| Clockify Tracker | `CLOCKIFY_API_KEY` | Yes | API key from Clockify (Profile → API) |
+| Clockify Tracker | `CLOCKIFY_TZ_OFFSET` | No | Local UTC offset in whole hours (e.g. `-3` for Argentina) |
+
+---
+
 ## Verifying Installation
 
 ```bash
