@@ -7,15 +7,16 @@
 Goal: Analyze the quality, structure, and best practices of NestJS
 test files.
 
-STANDARDS SOURCE:
-- Validates against:
-     `https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/nestjs/nestjs-testing-unit.mdc`
-- Validates against:
-     `https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/nestjs/nestjs-testing-integration.mdc`
+STANDARDS SOURCE (local):
+- `agent-rules/rules/nestjs/testing-unit.md`
+- `agent-rules/rules/nestjs/testing-integration.md`
+
+To resolve the absolute path: find the directory containing
+`skills/nestjs-best-practices/SKILL.md`, go up two levels to reach
+the somnio-ai-tools repository root, then read the files above.
 
 INSTRUCTIONS:
-1. USE the `read_url_content` tool to fetch the latest standards
-   from the URLs above.
+1. USE the `Read` tool to read the local standards files listed above.
 2. Proceed with the analysis below using strict adherence to those rules.
 
 ANALYSIS TARGETS:

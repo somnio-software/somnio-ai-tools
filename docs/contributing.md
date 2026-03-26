@@ -1,6 +1,8 @@
-[Home](../README.md) > Contributing
+[Home](../README.md) > [Contributing](../CONTRIBUTING.md) > CLI Development
 
-# Contributing & Development
+> For a full overview of all contribution areas (agent rules, skills, agents, plugins), see the [root CONTRIBUTING.md](../CONTRIBUTING.md).
+
+# CLI & Skills Development
 
 ## Getting Started
 

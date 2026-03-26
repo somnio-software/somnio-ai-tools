@@ -73,6 +73,28 @@ somnio setup
 
 ---
 
+## Agent Rules
+
+Global coding standards for NestJS and Flutter — automatically applied by your AI agent in every project.
+
+| Rules Pack | Coverage |
+|:-----------|:---------|
+| NestJS Rules | DTOs, services, controllers, repositories, testing, error handling, TypeScript |
+| Flutter Rules | Layered architecture, BLoC patterns, testing, JSON models |
+
+Install via the Somnio CLI:
+
+```bash
+somnio rules install                          # interactive: detect agents + choose scope
+somnio rules install --agent claude --global  # Claude Code, global
+somnio rules install --agent cursor --project # Cursor, current project
+somnio rules install --all --global           # all detected agents, global
+```
+
+> [Agent rules details →](docs/agent-rules.md)
+
+---
+
 ## Commands
 
 | Command | Description |
@@ -106,13 +128,13 @@ Somnio is also available as a **Claude Desktop App plugin** (Cowork) with four p
 |:--|:--|:--|
 | [Installation Guide](docs/installation.md) | [Skills Catalog](docs/skills.md) | [CLI Reference](docs/cli.md) |
 | [Plugin System](docs/plugins.md) | [Workflow Builder](docs/workflows.md) | [Architecture](docs/architecture.md) |
-| [Contributing](docs/contributing.md) | | |
+| [Agent Rules](docs/agent-rules.md) | [Contributing](CONTRIBUTING.md) | |
 
 ---
 
 ## Contributing
 
-We welcome contributions. See the [Contributing Guide](docs/contributing.md) for setup instructions, how to add new skills or plugins, and the pull request workflow.
+We welcome contributions. See the [Contributing Guide](CONTRIBUTING.md) for setup instructions, how to add new skills, agent rules, agents, or plugins, and the pull request workflow.
 
 ## License
 

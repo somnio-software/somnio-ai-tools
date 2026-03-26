@@ -7,9 +7,13 @@
 Goal: Analyze the Flutter codebase for specific code standards, model
 best practices, and error handling.
 
-STANDARDS SOURCE:
-- https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/flutter/dart-model-from-json.mdc
-- https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/flutter/flutter-ai-rules.mdc
+STANDARDS SOURCE (local):
+- `agent-rules/rules/flutter/dart-model-from-json.md`
+- `agent-rules/rules/flutter/best-practices.md`
+
+To resolve the absolute path: find the directory containing
+`skills/flutter-best-practices/SKILL.md`, go up two levels to reach
+the somnio-ai-tools repository root, then read the files above.
 
 INSTRUCTIONS:
  1.  **SCOPE**: You must analyze **ALL** Dart files for code standards
@@ -19,8 +23,8 @@ INSTRUCTIONS:
      -not -name "*.freezed.dart" 2>/dev/null | wc -l)"` to count source
      files. Then use `glob_file_search` with pattern `**/*.dart` to find
      all Dart files for analysis (excluding generated files).
- 3.  **STANDARDS**: USE the `read_url_content` tool to fetch the latest
-     standards from the URLs above.
+ 3.  **STANDARDS**: USE the `Read` tool to read the local standards
+     files listed above.
  4.  **EFFICIENCY**: When iterating through files, read 3-5 files per
      response using parallel tool calls. Do NOT read one file per
      response — this causes massive context accumulation. Group files

@@ -7,9 +7,13 @@
 Goal: Analyze the quality, structure, and best practices of Flutter
 test files.
 
-STANDARDS SOURCE:
-- https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/flutter/flutter-testing.mdc
-- https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/flutter/bloc-test.mdc
+STANDARDS SOURCE (local):
+- `agent-rules/rules/flutter/testing.md`
+- `agent-rules/rules/flutter/bloc-test.md`
+
+To resolve the absolute path: find the directory containing
+`skills/flutter-best-practices/SKILL.md`, go up two levels to reach
+the somnio-ai-tools repository root, then read the files above.
 
 INSTRUCTIONS:
 1.  **SCOPE**: You must analyze **ALL** test files in the project.
@@ -17,8 +21,8 @@ INSTRUCTIONS:
      -type f -name "*_test.dart" -not -path "*/.*" 2>/dev/null | \
      wc -l)"` to count test files. Then use `glob_file_search` with
      pattern `**/*_test.dart` to find all test files for analysis.
- 3.  **STANDARDS**: USE the `read_url_content` tool to fetch the latest
-     standards from the URLs above.
+ 3.  **STANDARDS**: USE the `Read` tool to read the local standards
+     files listed above.
  4.  **EFFICIENCY**: When iterating through files, read 3-5 files per
      response using parallel tool calls. Do NOT read one file per
      response — this causes massive context accumulation. Group files

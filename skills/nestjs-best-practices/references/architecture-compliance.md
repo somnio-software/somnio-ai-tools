@@ -7,17 +7,17 @@
 Goal: Analyze the NestJS codebase for strict adherence to Layered
 Architecture and Separation of Concerns.
 
-STANDARDS SOURCE:
-- Validates against:
-    `https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/nestjs/nestjs-module-structure.mdc`
-- Validates against:
-    `https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/nestjs/nestjs-service-patterns.mdc`
-- Validates against:
-    `https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/nestjs/nestjs-repository-patterns.mdc`
+STANDARDS SOURCE (local):
+- `agent-rules/rules/nestjs/module-structure.md`
+- `agent-rules/rules/nestjs/service-patterns.md`
+- `agent-rules/rules/nestjs/repository-patterns.md`
+
+To resolve the absolute path: find the directory containing
+`skills/nestjs-best-practices/SKILL.md`, go up two levels to reach
+the somnio-ai-tools repository root, then read the files above.
 
 INSTRUCTIONS:
-1. USE the `read_url_content` tool to fetch the latest standards
-   from the URLs above.
+1. USE the `Read` tool to read the local standards files listed above.
 2. Proceed with the analysis below using strict adherence to those rules.
 
 LAYER DEFINITIONS:

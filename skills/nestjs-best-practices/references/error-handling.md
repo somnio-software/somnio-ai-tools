@@ -6,13 +6,15 @@
 
 Goal: Analyze error handling patterns for consistency and best practices.
 
-STANDARDS SOURCE:
-- Validates against:
-     `https://raw.githubusercontent.com/somnio-software/cursor-rules/main/.cursor/rules/nestjs/nestjs-error-handling.mdc`
+STANDARDS SOURCE (local):
+- `agent-rules/rules/nestjs/error-handling.md`
+
+To resolve the absolute path: find the directory containing
+`skills/nestjs-best-practices/SKILL.md`, go up two levels to reach
+the somnio-ai-tools repository root, then read the file above.
 
 INSTRUCTIONS:
-1. USE the `read_url_content` tool to fetch the latest standards
-   from the URL above.
+1. USE the `Read` tool to read the local standards file listed above.
 2. Proceed with the analysis below using strict adherence to those rules.
 
 ANALYSIS TARGETS:

@@ -1,0 +1,15 @@
+{
+  "name": "agent-rules",
+  "version": "1.0.0",
+  "description": "Somnio coding standards for AI coding agents (Antigravity, Claude Code, Cursor, Copilot, Codex, Windsurf, and more)",
+  "private": true,
+  "scripts": {
+    "generate": "node scripts/generate.js",
+    "generate:antigravity": "node scripts/generate.js --only antigravity",
+    "generate:claude": "node scripts/generate.js --only claude",
+    "generate:codex": "node scripts/generate.js --only codex",
+    "generate:copilot": "node scripts/generate.js --only copilot",
+    "generate:cursor": "node scripts/generate.js --only cursor",
+    "generate:windsurf": "node scripts/generate.js --only windsurf"
+  }
+}
