@@ -60,5 +60,5 @@ your-project/
 ## Actualizar
 
 ```bash
-npm run generate:cursor
+cd agent-rules && python3 scripts/generate.py --only cursor
 ```

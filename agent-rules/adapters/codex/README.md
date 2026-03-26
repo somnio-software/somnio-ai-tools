@@ -23,5 +23,5 @@ Si necesitás los ejemplos de código incluidos, usá el archivo de Claude Code 
 ## Actualizar
 
 ```bash
-npm run generate:codex
+cd agent-rules && python3 scripts/generate.py --only codex
 ```

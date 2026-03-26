@@ -20,5 +20,5 @@ cp adapters/copilot/copilot-instructions.md your-project/.github/copilot-instruc
 ## Actualizar
 
 ```bash
-npm run generate:copilot
+cd agent-rules && python3 scripts/generate.py --only copilot
 ```

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:path/path.dart' as p;
 
 import '../agents/agent_registry.dart';
 import '../content/agent_rule.dart';
@@ -97,6 +98,10 @@ class _RulesInstallCommand extends Command<int> {
     }
 
     final installer = RulesInstaller(repoRoot: repoRoot);
+
+    // ── Generate adapter files from source rules ──────────────────
+    final generateResult = await _generateAdapters(repoRoot);
+    if (generateResult != ExitCode.success.code) return generateResult;
 
     // ── Detect agents ───────────────────────────────────────────────
     _logger.info('');
@@ -234,6 +239,39 @@ class _RulesInstallCommand extends Command<int> {
     }
 
     return ExitCode.success.code;
+  }
+
+  /// Runs the adapter generation script to produce up-to-date output files.
+  ///
+  /// The generated files live in `agent-rules/adapters/` and are not committed
+  /// to the repository. This step ensures the installer always copies the
+  /// latest content derived from the canonical rules in `agent-rules/rules/`.
+  Future<int> _generateAdapters(String repoRoot) async {
+    final progress = _logger.progress('Generating adapter files');
+    try {
+      final result = await Process.run(
+        'python3',
+        ['scripts/generate.py'],
+        workingDirectory: p.join(repoRoot, 'agent-rules'),
+      );
+      if (result.exitCode == 0) {
+        progress.complete('Adapter files generated');
+        return ExitCode.success.code;
+      } else {
+        progress.fail('Failed to generate adapter files');
+        final stderr = (result.stderr as String).trim();
+        if (stderr.isNotEmpty) _logger.err(stderr);
+        return ExitCode.software.code;
+      }
+    } on ProcessException catch (e) {
+      progress.fail('Could not run generate script');
+      _logger.err(
+        'Python 3 is required to generate adapter files. '
+        'Install it from https://www.python.org\n'
+        '  Details: $e',
+      );
+      return ExitCode.software.code;
+    }
   }
 
   /// Detects which supported agents are available on the machine.

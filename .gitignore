@@ -71,4 +71,10 @@ cli/.dart_tool/
 cli/pubspec.lock
 cli/.packages
 
-!agent-rules/adapters/claude/CLAUDE.md
+# Agent rules generated outputs (regenerate with: cd agent-rules && npm run generate)
+agent-rules/adapters/claude/CLAUDE.md
+agent-rules/adapters/copilot/copilot-instructions.md
+agent-rules/adapters/windsurf/.windsurfrules
+agent-rules/adapters/codex/system-prompt.md
+agent-rules/adapters/cursor/rules/
+agent-rules/adapters/antigravity/rules/

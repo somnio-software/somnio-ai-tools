@@ -18,5 +18,5 @@ cp adapters/windsurf/.windsurfrules your-project/.windsurfrules
 ## Actualizar
 
 ```bash
-npm run generate:windsurf
+cd agent-rules && python3 scripts/generate.py --only windsurf
 ```

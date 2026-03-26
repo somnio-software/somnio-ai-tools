@@ -29,5 +29,5 @@ CLAUDE.md
 ## Actualizar
 
 ```bash
-npm run generate:claude
+cd agent-rules && python3 scripts/generate.py --only claude
 ```

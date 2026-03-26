@@ -55,5 +55,5 @@ your-project/
 Cuando se modifiquen las reglas en `rules/`, regenerar este adapter:
 
 ```bash
-npm run generate:antigravity
+cd agent-rules && python3 scripts/generate.py --only antigravity
 ```
