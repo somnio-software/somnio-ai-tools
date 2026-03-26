@@ -3,6 +3,10 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
+import '../agents/agent_config.dart';
+import '../content/skill_registry.dart';
+import '../installers/agent_installer.dart';
+import '../utils/agent_detector.dart';
 import '../utils/cli_installer.dart';
 import '../utils/command_helpers.dart';
 
@@ -207,6 +211,10 @@ class SetupCommand extends Command<int> {
       return CommandHelpers.installToDetectedAgents(_logger);
     }
 
+    // skills.sh only covers Claude/Cursor. Install to workflow-format
+    // agents (e.g., Antigravity) via the built-in installer.
+    await _installWorkflowAgents();
+
     _logger.info('');
     _logger.success('Skills installed via skills.sh!');
     _logger.info('');
@@ -214,6 +222,45 @@ class SetupCommand extends Command<int> {
     CommandHelpers.printNextSteps(_logger);
 
     return ExitCode.success.code;
+  }
+
+  /// Installs skills to workflow-format agents (e.g., Antigravity) that
+  /// skills.sh does not support.
+  Future<void> _installWorkflowAgents() async {
+    final detector = AgentDetector();
+    final agents = await detector.detect();
+
+    final workflowAgents = agents.entries
+        .where(
+          (e) =>
+              e.value.installed &&
+              e.key.installFormat == InstallFormat.workflow,
+        )
+        .map((e) => e.key)
+        .toList();
+
+    if (workflowAgents.isEmpty) return;
+
+    final content = await CommandHelpers.resolveContent();
+
+    for (final agentConfig in workflowAgents) {
+      final progress = _logger.progress(agentConfig.displayName);
+
+      final installer = AgentInstaller(
+        logger: _logger,
+        loader: content.loader,
+        agentConfig: agentConfig,
+      );
+      final result = await installer.install(bundles: content.bundles);
+      final wfCount = installer.installWorkflowSkills(
+        SkillRegistry.workflowSkills,
+      );
+
+      progress.complete(
+        '${agentConfig.displayName}  '
+        '${CommandHelpers.installSummary(result, agentConfig, extraCount: wfCount)}',
+      );
+    }
   }
 
   /// Checks if npx is available in PATH.

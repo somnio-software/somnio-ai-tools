@@ -116,32 +116,25 @@ class AntigravityTransformer implements Transformer {
   }
 
   String _rewritePaths(String content) {
-    // First: rewrite workflow cross-references (must be done before
-    // the general path rewrite catches them)
-    // Pattern: `<prefix>_best_practices_check/.agent/workflows/<name>.md`
+    // First: rewrite workflow cross-references (must be done before the
+    // general path rewrite catches them).
+    // Pattern: `<skill-name>/.agent/workflows/<workflow-name>.md`
+    // → `somnio_<workflow-name>.md`
     content = content.replaceAllMapped(
-      RegExp(
-        r'`((\w+)_best_practices_check)/\.agent/workflows/(\w+)\.md`',
-      ),
-      (match) {
-        final workflowName = match.group(3)!;
-        return '`somnio_$workflowName.md`';
-      },
+      RegExp(r'`([a-z][a-z0-9-]*)\/\.agent\/workflows\/([a-z_]+)\.md`'),
+      (match) => '`somnio_${match.group(2)}.md`',
     );
 
-    // Then: rewrite cursor_rules and plan paths like:
-    //   `<prefix>_project_health_audit/cursor_rules/...`
-    //   `<prefix>_best_practices_check/cursor_rules/...`
-    // to:
-    //   `~/.gemini/antigravity/somnio_rules/<prefix>_.../cursor_rules/...`
+    // Then: rewrite references/ rule file paths.
+    // Pattern: `<skill-name>/references/<path>`
+    // → `~/.gemini/antigravity/somnio_rules/<skill-name>/references/<path>`
     // Absolute path because Antigravity resolves paths relative to the
     // workspace, not relative to the workflow file.
-    final pathPattern = RegExp(
-      r'`(\w+_(?:project_health_audit|best_practices_check|audit)/[^`]+)`',
+    content = content.replaceAllMapped(
+      RegExp(r'`([a-z][a-z0-9-]*)\/references\/([^`]+)`'),
+      (match) =>
+          '`~/.gemini/antigravity/somnio_rules/${match.group(1)}/references/${match.group(2)}`',
     );
-    content = content.replaceAllMapped(pathPattern, (match) {
-      return '`~/.gemini/antigravity/somnio_rules/${match.group(1)}`';
-    });
 
     return content;
   }

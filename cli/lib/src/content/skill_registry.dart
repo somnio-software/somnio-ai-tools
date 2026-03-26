@@ -25,6 +25,8 @@ class SkillRegistry {
           'skills/flutter-health-audit/SKILL.md',
       rulesDirectory:
           'skills/flutter-health-audit/references',
+      workflowPath:
+          'skills/flutter-health-audit/.agent/workflows/flutter_health_audit.md',
       templatePath:
           'skills/flutter-health-audit/assets/report-template.txt',
     ),
@@ -42,6 +44,8 @@ class SkillRegistry {
           'skills/flutter-best-practices/SKILL.md',
       rulesDirectory:
           'skills/flutter-best-practices/references',
+      workflowPath:
+          'skills/flutter-best-practices/.agent/workflows/flutter_best_practices.md',
       templatePath:
           'skills/flutter-best-practices/assets/report-template.txt',
     ),
@@ -60,6 +64,8 @@ class SkillRegistry {
           'skills/nestjs-health-audit/SKILL.md',
       rulesDirectory:
           'skills/nestjs-health-audit/references',
+      workflowPath:
+          'skills/nestjs-health-audit/.agent/workflows/nestjs_health_audit.md',
       templatePath:
           'skills/nestjs-health-audit/assets/report-template.txt',
     ),
@@ -78,6 +84,8 @@ class SkillRegistry {
           'skills/nestjs-best-practices/SKILL.md',
       rulesDirectory:
           'skills/nestjs-best-practices/references',
+      workflowPath:
+          'skills/nestjs-best-practices/.agent/workflows/nestjs_best_practices.md',
       templatePath:
           'skills/nestjs-best-practices/assets/report-template.txt',
     ),
@@ -96,6 +104,8 @@ class SkillRegistry {
           'skills/react-health-audit/SKILL.md',
       rulesDirectory:
           'skills/react-health-audit/references',
+      workflowPath:
+          'skills/react-health-audit/.agent/workflows/react_health_audit.md',
       templatePath:
           'skills/react-health-audit/assets/report-template.txt',
     ),
@@ -114,6 +124,8 @@ class SkillRegistry {
           'skills/react-best-practices/SKILL.md',
       rulesDirectory:
           'skills/react-best-practices/references',
+      workflowPath:
+          'skills/react-best-practices/.agent/workflows/react_best_practices.md',
       templatePath:
           'skills/react-best-practices/assets/report-template.txt',
     ),
@@ -132,6 +144,8 @@ class SkillRegistry {
           'skills/security-audit/SKILL.md',
       rulesDirectory:
           'skills/security-audit/references',
+      workflowPath:
+          'skills/security-audit/.agent/workflows/security_audit.md',
       templatePath:
           'skills/security-audit/assets/report-template.txt',
     ),
@@ -139,8 +153,39 @@ class SkillRegistry {
 
   /// Workflow skill bundles (standalone markdown, no YAML rules).
   ///
-  /// Installed to all agents as `/workflow-builder`.
+  /// Installed to all agents as slash commands.
   static const List<WorkflowSkill> workflowSkills = [
+    WorkflowSkill(
+      id: 'clockify_tracker',
+      name: 'clockify-tracker',
+      displayName: 'Clockify Tracker',
+      description:
+          'Manages Clockify time tracking via the official Clockify REST '
+          'API (v1): list workspaces and projects, create time entries '
+          'with correct UTC timestamps.',
+      planRelativePath:
+          'skills/clockify-tracker/SKILL.md',
+    ),
+    WorkflowSkill(
+      id: 'git_commit_format',
+      name: 'git-commit-format',
+      displayName: 'Git Commit Format',
+      description:
+          'Generates properly formatted Git commit messages (title + '
+          'description) following Conventional Commits.',
+      planRelativePath:
+          'skills/git-commit-format/SKILL.md',
+    ),
+    WorkflowSkill(
+      id: 'git_branch_format',
+      name: 'git-branch-format',
+      displayName: 'Git Branch Format',
+      description:
+          'Generates properly formatted Git branch names following '
+          'project conventions.',
+      planRelativePath:
+          'skills/git-branch-format/SKILL.md',
+    ),
     WorkflowSkill(
       id: 'workflow_builder',
       name: 'workflow-builder',

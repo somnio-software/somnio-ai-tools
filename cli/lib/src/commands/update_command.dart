@@ -4,6 +4,10 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_config.dart';
+import '../content/skill_registry.dart';
+import '../installers/agent_installer.dart';
+import '../utils/agent_detector.dart';
 import '../utils/command_helpers.dart';
 import '../utils/platform_utils.dart';
 
@@ -33,14 +37,21 @@ class UpdateCommand extends Command<int> {
     'somnio-fp',
     'somnio-nh',
     'somnio-np',
+    'somnio-rh',
+    'somnio-rp',
     'somnio-sa',
     'workflow-plan',
     'workflow-run',
     // v2.x names (new)
+    'clockify-tracker',
     'flutter-health-audit',
     'flutter-best-practices',
+    'git-branch-format',
+    'git-commit-format',
     'nestjs-health-audit',
     'nestjs-best-practices',
+    'react-health-audit',
+    'react-best-practices',
     'security-audit',
     'workflow-builder',
   ];
@@ -51,13 +62,20 @@ class UpdateCommand extends Command<int> {
     'somnio-fp.md',
     'somnio-nh.md',
     'somnio-np.md',
+    'somnio-rh.md',
+    'somnio-rp.md',
     'somnio-sa.md',
     'workflow-plan.md',
     'workflow-run.md',
+    'clockify-tracker.md',
     'flutter-health-audit.md',
     'flutter-best-practices.md',
+    'git-branch-format.md',
+    'git-commit-format.md',
     'nestjs-health-audit.md',
     'nestjs-best-practices.md',
+    'react-health-audit.md',
+    'react-best-practices.md',
     'security-audit.md',
     'workflow-builder.md',
   ];
@@ -248,6 +266,48 @@ class UpdateCommand extends Command<int> {
     return count;
   }
 
+  /// Installs skills to workflow-format agents (e.g., Antigravity) that
+  /// skills.sh does not support.
+  ///
+  /// skills.sh only covers Claude and Cursor. Agents with
+  /// [InstallFormat.workflow] need the built-in installer.
+  Future<void> _installWorkflowAgents() async {
+    final detector = AgentDetector();
+    final agents = await detector.detect();
+
+    final workflowAgents = agents.entries
+        .where(
+          (e) =>
+              e.value.installed &&
+              e.key.installFormat == InstallFormat.workflow,
+        )
+        .map((e) => e.key)
+        .toList();
+
+    if (workflowAgents.isEmpty) return;
+
+    final content = await CommandHelpers.resolveContent();
+
+    for (final agentConfig in workflowAgents) {
+      final progress = _logger.progress(agentConfig.displayName);
+
+      final installer = AgentInstaller(
+        logger: _logger,
+        loader: content.loader,
+        agentConfig: agentConfig,
+      );
+      final result = await installer.install(bundles: content.bundles);
+      final wfCount = installer.installWorkflowSkills(
+        SkillRegistry.workflowSkills,
+      );
+
+      progress.complete(
+        '${agentConfig.displayName}  '
+        '${CommandHelpers.installSummary(result, agentConfig, extraCount: wfCount)}',
+      );
+    }
+  }
+
   /// Installs skills via `npx skills add` (skills.sh).
   Future<int> _installViaSkillsSh() async {
     _logger.info(
@@ -297,6 +357,10 @@ class UpdateCommand extends Command<int> {
       _logger.info('');
       return CommandHelpers.installToDetectedAgents(_logger);
     }
+
+    // skills.sh only covers Claude/Cursor. Install to workflow-format
+    // agents (e.g., Antigravity) via the built-in installer.
+    await _installWorkflowAgents();
 
     _logger.info('');
     _logger.success('Update complete! Skills reinstalled via skills.sh.');

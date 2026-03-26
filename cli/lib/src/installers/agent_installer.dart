@@ -121,7 +121,17 @@ class AgentInstaller extends Installer {
         final planFile = File(planPath);
         if (!planFile.existsSync()) continue;
 
-        final content = planFile.readAsStringSync();
+        var content = planFile.readAsStringSync();
+
+        // Strip existing YAML frontmatter so agents that add their own
+        // header don't produce duplicate frontmatter.
+        if (content.startsWith('---')) {
+          final endIndex = content.indexOf('---', 3);
+          if (endIndex != -1) {
+            content = content.substring(endIndex + 3).trimLeft();
+          }
+        }
+
         final format = agentConfig.installFormat;
 
         switch (format) {
