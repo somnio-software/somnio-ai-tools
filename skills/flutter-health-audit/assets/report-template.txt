@@ -178,13 +178,14 @@ Description: [One-sentence description of the testing analysis].
 
 Score: [Score]/100 ([Label])
 
-Code Coverage: [Value from @flutter_test_coverage artifact: overall % or
-  per-app for monorepo]
+Code Coverage: [X]% (overall: lib + packages)
+  For monorepo: Code Coverage: App [name]: [X]%, App [name2]: [Y]%
 
 Coverage Breakdown:
-  [Component/lib: X%]
-  [Component/packages/package_name: X%]
-  [Continue for each component — see @flutter_test_coverage artifact]
+  [ProjectName]/lib: [X]%
+  packages/[package_name]: [X]%
+  packages/[package_name]: [X]%
+  [Continue for each package — one line per component from @flutter_test_coverage artifact]
 
 Key Findings:
 - [Finding 1]
@@ -315,9 +316,9 @@ Counts & Metrics:
 - Packages count: [Count]
 - Coverage %: [Percentage or status] (per app if multi-app)
 - Coverage breakdown by component:
-  [Component/lib: X%]
-  [Component/packages/package_name: X%]
-  [Continue for each component]
+  [ProjectName]/lib: X%
+  packages/[package_name]: X%
+  [Continue for each package]
 - Overall aggregated coverage %: [Total percentage combining all apps and packages]
 - State management detected: [Pattern]
 - Force-upgrade/maintenance mode: [Status]

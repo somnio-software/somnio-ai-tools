@@ -105,7 +105,18 @@ Save your complete analysis to `reports/.artifacts/flutter_health/step_04_testin
 
 Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
 
-Structure your output as:
+MANDATORY: The artifact MUST begin with the "Code Coverage:" and
+"Coverage Breakdown:" lines copied VERBATIM from the preflight artifact
+at `reports/.artifacts/flutter_health/step_00_test_coverage.md`. Do NOT
+summarize, reformat, or omit any coverage breakdown line. These lines
+are consumed by the report generator to produce Section 7 (Testing).
+
+If the preflight artifact is missing, write:
+  Code Coverage: 0% (coverage data unavailable from preflight)
+  Coverage Breakdown:
+    (no coverage data — preflight artifact missing)
+
+After the coverage lines, structure the rest of your output as:
 - **Repository Structure**: Single app or multi-app monorepo
 - **Test File Summary**: Total count of test files per app/package
 - **Test Type Breakdown**: Count of unit, widget, and bloc tests per app/package

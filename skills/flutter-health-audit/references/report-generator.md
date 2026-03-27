@@ -75,12 +75,60 @@ Description: [One-sentence description of the section's purpose]
 
 Score: [Score]/100 ([Label])
 
-Section 7 (Testing) EXCEPTION: MUST include "Code Coverage:" on a line
-immediately after Score, before Key Findings. Extract from
-@flutter_test_coverage artifact (line starting with "Code Coverage:").
-MUST also include "Coverage Breakdown:" immediately after "Code Coverage:",
-listing per-component coverage (one line per lib/package). Extract from
-@flutter_test_coverage artifact (lines under "COVERAGE BREAKDOWN:").
+Section 7 (Testing) EXCEPTION — NON-NEGOTIABLE:
+MUST include "Code Coverage:" on a line immediately after Score, before
+Key Findings. MUST also include "Coverage Breakdown:" immediately after
+"Code Coverage:", listing per-component coverage (one line per
+lib/package).
+
+HOW TO EXTRACT: Read the artifact file at
+  reports/.artifacts/flutter_health/step_00_test_coverage.md
+Copy the "Code Coverage:" and "Coverage Breakdown:" lines VERBATIM
+from that file into Section 7 of the report. Do NOT summarize,
+reformat, or omit any line.
+
+If the artifact file does not exist or is empty, output:
+  Code Coverage: 0% (coverage data unavailable)
+  Coverage Breakdown:
+    (no coverage data — artifact missing)
+
+EXAMPLE OUTPUT for Section 7 (single app with packages):
+
+  Score: 35/100 (Weak)
+
+  Code Coverage: 3% (overall: lib + packages)
+  Coverage Breakdown:
+    locl/lib: 2%
+    packages/app_config_repository: 10%
+    packages/community_repository: 0%
+    packages/location_service: 85%
+    packages/locl_api_client: 10%
+    packages/locl_app_ui: 4%
+    packages/media_service: 88%
+    packages/notification_badge_service: 11%
+    packages/notification_repository: 0%
+    packages/permission_service: 3%
+    packages/post_repository: 0%
+    packages/proto_http_client: 4%
+    packages/share_service: 60%
+
+  Key Findings:
+  - ...
+
+EXAMPLE OUTPUT for Section 7 (multi-app monorepo):
+
+  Score: 42/100 (Weak)
+
+  Code Coverage: App appA: 15%, App appB: 22%
+  Coverage Breakdown:
+    appA/lib: 12%
+    appA/packages/shared_ui: 20%
+    appB/lib: 18%
+    packages/common_utils: 45%
+    packages/api_client: 8%
+
+  Key Findings:
+  - ...
 
 Key Findings:
 - [Bullet point 1]
@@ -142,9 +190,9 @@ Priority Recommendations:
 - Packages count: [Count]
 - Coverage %: [Percentage or status] (per app if multi-app)
 - Coverage breakdown by component:
-  [Component/lib: X%]
-  [Component/packages/package_name: X%]
-  [Continue for each component]
+  [ProjectName]/lib: X%
+  packages/[package_name]: X%
+  [Continue for each package]
 - Overall aggregated coverage %: [Total percentage combining all
   apps and packages]
 - State management detected: [Pattern]

@@ -286,9 +286,9 @@ if [ -d "coverage/packages/" ]; then
         grep -c ",[1-9]" || echo "0")
       if [ $bd_lines -gt 0 ]; then
         bd_pct=$((bd_covered * 100 / bd_lines))
-        echo "  $project_name/packages/$pkg_name: $bd_pct%"
+        echo "  packages/$pkg_name: $bd_pct%"
       else
-        echo "  $project_name/packages/$pkg_name: 0%"
+        echo "  packages/$pkg_name: 0%"
       fi
     fi
   done
@@ -418,7 +418,7 @@ SINGLE APP SUMMARY:
 - Code Coverage: [X]% (overall: lib + packages) — MANDATORY
 - Coverage Breakdown: — MANDATORY (one line per component)
   [ProjectName]/lib: [X]%
-  [ProjectName]/packages/[package_name]: [X]%
+  packages/[package_name]: [X]%
   (list every package found)
 - App test count and coverage percentage
 - Packages test counts and coverage percentages (if packages/ exists)
@@ -498,7 +498,7 @@ Provide the following structured output:
    - Single app:
      Coverage Breakdown:
        [ProjectName]/lib: [X]%
-       [ProjectName]/packages/[package_name]: [X]%
+       packages/[package_name]: [X]%
    - Multi-app monorepo:
      Coverage Breakdown:
        [AppName1]/lib: [X]%
@@ -621,3 +621,53 @@ Provide recommendations for:
 Remember: Focus on actionable insights and specific recommendations
 for improving test coverage and quality, considering single app,
 multi-app, and package scenarios.
+
+----------------------------------------------------------------------
+ARTIFACT PERSISTENCE (MANDATORY)
+----------------------------------------------------------------------
+
+After completing ALL coverage analysis, you MUST save the coverage
+summary to a persistent artifact file. This is NON-NEGOTIABLE because
+the report generator depends on this file to extract coverage data.
+
+```bash
+mkdir -p reports/.artifacts/flutter_health
+```
+
+Write the coverage summary to:
+  reports/.artifacts/flutter_health/step_00_test_coverage.md
+
+The artifact file MUST contain AT MINIMUM these two mandatory sections
+at the very top of the file, before any other content:
+
+SINGLE APP FORMAT:
+```
+Code Coverage: [X]% (overall: lib + packages)
+Coverage Breakdown:
+  [ProjectName]/lib: [X]%
+  packages/[package_name]: [X]%
+  packages/[package_name]: [X]%
+  ... (one line per package)
+```
+
+MULTI-APP FORMAT:
+```
+Code Coverage: App [name]: [X]%, App [name2]: [Y]%
+Coverage Breakdown:
+  [AppName1]/lib: [X]%
+  [AppName1]/packages/[package_name]: [X]%
+  packages/[shared_package_name]: [X]%
+  [AppName2]/lib: [X]%
+  ... (one line per app/package)
+```
+
+If coverage could not be calculated (e.g., no tests, no lcov.info),
+write:
+```
+Code Coverage: 0% (no coverage data available)
+Coverage Breakdown:
+  (no coverage data — tests failed or no test files found)
+```
+
+NEVER omit this artifact. The report generator will fail to produce
+correct Section 7 (Testing) without it.

@@ -103,6 +103,22 @@ COVERAGE ANALYSIS:
   * Verify coverage execution per app
 
 Output format:
+
+MANDATORY FIRST LINES: The output artifact MUST begin with the
+"Code Coverage:" and "Coverage Breakdown:" lines copied VERBATIM from
+the preflight coverage artifact at:
+  reports/.artifacts/flutter_health/step_00_test_coverage.md
+
+Copy the "Code Coverage:" line and ALL "Coverage Breakdown:" lines
+exactly as they appear. Do NOT summarize, reformat, or omit any line.
+The report generator depends on these exact lines for Section 7.
+
+If the preflight artifact is missing, write:
+  Code Coverage: 0% (coverage data unavailable from preflight)
+  Coverage Breakdown:
+    (no coverage data — preflight artifact missing)
+
+After the mandatory coverage lines, include:
 - Repository structure type (single app / multi-app monorepo)
 - Total count of test files (per app if multi-app)
 - Breakdown by test type (unit, widget, bloc) (per app if multi-app)

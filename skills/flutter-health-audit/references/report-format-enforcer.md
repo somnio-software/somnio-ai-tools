@@ -54,8 +54,29 @@ Description: [One-sentence description of the section's purpose]
 
 Score: [Score]/100 ([Label])
 
-Section 7 (Testing) MUST include "Code Coverage:" on a line after Score.
-Extract from @flutter_test_coverage artifact.
+Section 7 (Testing) MUST include "Code Coverage:" on a line immediately
+after Score, before Key Findings. Extract from @flutter_test_coverage
+artifact (line starting with "Code Coverage:").
+MUST also include "Coverage Breakdown:" immediately after "Code Coverage:",
+listing per-component coverage (one line per lib/package). Extract from
+@flutter_test_coverage artifact (lines under "COVERAGE BREAKDOWN:").
+For monorepos, separate by application and by package.
+
+Example (single app with packages):
+  Code Coverage: 3% (overall: lib + packages)
+  Coverage Breakdown:
+    locl/lib: 2%
+    packages/app_config_repository: 10%
+    packages/community_repository: 0%
+    packages/location_service: 85%
+
+Example (multi-app monorepo):
+  Code Coverage: App appA: 15%, App appB: 22%
+  Coverage Breakdown:
+    appA/lib: 12%
+    appA/packages/shared_ui: 20%
+    appB/lib: 18%
+    packages/common_utils: 45%
 
 Key Findings:
 - [Bullet point 1]
@@ -121,6 +142,10 @@ Priority Recommendations:
 - Number of feature folders: [Count] ([App breakdown if multi-app])
 - Packages count: [Count]
 - Coverage %: [Percentage or status] (per app if multi-app)
+- Coverage breakdown by component:
+  [ProjectName]/lib: X%
+  packages/[package_name]: X%
+  [Continue for each component]
 - Overall aggregated coverage %: [Total percentage combining all
   apps and packages]
 - State management detected: [Pattern]
