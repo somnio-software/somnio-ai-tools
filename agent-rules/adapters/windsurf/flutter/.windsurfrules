@@ -1,0 +1,2376 @@
+# Somnio Coding Standards — Windsurf (Flutter)
+
+Follow these standards when generating or editing code.
+
+### General architecture guidelines when using Flutter.
+
+# Flutter Layered Architecture
+
+How to build highly scalable, maintainable, and testable Flutter apps using layered architecture. This architecture consists of four layers with clear boundaries and single responsibilities.
+
+## Architecture Overview
+
+Layered architecture enhances developer experience by allowing independent development of each layer. Each layer can be developed by different teams without impacting others. Testing is simplified since only one layer needs to be mocked.
+
+### Layer Structure
+
+```
+Presentation Layer (UI/Widgets)
+    ↓
+Business Logic Layer (BLoC/State Management)
+    ↓
+Repository Layer (Domain Logic)
+    ↓
+Data Layer (External Sources)
+```
+
+## Layer Responsibilities
+
+### 1. Data Layer (Bottom Layer)
+
+**Purpose**: Retrieve raw data from external sources
+
+**Responsibilities**:
+- SQLite database operations
+- Local storage (SharedPreferences)
+- RESTful API calls
+- GPS, battery data, file system access
+- No domain or business logic
+
+**Characteristics**:
+- Closest to data retrieval
+- Free of specific domain logic
+- Reusable across unrelated projects
+- Platform-specific implementations
+
+**Example**:
+```dart
+// api_client.dart
+class ApiClient {
+  final http.Client _client;
+  
+  Future<Map<String, dynamic>> makeRequest({
+    required String url,
+    Map<String, dynamic>? data,
+  }) async {
+    // Raw HTTP implementation
+  }
+}
+```
+
+### 2. Repository Layer (Composition Layer)
+
+**Purpose**: Compose data clients and apply business rules
+
+**Responsibilities**:
+- Fetch data from one or more data sources
+- Apply domain-specific logic to raw data
+- Provide clean interface to business logic layer
+- One repository per domain (UserRepository, WeatherRepository)
+
+**Characteristics**:
+- No Flutter dependencies
+- No dependencies on other repositories
+- Domain-specific business rules
+- "Product" layer - business owner determines rules
+
+**Example**:
+```dart
+// user_repository.dart
+class UserRepository {
+  const UserRepository(this.apiClient);
+  
+  final ApiClient apiClient;
+  final String loginUrl = '/login';
+  
+  Future<void> logIn(String email, String password) async {
+    await apiClient.makeRequest(
+      url: loginUrl,
+      data: {
+        'email': email,
+        'password': password,
+      },
+    );
+  }
+}
+```
+
+### 3. Business Logic Layer (Feature Layer)
+
+**Purpose**: Compose repositories and implement feature logic
+
+**Responsibilities**:
+- Implement BLoC library
+- Retrieve data from repository layer
+- Provide state to presentation layer
+- Feature-specific use cases
+
+**Characteristics**:
+- No Flutter SDK dependencies
+- No direct dependencies on other business logic components
+- "Feature" layer - design/product determines feature rules
+
+**Example**:
+```dart
+// login_bloc.dart
+class LoginBloc extends Bloc<LoginEvent, LoginState> {
+  LoginBloc({required UserRepository userRepository})
+      : _userRepository = userRepository,
+        super(const LoginState()) {
+    on<LoginSubmitted>(_onLoginSubmitted);
+  }
+
+  final UserRepository _userRepository;
+
+  Future<void> _onLoginSubmitted(
+    LoginSubmitted event,
+    Emitter<LoginState> emit,
+  ) async {
+    try {
+      await _userRepository.logIn(state.email, state.password);
+      emit(const LoginSuccess());
+    } catch (error, stackTrace) {
+      addError(error, stackTrace);
+      emit(const LoginFailure());
+    }
+  }
+}
+```
+
+### 4. Presentation Layer (Top Layer)
+
+**Purpose**: UI layer using Flutter widgets
+
+**Responsibilities**:
+- Build widgets and manage lifecycle
+- Request updates from business logic layer
+- Update UI based on state changes
+- No business logic
+
+**Characteristics**:
+- Flutter UI dependencies
+- "Design" layer - designers determine UI
+- Only interacts with business logic layer
+
+**Example**:
+```dart
+// login_page.dart
+class LoginPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => LoginBloc(
+        userRepository: context.read<UserRepository>(),
+      ),
+      child: BlocListener<LoginBloc, LoginState>(
+        listener: (context, state) {
+          if (state.status == LoginStatus.success) {
+            Navigator.of(context).pushReplacementNamed('/home');
+          }
+        },
+        child: LoginForm(),
+      ),
+    );
+  }
+}
+```
+
+## Project Organization
+
+### Directory Structure
+
+```
+my_app/
+├── lib/                    # Presentation + Business Logic
+│   ├── login/
+│   │   ├── bloc/
+│   │   │   ├── login_bloc.dart
+│   │   │   ├── login_event.dart
+│   │   │   └── login_state.dart
+│   │   ├── view/
+│   │   │   ├── login_page.dart
+│   │   │   └── view.dart
+│   │   └── login.dart
+│   └── main.dart
+├── packages/               # Data + Repository Layers
+│   ├── user_repository/
+│   │   ├── lib/
+│   │   │   ├── src/
+│   │   │   │   ├── models/
+│   │   │   │   │   ├── models.dart
+│   │   │   │   │   └── user.dart
+│   │   │   │   └── user_repository.dart
+│   │   │   └── user_repository.dart
+│   │   └── test/
+│   │       ├── models/
+│   │       │   └── user_test.dart
+│   │       └── user_repository_test.dart
+│   └── api_client/
+│       ├── lib/
+│       │   ├── src/
+│       │   │   └── api_client.dart
+│       │   └── api_client.dart
+│       └── test/
+│           └── api_client_test.dart
+└── test/                   # Presentation + Business Logic Tests
+    └── login/
+        ├── bloc/
+        │   ├── login_bloc_test.dart
+        │   ├── login_event_test.dart
+        │   └── login_state_test.dart
+        └── view/
+            └── login_page_test.dart
+```
+
+### Key Principles
+
+1. **Separation of Concerns**: Each layer has a single responsibility
+2. **Dependency Direction**: Data flows bottom-up, dependencies flow top-down
+3. **Abstraction**: Implementation details don't leak between layers
+4. **Testability**: Each layer can be tested in isolation
+
+## Dependency Rules
+
+### ✅ Good: Proper Layer Dependencies
+
+```dart
+// Presentation Layer
+class LoginPage extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return LoginButton(
+      onPressed: () => context.read<LoginBloc>().add(const LoginSubmitted()),
+    );
+  }
+}
+
+// Business Logic Layer
+class LoginBloc extends Bloc<LoginEvent, LoginState> {
+  Future<void> _onLoginSubmitted(
+    LoginSubmitted event,
+    Emitter<LoginState> emit,
+  ) async {
+    try {
+      await _userRepository.logIn(state.email, state.password);
+      emit(const LoginSuccess());
+    } catch (error, stackTrace) {
+      addError(error, stackTrace);
+      emit(const LoginFailure());
+    }
+  }
+}
+
+// Repository Layer
+class UserRepository {
+  const UserRepository(this.apiClient);
+  final ApiClient apiClient;
+  final String loginUrl = '/login';
+
+  Future<void> logIn(String email, String password) async {
+    await apiClient.makeRequest(
+      url: loginUrl,
+      data: {
+        'email': email,
+        'password': password,
+      },
+    );
+  }
+}
+```
+
+### ❌ Bad: Layer Violations
+
+```dart
+// ❌ Business Logic Layer accessing Data Layer directly
+class LoginBloc extends Bloc<LoginEvent, LoginState> {
+  final String loginUrl = '/login'; // ❌ API details leaked
+
+  Future<void> _onLoginSubmitted(
+    LoginSubmitted event,
+    Emitter<LoginState> emit,
+  ) async {
+    try {
+      // ❌ Direct API access from BLoC
+      await apiClient.makeRequest(
+        url: loginUrl,
+        data: {
+          'email': state.email,
+          'password': state.password,
+        },
+      );
+      emit(const LoginSuccess());
+    } catch (error, stackTrace) {
+      addError(error, stackTrace);
+      emit(const LoginFailure());
+    }
+  }
+}
+```
+
+## Implementation Guidelines
+
+### 1. Layer Boundaries
+
+- **Never skip layers**: Presentation → Business Logic → Repository → Data
+- **No cross-layer dependencies**: Repository shouldn't depend on Business Logic
+- **Single responsibility**: Each layer has one clear purpose
+
+### 2. Dependency Injection
+
+```dart
+// Use dependency injection to provide dependencies
+class LoginBloc extends Bloc<LoginEvent, LoginState> {
+  LoginBloc({required UserRepository userRepository})
+      : _userRepository = userRepository,
+        super(const LoginState());
+}
+```
+
+### 3. Error Handling
+
+```dart
+// Handle errors at the appropriate layer
+class LoginBloc extends Bloc<LoginEvent, LoginState> {
+  Future<void> _onLoginSubmitted(
+    LoginSubmitted event,
+    Emitter<LoginState> emit,
+  ) async {
+    try {
+      await _userRepository.logIn(state.email, state.password);
+      emit(const LoginSuccess());
+    } catch (error, stackTrace) {
+      addError(error, stackTrace);
+      emit(const LoginFailure());
+    }
+  }
+}
+```
+
+### 4. Testing Strategy
+
+```dart
+// Test each layer in isolation
+class LoginBlocTest {
+  late MockUserRepository mockUserRepository;
+  late LoginBloc loginBloc;
+
+  setUp(() {
+    mockUserRepository = MockUserRepository();
+    loginBloc = LoginBloc(userRepository: mockUserRepository);
+  });
+
+  blocTest<LoginBloc, LoginState>(
+    'emits [loading, success] when login succeeds',
+    build: () => loginBloc,
+    act: (bloc) => bloc.add(const LoginSubmitted()),
+    expect: () => [
+      const LoginState(status: LoginStatus.loading),
+      const LoginState(status: LoginStatus.success),
+    ],
+  );
+}
+```
+
+## Common Patterns
+
+### Repository Pattern
+
+```dart
+abstract class UserRepository {
+  Future<void> logIn(String email, String password);
+  Future<User> getUser(String id);
+  Future<void> updateUser(User user);
+}
+
+class UserRepositoryImpl implements UserRepository {
+  const UserRepositoryImpl(this.apiClient);
+  final ApiClient apiClient;
+  
+  @override
+  Future<void> logIn(String email, String password) async {
+    // Implementation
+  }
+}
+```
+
+### BLoC Pattern
+
+```dart
+// Events
+abstract class LoginEvent extends Equatable {
+  const LoginEvent();
+}
+
+class LoginSubmitted extends LoginEvent {
+  const LoginSubmitted();
+  
+  @override
+  List<Object?> get props => [];
+}
+
+// States
+class LoginState extends Equatable {
+  const LoginState({
+    this.status = LoginStatus.initial,
+    this.email = '',
+    this.password = '',
+  });
+  
+  final LoginStatus status;
+  final String email;
+  final String password;
+  
+  @override
+  List<Object?> get props => [status, email, password];
+}
+```
+
+### Widget Organization
+
+```dart
+// Feature-level barrel file
+export 'bloc/bloc.dart';
+export 'view/view.dart';
+
+// View barrel file
+export 'login_page.dart';
+export 'login_form.dart';
+
+// BLoC barrel file
+export 'login_bloc.dart';
+export 'login_event.dart';
+export 'login_state.dart';
+```
+
+## Common Anti-Patterns to Avoid
+
+1. **Direct Data Layer Access**: Never access data layer from presentation or business logic
+2. **Cross-Layer Dependencies**: Don't create circular dependencies between layers
+3. **Business Logic in UI**: Keep all business logic in the business logic layer
+4. **Hardcoded Dependencies**: Use dependency injection instead of direct instantiation
+5. **Mixed Responsibilities**: Don't mix conce
+
+## Rules
+
+1. **Layer Isolation**: Each layer should be independent and testable
+2. **Dependency Direction**: Always flow from top to bottom
+3. **Abstraction**: Hide implementation details behind interfaces
+4. **Single Responsibility**: Each class has one clear purpose
+5. **Error Boundaries**: Handle errors at the appropriate layer
+6. **Testing**: Test each layer in isolation with mocks
+7. **Documentation**: Document layer boundaries and responsibilities
+8. **Consistency**: Follow the same patterns across all features
+
+---
+
+### General guidelines when using Flutter
+
+# AI rules for Flutter
+
+You are an expert in Flutter and Dart development. Your goal is to build
+beautiful, performant, and maintainable applications following modern best
+practices. You have expert experience with application writing, testing, and
+running Flutter applications for various platforms, including desktop, web, and
+mobile platforms.
+
+## Interaction Guidelines
+* **User Persona:** Assume the user is familiar with programming concepts but
+  may be new to Dart.
+* **Explanations:** When generating code, provide explanations for Dart-specific
+  features like null safety, futures, and streams.
+* **Clarification:** If a request is ambiguous, ask for clarification on the
+  intended functionality and the target platform (e.g., command-line, web,
+  server).
+* **Dependencies:** When suggesting new dependencies from `pub.dev`, explain
+  their benefits.
+* **Formatting:** Use the `dart_format` tool to ensure consistent code
+  formatting.
+* **Fixes:** Use the `dart_fix` tool to automatically fix many common errors,
+  and to help code conform to configured analysis options.
+* **Linting:** Use the Dart linter with a recommended set of rules to catch
+  common issues. Use the `analyze_files` tool to run the linter.
+
+## Flutter style guide
+* **SOLID Principles:** Apply SOLID principles throughout the codebase.
+* **Concise and Declarative:** Write concise, modern, technical Dart code.
+  Prefer functional and declarative patterns.
+* **Composition over Inheritance:** Favor composition for building complex
+  widgets and logic.
+* **Immutability:** Prefer immutable data structures. Widgets (especially
+  `StatelessWidget`) should be immutable.
+* **State Management:** Separate ephemeral state and app state. Use a state
+  management solution for app state to handle the separation of concerns.
+* **Widgets are for UI:** Everything in Flutter's UI is a widget. Compose
+  complex UIs from smaller, reusable widgets.
+* **Navigation:** Use a modern routing package like `auto_route` or `go_router`.
+  See the [navigation guide](./navigation.md) for a detailed example using
+  `go_router`.
+
+## Package Management
+* **Pub Tool:** To manage packages, use the `pub` tool, if available.
+* **External Packages:** If a new feature requires an external package, use the
+  `pub_dev_search` tool, if it is available. Otherwise, identify the most
+  suitable and stable package from pub.dev.
+* **Adding Dependencies:** To add a regular dependency, use the `pub` tool, if
+  it is available. Otherwise, run `flutter pub add <package_name>`.
+* **Adding Dev Dependencies:** To add a development dependency, use the `pub`
+  tool, if it is available, with `dev:<package name>`. Otherwise, run `flutter
+  pub add dev:<package_name>`.
+* **Dependency Overrides:** To add a dependency override, use the `pub` tool, if
+  it is available, with `override:<package name>:1.0.0`. Otherwise, run `flutter
+  pub add override:<package_name>:1.0.0`.
+* **Removing Dependencies:** To remove a dependency, use the `pub` tool, if it
+  is available. Otherwise, run `dart pub remove <package_name>`.
+
+## Code Quality
+* **Code structure:** Adhere to maintainable code structure and separation of
+  concerns (e.g., UI logic separate from business logic).
+* **Naming conventions:** Avoid abbreviations and use meaningful, consistent,
+  descriptive names for variables, functions, and classes.
+* **Conciseness:** Write code that is as short as it can be while remaining
+  clear.
+* **Simplicity:** Write straightforward code. Code that is clever or
+  obscure is difficult to maintain.
+* **Error Handling:** Anticipate and handle potential errors. Don't let your
+  code fail silently.
+* **Styling:**
+    * Line length: Lines should be 80 characters or fewer.
+    * Use `PascalCase` for classes, `camelCase` for
+      members/variables/functions/enums, and `snake_case` for files.
+* **Functions:**
+    * Functions short and with a single purpose (strive for less than 20 lines).
+* **Testing:** Write code with testing in mind. Use the `file`, `process`, and
+  `platform` packages, if appropriate, so you can inject in-memory and fake
+  versions of the objects.
+* **Logging:** Use the `logging` package instead of `print`.
+
+## Dart Best Practices
+* **Effective Dart:** Follow the official Effective Dart guidelines
+  (https://dart.dev/effective-dart)
+* **Class Organization:** Define related classes within the same library file.
+  For large libraries, export smaller, private libraries from a single top-level
+  library.
+* **Library Organization:** Group related libraries in the same folder.
+* **API Documentation:** Add documentation comments to all public APIs,
+  including classes, constructors, methods, and top-level functions.
+* **Comments:** Write clear comments for complex or non-obvious code. Avoid
+  over-commenting.
+* **Trailing Comments:** Don't add trailing comments.
+* **Async/Await:** Ensure proper use of `async`/`await` for asynchronous
+  operations with robust error handling.
+    * Use `Future`s, `async`, and `await` for asynchronous operations.
+    * Use `Stream`s for sequences of asynchronous events.
+* **Null Safety:** Write code that is soundly null-safe. Leverage Dart's null
+  safety features. Avoid `!` unless the value is guaranteed to be non-null.
+* **Pattern Matching:** Use pattern matching features where they simplify the
+  code.
+* **Records:** Use records to return multiple types in situations where defining
+  an entire class is cumbersome.
+* **Switch Statements:** Prefer using exhaustive `switch` statements or
+  expressions, which don't require `break` statements.
+* **Exception Handling:** Use `try-catch` blocks for handling exceptions, and
+  use exceptions appropriate for the type of exception. Use custom exceptions
+  for situations specific to your code.
+* **Arrow Functions:** Use arrow syntax for simple one-line functions.
+
+## Flutter Best Practices
+* **Immutability:** Widgets (especially `StatelessWidget`) are immutable; when
+  the UI needs to change, Flutter rebuilds the widget tree.
+* **Composition:** Prefer composing smaller widgets over extending existing
+  ones. Use this to avoid deep widget nesting.
+* **Private Widgets:** Use small, private `Widget` classes instead of private
+  helper methods that return a `Widget`.
+* **Build Methods:** Break down large `build()` methods into smaller, reusable
+  private Widget classes.
+* **List Performance:** Use `ListView.builder` or `SliverList` for long lists to
+  create lazy-loaded lists for performance.
+* **Isolates:** Use `compute()` to run expensive calculations in a separate
+  isolate to avoid blocking the UI thread, such as JSON parsing.
+* **Const Constructors:** Use `const` constructors for widgets and in `build()`
+  methods whenever possible to reduce rebuilds.
+* **Build Method Performance:** Avoid performing expensive operations, like
+  network calls or complex computations, directly within `build()` methods.
+
+## API Design Principles
+When building reusable APIs, such as a library, follow these principles.
+
+* **Consider the User:** Design APIs from the perspective of the person who will
+  be using them. The API should be intuitive and easy to use correctly.
+* **Documentation is Essential:** Good documentation is a part of good API
+  design. It should be clear, concise, and provide examples.
+
+### Data Flow
+* **Data Structures:** Define data structures (classes) to represent the data
+  used in the application.
+* **Data Abstraction:** Abstract data sources (e.g., API calls, database
+  operations) using Repositories to promote testability.
+
+### Routing
+* **GoRouter:** Use the `go_router` package for declarative navigation, deep
+  linking, and web support.
+* **GoRouter Setup:** To use `go_router`, first add it to your `pubspec.yaml`
+  using the `pub` tool's `add` command.
+
+  ```dart
+  // 1. Add the dependency
+  // flutter pub add go_router
+
+  // 2. Configure the router
+  final GoRouter _router = GoRouter(
+    routes: <RouteBase>[
+      GoRoute(
+        path: '/',
+        builder: (context, state) => const HomeScreen(),
+        routes: <RouteBase>[
+          GoRoute(
+            path: 'details/:id', // Route with a path parameter
+            builder: (context, state) {
+              final String id = state.pathParameters['id']!;
+              return DetailScreen(id: id);
+            },
+          ),
+        ],
+      ),
+    ],
+  );
+
+  // 3. Use it in your MaterialApp
+  MaterialApp.router(
+    routerConfig: _router,
+  );
+  ```
+* **Authentication Redirects:** Configure `go_router`'s `redirect` property to
+  handle authentication flows, ensuring users are redirected to the login screen
+  when unauthorized, and back to their intended destination after successful
+  login.
+
+* **Navigator:** Use the built-in `Navigator` for short-lived screens that do
+  not need to be deep-linkable, such as dialogs or temporary views.
+
+  ```dart
+  // Push a new screen onto the stack
+  Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => const DetailsScreen()),
+  );
+
+  // Pop the current screen to go back
+  Navigator.pop(context);
+  ```
+
+### Data Handling & Serialization
+* **JSON Serialization:** Use `json_serializable` and `json_annotation` for
+  parsing and encoding JSON data.
+* **Field Renaming:** When encoding data, use `fieldRename: FieldRename.snake`
+  to convert Dart's camelCase fields to snake_case JSON keys.
+
+  ```dart
+  // In your model file
+  import 'package:json_annotation/json_annotation.dart';
+
+  part 'user.g.dart';
+
+  @JsonSerializable(fieldRename: FieldRename.snake)
+  class User {
+    final String firstName;
+    final String lastName;
+
+    User({required this.firstName, required this.lastName});
+
+    factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+    Map<String, dynamic> toJson() => _$UserToJson(this);
+  }
+  ```
+
+### Logging
+* **Structured Logging:** Use the `log` function from `dart:developer` for
+  structured logging that integrates with Dart DevTools.
+
+  ```dart
+  import 'dart:developer' as developer;
+
+  // For simple messages
+  developer.log('User logged in successfully.');
+
+  // For structured error logging
+  try {
+    // ... code that might fail
+  } catch (e, s) {
+    developer.log(
+      'Failed to fetch data',
+      name: 'myapp.network',
+      level: 1000, // SEVERE
+      error: e,
+      stackTrace: s,
+    );
+  }
+  ```
+
+## Code Generation
+* **Build Runner:** If the project uses code generation, ensure that
+  `build_runner` is listed as a dev dependency in `pubspec.yaml`.
+* **Code Generation Tasks:** Use `build_runner` for all code generation tasks,
+  such as for `json_serializable`.
+* **Running Build Runner:** After modifying files that require code generation,
+  run the build command:
+
+  ```shell
+  dart run build_runner build --delete-conflicting-outputs
+  ```
+
+## Testing
+* **Running Tests:** To run tests, use the `run_tests` tool if it is available,
+  otherwise use `flutter test`.
+* **Unit Tests:** Use `package:test` for unit tests.
+* **Widget Tests:** Use `package:flutter_test` for widget tests.
+* **Integration Tests:** Use `package:integration_test` for integration tests.
+* **Assertions:** Prefer using `package:checks` for more expressive and readable
+  assertions over the default `matchers`.
+
+### Testing Best practices
+* **Convention:** Follow the Arrange-Act-Assert (or Given-When-Then) pattern.
+* **Unit Tests:** Write unit tests for domain logic, data layer, and state
+  management.
+* **Widget Tests:** Write widget tests for UI components.
+* **Integration Tests:** For broader application validation, use integration
+  tests to verify end-to-end user flows.
+* **integration_test package:** Use the `integration_test` package from the
+  Flutter SDK for integration tests. Add it as a `dev_dependency` in
+  `pubspec.yaml` by specifying `sdk: flutter`.
+* **Mocks:** Prefer fakes or stubs over mocks. If mocks are absolutely
+  necessary, use `mockito` or `mocktail` to create mocks for dependencies. While
+  code generation is common for state management (e.g., with `freezed`), try to
+  avoid it for mocks.
+* **Coverage:** Aim for high test coverage.
+
+## Visual Design & Theming
+* **UI Design:** Build beautiful and intuitive user interfaces that follow
+  modern design guidelines.
+* **Responsiveness:** Ensure the app is mobile responsive and adapts to
+  different screen sizes, working perfectly on mobile and web.
+* **Navigation:** If there are multiple pages for the user to interact with,
+  provide an intuitive and easy navigation bar or controls.
+* **Typography:** Stress and emphasize font sizes to ease understanding, e.g.,
+  hero text, section headlines, list headlines, keywords in paragraphs.
+* **Background:** Apply subtle noise texture to the main background to add a
+  premium, tactile feel.
+* **Shadows:** Multi-layered drop shadows create a strong sense of depth; cards
+  have a soft, deep shadow to look "lifted."
+* **Icons:** Incorporate icons to enhance the user’s understanding and the
+  logical navigation of the app.
+* **Interactive Elements:** Buttons, checkboxes, sliders, lists, charts, graphs,
+  and other interactive elements have a shadow with elegant use of color to
+  create a "glow" effect.
+
+### Theming
+* **Centralized Theme:** Define a centralized `ThemeData` object to ensure a
+  consistent application-wide style.
+* **Light and Dark Themes:** Implement support for both light and dark themes,
+  ideal for a user-facing theme toggle (`ThemeMode.light`, `ThemeMode.dark`,
+  `ThemeMode.system`).
+* **Color Scheme Generation:** Generate harmonious color palettes from a single
+  color using `ColorScheme.fromSeed`.
+
+  ```dart
+  final ThemeData lightTheme = ThemeData(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.deepPurple,
+      brightness: Brightness.light,
+    ),
+    // ... other theme properties
+  );
+  ```
+* **Color Palette:** Include a wide range of color concentrations and hues in
+  the palette to create a vibrant and energetic look and feel.
+* **Component Themes:** Use specific theme properties (e.g., `appBarTheme`,
+  `elevatedButtonTheme`) to customize the appearance of individual Material
+  components.
+* **Custom Fonts:** For custom fonts, use the `google_fonts` package. Define a
+  `TextTheme` to apply fonts consistently.
+
+  ```dart
+  // 1. Add the dependency
+  // flutter pub add google_fonts
+
+  // 2. Define a TextTheme with a custom font
+  final TextTheme appTextTheme = TextTheme(
+    displayLarge: GoogleFonts.oswald(fontSize: 57, fontWeight: FontWeight.bold),
+    titleLarge: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.w500),
+    bodyMedium: GoogleFonts.openSans(fontSize: 14),
+  );
+  ```
+
+### Assets and Images
+* **Image Guidelines:** If images are needed, make them relevant and meaningful,
+  with appropriate size, layout, and licensing (e.g., freely available). Provide
+  placeholder images if real ones are not available.
+* **Asset Declaration:** Declare all asset paths in your `pubspec.yaml` file.
+
+    ```yaml
+    flutter:
+      uses-material-design: true
+      assets:
+        - assets/images/
+    ```
+
+* **Local Images:** Use `Image.asset` for local images from your asset
+  bundle.
+
+    ```dart
+    Image.asset('assets/images/placeholder.png')
+    ```
+* **Network images:** Use NetworkImage for images loaded from the network.
+* **Cached images:** For cached images, use NetworkImage a package like
+  `cached_network_image`.
+* **Custom Icons:** Use `ImageIcon` to display an icon from an `ImageProvider`,
+  useful for custom icons not in the `Icons` class.
+* **Network Images:** Use `Image.network` to display images from a URL, and
+  always include `loadingBuilder` and `errorBuilder` for a better user
+  experience.
+
+    ```dart
+    Image.network(
+      'https://picsum.photos/200/300',
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) return child;
+        return const Center(child: CircularProgressIndicator());
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return const Icon(Icons.error);
+      },
+    )
+    ```
+## UI Theming and Styling Code
+
+* **Responsiveness:** Use `LayoutBuilder` or `MediaQuery` to create responsive
+  UIs.
+* **Text:** Use `Theme.of(context).textTheme` for text styles.
+* **Text Fields:** Configure `textCapitalization`, `keyboardType`, and
+* **Responsiveness:** Use `LayoutBuilder` or `MediaQuery` to create responsive
+  UIs.
+* **Text:** Use `Theme.of(context).textTheme` for text styles.
+  remote images.
+
+```dart
+// When using network images, always provide an errorBuilder.
+Image.network(
+  'https://example.com/image.png',
+  errorBuilder: (context, error, stackTrace) {
+    return const Icon(Icons.error); // Show an error icon
+  },
+);
+```
+
+## Material Theming Best Practices
+
+### Embrace `ThemeData` and Material 3
+
+* **Use `ColorScheme.fromSeed()`:** Use this to generate a complete, harmonious
+  color palette for both light and dark modes from a single seed color.
+* **Define Light and Dark Themes:** Provide both `theme` and `darkTheme` to your
+  `MaterialApp` to support system brightness settings seamlessly.
+* **Centralize Component Styles:** Customize specific component themes (e.g.,
+  `elevatedButtonTheme`, `cardTheme`, `appBarTheme`) within `ThemeData` to
+  ensure consistency.
+* **Dark/Light Mode and Theme Toggle:** Implement support for both light and
+  dark themes using `theme` and `darkTheme` properties of `MaterialApp`. The
+  `themeMode` property can be dynamically controlled (e.g., via a
+  `ChangeNotifierProvider`) to allow for toggling between `ThemeMode.light`,
+  `ThemeMode.dark`, or `ThemeMode.system`.
+
+```dart
+// main.dart
+MaterialApp(
+  theme: ThemeData(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.deepPurple,
+      brightness: Brightness.light,
+    ),
+    textTheme: const TextTheme(
+      displayLarge: TextStyle(fontSize: 57.0, fontWeight: FontWeight.bold),
+      bodyMedium: TextStyle(fontSize: 14.0, height: 1.4),
+    ),
+  ),
+  darkTheme: ThemeData(
+    colorScheme: ColorScheme.fromSeed(
+      seedColor: Colors.deepPurple,
+      brightness: Brightness.dark,
+    ),
+  ),
+  home: const MyHomePage(),
+);
+```
+
+### Implement Design Tokens with `ThemeExtension`
+
+For custom styles that aren't part of the standard `ThemeData`, use
+`ThemeExtension` to define reusable design tokens.
+
+* **Create a Custom Theme Extension:** Define a class that extends
+  `ThemeExtension<T>` and include your custom properties.
+* **Implement `copyWith` and `lerp`:** These methods are required for the
+  extension to work correctly with theme transitions.
+* **Register in `ThemeData`:** Add your custom extension to the `extensions`
+  list in your `ThemeData`.
+* **Access Tokens in Widgets:** Use `Theme.of(context).extension<MyColors>()!`
+  to access your custom tokens.
+
+```dart
+// 1. Define the extension
+@immutable
+class MyColors extends ThemeExtension<MyColors> {
+  const MyColors({required this.success, required this.danger});
+
+  final Color? success;
+  final Color? danger;
+
+  @override
+  ThemeExtension<MyColors> copyWith({Color? success, Color? danger}) {
+    return MyColors(success: success ?? this.success, danger: danger ?? this.danger);
+  }
+
+  @override
+  ThemeExtension<MyColors> lerp(ThemeExtension<MyColors>? other, double t) {
+    if (other is! MyColors) return this;
+    return MyColors(
+      success: Color.lerp(success, other.success, t),
+      danger: Color.lerp(danger, other.danger, t),
+    );
+  }
+}
+
+// 2. Register it in ThemeData
+theme: ThemeData(
+  extensions: const <ThemeExtension<dynamic>>[
+    MyColors(success: Colors.green, danger: Colors.red),
+  ],
+),
+
+// 3. Use it in a widget
+Container(
+  color: Theme.of(context).extension<MyColors>()!.success,
+)
+```
+
+### Styling with `WidgetStateProperty`
+
+* **`WidgetStateProperty.resolveWith`:** Provide a function that receives a
+  `Set<WidgetState>` and returns the appropriate value for the current state.
+* **`WidgetStateProperty.all`:** A shorthand for when the value is the same for
+  all states.
+
+```dart
+// Example: Creating a button style that changes color when pressed.
+final ButtonStyle myButtonStyle = ButtonStyle(
+  backgroundColor: WidgetStateProperty.resolveWith<Color>(
+    (Set<WidgetState> states) {
+      if (states.contains(WidgetState.pressed)) {
+        return Colors.green; // Color when pressed
+      }
+      return Colors.red; // Default color
+    },
+  ),
+);
+```
+
+## Layout Best Practices
+
+### Building Flexible and Overflow-Safe Layouts
+
+#### For Rows and Columns
+
+* **`Expanded`:** Use to make a child widget fill the remaining available space
+  along the main axis.
+* **`Flexible`:** Use when you want a widget to shrink to fit, but not
+  necessarily grow. Don't combine `Flexible` and `Expanded` in the same `Row` or
+  `Column`.
+* **`Wrap`:** Use when you have a series of widgets that would overflow a `Row`
+  or `Column`, and you want them to move to the next line.
+
+#### For General Content
+
+* **`SingleChildScrollView`:** Use when your content is intrinsically larger
+  than the viewport, but is a fixed size.
+* **`ListView` / `GridView`:** For long lists or grids of content, always use a
+  builder constructor (`.builder`).
+* **`FittedBox`:** Use to scale or fit a single child widget within its parent.
+* **`LayoutBuilder`:** Use for complex, responsive layouts to make decisions
+  based on the available space.
+
+### Layering Widgets with Stack
+
+* **`Positioned`:** Use to precisely place a child within a `Stack` by anchoring it to the edges.
+* **`Align`:** Use to position a child within a `Stack` using alignments like `Alignment.center`.
+
+### Advanced Layout with Overlays
+
+* **`OverlayPortal`:** Use this widget to show UI elements (like custom
+  dropdowns or tooltips) "on top" of everything else. It manages the
+  `OverlayEntry` for you.
+
+  ```dart
+  class MyDropdown extends StatefulWidget {
+    const MyDropdown({super.key});
+
+    @override
+    State<MyDropdown> createState() => _MyDropdownState();
+  }
+
+  class _MyDropdownState extends State<MyDropdown> {
+    final _controller = OverlayPortalController();
+
+    @override
+    Widget build(BuildContext context) {
+      return OverlayPortal(
+        controller: _controller,
+        overlayChildBuilder: (BuildContext context) {
+          return const Positioned(
+            top: 50,
+            left: 10,
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(8.0),
+                child: Text('I am an overlay!'),
+              ),
+            ),
+          );
+        },
+        child: ElevatedButton(
+          onPressed: _controller.toggle,
+          child: const Text('Toggle Overlay'),
+        ),
+      );
+    }
+  }
+  ```
+
+## Color Scheme Best Practices
+
+### Contrast Ratios
+
+* **WCAG Guidelines:** Aim to meet the Web Content Accessibility Guidelines
+  (WCAG) 2.1 standards.
+* **Minimum Contrast:**
+    * **Normal Text:** A contrast ratio of at least **4.5:1**.
+    * **Large Text:** (18pt or 14pt bold) A contrast ratio of at least **3:1**.
+
+### Palette Selection
+
+* **Primary, Secondary, and Accent:** Define a clear color hierarchy.
+* **The 60-30-10 Rule:** A classic design rule for creating a balanced color scheme.
+    * **60%** Primary/Neutral Color (Dominant)
+    * **30%** Secondary Color
+    * **10%** Accent Color
+
+### Complementary Colors
+
+* **Use with Caution:** They can be visually jarring if overused.
+* **Best Use Cases:** They are excellent for accent colors to make specific
+  elements pop, but generally poor for text and background pairings as they can
+  cause eye strain.
+
+### Example Palette
+
+* **Primary:** #0D47A1 (Dark Blue)
+* **Secondary:** #1976D2 (Medium Blue)
+* **Accent:** #FFC107 (Amber)
+* **Neutral/Text:** #212121 (Almost Black)
+* **Background:** #FEFEFE (Almost White)
+
+## Font Best Practices
+
+### Font Selection
+
+* **Limit Font Families:** Stick to one or two font families for the entire
+  application.
+* **Prioritize Legibility:** Choose fonts that are easy to read on screens of
+  all sizes. Sans-serif fonts are generally preferred for UI body text.
+* **System Fonts:** Consider using platform-native system fonts.
+* **Google Fonts:** For a wide selection of open-source fonts, use the
+  `google_fonts` package.
+
+### Hierarchy and Scale
+
+* **Establish a Scale:** Define a set of font sizes for different text elements
+  (e.g., headlines, titles, body text, captions).
+* **Use Font Weight:** Differentiate text effectively using font weights.
+* **Color and Opacity:** Use color and opacity to de-emphasize less important
+  text.
+
+### Readability
+
+* **Line Height (Leading):** Set an appropriate line height, typically **1.4x to
+  1.6x** the font size.
+* **Line Length:** For body text, aim for a line length of **45-75 characters**.
+* **Avoid All Caps:** Do not use all caps for long-form text.
+
+### Example Typographic Scale
+
+```dart
+// In your ThemeData
+textTheme: const TextTheme(
+  displayLarge: TextStyle(fontSize: 57.0, fontWeight: FontWeight.bold),
+  titleLarge: TextStyle(fontSize: 22.0, fontWeight: FontWeight.bold),
+  bodyLarge: TextStyle(fontSize: 16.0, height: 1.5),
+  bodyMedium: TextStyle(fontSize: 14.0, height: 1.4),
+  labelSmall: TextStyle(fontSize: 11.0, color: Colors.grey),
+),
+```
+
+## Documentation
+
+* **`dartdoc`:** Write `dartdoc`-style comments for all public APIs.
+
+### Documentation Philosophy
+
+* **Comment wisely:** Use comments to explain why the code is written a certain
+  way, not what the code does. The code itself should be self-explanatory.
+* **Document for the user:** Write documentation with the reader in mind. If you
+  had a question and found the answer, add it to the documentation where you
+  first looked. This ensures the documentation answers real-world questions.
+* **No useless documentation:** If the documentation only restates the obvious
+  from the code's name, it's not helpful. Good documentation provides context
+  and explains what isn't immediately apparent.
+* **Consistency is key:** Use consistent terminology throughout your
+  documentation.
+
+### Commenting Style
+
+* **Use `///` for doc comments:** This allows documentation generation tools to
+  pick them up.
+* **Start with a single-sentence summary:** The first sentence should be a
+  concise, user-centric summary ending with a period.
+* **Separate the summary:** Add a blank line after the first sentence to create
+  a separate paragraph. This helps tools create better summaries.
+* **Avoid redundancy:** Don't repeat information that's obvious from the code's
+  context, like the class name or signature.
+* **Don't document both getter and setter:** For properties with both, only
+  document one. The documentation tool will treat them as a single field.
+
+### Writing Style
+
+* **Be brief:** Write concisely.
+* **Avoid jargon and acronyms:** Don't use abbreviations unless they are widely
+  understood.
+* **Use Markdown sparingly:** Avoid excessive markdown and never use HTML for
+  formatting.
+* **Use backticks for code:** Enclose code blocks in backtick fences, and
+  specify the language.
+
+### What to Document
+
+* **Public APIs are a priority:** Always document public APIs.
+* **Consider private APIs:** It's a good idea to document private APIs as well.
+* **Library-level comments are helpful:** Consider adding a doc comment at the
+  library level to provide a general overview.
+* **Include code samples:** Where appropriate, add code samples to illustrate usage.
+* **Explain parameters, return values, and exceptions:** Use prose to describe
+  what a function expects, what it returns, and what errors it might throw.
+* **Place doc comments before annotations:** Documentation should come before
+  any metadata annotations.
+
+## Accessibility (A11Y)
+Implement accessibility features to empower all users, assuming a wide variety
+of users with different physical abilities, mental abilities, age groups,
+education levels, and learning styles.
+
+* **Color Contrast:** Ensure text has a contrast ratio of at least **4.5:1**
+  against its background.
+* **Dynamic Text Scaling:** Test your UI to ensure it remains usable when users
+  increase the system font size.
+* **Semantic Labels:** Use the `Semantics` widget to provide clear, descriptive
+  labels for UI elements.
+* **Screen Reader Testing:** Regularly test your app with TalkBack (Android) and
+  VoiceOver (iOS).
+
+---
+
+> Applies to: `**/*bloc_test.dart`
+
+# Bloc Testing Standards
+
+How to write comprehensive bloc tests following the project's established patterns and conventions.
+
+## Usage
+
+To use this rule when writing bloc tests:
+
+1. Reference this rule when writing BLoC tests.
+2. Reference the bloc folder you're testing.
+3. Follow the directory structure and naming conventions below
+
+## Directory Structure
+
+Follow this exact structure for bloc files and tests:
+
+```
+lib/feature_name/bloc/
+├── feature_name_bloc.dart
+├── feature_name_event.dart
+└── feature_name_state.dart
+
+test/feature_name/bloc/
+├── feature_name_bloc_test.dart
+├── feature_name_event_test.dart
+└── feature_name_state_test.dart
+```
+
+## Required Imports
+
+Import only what you need:
+
+```dart
+// Always required for bloc tests
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+// Only if mocking dependencies
+import 'package:mocktail/mocktail.dart';
+
+// Import your feature's bloc files
+import 'package:your_app/feature_name/feature_name.dart';
+
+// Only if bloc has repository/dependency
+import 'package:your_repository/your_repository.dart';
+```
+
+## Test File Structure
+
+### 1. Bloc Test File (`feature_name_bloc_test.dart`)
+
+Structure: **Bloc → Event → Test Cases** (focus on state changes)
+
+```dart
+import 'package:bloc_test/bloc_test.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:your_app/feature_name/feature_name.dart';
+
+// Only add if bloc has dependencies
+import 'package:mocktail/mocktail.dart';
+import 'package:your_repository/your_repository.dart';
+
+// Only if mocking repositories
+class MockYourRepository extends Mock implements YourRepository {}
+
+void main() {
+  group('FeatureNameBloc', () {
+    // Only if bloc has dependencies
+    late YourRepository yourRepository;
+
+    setUp(() {
+      // Only if mocking
+      yourRepository = MockYourRepository();
+      when(() => yourRepository.someMethod()).thenAnswer((_) async {});
+    });
+
+    FeatureNameBloc buildBloc() {
+      return FeatureNameBloc(repository: yourRepository);
+    }
+
+    group('constructor', () {
+      test('works properly', () => expect(buildBloc, returnsNormally));
+
+      test('has correct initial state', () {
+        expect(
+          buildBloc().state,
+          equals(const FeatureNameState()),
+        );
+      });
+    });
+
+    group('EventName', () {
+      blocTest<FeatureNameBloc, FeatureNameState>(
+        'emits [loading, success] when event succeeds',
+        setUp: () {
+          when(() => yourRepository.someMethod())
+              .thenAnswer((_) async => result);
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const EventName()),
+        expect: () => const <FeatureNameState>[
+          FeatureNameState(status: Status.loading),
+          FeatureNameState(status: Status.success),
+        ],
+        verify: (_) {
+          verify(() => yourRepository.someMethod()).called(1);
+        },
+      );
+
+      blocTest<FeatureNameBloc, FeatureNameState>(
+        'emits [loading, failure] when event fails',
+        setUp: () {
+          when(() => yourRepository.someMethod())
+              .thenThrow(Exception('error'));
+        },
+        build: buildBloc,
+        act: (bloc) => bloc.add(const EventName()),
+        expect: () => const <FeatureNameState>[
+          FeatureNameState(status: Status.loading),
+          FeatureNameState(status: Status.failure),
+        ],
+      );
+    });
+  });
+}
+```
+
+### 2. Event Test File (`feature_name_event_test.dart`)
+
+```dart
+// ignore_for_file: prefer_const_constructors
+import 'package:flutter_test/flutter_test.dart';
+import 'package:your_app/feature_name/feature_name.dart';
+
+void main() {
+  group('FeatureNameEvent', () {
+    group('EventName', () {
+      test('supports value equality', () {
+        expect(
+          EventName(),
+          equals(EventName()),
+        );
+      });
+
+      test('props are correct', () {
+        expect(
+          EventName().props,
+          equals(<Object?>[]),
+        );
+      });
+    });
+
+    group('EventWithData', () {
+      const data = 'test-data';
+      
+      test('supports value equality', () {
+        expect(
+          EventWithData(data),
+          equals(EventWithData(data)),
+        );
+      });
+
+      test('props are correct', () {
+        expect(
+          EventWithData(data).props,
+          equals(<Object?>[data]),
+        );
+      });
+    });
+  });
+}
+```
+
+### 3. State Test File (`feature_name_state_test.dart`)
+
+```dart
+// ignore_for_file: prefer_const_constructors, avoid_redundant_argument_values
+import 'package:flutter_test/flutter_test.dart';
+import 'package:your_app/feature_name/feature_name.dart';
+
+void main() {
+  group('FeatureNameState', () {
+    FeatureNameState createSubject({
+      Status status = Status.initial,
+      String? data,
+    }) {
+      return FeatureNameState(
+        status: status,
+        data: data,
+      );
+    }
+
+    test('supports value equality', () {
+      expect(
+        createSubject(),
+        equals(createSubject()),
+      );
+    });
+
+    test('props are correct', () {
+      expect(
+        createSubject(
+          status: Status.initial,
+          data: 'test',
+        ).props,
+        equals(<Object?>[
+          Status.initial, // status
+          'test', // data
+        ]),
+      );
+    });
+
+    group('copyWith', () {
+      test('returns the same object if no arguments are provided', () {
+        expect(
+          createSubject().copyWith(),
+          equals(createSubject()),
+        );
+      });
+
+      test('retains the old value for every parameter if null is provided', () {
+        expect(
+          createSubject().copyWith(
+            status: null,
+            data: null,
+          ),
+          equals(createSubject()),
+        );
+      });
+
+      test('replaces every non-null parameter', () {
+        expect(
+          createSubject().copyWith(
+            status: () => Status.success,
+            data: () => 'new-data',
+          ),
+          equals(
+            createSubject(
+              status: Status.success,
+              data: 'new-data',
+            ),
+          ),
+        );
+      });
+    });
+  });
+}
+```
+
+## Testing Patterns
+
+### 1. Mock Setup (Only if needed)
+
+```dart
+// Only use if bloc has dependencies
+class MockRepository extends Mock implements Repository {}
+
+setUp(() {
+  repository = MockRepository();
+  when(() => repository.method()).thenAnswer((_) async {});
+});
+```
+
+### 2. BlocTest Structure
+
+```dart
+blocTest<BlocType, StateType>(
+  'emits [state1, state2] when event succeeds', // Descriptive but concise
+  setUp: () {
+    // Setup specific mock behaviors for this test
+    when(() => repository.method()).thenAnswer((_) async => result);
+  },
+  build: () => buildBloc(),
+  seed: () => initialState, // Optional: set initial state
+  act: (bloc) => bloc.add(event),
+  expect: () => [expectedState1, expectedState2],
+  verify: (_) {
+    // Verify mock interactions
+    verify(() => repository.method()).called(1);
+  },
+);
+```
+
+### 3. Test Organization
+
+- **Bloc → Event → Test Cases**: Group by bloc, then by event, then test cases
+- **Focus on State Changes**: Test descriptions should explain what state changes occur
+- **Descriptive but Concise**: Test names should be clear but not verbose
+
+## Official Documentation Examples
+
+### Login Bloc Test Pattern
+
+```dart
+// Simple form-based bloc with validation
+blocTest<LoginBloc, LoginState>(
+  'emits [submissionInProgress, submissionSuccess] when login succeeds',
+  setUp: () {
+    when(() => authenticationRepository.logIn(
+      username: 'username',
+      password: 'password',
+    )).thenAnswer((_) => Future<String>.value('user'));
+  },
+  build: () => LoginBloc(authenticationRepository: authenticationRepository),
+  act: (bloc) {
+    bloc
+      ..add(const LoginUsernameChanged('username'))
+      ..add(const LoginPasswordChanged('password'))
+      ..add(const LoginSubmitted());
+  },
+  expect: () => const <LoginState>[
+    LoginState(username: Username.dirty('username')),
+    LoginState(
+      username: Username.dirty('username'),
+      password: Password.dirty('password'),
+      isValid: true,
+    ),
+    LoginState(
+      username: Username.dirty('username'),
+      password: Password.dirty('password'),
+      isValid: true,
+      status: FormzSubmissionStatus.inProgress,
+    ),
+    LoginState(
+      username: Username.dirty('username'),
+      password: Password.dirty('password'),
+      isValid: true,
+      status: FormzSubmissionStatus.success,
+    ),
+  ],
+);
+```
+
+### Todos Overview Bloc Test Pattern
+
+```dart
+// Complex bloc with multiple events and stream handling
+blocTest<TodosOverviewBloc, TodosOverviewState>(
+  'emits state with updated status and todos when repository stream emits',
+  build: buildBloc,
+  act: (bloc) => bloc.add(const TodosOverviewSubscriptionRequested()),
+  expect: () => [
+    const TodosOverviewState(status: TodosOverviewStatus.loading),
+    TodosOverviewState(
+      status: TodosOverviewStatus.success,
+      todos: mockTodos,
+    ),
+  ],
+);
+```
+
+### Edit Todo Bloc Test Pattern
+
+```dart
+// Bloc with conditional logic based on initial state
+blocTest<EditTodoBloc, EditTodoState>(
+  'emits [loading, success] when saving new todo',
+  setUp: () {
+    when(() => todosRepository.saveTodo(any())).thenAnswer((_) async {});
+  },
+  build: buildBloc,
+  seed: () => const EditTodoState(title: 'title', description: 'description'),
+  act: (bloc) => bloc.add(const EditTodoSubmitted()),
+  expect: () => const [
+    EditTodoState(
+      status: EditTodoStatus.loading,
+      title: 'title',
+      description: 'description',
+    ),
+    EditTodoState(
+      status: EditTodoStatus.success,
+      title: 'title',
+      description: 'description',
+    ),
+  ],
+  verify: (bloc) {
+    verify(() => todosRepository.saveTodo(any())).called(1);
+  },
+);
+```
+
+## Common Patterns
+
+### Testing Stream-Based Blocs
+
+```dart
+blocTest<BlocType, StateType>(
+  'emits [loading, success] when stream emits data',
+  build: buildBloc,
+  act: (bloc) => bloc.add(const StreamSubscriptionRequested()),
+  expect: () => [
+    const State(status: Status.loading),
+    State(status: Status.success, data: streamData),
+  ],
+);
+```
+
+### Testing Form Validation
+
+```dart
+blocTest<BlocType, StateType>(
+  'emits state with updated field and validation',
+  build: buildBloc,
+  act: (bloc) => bloc.add(const FieldChanged('value')),
+  expect: () => [
+    State(field: Field.dirty('value'), isValid: true),
+  ],
+);
+```
+
+### Testing Async Operations
+
+```dart
+blocTest<BlocType, StateType>(
+  'emits [loading, success] when async operation succeeds',
+  setUp: () {
+    when(() => repository.asyncMethod()).thenAnswer((_) async => result);
+  },
+  build: buildBloc,
+  act: (bloc) => bloc.add(const AsyncEvent()),
+  expect: () => [
+    const State(status: Status.loading),
+    State(status: Status.success, data: result),
+  ],
+);
+```
+
+### Testing Error Scenarios
+
+```dart
+blocTest<BlocType, StateType>(
+  'emits [loading, failure] when repository throws exception',
+  setUp: () {
+    when(() => repository.method()).thenThrow(Exception('error'));
+  },
+  build: buildBloc,
+  act: (bloc) => bloc.add(const EventName()),
+  expect: () => [
+    const State(status: Status.loading),
+    State(status: Status.failure, errorMessage: 'error'),
+  ],
+);
+```
+
+### Testing Conditional Logic
+
+```dart
+blocTest<BlocType, StateType>(
+  'emits different states based on condition',
+  build: buildBloc,
+  seed: () => State(condition: true),
+  act: (bloc) => bloc.add(const ConditionalEvent()),
+  expect: () => [
+    State(condition: true, result: 'success'),
+  ],
+);
+```
+
+## Rules
+
+1. **Naming**: Use descriptive but concise test names that explain state changes
+2. **Grouping**: Group by Bloc → Event → Test Cases
+3. **Mocking**: Only mock when bloc has dependencies
+4. **Verification**: Always verify repository interactions when testing bloc logic
+5. **State Transitions**: Test the complete state transition sequence
+6. **Error Handling**: Test both success and failure scenarios
+7. **Constants**: Use `const` constructors for events and states when possible
+8. **Helper Functions**: Create `buildBloc()` helper for consistent bloc creation
+9. **Props Testing**: Always test `props` getter for events and states
+10. **Focus**: Focus on state changes that occur in each event
+
+---
+
+# Dart Model from JSON Generator
+
+Generate Dart models from JSON with proper serialization using `json_annotation` and `equatable`.
+
+## Requirements
+
+- Use `json_annotation` for JSON serialization
+- Use `equatable` for value equality
+- Include `copyWith` method
+- Include `fromJson` and `toJson` methods
+- Include `props` getter for equatable
+- No `@immutable` decorator needed
+- No documentation unless specified
+- No `@JsonKey` annotations unless specified
+
+## Model Structure
+
+```dart
+import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'model_name.g.dart';
+
+@JsonSerializable()
+class ModelName extends Equatable {
+  ModelName({
+    required this.field1,
+    this.field2,
+    this.field3 = defaultValue,
+  });
+
+  final String field1;
+  final int? field2;
+  final bool field3;
+
+  ModelName copyWith({
+    String? field1,
+    int? field2,
+    bool? field3,
+  }) {
+    return ModelName(
+      field1: field1 ?? this.field1,
+      field2: field2 ?? this.field2,
+      field3: field3 ?? this.field3,
+    );
+  }
+
+  static ModelName fromJson(Map<String, dynamic> json) => _$ModelNameFromJson(json);
+  Map<String, dynamic> toJson() => _$ModelNameToJson(this);
+
+  @override
+  List<Object?> get props => [field1, field2, field3];
+}
+```
+
+## Field Type Mapping
+
+- `String` → `String`
+- `int` → `int`
+- `double` → `double`
+- `bool` → `bool`
+- `null` → nullable type (e.g., `String?`)
+- `array` → `List<Type>`
+- `object` → custom class or `Map<String, dynamic>`
+
+## Complex JSON Example with Nested Objects
+
+Input JSON:
+```json
+{
+  "id": "123",
+  "name": "John Doe",
+  "age": 30,
+  "isActive": true,
+  "tags": ["tag1", "tag2"],
+  "address": {
+    "street": "123 Main St",
+    "city": "New York",
+    "zipCode": "10001",
+    "country": "USA"
+  },
+  "profile": {
+    "avatar": "https://example.com/avatar.jpg",
+    "bio": "Software developer",
+    "preferences": {
+      "theme": "dark",
+      "notifications": true,
+      "language": "en"
+    }
+  },
+  "orders": [
+    {
+      "orderId": "ORD-001",
+      "items": [
+        {
+          "productId": "PROD-001",
+          "name": "Laptop",
+          "price": 999.99,
+          "quantity": 1
+        }
+      ],
+      "total": 999.99,
+      "status": "completed"
+    }
+  ]
+}
+```
+
+Generated Models:
+
+**Main Model (User):**
+```dart
+import 'package:equatable/equatable.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'user.g.dart';
+
+@JsonSerializable()
+class User extends Equatable {
+  User({
+    required this.id,
+    required this.name,
+    required this.age,
+    required this.isActive,
+    required this.tags,
+    required this.address,
+    required this.profile,
+    required this.orders,
+  });
+
+  final String id;
+  final String name;
+  final int age;
+  final bool isActive;
+  final List<String> tags;
+  final Address address;
+  final Profile profile;
+  final List<Order> orders;
+
+  User copyWith({
+    String? id,
+    String? name,
+    int? age,
+    bool? isActive,
+    List<String>? tags,
+    Address? address,
+    Profile? profile,
+    List<Order>? orders,
+  }) {
+    return User(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      isActive: isActive ?? this.isActive,
+      tags: tags ?? this.tags,
+      address: address ?? this.address,
+      profile: profile ?? this.profile,
+      orders: orders ?? this.orders,
+    );
+  }
+
+  static User fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
+  Map<String, dynamic> toJson() => _$UserToJson(this);
+
+  @override
+  List<Object?> get props => [id, name, age, isActive, tags, address, profile, orders];
+}
+```
+
+**Address Model:**
+```dart
+@JsonSerializable()
+class Address extends Equatable {
+  Address({
+    required this.street,
+    required this.city,
+    required this.zipCode,
+    required this.country,
+  });
+
+  final String street;
+  final String city;
+  final String zipCode;
+  final String country;
+
+  Address copyWith({
+    String? street,
+    String? city,
+    String? zipCode,
+    String? country,
+  }) {
+    return Address(
+      street: street ?? this.street,
+      city: city ?? this.city,
+      zipCode: zipCode ?? this.zipCode,
+      country: country ?? this.country,
+    );
+  }
+
+  static Address fromJson(Map<String, dynamic> json) => _$AddressFromJson(json);
+  Map<String, dynamic> toJson() => _$AddressToJson(this);
+
+  @override
+  List<Object?> get props => [street, city, zipCode, country];
+}
+```
+
+**Profile Model:**
+```dart
+@JsonSerializable()
+class Profile extends Equatable {
+  Profile({
+    required this.avatar,
+    required this.bio,
+    required this.preferences,
+  });
+
+  final String avatar;
+  final String bio;
+  final Preferences preferences;
+
+  Profile copyWith({
+    String? avatar,
+    String? bio,
+    Preferences? preferences,
+  }) {
+    return Profile(
+      avatar: avatar ?? this.avatar,
+      bio: bio ?? this.bio,
+      preferences: preferences ?? this.preferences,
+    );
+  }
+
+  static Profile fromJson(Map<String, dynamic> json) => _$ProfileFromJson(json);
+  Map<String, dynamic> toJson() => _$ProfileToJson(this);
+
+  @override
+  List<Object?> get props => [avatar, bio, preferences];
+}
+```
+
+**Preferences Model:**
+```dart
+@JsonSerializable()
+class Preferences extends Equatable {
+  Preferences({
+    required this.theme,
+    required this.notifications,
+    required this.language,
+  });
+
+  final String theme;
+  final bool notifications;
+  final String language;
+
+  Preferences copyWith({
+    String? theme,
+    bool? notifications,
+    String? language,
+  }) {
+    return Preferences(
+      theme: theme ?? this.theme,
+      notifications: notifications ?? this.notifications,
+      language: language ?? this.language,
+    );
+  }
+
+  static Preferences fromJson(Map<String, dynamic> json) => _$PreferencesFromJson(json);
+  Map<String, dynamic> toJson() => _$PreferencesToJson(this);
+
+  @override
+  List<Object?> get props => [theme, notifications, language];
+}
+```
+
+**Order Model:**
+```dart
+@JsonSerializable()
+class Order extends Equatable {
+  Order({
+    required this.orderId,
+    required this.items,
+    required this.total,
+    required this.status,
+  });
+
+  final String orderId;
+  final List<OrderItem> items;
+  final double total;
+  final String status;
+
+  Order copyWith({
+    String? orderId,
+    List<OrderItem>? items,
+    double? total,
+    String? status,
+  }) {
+    return Order(
+      orderId: orderId ?? this.orderId,
+      items: items ?? this.items,
+      total: total ?? this.total,
+      status: status ?? this.status,
+    );
+  }
+
+  static Order fromJson(Map<String, dynamic> json) => _$OrderFromJson(json);
+  Map<String, dynamic> toJson() => _$OrderToJson(this);
+
+  @override
+  List<Object?> get props => [orderId, items, total, status];
+}
+```
+
+**OrderItem Model:**
+```dart
+@JsonSerializable()
+class OrderItem extends Equatable {
+  OrderItem({
+    required this.productId,
+    required this.name,
+    required this.price,
+    required this.quantity,
+  });
+
+  final String productId;
+  final String name;
+  final double price;
+  final int quantity;
+
+  OrderItem copyWith({
+    String? productId,
+    String? name,
+    double? price,
+    int? quantity,
+  }) {
+    return OrderItem(
+      productId: productId ?? this.productId,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      quantity: quantity ?? this.quantity,
+    );
+  }
+
+  static OrderItem fromJson(Map<String, dynamic> json) => _$OrderItemFromJson(json);
+  Map<String, dynamic> toJson() => _$OrderItemToJson(this);
+
+  @override
+  List<Object?> get props => [productId, name, price, quantity];
+}
+```
+
+## Guidelines
+
+1. **Naming**: Use PascalCase for class names, camelCase for fields
+2. **Required fields**: Use `required` keyword for non-nullable fields
+3. **Nullable fields**: Add `?` to type for nullable fields
+4. **Default values**: Provide default values in constructor when appropriate
+5. **Lists**: Use `List<Type>` for arrays
+6. **Nested Objects**: Create separate classes for nested objects instead of using `Map<String, dynamic>`
+7. **Props**: Include all fields in the `props` list for equatable comparison (use `List<Object?>` type)
+8. **CopyWith**: Include all fields as optional parameters
+9. **JsonKey**: Do not add `@JsonKey(name: 'snake_case_name')` annotations unless explicitly specified
+
+## Nested Object Handling
+
+### Class Name Inference Rules:
+- **Direct object**: Use the field name in PascalCase (e.g., `address` → `Address`)
+- **Nested object**: Use the field name in PascalCase (e.g., `profile.preferences` → `Preferences`)
+- **Array items**: Use singular form of the array name in PascalCase (e.g., `orders` → `Order`, `items` → `OrderItem`)
+- **Context-based**: If context is unclear, ask for clarification
+
+### When to Create Separate Classes:
+- ✅ **Always create classes** for objects with multiple properties
+- ✅ **Create classes** for array items that are objects
+- ❌ **Don't create classes** for primitive arrays (use `List<String>`, `List<int>`, etc.)
+
+### Context Inference Examples:
+- `user.address` → `Address` class
+- `user.profile.preferences` → `Preferences` class  
+- `user.orders[].items[]` → `Order` and `OrderItem` classes
+- `product.categories[]` → `Category` class (if objects) or `List<String>` (if strings)
+
+### When Context is Unclear:
+If the JSON structure doesn't provide enough context to infer meaningful class names, ask the user for clarification:
+- "What should I name the class for the nested object at `path.to.object`?"
+- "Should I create a separate class for the array items in `arrayName`?"
+
+---
+
+> Applies to: `**/*_test.dart, **/test/**/*.dart`
+
+# Flutter/Dart Testing Best Practices
+
+This rule provides comprehensive guidelines for writing high-quality tests in Flutter/Dart projects, following testing standards.
+
+## Test File Organization
+
+Test files should mirror your project structure:
+
+```dart
+// Good: test/models/user_test.dart for lib/models/user.dart
+// Good: test/widgets/home_page_test.dart for lib/widgets/home_page.dart
+// Bad: test/user_test.dart (flat structure)
+```
+
+## Essential Testing Patterns
+
+### 1. Always Assert Test Results
+
+Every test must have assertions using `expect` or `verify`:
+
+```dart
+// Good ✅
+testWidgets('calls [onTap] on tapping widget', (tester) async {
+  var isTapped = false;
+  await tester.pumpWidget(SomeTappableWidget(onTap: () => isTapped = true));
+  await tester.tap(find.byType(SomeTappableWidget));
+  expect(isTapped, isTrue); // Always assert!
+});
+
+// Bad ❌
+testWidgets('can tap widget', (tester) async {
+  await tester.pumpWidget(SomeTappableWidget());
+  await tester.tap(find.byType(SomeTappableWidget));
+  // No assertion - test passes even if nothing works!
+});
+```
+
+### 2. Use Matchers for Better Messages
+
+Always use matchers instead of direct comparisons:
+
+```dart
+// Good ✅
+expect(name, equals('Hank'));
+expect(people, hasLength(3));
+expect(valid, isTrue);
+expect(list, contains('item'));
+
+// Bad ❌
+expect(name, 'Hank');
+expect(people.length, 3);
+expect(valid, true);
+```
+
+### 3. String Expressions for Types
+
+Use string interpolation for type references in test descriptions:
+
+```dart
+// Good ✅
+testWidgets('renders $YourView', (tester) async {});
+test('$UserRepository returns user data', () async {});
+
+// Bad ❌
+testWidgets('renders YourView', (tester) async {});
+```
+
+### 4. Descriptive Test Names
+
+Be verbose and descriptive in test names:
+
+```dart
+// Good ✅
+testWidgets('renders $YourView when user is authenticated', (tester) async {});
+test('given valid email returns success response', () async {});
+blocTest<YourBloc, State>('emits $LoadingState when fetching data', () {});
+
+// Bad ❌
+testWidgets('renders', (tester) async {});
+test('works', () async {});
+blocTest<YourBloc, State>('emits', () {});
+```
+
+### 5. Single Purpose Tests
+
+Test one scenario per test:
+
+```dart
+// Good ✅
+testWidgets('renders $WidgetA', (tester) async {});
+testWidgets('renders $WidgetB', (tester) async {});
+
+// Bad ❌
+testWidgets('renders $WidgetA and $WidgetB', (tester) async {});
+```
+
+### 6. Find Widgets by Type, Not Keys
+
+Prefer finding widgets by type over hardcoded keys:
+
+```dart
+// Good ✅
+expect(find.byType(HomePage), findsOneWidget);
+expect(find.byType(ElevatedButton), findsNWidgets(2));
+
+// Bad ❌
+expect(find.byKey(Key('homePageKey')), findsOneWidget);
+```
+
+### 7. Private Mocks
+
+Use private mocks to avoid shared state between test files:
+
+```dart
+// Good ✅
+class _MockApiClient extends Mock implements ApiClient {}
+class _MockUserRepository extends Mock implements UserRepository {}
+
+// Bad ❌
+class MockApiClient extends Mock implements ApiClient {}
+```
+
+### 8. Group Tests by Functionality
+
+Organize tests into logical groups:
+
+```dart
+void main() {
+  group(UserRepository, () {
+    late ApiClient apiClient;
+    late UserRepository repository;
+
+    setUp(() {
+      apiClient = _MockApiClient();
+      repository = UserRepository(apiClient);
+    });
+
+    group('getUser', () {
+      test('returns user when API call succeeds', () async {
+        // Test implementation
+      });
+
+      test('throws exception when API call fails', () async {
+        // Test implementation
+      });
+    });
+
+    group('updateUser', () {
+      test('updates user successfully', () async {
+        // Test implementation
+      });
+    });
+  });
+}
+```
+
+### 9. Keep Setup Inside Groups
+
+Always put `setUp` and `tearDown` inside groups:
+
+```dart
+// Good ✅
+void main() {
+  group(UserRepository, () {
+    late ApiClient apiClient;
+
+    setUp(() {
+      apiClient = _MockApiClient();
+    });
+
+    // Tests...
+  });
+}
+
+// Bad ❌
+void main() {
+  late ApiClient apiClient;
+
+  setUp(() {
+    apiClient = _MockApiClient();
+  });
+
+  group(UserRepository, () {
+    // Tests...
+  });
+}
+```
+
+### 10. Initialize Mutable Objects Per Test
+
+Avoid shared mutable state between tests:
+
+```dart
+// Good ✅
+void main() {
+  group(_MySubject, () {
+    late _MySubjectDependency myDependency;
+
+    setUp(() {
+      myDependency = _MySubjectDependency(); // Fresh instance per test
+    });
+
+    test('value starts at 0', () {
+      final subject = _MySubject(myDependency);
+      expect(subject.value, equals(0));
+    });
+
+    test('value can be increased', () {
+      final subject = _MySubject(myDependency);
+      subject.increase();
+      expect(subject.value, equals(1));
+    });
+  });
+}
+```
+
+### 11. Use Constants for Test Tags
+
+Avoid magic strings when tagging tests:
+
+```dart
+// Good ✅
+abstract class TestTag {
+  static const golden = 'golden';
+  static const integration = 'integration';
+  static const unit = 'unit';
+}
+
+testWidgets(
+  'render matches golden file',
+  tags: TestTag.golden,
+  (WidgetTester tester) async {
+    // Test implementation
+  },
+);
+
+// Bad ❌
+testWidgets(
+  'render matches golden file',
+  tags: 'golden',
+  (WidgetTester tester) async {
+    // Test implementation
+  },
+);
+```
+
+### 12. Avoid Shared State Between Tests
+
+Ensure tests are completely independent:
+
+```dart
+// Good ✅
+void main() {
+  group(_Counter, () {
+    late _Counter counter;
+
+    setUp(() => counter = _Counter()); // Fresh instance per test
+
+    test('increment', () {
+      counter.increment();
+      expect(counter.value, 1);
+    });
+
+    test('decrement', () {
+      counter.decrement();
+      expect(counter.value, -1);
+    });
+  });
+}
+
+// Bad ❌
+void main() {
+  group(_Counter, () {
+    final _Counter counter = _Counter(); // Shared instance
+
+    test('increment', () {
+      counter.increment();
+      expect(counter.value, 1);
+    });
+
+    test('decrement', () {
+      counter.decrement();
+      // This test depends on the previous test's state!
+      expect(counter.value, 0);
+    });
+  });
+}
+```
+
+## Running Tests
+
+Use random test ordering to catch flaky tests:
+
+```bash
+# Randomize test ordering
+flutter test --test-randomize-ordering-seed random
+dart test --test-randomize-ordering-seed random
+```
+
+## Quick Reference
+
+- ✅ Always use `expect()` or `verify()` assertions
+- ✅ Use matchers (`equals`, `isTrue`, `hasLength`, etc.)
+- ✅ Use string interpolation for types: `'renders $WidgetName'`
+- ✅ Write descriptive test names
+- ✅ Test one scenario per test
+- ✅ Find widgets by type: `find.byType(WidgetClass)`
+- ✅ Use private mocks: `_MockClassName`
+- ✅ Group related tests
+- ✅ Keep setup inside groups
+- ✅ Initialize mutable objects per test
+- ✅ Use constants for test tags
+- ✅ Avoid shared state between tests
+
+- ❌ Don't skip assertions
+- ❌ Don't use direct comparisons without matchers
+- ❌ Don't use hardcoded keys for finding widgets
+- ❌ Don't use public mocks
+- ❌ Don't put setup outside groups
+- ❌ Don't share mutable state between tests
+- ❌ Don't use magic strings for tags
+
+---

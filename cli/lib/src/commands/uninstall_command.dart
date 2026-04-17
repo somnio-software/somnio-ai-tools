@@ -89,11 +89,19 @@ class UninstallCommand extends Command<int> {
 
   /// All skill names to clean up (old v1.x + new v2.x naming).
   static const _allSkillNames = [
-    'somnio-fh', 'somnio-fp', 'somnio-nh', 'somnio-np', 'somnio-sa',
-    'workflow-plan', 'workflow-run',
-    'flutter-health-audit', 'flutter-best-practices',
-    'nestjs-health-audit', 'nestjs-best-practices',
-    'security-audit', 'workflow-builder',
+    'somnio-fh',
+    'somnio-fp',
+    'somnio-nh',
+    'somnio-np',
+    'somnio-sa',
+    'workflow-plan',
+    'workflow-run',
+    'flutter-health-audit',
+    'flutter-best-practices',
+    'nestjs-health-audit',
+    'nestjs-best-practices',
+    'security-audit',
+    'workflow-builder',
   ];
 
   bool _removeClaude() {
@@ -253,7 +261,40 @@ class UninstallCommand extends Command<int> {
         return _removeRuleSingleFile(rule, targetPath);
       case RulesInstallFormat.directory:
         return _removeRuleDirectory(rule, targetPath);
+      case RulesInstallFormat.claudeModular:
+        return _removeRuleClaudeModular(rule, targetPath);
     }
+  }
+
+  /// Uninstalls Claude's hybrid layout: strips the CLAUDE.md block and
+  /// removes `.claude/rules/<stack>/` directories for every known stack.
+  bool _removeRuleClaudeModular(AgentRule rule, String filePath) {
+    var removed = _removeRuleSingleFile(rule, filePath);
+
+    final projectDir = p.dirname(filePath);
+    for (final stack in rule.stacks) {
+      final stackDir = Directory(p.join(projectDir, '.claude', 'rules', stack));
+      if (stackDir.existsSync()) {
+        stackDir.deleteSync(recursive: true);
+        _logger.info(
+          '  Removed ${rule.displayName} $stack rules directory',
+        );
+        removed = true;
+      }
+    }
+
+    // Tidy empty parents — `.claude/rules/` and `.claude/` if nothing else is
+    // there. Leaves user-authored content untouched.
+    final rulesDir = Directory(p.join(projectDir, '.claude', 'rules'));
+    if (rulesDir.existsSync() && rulesDir.listSync().isEmpty) {
+      rulesDir.deleteSync();
+    }
+    final claudeDir = Directory(p.join(projectDir, '.claude'));
+    if (claudeDir.existsSync() && claudeDir.listSync().isEmpty) {
+      claudeDir.deleteSync();
+    }
+
+    return removed;
   }
 
   /// Strips the somnio block from a single-file rule. Deletes the file if
@@ -273,7 +314,8 @@ class UninstallCommand extends Command<int> {
 
     if (remaining.isEmpty) {
       file.deleteSync();
-      _logger.info('  Removed ${rule.displayName} rules: ${p.basename(filePath)}');
+      _logger
+          .info('  Removed ${rule.displayName} rules: ${p.basename(filePath)}');
     } else {
       file.writeAsStringSync('$remaining\n');
       _logger.info(

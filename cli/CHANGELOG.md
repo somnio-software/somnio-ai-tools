@@ -5,6 +5,24 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.2.0] - 2026-04-16
+
+### Added
+
+- **Agent Rules**: Per-stack rule installs — Claude modular layout support with separate files per stack (Flutter, NestJS, React) instead of a single merged `CLAUDE.md`
+- **Agent Rules**: `somnio rules uninstall` now cleans up all installed rule files
+- **Engineering Management**: 10 new external service connectors for the engineering management plugin
+
+### Changed
+
+- **Health Audits**: Improved installation logic with stricter execution discipline and parallelization for faster audit runs
+- **Agent Rules**: Migrated code generation script from shell to Python; generated outputs are now gitignored
+
+### Fixed
+
+- **CLI**: Fixed Antigravity skill installation and registered missing skills
+- **Flutter Health Audit**: Enforced per-section coverage breakdown in the Testing section of the report
+
 ## [2.1.1] - 2026-03-25
 
 ### Fixed

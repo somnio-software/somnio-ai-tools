@@ -9,15 +9,22 @@ import 'agent_rule.dart';
 class AgentRuleRegistry {
   AgentRuleRegistry._();
 
+  /// Stacks exposed by every adapter — must match subfolder names under
+  /// `agent-rules/rules/` and the per-stack subfolders the generator emits
+  /// under `agent-rules/adapters/<agent>/`.
+  static const List<String> stacks = ['flutter', 'nestjs', 'react'];
+
   /// All registered agent-rules packs.
   static const List<AgentRule> rules = [
     AgentRule(
       agentId: 'claude',
       displayName: 'Claude Code',
-      adapterPath: 'agent-rules/adapters/claude/CLAUDE.md',
-      globalPath: '{home}/.claude/CLAUDE.md',
+      adapterPath: 'agent-rules/adapters/claude',
+      // No global install for Claude — rules are stack-scoped and should live
+      // next to the project that uses them via @imports.
       projectPath: 'CLAUDE.md',
-      format: RulesInstallFormat.singleFile,
+      format: RulesInstallFormat.claudeModular,
+      stacks: stacks,
     ),
     AgentRule(
       agentId: 'cursor',
@@ -26,31 +33,34 @@ class AgentRuleRegistry {
       globalPath: '{home}/.cursor/rules',
       projectPath: '.cursor/rules',
       format: RulesInstallFormat.directory,
+      stacks: stacks,
     ),
     AgentRule(
       agentId: 'windsurf',
       displayName: 'Windsurf',
-      adapterPath: 'agent-rules/adapters/windsurf/.windsurfrules',
+      adapterPath: 'agent-rules/adapters/windsurf',
       globalPath: '{home}/.windsurfrules',
       projectPath: '.windsurfrules',
       format: RulesInstallFormat.singleFile,
+      stacks: stacks,
     ),
     AgentRule(
       agentId: 'copilot',
       displayName: 'GitHub Copilot',
-      adapterPath:
-          'agent-rules/adapters/copilot/copilot-instructions.md',
+      adapterPath: 'agent-rules/adapters/copilot',
       // No well-known global path for Copilot — project-level only.
       projectPath: '.github/copilot-instructions.md',
       format: RulesInstallFormat.singleFile,
+      stacks: stacks,
     ),
     AgentRule(
       agentId: 'codex',
       displayName: 'OpenAI Codex',
-      adapterPath: 'agent-rules/adapters/codex/system-prompt.md',
+      adapterPath: 'agent-rules/adapters/codex',
       // No well-known global path for Codex — project-level only.
       projectPath: 'AGENTS.md',
       format: RulesInstallFormat.singleFile,
+      stacks: stacks,
     ),
     AgentRule(
       agentId: 'antigravity',
@@ -59,6 +69,7 @@ class AgentRuleRegistry {
       // No well-known global path for Antigravity — project-level only.
       projectPath: 'rules',
       format: RulesInstallFormat.directory,
+      stacks: stacks,
     ),
   ];
 

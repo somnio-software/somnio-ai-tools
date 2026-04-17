@@ -27,8 +27,8 @@ class RulesCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding standards (NestJS & Flutter rules) globally '
-      'or per project.';
+      'Install agent coding standards (Flutter / NestJS / React) '
+      'per agent and per stack.';
 }
 
 // ── Install subcommand ────────────────────────────────────────────────────────
@@ -48,12 +48,22 @@ class _RulesInstallCommand extends Command<int> {
     argParser.addFlag(
       'global',
       abbr: 'g',
-      help: 'Install globally (agent config dir). Mutually exclusive with --project.',
+      help:
+          'Install globally (agent config dir). Mutually exclusive with --project.\n'
+          'Not supported for Claude — rules install per project only.',
     );
     argParser.addFlag(
       'project',
       abbr: 'p',
-      help: 'Install in the current project directory. Mutually exclusive with --global.',
+      help:
+          'Install in the current project directory. Mutually exclusive with --global.',
+    );
+    argParser.addMultiOption(
+      'stacks',
+      abbr: 's',
+      help:
+          'Stacks to install (comma-separated). Skip to select interactively.',
+      allowed: AgentRuleRegistry.stacks,
     );
     argParser.addFlag(
       'force',
@@ -69,12 +79,12 @@ class _RulesInstallCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding rules globally or in the current project.\n'
+      'Install agent coding rules per stack (flutter / nestjs / react).\n'
       '\n'
       'Examples:\n'
-      '  somnio rules install                          # interactive\n'
-      '  somnio rules install --agent claude --global  # non-interactive\n'
-      '  somnio rules install --all --project          # all detected, project scope';
+      '  somnio rules install                                  # interactive\n'
+      '  somnio rules install --agent claude --stacks react    # non-interactive\n'
+      '  somnio rules install --all --project --stacks react,nestjs';
 
   @override
   Future<int> run() async {
@@ -82,6 +92,7 @@ class _RulesInstallCommand extends Command<int> {
     final installAll = argResults!['all'] as bool;
     final forceGlobal = argResults!['global'] as bool;
     final forceProject = argResults!['project'] as bool;
+    final cliStacks = (argResults!['stacks'] as List<String>).toList();
 
     if (forceGlobal && forceProject) {
       _logger.err('Use either --global or --project, not both.');
@@ -113,10 +124,8 @@ class _RulesInstallCommand extends Command<int> {
     final detected = checks.where((c) => c.detected).length;
     for (var i = 0; i < checks.length; i++) {
       final check = checks[i];
-      final mark =
-          check.detected ? lightGreen.wrap('✓') : lightRed.wrap('✗');
-      final suffix =
-          check.detected ? '  (${check.path})' : '  (not found)';
+      final mark = check.detected ? lightGreen.wrap('✓') : lightRed.wrap('✗');
+      final suffix = check.detected ? '  (${check.path})' : '  (not found)';
       _logger.info('  ${i + 1}) $mark ${check.rule.displayName}$suffix');
     }
     _logger.info(
@@ -150,8 +159,6 @@ class _RulesInstallCommand extends Command<int> {
         ),
       ];
     } else {
-      // Interactive: numbered prompt avoids ANSI redraw flicker
-      // that chooseOne causes on each keystroke.
       final input = _logger.prompt(
         'Select agent (1-${checks.length + 1})',
       );
@@ -173,14 +180,62 @@ class _RulesInstallCommand extends Command<int> {
       }
     }
 
-    // ── Select scope ────────────────────────────────────────────────
-    RulesInstallScope scope;
+    // ── Select stacks ───────────────────────────────────────────────
+    final List<String> selectedStacks;
+    if (cliStacks.isNotEmpty) {
+      selectedStacks = cliStacks;
+    } else {
+      _logger.info('');
+      final stacks = AgentRuleRegistry.stacks;
+      _logger.info('Which stacks do you want to install?');
+      _logger.info('');
+      for (var i = 0; i < stacks.length; i++) {
+        _logger.info('  ${i + 1}) ${stacks[i]}');
+      }
+      _logger.info('  ${stacks.length + 1}) All stacks');
+      _logger.info('');
+      final stackInput = _logger.prompt(
+        'Select stacks (comma-separated, e.g. 1,3 or ${stacks.length + 1} for all)',
+      );
 
+      final parts = stackInput.split(',').map((s) => s.trim()).toList();
+      final picked = <String>[];
+      for (final part in parts) {
+        final choice = int.tryParse(part);
+        if (choice == null || choice < 1 || choice > stacks.length + 1) {
+          _logger.err('Invalid selection: $part');
+          return ExitCode.usage.code;
+        }
+        if (choice == stacks.length + 1) {
+          picked
+            ..clear()
+            ..addAll(stacks);
+          break;
+        } else {
+          final stack = stacks[choice - 1];
+          if (!picked.contains(stack)) picked.add(stack);
+        }
+      }
+
+      if (picked.isEmpty) {
+        _logger.err('No stacks selected.');
+        return ExitCode.usage.code;
+      }
+      selectedStacks = picked;
+    }
+
+    // ── Select scope ────────────────────────────────────────────────
+    // If every target lacks global support, quietly force project scope
+    // and skip the prompt — the alternative is a confusing warning loop.
+    final anyGlobalCapable = targets.any((t) => t.rule.supportsGlobal);
+
+    RulesInstallScope scope;
     if (forceGlobal) {
       scope = RulesInstallScope.global;
-    } else if (forceProject) {
+    } else if (forceProject || !anyGlobalCapable) {
       scope = RulesInstallScope.project;
     } else {
+      _logger.info('');
       _logger.info('  1) global (agent config dir)');
       _logger.info('  2) project (current directory)');
       _logger.info('');
@@ -204,22 +259,23 @@ class _RulesInstallCommand extends Command<int> {
 
       if (scope == RulesInstallScope.global && !rule.supportsGlobal) {
         _logger.warn(
-          '  ${rule.displayName}: no global config path defined — '
+          '  ${rule.displayName}: no global install supported — '
           'use --project to install in a project instead.',
         );
         continue;
       }
 
       final targetPath = RulesInstaller.resolveTargetPath(rule, scope);
-      final progress = _logger.progress('${rule.displayName}');
+      final progress = _logger.progress(rule.displayName);
 
-      final result = installer.install(rule, targetPath);
+      final result = installer.install(rule, targetPath, selectedStacks);
 
       if (result.success) {
         final scopeLabel =
             scope == RulesInstallScope.global ? 'global' : 'project';
+        final stackLabel = selectedStacks.join(', ');
         progress.complete(
-          '${rule.displayName}  rules installed ($scopeLabel)',
+          '${rule.displayName}  rules installed ($scopeLabel) — $stackLabel',
         );
         _logger.info('  Location: $targetPath');
         successCount++;
@@ -388,7 +444,9 @@ class _RulesStatusCommand extends Command<int> {
       final projectInstalled = installer.isInstalled(rule, projectPath);
 
       final globalStatus = rule.supportsGlobal
-          ? (globalInstalled ? lightGreen.wrap('✓ global') : darkGray.wrap('✗ global'))
+          ? (globalInstalled
+              ? lightGreen.wrap('✓ global')
+              : darkGray.wrap('✗ global'))
           : darkGray.wrap('— global n/a');
       final projectStatus = projectInstalled
           ? lightGreen.wrap('✓ project')

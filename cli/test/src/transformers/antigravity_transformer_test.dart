@@ -415,21 +415,17 @@ void main() {
         // workflowPath: null
       );
 
-      final withPathBundle = const SkillBundle(
-        id: 'test',
-        name: 'test-skill',
-        displayName: 'Test',
-        description: 'Test',
-        planRelativePath: 'skills/test/SKILL.md',
-        rulesDirectory: 'skills/test/references',
-        workflowPath: 'skills/test/.agent/workflows/test.md',
+      final withPathBundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'test',
+        skillId: 'test',
+        workflowContent: '# Workflow',
       );
 
       final skipped = transformer.transform(nullPathBundle, loader, agent);
       final notSkipped = transformer.transform(withPathBundle, loader, agent);
 
       expect(skipped.skipped, isTrue, reason: 'null workflowPath → skipped');
-      // notSkipped may error loading files, but skipped flag is false
       expect(notSkipped.skipped, isFalse,
           reason: 'non-null workflowPath → not skipped');
     });
