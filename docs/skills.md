@@ -190,6 +190,27 @@ Add a Clockify time entry for yesterday on "Frontend" project, 9:00 to 18:00, Bu
 
 ---
 
+## Ship
+
+Fully automated ship workflow. Detects the base branch, merges it in, runs tests, reviews the diff, bumps `VERSION`, updates `CHANGELOG.md`, commits, pushes, and opens a pull request. Non-interactive — only stops for merge conflicts, failing tests, review ASKs, or ambiguous minor/major version bumps.
+
+**Use when:**
+- Ready to land a feature branch and open a PR
+- Asked to "ship", "deploy", "push to main", or "create a PR"
+- Closing out work and need version/changelog/commit/push done in one pass
+
+**Example prompts:**
+```
+Ship it.
+```
+```
+Create a PR for this branch.
+```
+
+**Output:** Pull request URL, with `VERSION` bumped and `CHANGELOG.md` updated.
+
+---
+
 ## Git Branch Format
 
 Generates properly formatted Git branch names following project conventions.
