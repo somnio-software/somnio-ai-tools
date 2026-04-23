@@ -70,6 +70,7 @@ somnio setup
 |:------|:------------|
 | [Clockify Tracker](docs/skills.md#clockify-tracker) | Log and manage Clockify time entries via the REST API |
 | [Workflow Builder](docs/skills.md#workflow-builder) | Custom multi-step AI workflows with parallel execution |
+| [Ship](docs/skills.md#ship) | Automated ship workflow: merge, test, bump, changelog, commit, push, open PR |
 | [Git Branch Format](docs/skills.md#git-branch-format) | Branch naming convention generator |
 | [Git Commit Format](docs/skills.md#git-commit-format) | Conventional Commits message generator |
 
