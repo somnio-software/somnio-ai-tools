@@ -46,6 +46,7 @@ $RECYCLE.BIN/
 .claude
 .somnio
 CLAUDE.md
+.superset
 
 # Logs
 *.log
