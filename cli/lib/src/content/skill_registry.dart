@@ -209,6 +209,56 @@ class SkillRegistry {
       planRelativePath:
           'skills/ship/SKILL.md',
     ),
+    WorkflowSkill(
+      id: 'enhanced_adr',
+      name: 'enhanced-adr',
+      displayName: 'Enhanced ADR',
+      description:
+          'Author Architecture Decision Records using the Enhanced WH(Y) '
+          'format. Produces immutable, numbered ADRs at docs/adr/ that '
+          'capture context, problem, decision, rejected alternatives, '
+          'outcomes, and trade-offs. Standalone or invoked by '
+          'ticket-to-sparc Tier 1.',
+      planRelativePath:
+          'skills/enhanced-adr/SKILL.md',
+    ),
+    WorkflowSkill(
+      id: 'ticket_to_sparc',
+      name: 'ticket-to-sparc',
+      displayName: 'Ticket to SPARC',
+      description:
+          'Tech-Lead orchestrator: turn one or many tracker tickets '
+          '(or an epic) into the right artifact — a full ADR + SPARC '
+          'bundle, a SPARC bundle alone, or an enhanced prompt. '
+          'Auto-classifies tier per goal and dispatches to enhanced-adr, '
+          'sparc-orchestration, or prompt-enhancer.',
+      planRelativePath:
+          'skills/ticket-to-sparc/SKILL.md',
+    ),
+    WorkflowSkill(
+      id: 'prompt_enhancer',
+      name: 'prompt-enhancer',
+      displayName: 'Prompt Enhancer',
+      description:
+          'Transform a basic prompt or tracker ticket summary into a '
+          'production-ready prompt with role assignment, structured '
+          'sections, emphasis keywords, and explicit success criteria. '
+          'Saves to docs/briefs/ when invoked via ticket-to-sparc Tier 3.',
+      planRelativePath:
+          'skills/prompt-enhancer/SKILL.md',
+    ),
+    WorkflowSkill(
+      id: 'sparc_orchestration',
+      name: 'sparc-orchestration',
+      displayName: 'SPARC Orchestration',
+      description:
+          'Drive a feature through the 5-phase SPARC methodology — '
+          'Specification, Pseudocode, Architecture, Refinement, '
+          'Completion — with quality gates between phases. Produces '
+          'docs/sparc/<goal-slug>/ with phase files and a README index.',
+      planRelativePath:
+          'skills/sparc-orchestration/SKILL.md',
+    ),
   ];
 
   /// Find a skill bundle by its ID.
