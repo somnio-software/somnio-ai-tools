@@ -37,7 +37,7 @@ class InstallCommand extends Command<int> {
       'all-configs',
       help: 'Install to every ~/.<agent>* config directory found '
           '(e.g. .claude-work, .cursor-personal). Composes with --all. '
-          'For Claude, also unions in CLAUDE_CONFIG_DIR.',
+          'Overrides CLAUDE_CONFIG_DIR for Claude.',
     );
   }
 
@@ -186,9 +186,8 @@ class InstallCommand extends Command<int> {
   ///
   /// When [allConfigs] is true, scans `$HOME` for every directory whose name
   /// starts with the agent's [AgentConfig.configDirName] and joins each with
-  /// the agent's [AgentConfig.installSubpath]. For Claude, also unions in
-  /// `$CLAUDE_CONFIG_DIR` so a config dir set via env var outside `~/.claude*`
-  /// (e.g. `/opt/team/claude`) isn't missed.
+  /// the agent's [AgentConfig.installSubpath]. For Claude this overrides
+  /// `CLAUDE_CONFIG_DIR` — the explicit "all configs" intent wins.
   ///
   /// When [allConfigs] is false, returns the single default target: Claude
   /// honors `CLAUDE_CONFIG_DIR`; every other agent uses its declared
@@ -198,12 +197,9 @@ class InstallCommand extends Command<int> {
     bool allConfigs = false,
   }) {
     if (allConfigs) {
-      final bases = <String>{
-        ...PlatformUtils.discoverConfigDirs(prefix: agent.configDirName),
-        if (agent.id == 'claude') PlatformUtils.claudeConfigDir,
-      };
-      final sorted = bases.toList()..sort();
-      return sorted.map((dir) => p.join(dir, agent.installSubpath)).toList();
+      final bases =
+          PlatformUtils.discoverConfigDirs(prefix: agent.configDirName);
+      return bases.map((dir) => p.join(dir, agent.installSubpath)).toList();
     }
     if (agent.id == 'claude') {
       return [p.join(PlatformUtils.claudeConfigDir, agent.installSubpath)];
