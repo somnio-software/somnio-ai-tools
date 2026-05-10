@@ -19,14 +19,21 @@ class AgentInstaller extends Installer {
     required super.logger,
     required super.loader,
     required this.agentConfig,
+    this.installDirOverride,
   });
 
   final AgentConfig agentConfig;
 
+  /// When non-null, replaces the resolved install directory entirely.
+  /// Used by callers that compute the target dir themselves (e.g. Claude's
+  /// `CLAUDE_CONFIG_DIR` / `--all-configs` resolution in InstallCommand).
+  final String? installDirOverride;
+
   String get _home => PlatformUtils.homeDirectory;
 
   /// Resolves the base install directory for this agent.
-  String get _installDir => agentConfig.resolvedInstallPath(home: _home);
+  String get _installDir =>
+      installDirOverride ?? agentConfig.resolvedInstallPath(home: _home);
 
   @override
   Future<InstallResult> install({

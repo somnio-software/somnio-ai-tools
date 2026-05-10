@@ -1,3 +1,5 @@
+import 'package:path/path.dart' as p;
+
 import 'token_parsers.dart';
 
 /// How the CLI accepts prompt text.
@@ -201,6 +203,22 @@ class AgentConfig {
     }
 
     return args;
+  }
+
+  /// First path segment of [installPath] after `{home}/` — the agent's
+  /// config directory under the user's home (e.g. `.claude`, `.cursor`,
+  /// `.gemini`). Used by `--all-configs` to discover sibling config dirs.
+  String get configDirName {
+    final stripped = installPath.replaceFirst('{home}/', '');
+    return p.split(stripped).first;
+  }
+
+  /// Path segments of [installPath] after [configDirName] — what the agent
+  /// stores under its config dir (e.g. `skills`, `commands`, `antigravity`).
+  String get installSubpath {
+    final stripped = installPath.replaceFirst('{home}/', '');
+    final parts = p.split(stripped);
+    return parts.length > 1 ? p.joinAll(parts.skip(1)) : '';
   }
 
   /// Resolves the install path by replacing `{home}` and `{name}`.

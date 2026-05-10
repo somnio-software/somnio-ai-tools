@@ -235,4 +235,36 @@ void main() {
           'Read /path/to/rule.yaml and follow ALL instructions in the prompt field');
     });
   });
+
+  group('AgentConfig.configDirName / installSubpath', () {
+    test('splits a typical {home}/<dir>/<sub> template', () {
+      const agent = AgentConfig(
+        id: 'claude',
+        displayName: 'Claude',
+        installPath: '{home}/.claude/skills',
+      );
+      expect(agent.configDirName, '.claude');
+      expect(agent.installSubpath, 'skills');
+    });
+
+    test('handles a multi-segment subpath', () {
+      const agent = AgentConfig(
+        id: 'antigravity',
+        displayName: 'Antigravity',
+        installPath: '{home}/.gemini/antigravity/global_workflows',
+      );
+      expect(agent.configDirName, '.gemini');
+      expect(agent.installSubpath, 'antigravity/global_workflows');
+    });
+
+    test('returns empty subpath when only the config dir is present', () {
+      const agent = AgentConfig(
+        id: 'test',
+        displayName: 'Test',
+        installPath: '{home}/.test',
+      );
+      expect(agent.configDirName, '.test');
+      expect(agent.installSubpath, '');
+    });
+  });
 }

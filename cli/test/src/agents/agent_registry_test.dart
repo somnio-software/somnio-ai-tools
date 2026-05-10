@@ -135,6 +135,21 @@ void main() {
       }
     });
 
+    test('every agent installPath yields a usable configDirName', () {
+      // The --all-configs flag relies on every agent's installPath being
+      // shaped `{home}/<configDirName>/...`. A new entry that violates this
+      // would silently break multi-config installs for that agent.
+      for (final agent in AgentRegistry.agents) {
+        expect(agent.installPath, startsWith('{home}/'),
+            reason: '${agent.id} installPath must start with {home}/');
+        expect(agent.configDirName, isNotEmpty,
+            reason: '${agent.id} configDirName must be non-empty');
+        expect(agent.configDirName, startsWith('.'),
+            reason: '${agent.id} configDirName must start with "." '
+                '(scanned by --all-configs as ~/.<dir>*)');
+      }
+    });
+
     test('agents with output flags are correctly configured', () {
       final expectations = {
         'claude': ['--output-format', 'json'],

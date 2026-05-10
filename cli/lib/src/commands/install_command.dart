@@ -1,5 +1,6 @@
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
+import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
 import '../agents/agent_registry.dart';
@@ -32,6 +33,12 @@ class InstallCommand extends Command<int> {
       abbr: 'f',
       help: 'Force reinstall of all skills.',
     );
+    argParser.addFlag(
+      'all-configs',
+      help: 'Install to every ~/.<agent>* config directory found '
+          '(e.g. .claude-work, .cursor-personal). Composes with --all. '
+          'Overrides CLAUDE_CONFIG_DIR for Claude.',
+    );
   }
 
   final Logger _logger;
@@ -48,6 +55,7 @@ class InstallCommand extends Command<int> {
     final agentId = argResults!['agent'] as String?;
     final installAll = argResults!['all'] as bool;
     final force = argResults!['force'] as bool;
+    final allConfigs = argResults!['all-configs'] as bool;
 
     if (agentId == null && !installAll) {
       _logger.err('Specify --agent <name> or --all.');
@@ -69,7 +77,12 @@ class InstallCommand extends Command<int> {
     }
 
     if (installAll) {
-      return _installToAll(content.loader, content.bundles, force);
+      return _installToAll(
+        content.loader,
+        content.bundles,
+        force,
+        allConfigs: allConfigs,
+      );
     }
 
     final agent = AgentRegistry.findById(agentId!);
@@ -78,15 +91,22 @@ class InstallCommand extends Command<int> {
       return ExitCode.usage.code;
     }
 
-    return _installToAgent(agent, content.loader, content.bundles, force);
+    return _installToAgent(
+      agent,
+      content.loader,
+      content.bundles,
+      force,
+      allConfigs: allConfigs,
+    );
   }
 
   Future<int> _installToAgent(
     AgentConfig agent,
     ContentLoader loader,
     List<dynamic> bundles,
-    bool force,
-  ) async {
+    bool force, {
+    bool allConfigs = false,
+  }) async {
     // Check binary availability for CLI agents
     if (agent.binary != null) {
       final path = await PlatformUtils.whichBinary(agent.binary!);
@@ -99,51 +119,100 @@ class InstallCommand extends Command<int> {
       }
     }
 
-    final progress = _logger.progress(agent.displayName);
+    // Claude: resolve target dir(s) honoring CLAUDE_CONFIG_DIR or scanning
+    // ~/.claude* when --all-configs is set. Other agents use the default
+    // path resolution (no override).
+    final targetDirs = _resolveTargetDirs(agent, allConfigs: allConfigs);
 
-    final installer = AgentInstaller(
-      logger: _logger,
-      loader: loader,
-      agentConfig: agent,
-    );
+    var totalSkipped = 0;
+    final locations = <String>[];
 
-    final result = await installer.install(
-      bundles: SkillRegistry.skills,
-      force: force,
-    );
+    for (final targetDir in targetDirs) {
+      final progress = _logger.progress(
+        targetDirs.length == 1
+            ? agent.displayName
+            : '${agent.displayName} (${p.basename(p.dirname(targetDir))})',
+      );
 
-    // Install workflow skills
-    final wfCount = installer.installWorkflowSkills(
-      SkillRegistry.workflowSkills,
-    );
-    final totalInstalled = result.skillCount + wfCount;
+      final installer = AgentInstaller(
+        logger: _logger,
+        loader: loader,
+        agentConfig: agent,
+        installDirOverride: targetDir,
+      );
 
-    final label = agent.contentLabel;
-    final plural = totalInstalled == 1 ? label : '${label}s';
-    progress.complete(
-      '${agent.displayName}  '
-      '$totalInstalled $plural installed',
-    );
+      final result = await installer.install(
+        bundles: SkillRegistry.skills,
+        force: force,
+      );
 
-    if (result.skippedCount > 0) {
+      final wfCount = installer.installWorkflowSkills(
+        SkillRegistry.workflowSkills,
+      );
+      final installed = result.skillCount + wfCount;
+      totalSkipped += result.skippedCount;
+      locations.add(result.targetDirectory);
+
+      final label = agent.contentLabel;
+      final plural = installed == 1 ? label : '${label}s';
+      progress.complete(
+        '${agent.displayName}  '
+        '$installed $plural installed',
+      );
+    }
+
+    if (totalSkipped > 0) {
       _logger.info(
-        '  ${result.skippedCount} '
-        '${result.skippedCount == 1 ? 'skill' : 'skills'} '
+        '  $totalSkipped '
+        '${totalSkipped == 1 ? 'skill' : 'skills'} '
         'skipped (not yet supported)',
       );
     }
 
     _logger.info('');
-    _logger.info('Location: ${result.targetDirectory}');
+    if (locations.length == 1) {
+      _logger.info('Location: ${locations.first}');
+    } else {
+      _logger.info('Locations:');
+      for (final loc in locations) {
+        _logger.info('  $loc');
+      }
+    }
 
     return ExitCode.success.code;
+  }
+
+  /// Computes the install target directories for [agent].
+  ///
+  /// When [allConfigs] is true, scans `$HOME` for every directory whose name
+  /// starts with the agent's [AgentConfig.configDirName] and joins each with
+  /// the agent's [AgentConfig.installSubpath]. For Claude this overrides
+  /// `CLAUDE_CONFIG_DIR` — the explicit "all configs" intent wins.
+  ///
+  /// When [allConfigs] is false, returns the single default target: Claude
+  /// honors `CLAUDE_CONFIG_DIR`; every other agent uses its declared
+  /// `resolvedInstallPath` unchanged.
+  List<String> _resolveTargetDirs(
+    AgentConfig agent, {
+    bool allConfigs = false,
+  }) {
+    if (allConfigs) {
+      final bases =
+          PlatformUtils.discoverConfigDirs(prefix: agent.configDirName);
+      return bases.map((dir) => p.join(dir, agent.installSubpath)).toList();
+    }
+    if (agent.id == 'claude') {
+      return [p.join(PlatformUtils.claudeConfigDir, agent.installSubpath)];
+    }
+    return [agent.resolvedInstallPath(home: PlatformUtils.homeDirectory)];
   }
 
   Future<int> _installToAll(
     ContentLoader loader,
     List<dynamic> bundles,
-    bool force,
-  ) async {
+    bool force, {
+    bool allConfigs = false,
+  }) async {
     var totalSkills = 0;
     var agentCount = 0;
 
@@ -154,37 +223,49 @@ class InstallCommand extends Command<int> {
         if (path == null) continue;
       }
 
-      final progress = _logger.progress(agent.displayName);
+      // When allConfigs is set, fan out across every discovered config dir
+      // for this agent; otherwise use the single default target.
+      final targetDirs = _resolveTargetDirs(agent, allConfigs: allConfigs);
 
-      final installer = AgentInstaller(
-        logger: _logger,
-        loader: loader,
-        agentConfig: agent,
-      );
+      var agentTotal = 0;
+      for (final targetDir in targetDirs) {
+        final progress = _logger.progress(
+          targetDirs.length == 1
+              ? agent.displayName
+              : '${agent.displayName} (${p.basename(p.dirname(targetDir))})',
+        );
 
-      final result = await installer.install(
-        bundles: SkillRegistry.skills,
-        force: force,
-      );
+        final installer = AgentInstaller(
+          logger: _logger,
+          loader: loader,
+          agentConfig: agent,
+          installDirOverride: targetDir,
+        );
 
-      // Install workflow skills
-      final wfCount = installer.installWorkflowSkills(
-        SkillRegistry.workflowSkills,
-      );
-      final agentTotal = result.skillCount + wfCount;
+        final result = await installer.install(
+          bundles: SkillRegistry.skills,
+          force: force,
+        );
+
+        final wfCount = installer.installWorkflowSkills(
+          SkillRegistry.workflowSkills,
+        );
+        final dirTotal = result.skillCount + wfCount;
+        agentTotal += dirTotal;
+
+        final label = agent.contentLabel;
+        final plural = dirTotal == 1 ? label : '${label}s';
+        final parts = <String>['$dirTotal $plural'];
+        if (result.skippedCount > 0) {
+          parts.add('${result.skippedCount} skipped');
+        }
+        progress.complete(
+          '${agent.displayName}  ${parts.join(', ')}',
+        );
+      }
 
       totalSkills += agentTotal;
       if (agentTotal > 0) agentCount++;
-
-      final label = agent.contentLabel;
-      final plural = agentTotal == 1 ? label : '${label}s';
-      final parts = <String>['$agentTotal $plural'];
-      if (result.skippedCount > 0) {
-        parts.add('${result.skippedCount} skipped');
-      }
-      progress.complete(
-        '${agent.displayName}  ${parts.join(', ')}',
-      );
     }
 
     _logger.info('');

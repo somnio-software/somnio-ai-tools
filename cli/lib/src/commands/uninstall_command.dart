@@ -105,24 +105,35 @@ class UninstallCommand extends Command<int> {
   ];
 
   bool _removeClaude() {
-    final globalDir = Directory(PlatformUtils.claudeGlobalSkillsDir);
-    if (!globalDir.existsSync()) return false;
+    // Collect every Claude config dir somnio could have written to:
+    // every `~/.claude*` directory, plus `$CLAUDE_CONFIG_DIR` if set to a
+    // path outside `~/.claude*`.
+    final candidates = <String>{
+      ...PlatformUtils.discoverConfigDirs(prefix: '.claude'),
+      PlatformUtils.claudeConfigDir,
+    };
 
     var removed = false;
-    for (final name in _allSkillNames) {
-      // Remove directories (built-in installer)
-      final dir = Directory(p.join(globalDir.path, name));
-      if (dir.existsSync()) {
-        dir.deleteSync(recursive: true);
-        _logger.info('  Removed Claude skill: $name');
-        removed = true;
-      }
-      // Remove symlinks (skills.sh installer)
-      final link = Link(p.join(globalDir.path, name));
-      if (link.existsSync()) {
-        link.deleteSync();
-        _logger.info('  Removed Claude symlink: $name');
-        removed = true;
+    for (final base in candidates) {
+      final globalDir = Directory(p.join(base, 'skills'));
+      if (!globalDir.existsSync()) continue;
+
+      final label = p.basename(base);
+      for (final name in _allSkillNames) {
+        // Remove directories (built-in installer)
+        final dir = Directory(p.join(globalDir.path, name));
+        if (dir.existsSync()) {
+          dir.deleteSync(recursive: true);
+          _logger.info('  Removed Claude skill ($label): $name');
+          removed = true;
+        }
+        // Remove symlinks (skills.sh installer)
+        final link = Link(p.join(globalDir.path, name));
+        if (link.existsSync()) {
+          link.deleteSync();
+          _logger.info('  Removed Claude symlink ($label): $name');
+          removed = true;
+        }
       }
     }
 
@@ -144,75 +155,73 @@ class UninstallCommand extends Command<int> {
   }
 
   bool _removeCursor() {
-    final commandsDir = Directory(PlatformUtils.cursorGlobalCommandsDir);
-    if (!commandsDir.existsSync()) return false;
-
-    final files = commandsDir
-        .listSync()
-        .whereType<File>()
-        .where((f) =>
-            f.path.endsWith('.md') && p.basename(f.path).startsWith('somnio-'))
-        .toList();
-
-    if (files.isEmpty) return false;
-
-    for (final file in files) {
-      final name = p.basename(file.path);
-      file.deleteSync();
-      _logger.info('  Removed Cursor command: $name');
-    }
-    return true;
-  }
-
-  bool _removeAntigravity() {
-    final baseDir = PlatformUtils.antigravityGlobalDir;
     var removed = false;
+    for (final base in PlatformUtils.discoverConfigDirs(prefix: '.cursor')) {
+      final commandsDir = Directory(p.join(base, 'commands'));
+      if (!commandsDir.existsSync()) continue;
 
-    // Remove workflow files
-    final workflowsDir = Directory(p.join(baseDir, 'global_workflows'));
-    if (workflowsDir.existsSync()) {
-      final files = workflowsDir
-          .listSync()
-          .whereType<File>()
-          .where((f) => p.basename(f.path).startsWith('somnio_'))
-          .toList();
-
-      for (final file in files) {
+      final label = p.basename(base);
+      for (final file in commandsDir.listSync().whereType<File>()) {
         final name = p.basename(file.path);
+        if (!name.endsWith('.md') || !name.startsWith('somnio-')) continue;
         file.deleteSync();
-        _logger.info('  Removed Antigravity workflow: $name');
+        _logger.info('  Removed Cursor command ($label): $name');
         removed = true;
       }
     }
+    return removed;
+  }
 
-    // Remove somnio_rules directory
-    final rulesDir = Directory(p.join(baseDir, 'somnio_rules'));
-    if (rulesDir.existsSync()) {
-      rulesDir.deleteSync(recursive: true);
-      _logger.info('  Removed Antigravity rules: somnio_rules/');
-      removed = true;
+  bool _removeAntigravity() {
+    var removed = false;
+    for (final base in PlatformUtils.discoverConfigDirs(prefix: '.gemini')) {
+      final agBase = p.join(base, 'antigravity');
+      final label = p.basename(base);
+
+      // Remove workflow files
+      final workflowsDir = Directory(p.join(agBase, 'global_workflows'));
+      if (workflowsDir.existsSync()) {
+        for (final file in workflowsDir.listSync().whereType<File>()) {
+          final name = p.basename(file.path);
+          if (!name.startsWith('somnio_')) continue;
+          file.deleteSync();
+          _logger.info('  Removed Antigravity workflow ($label): $name');
+          removed = true;
+        }
+      }
+
+      // Remove somnio_rules directory
+      final rulesDir = Directory(p.join(agBase, 'somnio_rules'));
+      if (rulesDir.existsSync()) {
+        rulesDir.deleteSync(recursive: true);
+        _logger.info('  Removed Antigravity rules ($label): somnio_rules/');
+        removed = true;
+      }
     }
-
     return removed;
   }
 
   bool _removeGenericAgent(AgentConfig agent) {
-    final home = PlatformUtils.homeDirectory;
-    final installDir = agent.resolvedInstallPath(home: home);
-    final dir = Directory(installDir);
-    if (!dir.existsSync()) return false;
-
-    final prefix = agent.filePrefix;
     var removed = false;
-    for (final entity in dir.listSync()) {
-      if (p.basename(entity.path).startsWith(prefix)) {
+    final prefix = agent.filePrefix;
+    for (final base
+        in PlatformUtils.discoverConfigDirs(prefix: agent.configDirName)) {
+      final installDir = agent.installSubpath.isEmpty
+          ? base
+          : p.join(base, agent.installSubpath);
+      final dir = Directory(installDir);
+      if (!dir.existsSync()) continue;
+
+      final label = p.basename(base);
+      for (final entity in dir.listSync()) {
+        if (!p.basename(entity.path).startsWith(prefix)) continue;
         if (entity is File) {
           entity.deleteSync();
         } else if (entity is Directory) {
           entity.deleteSync(recursive: true);
         }
         _logger.info(
-          '  Removed ${agent.displayName}: ${p.basename(entity.path)}',
+          '  Removed ${agent.displayName} ($label): ${p.basename(entity.path)}',
         );
         removed = true;
       }
