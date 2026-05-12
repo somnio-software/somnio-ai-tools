@@ -18,10 +18,17 @@ import '../utils/platform_utils.dart';
 /// via skills.sh (`npx skills add`).
 class UpdateCommand extends Command<int> {
   UpdateCommand({required Logger logger}) : _logger = logger {
-    argParser.addFlag(
-      'legacy',
-      help: 'Use built-in installer instead of skills.sh.',
-    );
+    argParser
+      ..addFlag(
+        'legacy',
+        help: 'Use built-in installer instead of skills.sh.',
+      )
+      ..addFlag(
+        'verbose',
+        abbr: 'v',
+        help: 'Show detailed output for each step.',
+        negatable: false,
+      );
   }
 
   final Logger _logger;
@@ -53,6 +60,7 @@ class UpdateCommand extends Command<int> {
     'react-health-audit',
     'react-best-practices',
     'security-audit',
+    'ship',
     'workflow-builder',
   ];
 
@@ -77,6 +85,7 @@ class UpdateCommand extends Command<int> {
     'react-health-audit.md',
     'react-best-practices.md',
     'security-audit.md',
+    'ship.md',
     'workflow-builder.md',
   ];
 
@@ -90,6 +99,7 @@ class UpdateCommand extends Command<int> {
   @override
   Future<int> run() async {
     final useLegacy = argResults!['legacy'] as bool;
+    final verbose = argResults!['verbose'] as bool;
 
     // ── Step 1: Update CLI from git ───────────────────────────────
     final updateProgress = _logger.progress('Updating somnio CLI');
@@ -123,17 +133,12 @@ class UpdateCommand extends Command<int> {
     _logger.info('');
 
     // ── Step 2: Clean up ALL old installations ────────────────────
-    _logger.info(
-      '${lightCyan.wrap('Cleaning')}  Removing old skill installations...',
-    );
-    _logger.info('');
-
-    final cleanedCount = _cleanAllAgents();
-
+    final cleanProgress = _logger.progress('Cleaning old skill installations');
+    final cleanedCount = _cleanAllAgents(verbose: verbose);
     if (cleanedCount > 0) {
-      _logger.success('  Cleaned $cleanedCount old items.');
+      cleanProgress.complete('Cleaned $cleanedCount old items');
     } else {
-      _logger.info('  No old installations found.');
+      cleanProgress.complete('No old installations found');
     }
     _logger.info('');
 
@@ -146,7 +151,7 @@ class UpdateCommand extends Command<int> {
       return CommandHelpers.installToDetectedAgents(_logger);
     }
 
-    return _installViaSkillsSh();
+    return _installViaSkillsSh(verbose: verbose);
   }
 
   /// Cleans up all Somnio skill files across all agents.
@@ -154,17 +159,17 @@ class UpdateCommand extends Command<int> {
   /// Removes both v1.x (`somnio-*`) and v2.x (`flutter-health-audit`, etc.)
   /// naming conventions from Claude Code, Cursor, Antigravity, and the
   /// cross-agent registry (`~/.agents/skills/`).
-  int _cleanAllAgents() {
+  int _cleanAllAgents({bool verbose = false}) {
     var count = 0;
-    count += _cleanClaude();
-    count += _cleanCursor();
-    count += _cleanAntigravity();
-    count += _cleanAgentsRegistry();
+    count += _cleanClaude(verbose: verbose);
+    count += _cleanCursor(verbose: verbose);
+    count += _cleanAntigravity(verbose: verbose);
+    count += _cleanAgentsRegistry(verbose: verbose);
     return count;
   }
 
   /// Removes Somnio skill directories from `~/.claude/skills/`.
-  int _cleanClaude() {
+  int _cleanClaude({bool verbose = false}) {
     final dir = Directory(PlatformUtils.claudeGlobalSkillsDir);
     if (!dir.existsSync()) return 0;
 
@@ -173,14 +178,14 @@ class UpdateCommand extends Command<int> {
       final skillDir = Directory(p.join(dir.path, name));
       if (skillDir.existsSync()) {
         skillDir.deleteSync(recursive: true);
-        _logger.info('  Removed Claude: $name');
+        if (verbose) _logger.info('  Removed Claude: $name');
         count++;
       }
       // Also remove symlinks (skills.sh creates these)
       final link = Link(p.join(dir.path, name));
       if (link.existsSync()) {
         link.deleteSync();
-        _logger.info('  Removed Claude symlink: $name');
+        if (verbose) _logger.info('  Removed Claude symlink: $name');
         count++;
       }
     }
@@ -189,7 +194,7 @@ class UpdateCommand extends Command<int> {
 
   /// Removes Somnio command files from `~/.cursor/commands/`
   /// and rules from `~/.cursor/somnio_rules/`.
-  int _cleanCursor() {
+  int _cleanCursor({bool verbose = false}) {
     var count = 0;
 
     // Command files
@@ -199,7 +204,7 @@ class UpdateCommand extends Command<int> {
         final file = File(p.join(commandsDir.path, name));
         if (file.existsSync()) {
           file.deleteSync();
-          _logger.info('  Removed Cursor: $name');
+          if (verbose) _logger.info('  Removed Cursor: $name');
           count++;
         }
       }
@@ -209,7 +214,7 @@ class UpdateCommand extends Command<int> {
     final rulesDir = Directory(PlatformUtils.cursorGlobalRulesDir);
     if (rulesDir.existsSync()) {
       rulesDir.deleteSync(recursive: true);
-      _logger.info('  Removed Cursor: somnio_rules/');
+      if (verbose) _logger.info('  Removed Cursor: somnio_rules/');
       count++;
     }
 
@@ -217,7 +222,7 @@ class UpdateCommand extends Command<int> {
   }
 
   /// Removes Somnio workflows and rules from Antigravity/Gemini.
-  int _cleanAntigravity() {
+  int _cleanAntigravity({bool verbose = false}) {
     final baseDir = PlatformUtils.antigravityGlobalDir;
     var count = 0;
 
@@ -227,9 +232,9 @@ class UpdateCommand extends Command<int> {
       for (final entity in workflowsDir.listSync()) {
         if (entity is File && p.basename(entity.path).startsWith('somnio_')) {
           entity.deleteSync();
-          _logger.info(
-            '  Removed Antigravity: ${p.basename(entity.path)}',
-          );
+          if (verbose) {
+            _logger.info('  Removed Antigravity: ${p.basename(entity.path)}');
+          }
           count++;
         }
       }
@@ -239,7 +244,7 @@ class UpdateCommand extends Command<int> {
     final rulesDir = Directory(p.join(baseDir, 'somnio_rules'));
     if (rulesDir.existsSync()) {
       rulesDir.deleteSync(recursive: true);
-      _logger.info('  Removed Antigravity: somnio_rules/');
+      if (verbose) _logger.info('  Removed Antigravity: somnio_rules/');
       count++;
     }
 
@@ -249,7 +254,7 @@ class UpdateCommand extends Command<int> {
   /// Removes Somnio skills from the cross-agent registry (`~/.agents/skills/`).
   /// These are the canonical copies that skills.sh creates, with symlinks
   /// from `~/.claude/skills/` pointing to them.
-  int _cleanAgentsRegistry() {
+  int _cleanAgentsRegistry({bool verbose = false}) {
     final home = PlatformUtils.homeDirectory;
     final agentsDir = Directory(p.join(home, '.agents', 'skills'));
     if (!agentsDir.existsSync()) return 0;
@@ -259,7 +264,7 @@ class UpdateCommand extends Command<int> {
       final skillDir = Directory(p.join(agentsDir.path, name));
       if (skillDir.existsSync()) {
         skillDir.deleteSync(recursive: true);
-        _logger.info('  Removed agents registry: $name');
+        if (verbose) _logger.info('  Removed agents registry: $name');
         count++;
       }
     }
@@ -309,30 +314,29 @@ class UpdateCommand extends Command<int> {
   }
 
   /// Installs skills via `npx skills add` (skills.sh).
-  Future<int> _installViaSkillsSh() async {
-    _logger.info(
-      '${lightCyan.wrap('Installing')}  Reinstalling skills via skills.sh...',
-    );
-    _logger.info('');
+  Future<int> _installViaSkillsSh({bool verbose = false}) async {
+    final installProgress = _logger.progress('Reinstalling skills');
 
     // Check if npx is available
     try {
       final which = await Process.run('which', ['npx'], runInShell: true);
       if (which.exitCode != 0) {
-        _logger.warn('npx not found. Falling back to built-in installer.');
+        installProgress.fail('npx not found — falling back to built-in installer');
         _logger.info('');
         return CommandHelpers.installToDetectedAgents(_logger);
       }
     } catch (_) {
-      _logger.warn('npx not found. Falling back to built-in installer.');
+      installProgress.fail('npx not found — falling back to built-in installer');
       _logger.info('');
       return CommandHelpers.installToDetectedAgents(_logger);
     }
 
     final args = ['skills', 'add', _skillsRepo, '-g', '--all', '-y'];
 
-    _logger.info('  Running: npx ${args.join(' ')}');
-    _logger.info('');
+    if (verbose) {
+      installProgress.complete('Running: npx ${args.join(' ')}');
+      _logger.info('');
+    }
 
     final result = await Process.run(
       'npx',
@@ -341,22 +345,25 @@ class UpdateCommand extends Command<int> {
       runInShell: true,
     );
 
-    final stdout = (result.stdout as String).trim();
-    if (stdout.isNotEmpty) {
-      final clean = stdout.replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '');
-      for (final line in clean.split('\n')) {
-        if (line.trim().isNotEmpty) {
-          _logger.info('  $line');
+    if (verbose) {
+      final stdout = (result.stdout as String).trim();
+      if (stdout.isNotEmpty) {
+        final clean = stdout.replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '');
+        for (final line in clean.split('\n')) {
+          if (line.trim().isNotEmpty) {
+            _logger.info('  $line');
+          }
         }
       }
     }
 
     if (result.exitCode != 0) {
-      _logger.warn('');
-      _logger.warn('skills.sh failed. Falling back to built-in installer.');
+      if (!verbose) installProgress.fail('skills.sh failed — falling back to built-in installer');
       _logger.info('');
       return CommandHelpers.installToDetectedAgents(_logger);
     }
+
+    if (!verbose) installProgress.complete('Skills reinstalled');
 
     // skills.sh only covers Claude/Cursor. Install to workflow-format
     // agents (e.g., Antigravity) via the built-in installer.

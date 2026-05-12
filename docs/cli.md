@@ -34,6 +34,7 @@ somnio -q status      # Quiet mode (suppress banner)
 | `somnio status` | Show installed skills across all agents |
 | `somnio update` | Update CLI and reinstall skills |
 | `somnio uninstall` | Remove all Somnio skills from all agents |
+| `somnio rules` | Install coding-standard rules for all detected agents |
 | `somnio workflow` | Create, configure, and run custom workflows |
 | `somnio quote` | Display a random motivational quote |
 
@@ -53,6 +54,7 @@ somnio setup --legacy     # Use built-in installer instead of skills.sh
 | `--force` | `-f` | Skip all confirmation prompts |
 | `--skip-cli` | | Skip CLI detection and installation |
 | `--legacy` | | Use built-in installer instead of skills.sh |
+| `--verbose` | `-v` | Show detailed output (npx stdout, file-by-file progress) |
 
 ### somnio run
 
@@ -94,6 +96,49 @@ somnio add flutter     # Auto-detect existing skills/flutter-* bundles
 
 Two modes: **wizard** (when `skills/{tech}-*` does not exist, scaffolds new skill directories) and **auto-detect** (when `skills/{tech}-*` exists, scans and registers valid bundles).
 
+### somnio update
+
+Update the CLI to the latest version and reinstall all skills across all agents.
+
+```bash
+somnio update             # Update CLI + reinstall skills via skills.sh
+somnio update --verbose   # Show each removed file and npx output
+somnio update --legacy    # Use built-in installer instead of skills.sh
+```
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--legacy` | | Use built-in installer instead of skills.sh |
+| `--verbose` | `-v` | Show detailed output (removed files, npx stdout) |
+
+### somnio uninstall
+
+Remove all Somnio-installed skills, commands, workflows, and rules from all agents.
+
+```bash
+somnio uninstall            # Prompts for confirmation, then removes everything
+somnio uninstall --force    # Skip confirmation prompt
+somnio uninstall --verbose  # Show each removed file
+```
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip the confirmation prompt |
+| `--verbose` | `-v` | Show each removed file |
+
+### somnio rules
+
+Install global coding-standard rules into detected agents. Rules are injected into each agent's native rules file (e.g., `CLAUDE.md`, `.cursor/rules/`, `.windsurfrules`).
+
+```bash
+somnio rules install                           # Interactive: detect agents + choose scope
+somnio rules install --agent claude --global   # Claude Code, global scope
+somnio rules install --agent cursor --project  # Cursor, current project
+somnio rules install --all --global            # All detected agents, global
+```
+
+See the [Agent Rules guide](agent-rules.md) for available rule packs and details.
+
 ### somnio workflow
 
 Create, configure, and run custom workflows.
@@ -117,6 +162,8 @@ See the [Workflow Guide](workflows.md) for details.
 | `flutter-best-practices` | `fp`, `somnio-fp` | Flutter code quality check |
 | `nestjs-health-audit` | `nh`, `somnio-nh` | NestJS project health audit (13 steps) |
 | `nestjs-best-practices` | `np`, `somnio-np` | NestJS code quality check |
+| `react-health-audit` | `rh`, `somnio-rh` | React project health audit (13 steps) |
+| `react-best-practices` | `rp`, `somnio-rp` | React code quality check |
 | `security-audit` | `sa`, `somnio-sa` | Security audit (any stack, 11 steps) |
 
 See the [Skills Catalog](skills.md) for full descriptions.

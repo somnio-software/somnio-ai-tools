@@ -18,19 +18,26 @@ import '../utils/command_helpers.dart';
 /// Optionally detects and installs missing AI CLIs first.
 class SetupCommand extends Command<int> {
   SetupCommand({required Logger logger}) : _logger = logger {
-    argParser.addFlag(
-      'force',
-      abbr: 'f',
-      help: 'Skip prompts and auto-approve all steps.',
-    );
-    argParser.addFlag(
-      'skip-cli',
-      help: 'Skip CLI detection and installation.',
-    );
-    argParser.addFlag(
-      'legacy',
-      help: 'Use built-in installer instead of skills.sh.',
-    );
+    argParser
+      ..addFlag(
+        'force',
+        abbr: 'f',
+        help: 'Skip prompts and auto-approve all steps.',
+      )
+      ..addFlag(
+        'skip-cli',
+        help: 'Skip CLI detection and installation.',
+      )
+      ..addFlag(
+        'legacy',
+        help: 'Use built-in installer instead of skills.sh.',
+      )
+      ..addFlag(
+        'verbose',
+        abbr: 'v',
+        help: 'Show detailed output for each step.',
+        negatable: false,
+      );
   }
 
   final Logger _logger;
@@ -54,6 +61,7 @@ class SetupCommand extends Command<int> {
     final force = argResults!['force'] as bool;
     final skipCli = argResults!['skip-cli'] as bool;
     final useLegacy = argResults!['legacy'] as bool;
+    final verbose = argResults!['verbose'] as bool;
 
     // ── Step 1: Optional CLI detection & installation ──────────────
     if (!skipCli) {
@@ -70,7 +78,7 @@ class SetupCommand extends Command<int> {
       return CommandHelpers.installToDetectedAgents(_logger);
     }
 
-    return _installViaSkillsSh(force);
+    return _installViaSkillsSh(force, verbose: verbose);
   }
 
   /// Detects installed AI CLIs and offers to install missing ones.
@@ -143,18 +151,13 @@ class SetupCommand extends Command<int> {
   /// Installs skills via `npx skills add` (skills.sh).
   ///
   /// Falls back to built-in installer if npx is not available.
-  Future<int> _installViaSkillsSh(bool force) async {
-    _logger.info(
-      '${lightCyan.wrap('Step 2/2')}  Installing skills via skills.sh...',
-    );
-    _logger.info('');
+  Future<int> _installViaSkillsSh(bool force, {bool verbose = false}) async {
+    final installProgress = _logger.progress('Installing skills via skills.sh');
 
     // Check if npx is available
     final npxPath = await _whichNpx();
     if (npxPath == null) {
-      _logger.warn(
-        'npx not found. Falling back to built-in installer.',
-      );
+      installProgress.fail('npx not found — falling back to built-in installer');
       _logger.info(
         'To use skills.sh, install Node.js: https://nodejs.org',
       );
@@ -175,8 +178,10 @@ class SetupCommand extends Command<int> {
       args.add('-y'); // skip prompts
     }
 
-    _logger.info('  Running: npx ${args.join(' ')}');
-    _logger.info('');
+    if (verbose) {
+      installProgress.complete('Running: npx ${args.join(' ')}');
+      _logger.info('');
+    }
 
     // Execute npx skills add
     final result = await Process.run(
@@ -186,14 +191,14 @@ class SetupCommand extends Command<int> {
       runInShell: true,
     );
 
-    // Print stdout (contains the skills.sh progress UI)
-    final stdout = (result.stdout as String).trim();
-    if (stdout.isNotEmpty) {
-      // Strip ANSI escape codes for cleaner output
-      final clean = stdout.replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '');
-      for (final line in clean.split('\n')) {
-        if (line.trim().isNotEmpty) {
-          _logger.info('  $line');
+    if (verbose) {
+      final stdout = (result.stdout as String).trim();
+      if (stdout.isNotEmpty) {
+        final clean = stdout.replaceAll(RegExp(r'\x1B\[[0-9;]*[a-zA-Z]'), '');
+        for (final line in clean.split('\n')) {
+          if (line.trim().isNotEmpty) {
+            _logger.info('  $line');
+          }
         }
       }
     }
@@ -203,13 +208,14 @@ class SetupCommand extends Command<int> {
       if (stderr.isNotEmpty) {
         _logger.err('skills.sh error: $stderr');
       }
-      _logger.warn('');
-      _logger.warn(
-        'skills.sh installation failed. Falling back to built-in installer.',
-      );
+      if (!verbose) {
+        installProgress.fail('skills.sh failed — falling back to built-in installer');
+      }
       _logger.info('');
       return CommandHelpers.installToDetectedAgents(_logger);
     }
+
+    if (!verbose) installProgress.complete('Skills installed');
 
     // skills.sh only covers Claude/Cursor. Install to workflow-format
     // agents (e.g., Antigravity) via the built-in installer.
