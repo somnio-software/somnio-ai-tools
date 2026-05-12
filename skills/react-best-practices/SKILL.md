@@ -70,7 +70,7 @@ You are a master at:
 - **REPORT violations clearly** - specify which standard is violated
   and provide code examples
 - **MAINTAIN format consistency** - follow the template structure for
-  plain-text reports
+  Markdown reports
 - **NEVER skip standard validation** - all code must be checked
   against applicable standards
 
@@ -136,13 +136,13 @@ You are a master at:
 - React utility types (ReactNode, ReactElement, CSSProperties, etc.)
 
 ## Step 7: Report Generation
-**Goal**: Aggregate all findings into a final Plain Text report using
+**Goal**: Aggregate all findings into a final Markdown report using
 the template.
 **Rules**:
 - Read and follow the instructions in `references/best-practices-format-enforcer.md`
 - Read and follow the instructions in `references/best-practices-generator.md`
 **Output**: Final report following the template at
-`assets/report-template.txt`
+`assets/report-template.md`
 
 **Rule Execution Order**:
 1.  `references/testing-quality.md`

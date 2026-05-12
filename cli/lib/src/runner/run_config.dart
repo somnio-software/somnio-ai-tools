@@ -74,7 +74,7 @@ class RunConfig {
   /// Artifact output directory (e.g., `./reports/.artifacts/`).
   final String artifactsDir;
 
-  /// Final report path (e.g., `./reports/flutter_audit.txt`).
+  /// Final report path (e.g., `./reports/flutter_audit.md`).
   final String reportPath;
 
   /// Optional model override passed to the AI CLI via `--model`.

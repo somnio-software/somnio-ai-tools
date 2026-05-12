@@ -40,7 +40,7 @@ class ScaffoldGenerator {
 
     // Report template
     await _writeFile(
-      p.join(baseDir, 'assets', 'report-template.txt'),
+      p.join(baseDir, 'assets', 'report-template.md'),
       _reportTemplate(techTitle, displayName),
     );
   }
@@ -65,7 +65,7 @@ class ScaffoldGenerator {
 
     // Report template
     await _writeFile(
-      p.join(baseDir, 'assets', 'report-template.txt'),
+      p.join(baseDir, 'assets', 'report-template.md'),
       _bestPracticesReportTemplate(techTitle, displayName),
     );
   }
@@ -224,7 +224,7 @@ here.
 TODO: Create \`${tech}_report_generator.md\` reference and reference it
 here.
 
-Output: Save report to \`./reports/${tech}_audit.txt\`
+Output: Save report to \`./reports/${tech}_audit.md\`
 ''';
 
   String _sampleReferenceTemplate(String tech, String techTitle) => '''
@@ -401,7 +401,7 @@ TODO: Create \`code_standards.md\` reference and reference it here.
 TODO: Create \`best_practices_generator.md\` reference and reference it
 here.
 
-Output: Save report to \`./reports/${tech}_best_practices.txt\`
+Output: Save report to \`./reports/${tech}_best_practices.md\`
 ''';
 
   String _bestPracticesReportTemplate(

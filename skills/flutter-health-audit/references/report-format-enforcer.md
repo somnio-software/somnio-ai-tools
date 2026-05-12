@@ -1,11 +1,11 @@
 # Flutter Report Format Enforcer
 
-> Enforce consistent report format structure for Flutter Project Health Audit reports based on the established template located in assets/report-template.txt
+> Enforce consistent report format structure for Flutter Project Health Audit reports based on the established template located in assets/report-template.md
 
 ---
 
 When generating the final report, you MUST follow this exact structure
-and format based on the template in assets/report-template.txt:
+and format based on the template in assets/report-template.md:
 
 ----------------------------------------------------------------------
 IMPORTANT EXCLUSIONS
@@ -187,11 +187,11 @@ File Paths and Configs by Area:
 FORMATTING RULES
 ----------------------------------------------------------------------
 
-1. NO MARKDOWN SYNTAX: Use plain text only
-2. NO BOLD MARKERS: No **text** or __text__
-3. NO CODE FENCES: No ```code``` blocks
-4. NO TABLES: Use bullet points instead
-5. SECTION HEADERS: Use "X. Section Name" format
+1. USE MARKDOWN SYNTAX: Use proper Markdown formatting (# headers, **bold**, `backtick` paths)
+2. USE BOLD: Use **bold** for scores, labels, and key terms
+3. USE CODE BLOCKS: Use backticks for file paths and inline code
+4. USE TABLES: Use Markdown tables for scorecards and metadata
+5. SECTION HEADERS: Use "## X. Section Name" Markdown format
 6. SUBSECTION HEADERS: Use "Description:", "Score:", etc.
 7. BULLET POINTS: Use "- " for all lists
 8. NUMBERED LISTS: Use "1. ", "2. " format
@@ -232,10 +232,10 @@ Before finalizing the report, verify:
 ✓ All scores are integers with proper labels
 ✓ All evidence references actual files
 ✓ All recommendations are actionable
-✓ No markdown syntax is used
+✓ Markdown formatting is used consistently
 ✓ Multi-app metrics are included if applicable
 ✓ Overall score calculation is correct
-✓ Report is ready for Google Docs copy-paste
+✓ Report uses proper Markdown headings and formatting
 
 Remember: This format ensures consistency, readability, and
 professional presentation of Flutter project health audit results.

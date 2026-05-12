@@ -1,6 +1,6 @@
 # React Health Audit Report Format Enforcer
 
-> Enforce plain-text report format for the React Health Audit output. Ensures Google Docs-ready reports.
+> Enforce Markdown report format for the React Health Audit output. Ensures well-structured, readable reports.
 
 ---
 
@@ -8,19 +8,19 @@
 
 **CRITICAL**: The final health audit report MUST follow these rules:
 
-1.  **NO MARKDOWN SYNTAX**:
-    *   NO hash symbols for headers (# ## ###)
-    *   NO asterisks for bold (**text**)
-    *   NO code fences (``` blocks)
-    *   NO bullet points with asterisks (* item)
+1.  **USE MARKDOWN FORMATTING**:
+    *   `#` for main title, `##` for sections, `###` for subsections
+    *   `**bold**` for scores, labels, and key terms
+    *   Backticks for file paths and code references
+    *   `- ` for bullet points
 
-2.  **USE PLAIN TEXT FORMATTING**:
-    *   Section headers: Use "X. Section Name" format (numbered)
-    *   Sub-headers: Use "Description:", "Score:", "Key Findings:", etc.
-    *   Lists: Use "- " prefix for all bullet points
-    *   Numbered lists: Use "1. ", "2. " format
-    *   File paths: Bare text (no quotes needed for health audit)
-    *   Scores: Always "[Score]/100 ([Label])"
+2.  **MARKDOWN STRUCTURE**:
+    *   Section headers: `## X. Section Name` (numbered)
+    *   Sub-headers: `### Key Findings`, `### Evidence`, `### Risks`, etc.
+    *   Lists: `- ` prefix for all bullet points
+    *   Numbered lists: `1. `, `2. ` format
+    *   File paths: `` `path/to/file.ts` `` (backtick-wrapped)
+    *   Scores: **[Score]/100 ([Label])**
 
 3.  **MANDATORY SECTION FORMAT**:
     Each section must include in order:
@@ -84,8 +84,8 @@ Before finalizing the report, verify:
 - All scores are integers with proper labels
 - All evidence references actual files
 - All recommendations are actionable
-- No markdown syntax is used
+- Markdown formatting is used consistently
 - Overall score calculation is correct
-- Report is ready for Google Docs copy-paste
+- Report uses proper Markdown headings and formatting
 
 ENFORCE THIS FORMAT FOR THE FINAL AUDIT REPORT.

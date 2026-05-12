@@ -35,7 +35,7 @@
 
 4.  **GENERATE REPORT USING TEMPLATE**:
     Use the template at:
-    "assets/report-template.txt"
+    "assets/report-template.md"
 
 ## REPORT SECTIONS
 
@@ -106,7 +106,7 @@
 
 ## OUTPUT REQUIREMENTS
 
-- Use PLAIN TEXT format only (no markdown)
+- Use Markdown format (# headers, **bold**, `backtick` file paths)
 - Include all file references with line numbers
 - Provide specific, actionable recommendations
 - Include code examples where helpful

@@ -196,7 +196,7 @@ using the scoring rubrics BEFORE writing any report content. A report
 without computed scores is INVALID.
 
 **Report Sections** (13 sections with quantitative scoring):
-- Security Scoring Breakdown (5 scored lines with weights + Overall + Formula + Posture)
+- Security Scoring Breakdown (5 scored lines + Overall + Posture)
 - Executive Summary with Overall Score
 - Scored Detail Sections (5 sections, dynamically ordered by score ascending — lowest first):
   - Sensitive File Protection (scored, weight 25%)
@@ -217,8 +217,8 @@ Final), Key Findings, Evidence, Risks, and Recommendations.
 
 ## Step 11. Validate and Export Security Report
 
-Goal: Validate the generated report against structural and formatting
-rules, then save the final plain-text report.
+Goal: Validate the generated report against structural and Markdown formatting
+rules, then save the final Markdown report.
 
 Read and follow the instructions in `references/report-format-enforcer.md`
 
@@ -226,18 +226,18 @@ Read and follow the instructions in `references/report-format-enforcer.md`
 from the format enforcer rule: exactly 13 sections, Section 1 has 5 scored
 lines with weights + Overall + Formula + Posture, Sections 3-7 have Score
 lines, sections are ordered by score ascending, score labels match ranges,
-no markdown syntax. Fix any issues in-place. If scores are missing entirely,
+proper Markdown syntax. Fix any issues in-place. If scores are missing entirely,
 re-run step 10 before exporting.
 
-**Export**: Save the validated report to `./reports/security_audit.txt`
+**Export**: Save the validated report to `./reports/security_audit.md`
 
-**Format**: Plain text ready to copy into Google Docs (no markdown syntax,
-no # headings, no bold markers, no fenced code blocks).
+**Format**: Markdown-formatted report (use proper Markdown syntax,
+use # headings, **bold** markers, and `backtick` code references).
 
 **Command**:
 ```bash
 mkdir -p reports
-# Save validated report to ./reports/security_audit.txt
+# Save validated report to ./reports/security_audit.md
 ```
 
 ## Execution Summary

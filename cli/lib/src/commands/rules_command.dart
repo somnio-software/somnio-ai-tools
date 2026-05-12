@@ -27,7 +27,7 @@ class RulesCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding standards (Flutter / NestJS / React) '
+      'Install agent coding standards (Flutter / Functions / NestJS / React / TypeScript) '
       'per agent and per stack.';
 }
 

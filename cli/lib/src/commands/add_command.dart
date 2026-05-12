@@ -315,7 +315,7 @@ class AddCommand extends Command<int> {
         description: descriptions['health']!,
         planRelativePath: 'skills/$tech-health-audit/SKILL.md',
         rulesDirectory: 'skills/$tech-health-audit/references',
-        templatePath: 'skills/$tech-health-audit/assets/report-template.txt',
+        templatePath: 'skills/$tech-health-audit/assets/report-template.md',
       ));
     }
 
@@ -329,7 +329,7 @@ class AddCommand extends Command<int> {
         planRelativePath: 'skills/$tech-best-practices/SKILL.md',
         rulesDirectory: 'skills/$tech-best-practices/references',
         templatePath:
-            'skills/$tech-best-practices/assets/report-template.txt',
+            'skills/$tech-best-practices/assets/report-template.md',
       ));
     }
 

@@ -9,7 +9,7 @@ by aggregating findings from previous analysis steps.
 
 Apply the "Flutter Best Practices Report Format Enforcer" rule to
 ensure the output matches the template in
-assets/report-template.txt.
+assets/report-template.md.
 
 INPUTS:
 - Testing Quality Analysis findings
@@ -18,4 +18,4 @@ INPUTS:
 
 REPORT STRUCTURE:
 Must explicitly follow the sections defined in
-assets/report-template.txt.
+assets/report-template.md.

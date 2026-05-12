@@ -36,7 +36,7 @@ You are a master at:
 - **Technical Risk Assessment**: Identifying technical risks, technical
   debt, and project maturity indicators
 - **Report Integration**: Synthesizing findings from multiple analysis
-  rules into unified Google Docs-ready reports
+  rules into unified Markdown reports
 - **React Best Practices**: Deep knowledge of React patterns, hooks,
   component architecture, state management, and performance optimization
 - **Frontend Architecture**: Understanding of feature-based structure,
@@ -279,20 +279,20 @@ generates the final report.
 
 ## Step 10. Export Final Report
 
-Goal: Save the final Google Docs-ready plain-text report to the reports
+Goal: Save the final Google Docs-ready Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save
 the final React Project Health Audit report to:
-`./reports/react_audit.txt`
+`./reports/react_audit.md`
 
-**Format**: Plain text ready to copy into Google Docs (no markdown
-syntax, no # headings, no bold markers, no fenced code blocks).
+**Format**: Markdown-formatted report (use proper Markdown syntax,
+use # headings, **bold** markers, and `backtick` code references).
 
 **Command**:
 ```bash
 mkdir -p reports
-# Save report content to ./reports/react_audit.txt
+# Save report content to ./reports/react_audit.md
 ```
 
 **Note**: For security analysis, run the standalone Security Audit (`/somnio:security-audit`).

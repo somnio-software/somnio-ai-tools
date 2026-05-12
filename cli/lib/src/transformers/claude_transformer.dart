@@ -22,7 +22,7 @@ class ClaudeSkillOutput {
   /// Template file content, if available.
   final String? templateContent;
 
-  /// Template file name (e.g., 'flutter_report_template.txt').
+  /// Template file name (e.g., 'flutter_report_template.md').
   final String? templateFileName;
 }
 

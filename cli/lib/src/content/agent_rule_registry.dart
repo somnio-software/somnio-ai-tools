@@ -12,7 +12,13 @@ class AgentRuleRegistry {
   /// Stacks exposed by every adapter — must match subfolder names under
   /// `agent-rules/rules/` and the per-stack subfolders the generator emits
   /// under `agent-rules/adapters/<agent>/`.
-  static const List<String> stacks = ['flutter', 'nestjs', 'react'];
+  static const List<String> stacks = [
+    'flutter',
+    'functions',
+    'nestjs',
+    'react',
+    'typescript',
+  ];
 
   /// All registered agent-rules packs.
   static const List<AgentRule> rules = [

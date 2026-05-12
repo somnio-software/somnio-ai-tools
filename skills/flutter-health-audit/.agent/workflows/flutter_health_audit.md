@@ -69,7 +69,7 @@ STEP 6 COMPLETED: [log result]
 Read `flutter-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field
 STEP 7 COMPLETED: [log result]
 
-Save the final Google Docs-ready plain-text report to `./reports/flutter_audit.txt`
+Save the final Markdown report to `./reports/flutter_audit.md`
 STEP 8 COMPLETED: Report exported
 
 ## Step 9: Optional Best Practices Check

@@ -79,5 +79,5 @@ STEP 8 COMPLETED: [log result]
 Read `nestjs-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field
 STEP 9 COMPLETED: [log result]
 
-Save the final Google Docs-ready plain-text report to `./reports/nestjs_audit.txt`
+Save the final Markdown report to `./reports/nestjs_audit.md`
 STEP 10 COMPLETED: Report exported

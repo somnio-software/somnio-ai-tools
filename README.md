@@ -80,13 +80,15 @@ somnio setup
 
 ## Agent Rules
 
-Global coding standards for NestJS and Flutter — automatically applied by your AI agent in every project.
+Global coding standards — automatically applied by your AI agent in every project.
 
 | Rules Pack | Coverage |
 |:-----------|:---------|
-| NestJS Rules | DTOs, services, controllers, repositories, testing, error handling, TypeScript |
 | Flutter Rules | Layered architecture, BLoC patterns, testing, JSON models |
+| Firebase Functions Rules | Architecture, module boundaries, Express + auth, secrets, error handling, testing |
+| NestJS Rules | DTOs, services, controllers, repositories, testing, error handling, TypeScript |
 | React Rules | Components, hooks, state management, performance, testing, TypeScript |
+| TypeScript Rules | tsconfig standards, naming, imports, types, nullables, async/await, error handling |
 
 Install via the Somnio CLI:
 
@@ -115,14 +117,11 @@ somnio rules install --all --global           # all detected agents, global
 
 ## Plugins
 
-Somnio is also available as a **Claude Desktop App plugin** (Cowork) with four packages:
+Somnio is also available as a **Claude Desktop App plugin** (Cowork):
 
 | Package | Focus |
 |:--------|:------|
 | **Development** | Health audits, security scans, best practices |
-| **Marketing** | Content strategy, ASO audits, campaign analysis |
-| **Operations** | Story definition, backlog management, connectors |
-| **Engineering Management** | Performance reviews, career path evaluation |
 
 > [Plugin system details →](docs/plugins.md)
 

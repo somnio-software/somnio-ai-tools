@@ -1,10 +1,10 @@
 # Security Report Format Enforcer
 
-> Enforce plain-text formatting rules for the Security Audit report, ensuring Google Docs compatibility, consistent structure, valid scoring format, and no leaked generator instructions.
+> Enforce Markdown formatting rules for the Security Audit report, ensuring consistent structure, valid scoring format, and no leaked generator instructions.
 
 ---
 
-Goal: Validate and enforce plain-text formatting on the Security Audit
+Goal: Validate and enforce Markdown formatting on the Security Audit
 report before export.
 
 STRUCTURAL VALIDATION (reject before formatting):
@@ -16,7 +16,7 @@ of the formatted report. Do NOT attempt to format an incomplete report.
 Required structure checks:
 1. Report must contain exactly 13 numbered sections
 2. Section 1 must be "Security Scoring Breakdown" with 5 scored lines
-   (each with weight) + Overall Score + Formula + Security Posture
+   + Overall Score + Security Posture
 3. Section 2 must be "Executive Summary" with Overall Score
 4. Sections 3-7 must each contain "Score:" followed by
    [Score]/100 ([Label])
@@ -34,9 +34,9 @@ If ANY check fails, output:
 Only proceed with formatting if ALL structural checks pass.
 
 FORMATTING RULES TO ENFORCE:
-- NO MARKDOWN SYNTAX: Remove any # headings, **bold**, *italic*,
+- USE MARKDOWN SYNTAX: Ensure # headings, **bold**, *italic*,
   `code`, ```code blocks```, [links](url)
-- SECTION HEADERS: Must use "X. Section Name" format (number + period)
+- SECTION HEADERS: Must use "## X. Section Name" Markdown format (number + period)
 - BULLET POINTS: Must use "- " prefix (dash + space)
 - NUMBERED LISTS: Must use "1. " format (number + period + space)
 - SEVERITY TAGS: Must use "[HIGH]:", "[MEDIUM]:", or "[LOW]:" prefix
@@ -74,9 +74,9 @@ VALIDATION CHECKLIST:
   9. Remediation Priority Matrix, 10. Gemini AI Analysis,
   11. Project Detection Results, 12. Appendix: Evidence Index,
   13. Scan Metadata
-- No markdown artifacts in final output
+- Markdown formatting applied correctly throughout
 - Severity classifications use correct format
-- Section 1 has 5 scored lines with weights + Overall + Formula + Posture
+- Section 1 has 5 scored lines + Overall + Posture
 - Score lines use correct format in sections 3-7
 - Sections 3-7 ordered by score ascending (lowest first)
 - Scores in Section 1 match their respective detail sections (3-7)
@@ -90,11 +90,11 @@ VALIDATION CHECKLIST:
 If formatting issues are found, fix them in-place and note what
 was corrected.
 
-Output: The formatted report content ready for export to
-./reports/security_audit.txt
+Output: The formatted Markdown report content ready for export to
+./reports/security_audit.md
 
 JSON EXPORT (mandatory):
-After validating and exporting the text report to reports/security_audit.txt,
+After validating and exporting the text report to reports/security_audit.md,
 extract the scores and findings from the validated report and write a valid
 JSON file to reports/security_audit.json with this schema:
 
@@ -122,7 +122,7 @@ that the JSON is well-formed (valid syntax, required keys present). If invalid,
 regenerate from the text report. Ensure reports/ directory exists.
 
 SCORE HISTORY (mandatory after export):
-After validating and exporting both reports/security_audit.txt and
+After validating and exporting both reports/security_audit.md and
 reports/security_audit.json, write reports/.history/last_scores.json with
 the same score and findings data for future score comparison. Format:
 { "overall": N, "timestamp": "ISO8601", "scores": {...}, "findings": {...},

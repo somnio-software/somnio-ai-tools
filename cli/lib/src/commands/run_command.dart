@@ -64,7 +64,7 @@ class RunCommand extends Command<int> {
       'via pre-flight, then delegates analysis steps to an AI CLI.\n'
       '\n'
       'Artifacts are saved to ./reports/.artifacts/ and the final report\n'
-      'to ./reports/{tech}_audit.txt.';
+      'to ./reports/{tech}_audit.md.';
 
   @override
   String get invocation => 'somnio run <code>';
@@ -102,9 +102,9 @@ class RunCommand extends Command<int> {
   /// Derives the report file name from the bundle.
   String _reportFileFromBundle(SkillBundle bundle) {
     if (bundle.id.endsWith('_plan')) {
-      return '${bundle.techPrefix}_best_practices.txt';
+      return '${bundle.techPrefix}_best_practices.md';
     }
-    return '${bundle.techPrefix}_audit.txt';
+    return '${bundle.techPrefix}_audit.md';
   }
 
   /// Derives the artifacts directory for a bundle.

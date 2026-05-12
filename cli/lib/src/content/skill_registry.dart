@@ -28,7 +28,7 @@ class SkillRegistry {
       workflowPath:
           'skills/flutter-health-audit/.agent/workflows/flutter_health_audit.md',
       templatePath:
-          'skills/flutter-health-audit/assets/report-template.txt',
+          'skills/flutter-health-audit/assets/report-template.md',
     ),
     SkillBundle(
       id: 'flutter_plan',
@@ -47,7 +47,7 @@ class SkillRegistry {
       workflowPath:
           'skills/flutter-best-practices/.agent/workflows/flutter_best_practices.md',
       templatePath:
-          'skills/flutter-best-practices/assets/report-template.txt',
+          'skills/flutter-best-practices/assets/report-template.md',
     ),
     SkillBundle(
       id: 'nestjs_health',
@@ -67,7 +67,7 @@ class SkillRegistry {
       workflowPath:
           'skills/nestjs-health-audit/.agent/workflows/nestjs_health_audit.md',
       templatePath:
-          'skills/nestjs-health-audit/assets/report-template.txt',
+          'skills/nestjs-health-audit/assets/report-template.md',
     ),
     SkillBundle(
       id: 'nestjs_plan',
@@ -87,7 +87,7 @@ class SkillRegistry {
       workflowPath:
           'skills/nestjs-best-practices/.agent/workflows/nestjs_best_practices.md',
       templatePath:
-          'skills/nestjs-best-practices/assets/report-template.txt',
+          'skills/nestjs-best-practices/assets/report-template.md',
     ),
     SkillBundle(
       id: 'react_health',
@@ -107,7 +107,7 @@ class SkillRegistry {
       workflowPath:
           'skills/react-health-audit/.agent/workflows/react_health_audit.md',
       templatePath:
-          'skills/react-health-audit/assets/report-template.txt',
+          'skills/react-health-audit/assets/report-template.md',
     ),
     SkillBundle(
       id: 'react_plan',
@@ -127,7 +127,7 @@ class SkillRegistry {
       workflowPath:
           'skills/react-best-practices/.agent/workflows/react_best_practices.md',
       templatePath:
-          'skills/react-best-practices/assets/report-template.txt',
+          'skills/react-best-practices/assets/report-template.md',
     ),
     SkillBundle(
       id: 'security_audit',
@@ -147,7 +147,7 @@ class SkillRegistry {
       workflowPath:
           'skills/security-audit/.agent/workflows/security_audit.md',
       templatePath:
-          'skills/security-audit/assets/report-template.txt',
+          'skills/security-audit/assets/report-template.md',
     ),
   ];
 
