@@ -1,0 +1,231 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:args/command_runner.dart';
+import 'package:mason_logger/mason_logger.dart';
+import 'package:path/path.dart' as p;
+
+import '../utils/platform_utils.dart';
+
+/// Installs Claude Code hooks shipped with somnio-ai-tools.
+///
+/// Currently installs the work-log Stop hook, which appends a 2-3 sentence
+/// Haiku-generated summary of each session turn to ~/.work-log/YYYY-MM-DD.md.
+class HooksCommand extends Command<int> {
+  HooksCommand({required Logger logger}) : _logger = logger {
+    argParser
+      ..addFlag(
+        'force',
+        abbr: 'f',
+        help: 'Skip confirmation prompt.',
+      )
+      ..addFlag(
+        'verbose',
+        abbr: 'v',
+        help: 'Show each step in detail.',
+        negatable: false,
+      );
+  }
+
+  final Logger _logger;
+
+  static const _hookFilename = 'work-log-stop.sh';
+  static const _hookCommand = '~/.claude/hooks/work-log-stop.sh';
+
+  // Keep in sync with hooks/work-log-stop.sh in the repo root.
+  static const _hookScript = r'''#!/usr/bin/env bash
+set -euo pipefail
+
+[ -n "${WORK_LOG_CHILD:-}" ] && exit 0
+
+DATE=$(date '+%Y-%m-%d')
+LOG=~/.work-log/$DATE.md
+mkdir -p ~/.work-log
+
+LAST=$(stat -f %m "$LOG" 2>/dev/null || echo 0)
+AGE=$(( $(date +%s) - LAST ))
+[ "$AGE" -lt 5 ] && exit 0
+
+STDIN=$(cat)
+
+CWD=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("cwd",""))' 2>/dev/null || true)
+[ -z "$CWD" ] && CWD=$(pwd)
+
+BRANCH=$(cd "$CWD" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'no-git')
+
+GIT_COMMON=$(cd "$CWD" && git rev-parse --git-common-dir 2>/dev/null || echo "")
+if [ -n "$GIT_COMMON" ]; then
+  ROOT_REPO=$(basename "$(dirname "$GIT_COMMON")")
+  WORKTREE=$(basename "$CWD")
+  if [ "$ROOT_REPO" = "$WORKTREE" ]; then
+    PROJ="$ROOT_REPO"
+  else
+    PROJ="$ROOT_REPO/$WORKTREE"
+  fi
+else
+  PROJ=$(basename "$CWD")
+fi
+
+LAST_MSG=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("last_assistant_message","")[:3000])' 2>/dev/null || true)
+
+printf "\n## %s - %s (%s)\n" "$(date '+%H:%M')" "$PROJ" "$BRANCH" >> "$LOG"
+
+if [ "${#LAST_MSG}" -lt 20 ]; then
+  printf "No significant output.\n" >> "$LOG"
+  exit 0
+fi
+
+GIT_STAT=$(cd "$CWD" && { git log --oneline -3 2>/dev/null; echo "---"; git diff --stat HEAD 2>/dev/null | head -5; } || true)
+
+PROMPT=$(printf 'Write 2-3 sentences for a work log entry. Be specific: name files, functions, root causes, decisions. Cover: what was accomplished, the key technical finding, and any open question or next step. Output ONLY the sentences.\n\nProject: %s (%s)\nRecent git:\n%s\n\nFinal response:\n%s' \
+  "$PROJ" "$BRANCH" "$GIT_STAT" "$LAST_MSG")
+
+CLAUDE_BIN=$(which claude 2>/dev/null || echo "claude")
+
+(
+  WORK_LOG_CHILD=1 "$CLAUDE_BIN" -p \
+    --model claude-haiku-4-5-20251001 \
+    --no-session-persistence \
+    "$PROMPT" >> "$LOG" 2>/dev/null \
+  || printf "(summary unavailable)\n" >> "$LOG"
+) &
+
+exit 0
+''';
+
+  @override
+  String get name => 'hooks';
+
+  @override
+  String get description =>
+      'Install Claude Code hooks from somnio-ai-tools.\n'
+      '\n'
+      'Installs the work-log Stop hook into ~/.claude/hooks/ and registers\n'
+      'it in ~/.claude/settings.json. After each Claude Code session turn,\n'
+      'the hook appends a 2-3 sentence summary to ~/.work-log/YYYY-MM-DD.md\n'
+      'which the clockify-tracker skill can use to auto-fill time entries.';
+
+  @override
+  Future<int> run() async {
+    final force = argResults!['force'] as bool;
+    final verbose = argResults!['verbose'] as bool;
+
+    final home = PlatformUtils.homeDirectory;
+    final hooksDir = p.join(home, '.claude', 'hooks');
+    final hookPath = p.join(hooksDir, _hookFilename);
+    final settingsPath = p.join(home, '.claude', 'settings.json');
+
+    _logger.info('');
+    _logger.info('This will:');
+    _logger.info('  • Write  $hookPath');
+    _logger.info('  • Update $settingsPath  (Stop hook)');
+    _logger.info('  • Create ~/.work-log/ on first use (by the hook itself)');
+    _logger.info('');
+
+    if (!force) {
+      final confirmed = _logger.confirm('Proceed?', defaultValue: true);
+      if (!confirmed) {
+        _logger.info('');
+        _logger.info('Cancelled.');
+        return ExitCode.success.code;
+      }
+      _logger.info('');
+    }
+
+    final progress = _logger.progress('Installing work-log hook');
+
+    try {
+      // 1. Write the script.
+      final hooksDirectory = Directory(hooksDir);
+      if (!hooksDirectory.existsSync()) {
+        hooksDirectory.createSync(recursive: true);
+        if (verbose) _logger.info('  Created $hooksDir');
+      }
+      File(hookPath).writeAsStringSync(_hookScript);
+      if (verbose) _logger.info('  Wrote $hookPath');
+
+      // 2. Make executable.
+      if (!Platform.isWindows) {
+        await Process.run('chmod', ['+x', hookPath]);
+        if (verbose) _logger.info('  chmod +x $hookPath');
+      }
+
+      // 3. Register in settings.json.
+      final alreadyRegistered = _mergeSettings(settingsPath, verbose: verbose);
+      if (verbose && alreadyRegistered) {
+        _logger.info('  Stop hook already registered — skipped');
+      }
+
+      progress.complete('Work-log hook installed');
+    } catch (e) {
+      progress.fail('Failed: $e');
+      return ExitCode.software.code;
+    }
+
+    _logger.info('');
+    _logger.success(
+      'Hook active — summaries will appear in ~/.work-log/ after each turn.',
+    );
+    _logger.info('');
+    _logger.info(
+      'Use ${lightCyan.wrap('/clockify-tracker')} with "use logs" to '
+      'auto-fill Clockify from those summaries.',
+    );
+    _logger.info('');
+
+    return ExitCode.success.code;
+  }
+
+  /// Merges the Stop hook entry into [settingsPath].
+  ///
+  /// Returns true if the command was already registered (no-op).
+  bool _mergeSettings(String settingsPath, {bool verbose = false}) {
+    final file = File(settingsPath);
+    Map<String, dynamic> settings = {};
+
+    if (file.existsSync()) {
+      try {
+        settings =
+            jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      } catch (_) {
+        // Malformed JSON — back up and start fresh for the hooks key only.
+        file.copySync('$settingsPath.bak');
+        if (verbose) {
+          _logger.warn(
+            '  settings.json was malformed — backed up to settings.json.bak',
+          );
+        }
+      }
+    }
+
+    final hooks =
+        Map<String, dynamic>.from(settings['hooks'] as Map? ?? {});
+    final stopList = List<dynamic>.from(hooks['Stop'] as List? ?? []);
+
+    final alreadyRegistered = stopList.any((entry) {
+      if (entry is! Map) return false;
+      final innerHooks = entry['hooks'] as List?;
+      return innerHooks?.any(
+            (h) => h is Map && h['command'] == _hookCommand,
+          ) ??
+          false;
+    });
+
+    if (!alreadyRegistered) {
+      stopList.add({
+        'matcher': '',
+        'hooks': [
+          {'type': 'command', 'command': _hookCommand},
+        ],
+      });
+      hooks['Stop'] = stopList;
+      settings['hooks'] = hooks;
+
+      const encoder = JsonEncoder.withIndent('  ');
+      file.writeAsStringSync('${encoder.convert(settings)}\n');
+      if (verbose) _logger.info('  Updated $settingsPath');
+    }
+
+    return alreadyRegistered;
+  }
+}

@@ -5,6 +5,20 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.4.0] - 2026-05-26
+
+### Added
+
+- **Work-Log Hook**: New `hooks/work-log-stop.sh` script (portable, version-controlled) that appends a Haiku-generated 2-3 sentence summary of each Claude Code session turn to `~/.work-log/YYYY-MM-DD.md`. Logs root repo + worktree name (`mini-meta-repo/refactor-flutter_http`) so entries map cleanly to Clockify projects.
+- **CLI `somnio hooks`**: New command to opt-in install the work-log Stop hook — copies the script to `~/.claude/hooks/`, makes it executable, and merges the Stop hook entry into `~/.claude/settings.json`. Idempotent; supports `--force` and `--verbose`.
+- **Clockify log-based mode**: `clockify-tracker` skill now supports a second mode triggered by "use logs" / "usa los logs". Reads `~/.work-log/` daily files, maps repos to Clockify projects via `~/.clockify-prefs.json` (persisted), handles multi-project days with user-defined hour splits, generates 2-sentence executive summaries per entry, and shows a full preview before posting.
+- **Docs**: Added `docs/work-log-stop-hook.md` explaining the hook design, setup, and relation to Clockify.
+
+### Changed
+
+- **Work-Log Hook**: Hook now logs the root git repo name instead of the worktree directory name, and appends the worktree name as a suffix (`root/worktree`) for traceability. Uses `which claude` instead of a hardcoded binary path for portability.
+- **`clockify-tracker` command**: Updated description to document both manual mode (unchanged) and the new log-based mode.
+
 ## [2.3.0] - 2026-05-12
 
 ### Added
