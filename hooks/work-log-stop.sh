@@ -40,26 +40,37 @@ fi
 
 LAST_MSG=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("last_assistant_message","")[:3000])' 2>/dev/null || true)
 
-printf "\n## %s - %s (%s)\n" "$(date '+%H:%M')" "$PROJ" "$BRANCH" >> "$LOG"
-
-if [ "${#LAST_MSG}" -lt 20 ]; then
-  printf "No significant output.\n" >> "$LOG"
-  exit 0
-fi
+# Skip trivially short turns (one-liners, empty responses) without a Haiku call.
+[ "${#LAST_MSG}" -lt 300 ] && exit 0
 
 GIT_STAT=$(cd "$CWD" && { git log --oneline -3 2>/dev/null; echo "---"; git diff --stat HEAD 2>/dev/null | head -5; } || true)
 
-PROMPT=$(printf 'Write 2-3 sentences for a work log entry. Be specific: name files, functions, root causes, decisions. Cover: what was accomplished, the key technical finding, and any open question or next step. Output ONLY the sentences.\n\nProject: %s (%s)\nRecent git:\n%s\n\nFinal response:\n%s' \
+# Capture the stop time now so the log entry reflects when the session ended,
+# not when the background Haiku process finishes writing.
+TIMESTAMP=$(date '+%H:%M')
+
+PROMPT=$(printf 'You are writing a developer work log. Classify this session and respond accordingly.\n\nIf the session is purely conversational Q&A (factual questions, general explanations, no real investigation or decision-making): output exactly the word SKIP and nothing else.\n\nOtherwise write 2-3 sentences: what was accomplished or investigated, the key technical finding or decision, and any next step. Be specific — name files, functions, concepts, root causes. For research or investigation sessions with no code changes, describe what was explored and what was found. Do NOT reference git commits unless they are directly mentioned in the session response.\n\nProject: %s (%s)\nRecent git (supplementary context only):\n%s\n\nSession response:\n%s' \
   "$PROJ" "$BRANCH" "$GIT_STAT" "$LAST_MSG")
 
 CLAUDE_BIN=$(which claude 2>/dev/null || echo "claude")
 
 (
-  WORK_LOG_CHILD=1 "$CLAUDE_BIN" -p \
+  SUMMARY=$(WORK_LOG_CHILD=1 "$CLAUDE_BIN" -p \
     --model claude-haiku-4-5-20251001 \
     --no-session-persistence \
-    "$PROMPT" >> "$LOG" 2>/dev/null \
-  || printf "(summary unavailable)\n" >> "$LOG"
+    "$PROMPT" 2>/dev/null \
+    || echo "(summary unavailable)")
+
+  # Write nothing for Q&A sessions; write header + summary for everything else.
+  case "$SUMMARY" in
+    [Ss][Kk][Ii][Pp]*) ;;
+    *)
+      {
+        printf "\n## %s - %s (%s)\n" "$TIMESTAMP" "$PROJ" "$BRANCH"
+        printf "%s\n" "$SUMMARY"
+      } >> "$LOG"
+    ;;
+  esac
 ) &
 
 exit 0
