@@ -28,6 +28,7 @@ somnio -q status      # Quiet mode (suppress banner)
 | Command | Description |
 |---------|-------------|
 | `somnio setup` | Detect AI CLIs, install missing ones, install skills via skills.sh |
+| `somnio hooks` | Install Claude Code hooks (e.g. the work-log Stop hook) |
 | `somnio run <name-or-alias>` | Execute a multi-step audit from the target project directory |
 | `somnio install` | Install skills to a specific agent or all agents |
 | `somnio add <tech>` | Add a new technology's audit skills (scaffolds + registers) |
@@ -37,6 +38,28 @@ somnio -q status      # Quiet mode (suppress banner)
 | `somnio rules` | Install coding-standard rules for all detected agents |
 | `somnio workflow` | Create, configure, and run custom workflows |
 | `somnio quote` | Display a random motivational quote |
+
+### somnio hooks
+
+Opt-in installer for Claude Code hooks. Currently installs the **work-log Stop hook**, which appends a Haiku-generated 2-3 sentence summary of each Claude Code session turn to `~/.work-log/YYYY-MM-DD.md`. These logs feed directly into the `clockify-tracker` skill's log-based mode.
+
+```bash
+somnio hooks            # Interactive: shows what will be installed, prompts for confirmation
+somnio hooks --force    # Skip confirmation prompt
+somnio hooks --verbose  # Show each installation step
+```
+
+What it does:
+1. Writes `~/.claude/hooks/work-log-stop.sh` (idempotent — safe to re-run after updates)
+2. Makes the script executable
+3. Merges the Stop hook entry into `~/.claude/settings.json` without overwriting existing config
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip the confirmation prompt |
+| `--verbose` | `-v` | Show each step (file written, chmod, settings.json update) |
+
+> **Note:** `somnio hooks` is intentionally separate from `somnio setup` — hooks modify your Claude Code session behaviour and should be an explicit opt-in. See [docs/work-log-stop-hook.md](work-log-stop-hook.md) for the full hook design.
 
 ### somnio setup
 
