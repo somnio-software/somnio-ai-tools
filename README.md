@@ -68,13 +68,47 @@ somnio setup
 
 | Skill | Description |
 |:------|:------------|
-| [Clockify Tracker](docs/skills.md#clockify-tracker) | Log and manage Clockify time entries via the REST API |
+| [Clockify Tracker](docs/skills.md#clockify-tracker) | Log time manually or auto-fill from daily work logs — two modes, full preview before posting |
 | [Workflow Builder](docs/skills.md#workflow-builder) | Custom multi-step AI workflows with parallel execution |
 | [Ship](docs/skills.md#ship) | Automated ship workflow: merge, test, bump, changelog, commit, push, open PR |
 | [Git Branch Format](docs/skills.md#git-branch-format) | Branch naming convention generator |
 | [Git Commit Format](docs/skills.md#git-commit-format) | Conventional Commits message generator |
 
 > [Full skills catalog with examples →](docs/skills.md)
+
+### Automatic time tracking
+
+The Clockify Tracker skill integrates with a Claude Code Stop hook to automate daily time logging:
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│  Claude Code session ends                                    │
+│         ↓                                                    │
+│  Stop hook (work-log-stop.sh) runs in background            │
+│         ↓                                                    │
+│  Haiku generates a 2-3 sentence summary of the session      │
+│         ↓                                                    │
+│  Summary appended to ~/.work-log/YYYY-MM-DD.md              │
+│         ↓                                                    │
+│  /clockify-tracker use logs  →  entries posted to Clockify  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Setup (once):**
+
+```bash
+somnio hooks        # installs the Stop hook into ~/.claude/hooks/
+```
+
+**Daily usage:**
+
+```
+/clockify-tracker use logs for this week
+```
+
+The skill reads `~/.work-log/`, maps repos to Clockify projects (asked once, saved to `~/.clockify-prefs.json`), generates executive summaries, and shows a full preview before posting. Pure Q&A sessions are automatically filtered out — only real work gets logged.
+
+> [Work-log hook details →](docs/work-log-stop-hook.md) · [Clockify Tracker full docs →](docs/skills.md#clockify-tracker)
 
 ---
 
