@@ -168,6 +168,8 @@ See the [Workflow Guide](workflows.md) for full documentation.
 
 Log time and manage time entries in Clockify directly from your AI assistant using the Clockify REST API. Supports two modes:
 
+> **The work-log hook is optional.** Manual mode works with just a Clockify API key — no hook, no setup beyond that. Log-based mode additionally requires the hook to have generated `~/.work-log/` files.
+
 ### Manual mode
 
 Provide description, project, dates, and times explicitly.
@@ -208,7 +210,7 @@ The skill will:
 
 **Preferences file — `~/.clockify-prefs.json`**
 
-Created automatically on first use. All values are saved and reused on subsequent runs.
+Created and managed by this skill — the hook does not touch it. Created automatically on first use of log-based mode; all values are saved and reused on subsequent runs.
 
 ```json
 {

@@ -59,6 +59,10 @@ What it does:
 | `--force` | `-f` | Skip the confirmation prompt |
 | `--verbose` | `-v` | Show each step (file written, chmod, settings.json update) |
 
+**To uninstall:**
+1. `rm ~/.claude/hooks/work-log-stop.sh`
+2. Edit `~/.claude/settings.json` and remove the entry with `"command": "~/.claude/hooks/work-log-stop.sh"` from `hooks.Stop`
+
 > **Note:** `somnio hooks` is intentionally separate from `somnio setup` — hooks modify your Claude Code session behaviour and should be an explicit opt-in. See [docs/work-log-stop-hook.md](work-log-stop-hook.md) for the full hook design.
 
 ### somnio setup
