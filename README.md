@@ -96,6 +96,8 @@ Log 6 hours on "Mobile App" from March 23 to 27, 10:00–16:00, UTC-3
 
 #### Log-based mode — auto-fill from work logs
 
+> **Claude Code only.** The work-log hook relies on Claude Code's `Stop` hook mechanism, which is not available in Cursor, Windsurf, or other agents. Manual mode works with any agent.
+
 Automatically fills Clockify from daily work log files that the work-log Stop hook writes after each assistant turn.
 
 **How the hook works:**
