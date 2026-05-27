@@ -50,7 +50,8 @@ mkdir -p ~/.work-log
 
 # Debounce: skip if the log was written less than 5 seconds ago
 # (prevents duplicate entries when multiple sessions stop simultaneously)
-LAST=$(stat -f %m "$LOG" 2>/dev/null || echo 0)
+# python3 is used for mtime because stat flags differ between macOS (-f %m) and Linux (-c %Y).
+LAST=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$LOG" 2>/dev/null || echo 0)
 AGE=$(( $(date +%s) - LAST ))
 [ "$AGE" -lt 5 ] && exit 0
 
@@ -60,7 +61,23 @@ CWD=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); print
 [ -z "$CWD" ] && CWD=$(pwd)
 
 BRANCH=$(cd "$CWD" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'no-git')
-PROJ=$(basename "$CWD")
+
+# Log root repo + worktree so Clockify mapping works at the repo level.
+GIT_COMMON=$(cd "$CWD" && git rev-parse --git-common-dir 2>/dev/null || echo "")
+if [ -n "$GIT_COMMON" ]; then
+  # git rev-parse --git-common-dir returns a relative path (.git) for main checkouts.
+  # Resolve to absolute before dirname/basename so ROOT_REPO is correct in both cases.
+  case "$GIT_COMMON" in /*) ;; *) GIT_COMMON="$CWD/$GIT_COMMON" ;; esac
+  ROOT_REPO=$(basename "$(dirname "$GIT_COMMON")")
+  WORKTREE=$(basename "$CWD")
+  if [ "$ROOT_REPO" = "$WORKTREE" ]; then
+    PROJ="$ROOT_REPO"
+  else
+    PROJ="$ROOT_REPO/$WORKTREE"
+  fi
+else
+  PROJ=$(basename "$CWD")
+fi
 
 LAST_MSG=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("last_assistant_message","")[:3000])' 2>/dev/null || true)
 
@@ -76,8 +93,10 @@ GIT_STAT=$(cd "$CWD" && { git log --oneline -3 2>/dev/null; echo "---"; git diff
 PROMPT=$(printf 'Write 2-3 sentences for a work log entry. Be specific: name files, functions, root causes, decisions. Cover: what was accomplished, the key technical finding, and any open question or next step. Output ONLY the sentences.\n\nProject: %s (%s)\nRecent git:\n%s\n\nFinal response:\n%s' \
   "$PROJ" "$BRANCH" "$GIT_STAT" "$LAST_MSG")
 
+CLAUDE_BIN=$(which claude 2>/dev/null || echo "claude")
+
 (
-  WORK_LOG_CHILD=1 claude -p \
+  WORK_LOG_CHILD=1 "$CLAUDE_BIN" -p \
     --model claude-haiku-4-5-20251001 \
     --no-session-persistence \
     "$PROMPT" >> "$LOG" 2>/dev/null \
@@ -139,6 +158,8 @@ Parsing the JSONL transcript would add complexity and, for long-running sessions
 ### 5-second debounce
 
 When multiple Claude sessions are running simultaneously and stop within the same second, they can race to write to the log. The debounce skips the hook if the log was written less than 5 seconds ago, which prevents duplicate entries for rapid back-and-forth while still allowing concurrent sessions to log within a few seconds of each other.
+
+`python3` is used to read the file mtime instead of `stat` because `stat` flag syntax differs between macOS (`-f %m`) and Linux (`-c %Y`). `python3 os.path.getmtime` works on both.
 
 ## Log format
 

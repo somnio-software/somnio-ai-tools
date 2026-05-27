@@ -8,21 +8,30 @@ description: >-
 
 Integrate with Clockify using **HTTPS requests** to `https://api.clockify.me/api/v1`. Do not assume any local `clockify_tracker` binary exists.
 
+## API key
+
+Resolve the key using this priority order:
+
+1. `CLOCKIFY_API_KEY` environment variable — check with `echo $CLOCKIFY_API_KEY`
+2. `api_key` field in `~/.clockify-prefs.json` — read with `cat ~/.clockify-prefs.json 2>/dev/null`
+3. Neither found → ask the user to paste their key (Clockify → Profile → API), then offer to save it:
+   > "Save this key to ~/.clockify-prefs.json so you don't have to enter it again? (yes/no)"
+   If yes, merge `"api_key": "<key>"` into the prefs file.
+
+**Never echo or log the key value**. Use it only inside `curl -H "X-Api-Key: $KEY"` commands.
+
 ## Environment
 
-| Variable | Required | Purpose |
-|----------|----------|---------|
-| `CLOCKIFY_API_KEY` | Yes | API key from Clockify (Profile → API) |
-| `CLOCKIFY_TZ_OFFSET` | No | Local offset from UTC in **whole hours** (e.g. `-3` for Argentina). Use when the shell or runtime reports UTC but the user gives local `HH:mm`. |
+| Variable | Purpose |
+|----------|---------|
+| `CLOCKIFY_TZ_OFFSET` | Local offset from UTC in **whole hours** (e.g. `-3` for Argentina). Fallback when `~/.clockify-prefs.json` has no timezone. |
 
 ## Authentication
 
 Every request:
 
-- Header: `X-Api-Key: <CLOCKIFY_API_KEY>`
+- Header: `X-Api-Key: <resolved key>`
 - Header: `Content-Type: application/json` (for POST bodies)
-
-Never paste the API key into chat; use the environment variable in the tool/shell you run.
 
 ## Endpoints (mirror of former CLI behavior)
 
@@ -98,6 +107,7 @@ Path: `~/.clockify-prefs.json`. Read with `cat ~/.clockify-prefs.json 2>/dev/nul
 
 ```json
 {
+  "api_key": "<clockify-api-key>",
   "timezone": { "name": "Buenos Aires, Argentina", "offset": -3 },
   "default_start": "09:00",
   "default_end": "17:00",
@@ -133,9 +143,9 @@ Missing file → skip that day and tell the user. Parse every `## HH:MM - … (b
 **5. Confirm time frame** — default 09:00–17:00 (8 h). Show saved pref if one exists. Only ask to change if no prefs exist or user explicitly mentions a different block.
 
 **6. Timezone picker** — if a saved timezone exists, offer it as default:
-> "Using Buenos Aires (UTC-3) — press Enter to keep, or pick a number to change:"
+> "Using Buenos Aires (UTC-3) — press Enter to keep, or pick a number / type your own:"
 
-If no saved pref, print and wait for a number or name:
+If no saved pref, print and wait for a number, a name, or a free-text entry:
 ```
 1. Buenos Aires, Argentina  (UTC-3)
 2. Montevideo, Uruguay      (UTC-3)
@@ -144,7 +154,11 @@ If no saved pref, print and wait for a number or name:
 5. Lima, Peru               (UTC-5)
 6. Colombia                 (UTC-5)
 7. Nicaragua                (UTC-6)
+8. Other — type your city or UTC offset (e.g. "Madrid" or "UTC+1")
 ```
+
+If the user types a city or region not on the list, infer the standard UTC offset from your knowledge (e.g. "Madrid" → UTC+1 in winter / UTC+2 in summer — use the current standard offset for today's date). Confirm with the user before saving:
+> "Madrid is UTC+1 (standard time) — is that correct?"
 
 **7. Parse and resolve repo names** — log headers use two formats:
 - Worktree: `## HH:MM - mini-meta-repo/refactor-flutter_http (branch)` — root repo is the part **before** `/`

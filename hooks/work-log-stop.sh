@@ -9,7 +9,8 @@ LOG=~/.work-log/$DATE.md
 mkdir -p ~/.work-log
 
 # Debounce: skip if the log was written less than 5 seconds ago.
-LAST=$(stat -f %m "$LOG" 2>/dev/null || echo 0)
+# python3 is used for mtime because stat flags differ between macOS (-f %m) and Linux (-c %Y).
+LAST=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$LOG" 2>/dev/null || echo 0)
 AGE=$(( $(date +%s) - LAST ))
 [ "$AGE" -lt 5 ] && exit 0
 
@@ -23,6 +24,9 @@ BRANCH=$(cd "$CWD" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'no-gi
 # Log root repo + worktree so Clockify mapping works at the repo level.
 GIT_COMMON=$(cd "$CWD" && git rev-parse --git-common-dir 2>/dev/null || echo "")
 if [ -n "$GIT_COMMON" ]; then
+  # git rev-parse --git-common-dir returns a relative path (.git) for main checkouts.
+  # Resolve to absolute before dirname/basename so ROOT_REPO is correct in both cases.
+  case "$GIT_COMMON" in /*) ;; *) GIT_COMMON="$CWD/$GIT_COMMON" ;; esac
   ROOT_REPO=$(basename "$(dirname "$GIT_COMMON")")
   WORKTREE=$(basename "$CWD")
   if [ "$ROOT_REPO" = "$WORKTREE" ]; then

@@ -29,11 +29,12 @@ class HooksCommand extends Command<int> {
 
   final Logger _logger;
 
-  static const _hookFilename = 'work-log-stop.sh';
-  static const _hookCommand = '~/.claude/hooks/work-log-stop.sh';
+  static const hookFilename = 'work-log-stop.sh';
+  static const hookCommand = '~/.claude/hooks/work-log-stop.sh';
 
   // Keep in sync with hooks/work-log-stop.sh in the repo root.
-  static const _hookScript = r'''#!/usr/bin/env bash
+  // Exposed without leading underscore so tests can verify drift against the source file.
+  static const hookScript = r'''#!/usr/bin/env bash
 set -euo pipefail
 
 [ -n "${WORK_LOG_CHILD:-}" ] && exit 0
@@ -42,7 +43,7 @@ DATE=$(date '+%Y-%m-%d')
 LOG=~/.work-log/$DATE.md
 mkdir -p ~/.work-log
 
-LAST=$(stat -f %m "$LOG" 2>/dev/null || echo 0)
+LAST=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$LOG" 2>/dev/null || echo 0)
 AGE=$(( $(date +%s) - LAST ))
 [ "$AGE" -lt 5 ] && exit 0
 
@@ -55,6 +56,7 @@ BRANCH=$(cd "$CWD" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'no-gi
 
 GIT_COMMON=$(cd "$CWD" && git rev-parse --git-common-dir 2>/dev/null || echo "")
 if [ -n "$GIT_COMMON" ]; then
+  case "$GIT_COMMON" in /*) ;; *) GIT_COMMON="$CWD/$GIT_COMMON" ;; esac
   ROOT_REPO=$(basename "$(dirname "$GIT_COMMON")")
   WORKTREE=$(basename "$CWD")
   if [ "$ROOT_REPO" = "$WORKTREE" ]; then
@@ -112,7 +114,7 @@ exit 0
 
     final home = PlatformUtils.homeDirectory;
     final hooksDir = p.join(home, '.claude', 'hooks');
-    final hookPath = p.join(hooksDir, _hookFilename);
+    final hookPath = p.join(hooksDir, hookFilename);
     final settingsPath = p.join(home, '.claude', 'settings.json');
 
     _logger.info('');
@@ -141,17 +143,25 @@ exit 0
         hooksDirectory.createSync(recursive: true);
         if (verbose) _logger.info('  Created $hooksDir');
       }
-      File(hookPath).writeAsStringSync(_hookScript);
+      File(hookPath).writeAsStringSync(hookScript);
       if (verbose) _logger.info('  Wrote $hookPath');
 
       // 2. Make executable.
       if (!Platform.isWindows) {
-        await Process.run('chmod', ['+x', hookPath]);
+        final chmodResult = await Process.run('chmod', ['+x', hookPath]);
+        if (chmodResult.exitCode != 0) {
+          throw Exception('chmod +x failed: ${chmodResult.stderr}');
+        }
         if (verbose) _logger.info('  chmod +x $hookPath');
       }
 
       // 3. Register in settings.json.
-      final alreadyRegistered = _mergeSettings(settingsPath, verbose: verbose);
+      final alreadyRegistered = mergeStopHookIntoSettings(
+        settingsPath,
+        hookCommand,
+        onWarn: _logger.warn,
+        onVerbose: verbose ? _logger.info : null,
+      );
       if (verbose && alreadyRegistered) {
         _logger.info('  Stop hook already registered — skipped');
       }
@@ -176,56 +186,61 @@ exit 0
     return ExitCode.success.code;
   }
 
-  /// Merges the Stop hook entry into [settingsPath].
-  ///
-  /// Returns true if the command was already registered (no-op).
-  bool _mergeSettings(String settingsPath, {bool verbose = false}) {
-    final file = File(settingsPath);
-    Map<String, dynamic> settings = {};
+}
 
-    if (file.existsSync()) {
-      try {
-        settings =
-            jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-      } catch (_) {
-        // Malformed JSON — back up and start fresh for the hooks key only.
-        file.copySync('$settingsPath.bak');
-        if (verbose) {
-          _logger.warn(
-            '  settings.json was malformed — backed up to settings.json.bak',
-          );
-        }
-      }
+/// Merges the Stop hook entry for [hookCommand] into the settings file at
+/// [settingsPath]. Creates the file if absent.
+///
+/// Returns `true` if the command was already registered (no-op). Exposed at
+/// the top level (not as a class member) so it can be exercised directly in
+/// unit tests without spinning up the full command.
+bool mergeStopHookIntoSettings(
+  String settingsPath,
+  String hookCommand, {
+  void Function(String)? onWarn,
+  void Function(String)? onVerbose,
+}) {
+  final file = File(settingsPath);
+  Map<String, dynamic> settings = {};
+
+  if (file.existsSync()) {
+    try {
+      settings = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+    } catch (_) {
+      // Malformed JSON — back up and start fresh for the hooks key only.
+      file.copySync('$settingsPath.bak');
+      onWarn?.call(
+        '  settings.json was malformed — backed up to settings.json.bak',
+      );
     }
-
-    final hooks =
-        Map<String, dynamic>.from(settings['hooks'] as Map? ?? {});
-    final stopList = List<dynamic>.from(hooks['Stop'] as List? ?? []);
-
-    final alreadyRegistered = stopList.any((entry) {
-      if (entry is! Map) return false;
-      final innerHooks = entry['hooks'] as List?;
-      return innerHooks?.any(
-            (h) => h is Map && h['command'] == _hookCommand,
-          ) ??
-          false;
-    });
-
-    if (!alreadyRegistered) {
-      stopList.add({
-        'matcher': '',
-        'hooks': [
-          {'type': 'command', 'command': _hookCommand},
-        ],
-      });
-      hooks['Stop'] = stopList;
-      settings['hooks'] = hooks;
-
-      const encoder = JsonEncoder.withIndent('  ');
-      file.writeAsStringSync('${encoder.convert(settings)}\n');
-      if (verbose) _logger.info('  Updated $settingsPath');
-    }
-
-    return alreadyRegistered;
   }
+
+  final hooks = Map<String, dynamic>.from(settings['hooks'] as Map? ?? {});
+  final stopList = List<dynamic>.from(hooks['Stop'] as List? ?? []);
+
+  final alreadyRegistered = stopList.any((entry) {
+    if (entry is! Map) return false;
+    final innerHooks = entry['hooks'] as List?;
+    return innerHooks?.any(
+          (h) => h is Map && h['command'] == hookCommand,
+        ) ??
+        false;
+  });
+
+  if (!alreadyRegistered) {
+    stopList.add({
+      'matcher': '',
+      'hooks': [
+        {'type': 'command', 'command': hookCommand},
+      ],
+    });
+    hooks['Stop'] = stopList;
+    settings['hooks'] = hooks;
+
+    const encoder = JsonEncoder.withIndent('  ');
+    file.writeAsStringSync('${encoder.convert(settings)}\n');
+    onVerbose?.call('  Updated $settingsPath');
+  }
+
+  return alreadyRegistered;
 }
