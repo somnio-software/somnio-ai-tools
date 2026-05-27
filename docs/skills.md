@@ -220,6 +220,7 @@ Created and managed by this skill — the hook does not touch it. Created automa
   "default_start": "09:00",
   "default_end": "17:00",
   "workspace_id": "<workspace id>",
+  "auto_cleanup": true,
   "repo_mappings": {
     "mini-meta-repo":  { "name": "Nubank",         "id": "<project id>" },
     "somnio-ai-tools": { "name": "ignore",          "id": null }
@@ -235,6 +236,7 @@ Keys explained:
 | `timezone` | Your local timezone — asked once, applied to every entry. |
 | `default_start` / `default_end` | Default time block for each day (e.g. 09:00–17:00). |
 | `workspace_id` | Resolved automatically from the API on first run. |
+| `auto_cleanup` | If `true`, deletes processed `~/.work-log/` files after posting without asking. Set by answering "always" to the cleanup prompt. |
 | `repo_mappings` | Maps root repo names to Clockify projects. Use `"name": "ignore"` to permanently skip a repo. |
 
 > **Note on repo mappings:** the hook logs entries using the **root git repo name** (e.g. `mini-meta-repo`), not the worktree or branch name. Any worktree from the same repo (e.g. `mini-meta-repo/fix-NU-334`) maps to the same project automatically. If you have stale per-worktree entries in `repo_mappings` from before this behaviour was introduced, you can safely remove them and keep only the root repo key.

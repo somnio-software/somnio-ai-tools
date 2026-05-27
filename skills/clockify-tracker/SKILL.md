@@ -212,3 +212,18 @@ Post these entries? (yes / edit / cancel)
 Use a numbered list (not a table) so the full description is readable without truncation. If the user says "edit", ask which entry number they want to change and what the new description should be, then re-show the full preview before posting.
 
 **12. Create entries** — one `POST /workspaces/{workspaceId}/time-entries` per row using the existing UTC conversion logic. Show each API response.
+
+**13. Clean up log files** — after all entries are successfully posted, offer to delete the processed files.
+
+Check `~/.clockify-prefs.json` for `"auto_cleanup": true`. If set, delete without asking and tell the user which files were removed. Otherwise ask:
+
+> "Entries posted. Delete the processed log files?
+> - ~/.work-log/2026-05-26.md
+> - ~/.work-log/2026-05-27.md
+> (yes / no / always — 'always' saves the preference and never asks again)"
+
+- **yes** — delete those files with `rm`, confirm each one removed
+- **no** — leave files as-is
+- **always** — delete files, then merge `"auto_cleanup": true` into `~/.clockify-prefs.json`
+
+Only delete files whose entries **all** posted successfully. If posting was partial, skip deletion for any day with a failed entry and tell the user which files were kept.

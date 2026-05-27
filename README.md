@@ -151,12 +151,15 @@ Managed by the `/clockify-tracker` skill, not the hook. Created automatically on
   "default_start": "09:00",
   "default_end": "17:00",
   "workspace_id": "<id>",
+  "auto_cleanup": true,
   "repo_mappings": {
     "my-repo":  { "name": "My Clockify Project", "id": "<project id>" },
     "internal": { "name": "ignore", "id": null }
   }
 }
 ```
+
+`auto_cleanup: true` skips the deletion confirmation — set it by answering "always" the first time the prompt appears.
 
 > [Work-log hook details →](docs/work-log-stop-hook.md) · [Clockify Tracker full docs →](docs/skills.md#clockify-tracker)
 
