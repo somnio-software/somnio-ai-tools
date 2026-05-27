@@ -126,7 +126,7 @@ somnio hooks --verbose  # show each step
 
 This writes `~/.claude/hooks/work-log-stop.sh` and registers it as a `Stop` hook in `~/.claude/settings.json`. Safe to re-run after CLI updates — fully idempotent.
 
-**Daily usage:**
+**Common usage:**
 
 ```
 /clockify-tracker use logs for this week
@@ -161,7 +161,19 @@ Managed by the `/clockify-tracker` skill, not the hook. Created automatically on
 
 `auto_cleanup: true` skips the deletion confirmation — set it by answering "always" the first time the prompt appears.
 
-> [Work-log hook details →](docs/work-log-stop-hook.md) · [Clockify Tracker full docs →](docs/skills.md#clockify-tracker)
+**Custom API key / prefs locations**
+
+| Env var | Purpose |
+|---------|---------|
+| `CLOCKIFY_API_KEY` | API key value directly. |
+| `CLOCKIFY_API_KEY_FILE` | Path to a file containing just the API key — useful with secrets managers or symlinked vault files (e.g. `~/.secrets/clockify`). |
+| `CLOCKIFY_PREFS_PATH` | Custom path for the prefs JSON file. Defaults to `~/.clockify-prefs.json` when unset. |
+
+Key resolution order: `CLOCKIFY_API_KEY` env → `CLOCKIFY_API_KEY_FILE` → shell config files (`~/.zshrc`, `~/.bashrc`, etc.) → `api_key` in prefs → prompt.
+
+> [Work-log hook details →](docs/work-log-stop-hook.md) 
+
+>[Clockify Tracker full docs →](docs/skills.md#clockify-tracker)
 
 ---
 

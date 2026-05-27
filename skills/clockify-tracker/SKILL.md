@@ -13,9 +13,20 @@ Integrate with Clockify using **HTTPS requests** to `https://api.clockify.me/api
 Resolve the key using this priority order:
 
 1. `CLOCKIFY_API_KEY` environment variable — check with `echo $CLOCKIFY_API_KEY`
-2. `api_key` field in `~/.clockify-prefs.json` — read with `cat ~/.clockify-prefs.json 2>/dev/null`
-3. Neither found → ask the user to paste their key (Clockify → Profile → API), then offer to save it:
-   > "Save this key to ~/.clockify-prefs.json so you don't have to enter it again? (yes/no)"
+2. `CLOCKIFY_API_KEY_FILE` environment variable — path to a file containing just the key; read with `cat "$CLOCKIFY_API_KEY_FILE" 2>/dev/null | tr -d '[:space:]'`
+3. Shell config files — grep common rc files for an export/assignment of `CLOCKIFY_API_KEY`:
+   ```bash
+   grep -h "CLOCKIFY_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null \
+     | grep -v '^\s*#' | head -1
+   ```
+   Extract the value from a line like `export CLOCKIFY_API_KEY=abc123` or `CLOCKIFY_API_KEY="abc123"` using:
+   ```bash
+   sed 's/.*CLOCKIFY_API_KEY[[:space:]]*=[[:space:]]*//' | tr -d '"'"'"' '
+   ```
+   If a non-empty value is found, use it silently (same as if it were in the live environment).
+4. `api_key` field in the prefs file (see `CLOCKIFY_PREFS_PATH` below) — read with `cat <prefs-path> 2>/dev/null`
+5. None found → ask the user to paste their key (Clockify → Profile → API), then offer to save it:
+   > "Save this key to <prefs-path> so you don't have to enter it again? (yes/no)"
    If yes, merge `"api_key": "<key>"` into the prefs file.
 
 **Never echo or log the key value**. Use it only inside `curl -H "X-Api-Key: $KEY"` commands.
@@ -24,7 +35,12 @@ Resolve the key using this priority order:
 
 | Variable | Purpose |
 |----------|---------|
-| `CLOCKIFY_TZ_OFFSET` | Local offset from UTC in **whole hours** (e.g. `-3` for Argentina). Fallback when `~/.clockify-prefs.json` has no timezone. |
+| `CLOCKIFY_API_KEY` | API key value directly in the live environment. |
+| `CLOCKIFY_API_KEY_FILE` | Path to a file whose contents are the API key (e.g. `~/.secrets/clockify`). Useful with secrets managers or symlinked vault files. |
+| `CLOCKIFY_PREFS_PATH` | Custom path for the prefs JSON file. Defaults to `~/.clockify-prefs.json` when unset. Resolving prefs path: `${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}`. |
+| `CLOCKIFY_TZ_OFFSET` | Local offset from UTC in **whole hours** (e.g. `-3` for Argentina). Fallback when the prefs file has no timezone. |
+
+Shell config files checked (step 3 above): `~/.zshrc`, `~/.zprofile`, `~/.bashrc`, `~/.bash_profile`, `~/.profile`.
 
 ## Authentication
 
@@ -103,7 +119,7 @@ Triggered when the user says **"use logs"**, **"from work logs"**, **"usa los lo
 
 ### Preferences file
 
-Path: `~/.clockify-prefs.json`. Read with `cat ~/.clockify-prefs.json 2>/dev/null`; write by overwriting the file with merged JSON.
+Path: `${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}`. Always resolve this at runtime — check the env var first, then fall back to `~/.clockify-prefs.json`. Read with `cat "${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}" 2>/dev/null`; write by overwriting the file with merged JSON.
 
 ```json
 {
@@ -224,6 +240,6 @@ Check `~/.clockify-prefs.json` for `"auto_cleanup": true`. If set, delete withou
 
 - **yes** — delete those files with `rm`, confirm each one removed
 - **no** — leave files as-is
-- **always** — delete files, then merge `"auto_cleanup": true` into `~/.clockify-prefs.json`
+- **always** — delete files, then merge `"auto_cleanup": true` into the resolved prefs file (`${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}`)
 
 Only delete files whose entries **all** posted successfully. If posting was partial, skip deletion for any day with a failed entry and tell the user which files were kept.

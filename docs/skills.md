@@ -232,7 +232,7 @@ Keys explained:
 
 | Key | Description |
 |-----|-------------|
-| `api_key` | Clockify API key (Profile → API). Can also be set via `CLOCKIFY_API_KEY` env var. |
+| `api_key` | Clockify API key (Profile → API). Alternative sources: `CLOCKIFY_API_KEY` env var, `CLOCKIFY_API_KEY_FILE` env var (path to a file containing the key), or shell config files (`~/.zshrc` etc.). See resolution order below. |
 | `timezone` | Your local timezone — asked once, applied to every entry. |
 | `default_start` / `default_end` | Default time block for each day (e.g. 09:00–17:00). |
 | `workspace_id` | Resolved automatically from the API on first run. |
@@ -241,7 +241,7 @@ Keys explained:
 
 > **Note on repo mappings:** the hook logs entries using the **root git repo name** (e.g. `mini-meta-repo`), not the worktree or branch name. Any worktree from the same repo (e.g. `mini-meta-repo/fix-NU-334`) maps to the same project automatically. If you have stale per-worktree entries in `repo_mappings` from before this behaviour was introduced, you can safely remove them and keep only the root repo key.
 
-**API key resolution order:** `CLOCKIFY_API_KEY` env var → `api_key` in `~/.clockify-prefs.json` → prompted once and optionally saved.
+**API key resolution order:** `CLOCKIFY_API_KEY` env var → `CLOCKIFY_API_KEY_FILE` env var → shell config files (`~/.zshrc`, `~/.bashrc`, etc.) → `api_key` in prefs file → prompted once and optionally saved. The prefs file path itself defaults to `~/.clockify-prefs.json` but can be overridden with `CLOCKIFY_PREFS_PATH`.
 
 **Output:** Confirmed time entry (or entries) created via Clockify API, with a full preview shown before posting.
 
