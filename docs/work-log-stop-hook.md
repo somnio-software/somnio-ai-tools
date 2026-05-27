@@ -33,7 +33,19 @@ The hook reads `last_assistant_message` (the current turn's response) plus git c
 
 ## Setup
 
-### 1. Create the hook script
+### Recommended: use `somnio hooks`
+
+```bash
+somnio hooks
+```
+
+This copies the script to `~/.claude/hooks/work-log-stop.sh`, makes it executable, and merges the Stop hook entry into `~/.claude/settings.json` — all in one step, idempotently. Run it again after any CLI update to pick up script changes.
+
+### Manual setup
+
+If you prefer to install by hand:
+
+#### 1. Create the hook script
 
 Save this to `~/.claude/hooks/work-log-stop.sh` and make it executable:
 
@@ -110,7 +122,7 @@ exit 0
 chmod +x ~/.claude/hooks/work-log-stop.sh
 ```
 
-### 2. Register the hook in `~/.claude/settings.json`
+#### 2. Register the hook in `~/.claude/settings.json`
 
 ```json
 {
@@ -170,8 +182,23 @@ Entries are appended to `~/.work-log/YYYY-MM-DD.md` (one file per day):
 2-3 sentence summary of what was accomplished this turn.
 ```
 
+The `project-name` field depends on whether you are in a main checkout or a git worktree:
+
+| Context | Example header |
+|---------|----------------|
+| Main checkout | `## 09:15 - somnio-ai-tools (main)` |
+| Git worktree | `## 14:10 - mini-meta-repo/refactor-flutter_http (feat/my-branch)` |
+
+For worktrees the format is `root-repo/worktree-directory`. The `clockify-tracker` skill splits on `/` to extract the root repo name, so any number of worktrees from the same repo map to the same Clockify project automatically.
+
 Multiple sessions and projects interleave chronologically in the same daily file.
 
 ## Relation to Clockify
 
-The work log entries are plain markdown and could be fed to the [`/clockify-tracker`](../commands/clockify-tracker.md) skill to create Clockify time entries. Each entry's timestamp and description maps directly to a Clockify time entry — automating end-of-day time logging from the session history.
+At the end of the day (or week), run:
+
+```
+/clockify-tracker use logs for this week
+```
+
+The [`clockify-tracker`](../commands/clockify-tracker.md) skill reads your `~/.work-log/` files, maps each repo to a Clockify project (asked once, saved to `~/.clockify-prefs.json`), generates a 2-sentence executive summary per entry, and shows a full preview before posting. Each log entry's timestamp maps directly to a Clockify time entry — no manual input required beyond confirming the preview.
