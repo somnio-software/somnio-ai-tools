@@ -76,37 +76,85 @@ somnio setup
 
 > [Full skills catalog with examples →](docs/skills.md)
 
-### Automatic time tracking
+### Clockify time tracking
 
-The Clockify Tracker skill integrates with a Claude Code Stop hook to automate daily time logging:
+The `/clockify-tracker` skill has two independent modes:
+
+#### Manual mode — no setup required
+
+Tell the skill what to log and it handles the Clockify API calls:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  Claude Code assistant turn ends                             │
-│         ↓                                                    │
-│  Stop hook (work-log-stop.sh) runs in background            │
-│         ↓                                                    │
-│  Haiku generates a 2-3 sentence summary of the session      │
-│         ↓                                                    │
-│  Summary appended to ~/.work-log/YYYY-MM-DD.md              │
-│         ↓                                                    │
-│  /clockify-tracker use logs  →  entries posted to Clockify  │
-└─────────────────────────────────────────────────────────────┘
+/clockify-tracker
+carga 8 horas en el proyecto Somnio con la descripción "Technology"
+empezando a las 09:00 para los días 25–29 de mayo, timezone Buenos Aires
 ```
 
-**Setup (once):**
+```
+Log 6 hours on "Mobile App" from March 23 to 27, 10:00–16:00, UTC-3
+```
+
+#### Log-based mode — auto-fill from work logs
+
+Automatically fills Clockify from daily work log files that the work-log Stop hook writes after each assistant turn.
+
+**How the hook works:**
+
+Claude Code fires a `Stop` event after every assistant turn. The hook (`work-log-stop.sh`) receives the last response as a JSON payload, classifies it (pure Q&A is skipped automatically), and spawns a background Haiku process that writes a 2-3 sentence summary to `~/.work-log/YYYY-MM-DD.md`. The main session is never re-entered — no context pollution, no extra cost.
+
+```
+After each Claude Code assistant turn
+         ↓
+Stop hook runs in background (work-log-stop.sh)
+         ↓
+Haiku classifies: Q&A → skipped / real work → summarised
+         ↓
+Summary appended to ~/.work-log/YYYY-MM-DD.md
+         ↓
+/clockify-tracker use logs → entries previewed and posted
+```
+
+**Install the hook (once):**
 
 ```bash
-somnio hooks        # installs the Stop hook into ~/.claude/hooks/
+somnio hooks            # interactive install with confirmation
+somnio hooks --force    # skip confirmation
+somnio hooks --verbose  # show each step
 ```
+
+This writes `~/.claude/hooks/work-log-stop.sh` and registers it as a `Stop` hook in `~/.claude/settings.json`. Safe to re-run after CLI updates — fully idempotent.
 
 **Daily usage:**
 
 ```
 /clockify-tracker use logs for this week
+/clockify-tracker usa los logs de los últimos 5 días
 ```
 
-The skill reads `~/.work-log/`, maps repos to Clockify projects (asked once, saved to `~/.clockify-prefs.json`), generates executive summaries, and shows a full preview before posting. Pure Q&A sessions are automatically filtered out — only real work gets logged.
+**Uninstall the hook:**
+
+```bash
+rm ~/.claude/hooks/work-log-stop.sh
+# then edit ~/.claude/settings.json and remove the work-log-stop.sh entry from hooks.Stop
+```
+
+**Preferences — `~/.clockify-prefs.json`**
+
+Managed by the `/clockify-tracker` skill, not the hook. Created automatically on first log-based run. Stores your API key, timezone, default time block, workspace ID, and repo→project mappings (asked once per repo, reused forever). The hook only writes to `~/.work-log/` — it never reads or writes the prefs file.
+
+```json
+{
+  "api_key": "<Clockify API key>",
+  "timezone": { "name": "Buenos Aires, Argentina", "offset": -3 },
+  "default_start": "09:00",
+  "default_end": "17:00",
+  "workspace_id": "<id>",
+  "repo_mappings": {
+    "my-repo":  { "name": "My Clockify Project", "id": "<project id>" },
+    "internal": { "name": "ignore", "id": null }
+  }
+}
+```
 
 > [Work-log hook details →](docs/work-log-stop-hook.md) · [Clockify Tracker full docs →](docs/skills.md#clockify-tracker)
 
