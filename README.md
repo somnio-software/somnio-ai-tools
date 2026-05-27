@@ -78,6 +78,25 @@ somnio setup
 
 ---
 
+## Hooks
+
+Claude Code hooks that run automatically during sessions — opt-in, separate from `somnio setup`.
+
+| Hook | Trigger | What it does |
+|:-----|:-------:|:-------------|
+| Work-Log Stop | After every turn | Appends a 2-3 sentence Haiku summary to `~/.work-log/YYYY-MM-DD.md` — powers [Clockify log-based mode](docs/skills.md#log-based-mode) |
+
+Install via the Somnio CLI:
+
+```bash
+somnio hooks            # interactive: shows what will change, prompts for confirmation
+somnio hooks --force    # skip confirmation
+```
+
+> [Hook details →](docs/work-log-stop-hook.md) · [CLI reference →](docs/cli.md)
+
+---
+
 ## Agent Rules
 
 Global coding standards — automatically applied by your AI agent in every project.
@@ -133,7 +152,7 @@ Somnio is also available as a **Claude Desktop App plugin** (Cowork):
 |:--|:--|:--|
 | [Installation Guide](docs/installation.md) | [Skills Catalog](docs/skills.md) | [CLI Reference](docs/cli.md) |
 | [Plugin System](docs/plugins.md) | [Workflow Builder](docs/workflows.md) | [Architecture](docs/architecture.md) |
-| [Agent Rules](docs/agent-rules.md) | [Contributing](CONTRIBUTING.md) | |
+| [Agent Rules](docs/agent-rules.md) | [Hooks](docs/work-log-stop-hook.md) | [Contributing](CONTRIBUTING.md) |
 
 ---
 
