@@ -82,7 +82,7 @@ The Clockify Tracker skill integrates with a Claude Code Stop hook to automate d
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  Claude Code session ends                                    │
+│  Claude Code assistant turn ends                             │
 │         ↓                                                    │
 │  Stop hook (work-log-stop.sh) runs in background            │
 │         ↓                                                    │
