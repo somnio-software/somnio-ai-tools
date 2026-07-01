@@ -142,15 +142,39 @@ somnio rules install --all --global           # all detected agents, global
 
 ---
 
-## Plugins
+## Plugins & Utility CLIs
 
-Somnio is also available as a **Claude Desktop App plugin** (Cowork):
+Two ways to extend the setup: Cowork marketplace plugins that install through the Claude Desktop App, and standalone CLIs you install yourself and run alongside Somnio.
+
+### Cowork plugins
+
+Somnio ships as a Claude Desktop App plugin (Cowork):
 
 | Package | Focus |
 |:--------|:------|
 | **Development** | Health audits, security scans, best practices |
 
 > [Plugin system details →](docs/plugins.md)
+
+### Utility CLIs
+
+Separate binaries that add commands to Claude Code. These are not marketplace plugins and do not install via `npx skills add`. You install each one directly.
+
+| Tool | What it does |
+|:-----|:-------------|
+| [Vector](https://github.com/mcampbellr/vector) | Spec-driven kanban board for Claude Code specs. A JSON record on disk is the source of truth; a local web board renders it live. |
+
+Install the Vector binary once, then run `vector init` in each repo you want to track:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/mcampbellr/vector/main/scripts/install.sh | sh
+cd <your-project>
+vector init
+```
+
+`vector init` seeds the `/vector:*` commands into `.claude/commands/vector/`, detects your stack, and creates the `.vector/` state directory.
+
+> Full install options and usage: [Vector repository](https://github.com/mcampbellr/vector)
 
 ---
 
