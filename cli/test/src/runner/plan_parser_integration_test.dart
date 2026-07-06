@@ -60,6 +60,18 @@ void main() {
       lastRule: 'report-generator',
       mandatoryRules: ['tool-installer'],
     ),
+    'python-health-audit': _SkillExpectation(
+      stepCount: 13,
+      firstRule: 'tool-installer',
+      lastRule: 'report-generator',
+      mandatoryRules: ['version-alignment'],
+    ),
+    'python-best-practices': _SkillExpectation(
+      stepCount: 9,
+      firstRule: 'typing',
+      lastRule: 'best-practices-generator',
+      mandatoryRules: [],
+    ),
   };
 
   for (final entry in expectations.entries) {

@@ -17,6 +17,20 @@ This plan executes the NestJS Project Health Audit through sequential,
 modular rules. Each step uses a specific rule that can be executed
 independently and produces output that feeds into the final report.
 
+## Three-Tier Subagent Architecture
+
+When running in-session (Claude Code, Cursor, or any agent that supports the `Agent` tool), this skill operates through a tiered multi-subagent topology coordinated by `agents/orchestrator.md`. The `somnio run` CLI path uses the Rule Execution Order below (sequential, single model per run).
+
+**Entry point (in-session)**: `agents/orchestrator.md` (`model: mid`)
+
+**Tier assignments:**
+
+| Tier | Role | Agents |
+|------|------|--------|
+| cheap | Mechanical scanners — filesystem scans, key extraction, presence checklists | `env-setup-agent`, `repo-analyzer`, `config-analyzer`, `docs-analyzer` |
+| mid | Reasoning analyzers — CI gate compliance, test quality judgment, code quality depth, REST convention compliance, N+1 detection; also the orchestrator | `orchestrator`, `cicd-analyzer`, `testing-analyzer`, `code-quality-analyzer`, `api-design-analyzer`, `data-layer-analyzer` |
+| frontier | Report synthesis — cross-section score reconciliation, weighted overall score, narrative coherence, mandatory 16-section structure | `report-writer-agent` |
+
 ## Agent Role & Context
 
 **Role**: NestJS Project Health Auditor
@@ -36,7 +50,7 @@ You are a master at:
 - **Technical Risk Assessment**: Identifying technical risks, technical debt,
   and project maturity indicators
 - **Report Integration**: Synthesizing findings from multiple analysis rules
-  into unified Google Docs-ready reports
+  into unified Markdown reports
 - **NestJS Best Practices**: Deep knowledge of NestJS patterns, decorators,
   modules, providers, guards, interceptors, and pipes
 - **Backend Architecture**: Understanding of layered architecture, DDD,
@@ -280,20 +294,20 @@ generates the final report.
 
 ## Step 10. Export Final Report
 
-Goal: Save the final Google Docs-ready plain-text report to the reports
+Goal: Save the final Google Docs-ready Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save
 the final NestJS Project Health Audit report to:
-`./reports/nestjs_audit.txt`
+`./reports/nestjs_audit.md`
 
-**Format**: Plain text ready to copy into Google Docs (no markdown
-syntax, no # headings, no bold markers, no fenced code blocks).
+**Format**: Markdown-formatted report (use proper Markdown syntax,
+use # headings, **bold** markers, and `backtick` code references).
 
 **Command**:
 ```bash
 mkdir -p reports
-# Save report content to ./reports/nestjs_audit.txt
+# Save report content to ./reports/nestjs_audit.md
 ```
 
 **Note**: For security analysis, run the standalone Security Audit (`/somnio:security-audit`).
@@ -303,19 +317,19 @@ mkdir -p reports
 **Total Rules**: 13 rules
 
 **Rule Execution Order**:
-1. `references/tool-installer.md`
-2. `references/version-alignment.md` (MANDATORY - stops if nvm fails)
-3. `references/version-validator.md` (verification of nvm setup)
-4. `references/test-coverage.md` (coverage generation)
-5. `references/repository-inventory.md`
-6. `references/config-analysis.md`
-7. `references/cicd-analysis.md`
-8. `references/testing-analysis.md`
-9. `references/code-quality.md`
-10. `references/api-design-analysis.md`
-11. `references/data-layer-analysis.md`
-12. `references/documentation-analysis.md`
-13. `references/report-generator.md`
+1. `references/tool-installer.md` {model: cheap}
+2. `references/version-alignment.md` (MANDATORY - stops if nvm fails) {model: cheap}
+3. `references/version-validator.md` (verification of nvm setup) {model: cheap}
+4. `references/test-coverage.md` (coverage generation) {model: cheap}
+5. `references/repository-inventory.md` {model: cheap}
+6. `references/config-analysis.md` {model: cheap}
+7. `references/cicd-analysis.md` {model: mid}
+8. `references/testing-analysis.md` {model: mid}
+9. `references/code-quality.md` {model: mid}
+10. `references/api-design-analysis.md` {model: mid}
+11. `references/data-layer-analysis.md` {model: mid}
+12. `references/documentation-analysis.md` {model: cheap}
+13. `references/report-generator.md` {model: frontier}
 
 **Wave-Based Parallel Execution**:
 - Wave 0 (Sequential): Step 0 — Environment Setup (rules 1-4)
@@ -335,6 +349,36 @@ mkdir -p reports
 - Comprehensive dependency management for monorepos
 - Complete nvm configuration enforcement
 - Full project environment setup with all dependencies
+
+## Subagent Dispatch (in-session)
+
+This section describes the in-session multi-agent path. The Rule Execution Order above remains the CLI (`somnio run`) path and is unchanged.
+
+**Entry point**: `agents/orchestrator.md` (`model: mid`). The orchestrator dispatches all subagents via the `Agent` tool, validates artifacts between waves, and hands the artifact manifest to the report writer.
+
+**Wave plan:**
+
+| Wave | Mode | Subagent(s) | Tier | Reference(s) covered | Artifact(s) produced |
+|------|------|-------------|------|----------------------|---------------------|
+| 0 | Sequential (MANDATORY gate) | `env-setup-agent` | cheap | tool-installer, version-alignment, version-validator, test-coverage | `step_00_env_setup.md`, `step_00_test_coverage.md` |
+| 1 | Parallel | `repo-analyzer`, `config-analyzer` | cheap, cheap | repository-inventory, config-analysis | `step_01_repository_inventory.md`, `step_02_config_analysis.md` |
+| 2 | Parallel | `cicd-analyzer`, `testing-analyzer`, `code-quality-analyzer` | mid, mid, mid | cicd-analysis, testing-analysis, code-quality | `step_03_cicd_analysis.md`, `step_04_testing_analysis.md`, `step_05_code_quality.md` |
+| 3 | Parallel | `api-design-analyzer`, `data-layer-analyzer` | mid, mid | api-design-analysis, data-layer-analysis | `step_06_api_design_analysis.md`, `step_07_data_layer_analysis.md` |
+| 4 | Sequential | `docs-analyzer` | cheap | documentation-analysis | `step_08_documentation_analysis.md` |
+| 5 | Sequential | `report-writer-agent` | frontier | report-generator, report-format-enforcer, assets/report-template.md | `reports/nestjs_audit.md` |
+
+**Orchestrator behavior:**
+- Wave 0 is the only hard-stop gate: if `env-setup-agent` emits `Result: FAILED`, the orchestrator halts and surfaces resolution steps.
+- For any non-mandatory artifact missing after a wave: retry the responsible agent once; if the artifact is still absent, log the skip and mark the section as Unavailable in the manifest.
+- The orchestrator NEVER reads source code or writes prose.
+
+**Report writer behavior:**
+- Reads all ten artifacts produced by Waves 0–4.
+- Computes 8 weighted section scores and overall score per `references/report-generator.md` (weights: Tech Stack 0.20, Architecture 0.20, API Design 0.20, Data Layer 0.11, Testing 0.11, Code Quality 0.11, Docs & Ops 0.035, CI/CD 0.035).
+- Enforces the mandatory 16-section structure per `references/report-format-enforcer.md`.
+- Performs cross-section score reconciliation (e.g., low Testing score modulates Code Quality narrative).
+- Writes `reports/nestjs_audit.md` and appends the metadata block.
+- NEVER re-reads raw source files.
 
 ## Report Metadata (MANDATORY)
 

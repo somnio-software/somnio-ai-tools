@@ -7,13 +7,15 @@
 Goal: Analyze the quality, structure, and best practices of Flutter
 test files.
 
-STANDARDS SOURCE (local):
-- `agent-rules/rules/flutter/testing.md`
-- `agent-rules/rules/flutter/bloc-test.md`
+STANDARDS SOURCE (local-first, then live):
+- local: `agent-rules/rules/flutter/testing.md`
+  raw:   https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/flutter/testing.md
+- local: `agent-rules/rules/flutter/bloc-test.md`
+  raw:   https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/flutter/bloc-test.md
 
-To resolve the absolute path: find the directory containing
-`skills/flutter-best-practices/SKILL.md`, go up two levels to reach
-the somnio-ai-tools repository root, then read the files above.
+RESOLUTION ORDER (per rule, never assume the file is on disk):
+1. If `agent-rules/` exists in the repo, USE the `Read` tool on the local path above.
+2. If `agent-rules/` is absent (standalone install), USE the `WebFetch` tool on the matching raw URL.
 
 INSTRUCTIONS:
 1.  **SCOPE**: You must analyze **ALL** test files in the project.
@@ -21,8 +23,7 @@ INSTRUCTIONS:
      -type f -name "*_test.dart" -not -path "*/.*" 2>/dev/null | \
      wc -l)"` to count test files. Then use `glob_file_search` with
      pattern `**/*_test.dart` to find all test files for analysis.
- 3.  **STANDARDS**: USE the `Read` tool to read the local standards
-     files listed above.
+ 3.  **STANDARDS**: Resolve each standards file via the RESOLUTION ORDER above.
  4.  **EFFICIENCY**: When iterating through files, read 3-5 files per
      response using parallel tool calls. Do NOT read one file per
      response — this causes massive context accumulation. Group files

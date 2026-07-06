@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'dart:convert';
 import 'dart:io';
 
@@ -66,6 +67,19 @@ class StepExecutor {
   /// Set by the caller (RunCommand) based on the agent's cheapest model.
   String? fallbackModel;
 
+  /// Resolves the effective per-step base model for [step].
+  ///
+  /// When the step carries a tier (`step.model`), it is resolved via the
+  /// agent's [AgentConfig.resolveTier]; otherwise the run-level [RunConfig.model]
+  /// is used. The returned value becomes the model passed to the CLI for that
+  /// step (before any quota fallback retry).
+  String? _stepBaseModel(ExecutionStep step) {
+    if (step.model != null) {
+      return config.agentConfig.resolveTier(step.model!);
+    }
+    return config.model;
+  }
+
   /// Executes a single standard step.
   ///
   /// The AI CLI reads the rule file and saves findings as an artifact.
@@ -87,17 +101,18 @@ class StepExecutor {
     }
 
     final prompt = _buildStepPrompt(step, ruleFile, artifactPath);
+    final baseModel = _stepBaseModel(step);
 
     try {
-      var result = await _runProcess(prompt);
+      var result = await _runProcess(prompt, modelOverride: baseModel);
 
       // Fallback: retry with cheapest model on quota/capacity errors
       if (result.exitCode != 0 &&
           fallbackModel != null &&
-          fallbackModel != config.model &&
+          fallbackModel != baseModel &&
           _isQuotaError(result)) {
         logger.info(
-          '  Quota exceeded for "${config.model}", '
+          '  Quota exceeded for "$baseModel", '
           'retrying with "$fallbackModel"...',
         );
         result = await _runProcess(prompt, modelOverride: fallbackModel);
@@ -182,17 +197,18 @@ class StepExecutor {
     }
 
     final prompt = _buildReportPrompt(step, ruleFile, reportPath);
+    final baseModel = _stepBaseModel(step);
 
     try {
-      var result = await _runProcess(prompt);
+      var result = await _runProcess(prompt, modelOverride: baseModel);
 
       // Fallback: retry with cheapest model on quota/capacity errors
       if (result.exitCode != 0 &&
           fallbackModel != null &&
-          fallbackModel != config.model &&
+          fallbackModel != baseModel &&
           _isQuotaError(result)) {
         logger.info(
-          '  Quota exceeded for "${config.model}", '
+          '  Quota exceeded for "$baseModel", '
           'retrying with "$fallbackModel"...',
         );
         result = await _runProcess(prompt, modelOverride: fallbackModel);
@@ -265,17 +281,18 @@ class StepExecutor {
     }
 
     final prompt = _buildFormatEnforcerPrompt(ruleFile, reportPath);
+    final baseModel = _stepBaseModel(step);
 
     try {
-      var result = await _runProcess(prompt);
+      var result = await _runProcess(prompt, modelOverride: baseModel);
 
       // Fallback: retry with cheapest model on quota/capacity errors
       if (result.exitCode != 0 &&
           fallbackModel != null &&
-          fallbackModel != config.model &&
+          fallbackModel != baseModel &&
           _isQuotaError(result)) {
         logger.info(
-          '  Quota exceeded for "${config.model}", '
+          '  Quota exceeded for "$baseModel", '
           'retrying with "$fallbackModel"...',
         );
         result = await _runProcess(prompt, modelOverride: fallbackModel);

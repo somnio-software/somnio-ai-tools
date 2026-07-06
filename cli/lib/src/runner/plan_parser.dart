@@ -3,6 +3,14 @@ import 'run_config.dart';
 /// Parses the "Rule Execution Order" section from a plan.md file
 /// to extract ordered execution steps.
 class PlanParser {
+  /// Matches a trailing per-step tier token, e.g. ` {model: frontier}`.
+  ///
+  /// Captures the tier name (group 1). Tolerant of optional surrounding
+  /// whitespace inside the braces. Deliberately narrow so it never matches a
+  /// parenthetical `(...)` annotation or MANDATORY text.
+  static final RegExp _modelTokenPattern =
+      RegExp(r'\{\s*model:\s*([\w-]+)\s*\}');
+
   /// Parses plan content and returns ordered execution steps.
   ///
   /// Expects a section like:
@@ -45,7 +53,22 @@ class PlanParser {
         final index = int.parse(match.group(1)!);
         // Group 2 = references/ format, Group 3 = legacy @format
         final ruleName = match.group(2) ?? match.group(3)!;
-        final remainder = match.group(4)?.trim() ?? '';
+        var remainder = match.group(4)?.trim() ?? '';
+
+        // Capture an optional trailing tier token: `{model: cheap}`.
+        // Strip it from the remainder BEFORE MANDATORY / parenthetical
+        // annotation parsing so it never pollutes those, and so a tier token
+        // never collides with an existing `(...)` annotation.
+        String? model;
+        final modelMatch = _modelTokenPattern.firstMatch(remainder);
+        if (modelMatch != null) {
+          model = modelMatch.group(1);
+          remainder = remainder.replaceRange(
+            modelMatch.start,
+            modelMatch.end,
+            '',
+          ).trim();
+        }
 
         // Check for MANDATORY annotation
         final isMandatory = remainder.toUpperCase().contains('MANDATORY');
@@ -62,6 +85,7 @@ class PlanParser {
           ruleName: ruleName,
           isMandatory: isMandatory,
           annotation: annotation,
+          model: model,
         ));
       } else if (foundFirstStep && line.trim().isEmpty) {
         // Stop at first blank line after the list starts

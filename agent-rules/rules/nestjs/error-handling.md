@@ -1,9 +1,6 @@
 ---
 description: Consistent error handling patterns for NestJS - avoid magic strings, use structured approaches.
-globs:
-  - "**/*exception*.ts"
-  - "**/*error*.ts"
-  - "**/*filter*.ts"
+globs: src/**/*exception*.ts, src/**/*error*.ts, src/**/*filter*.ts
 alwaysApply: false
 ---
 

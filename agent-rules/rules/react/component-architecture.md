@@ -1,6 +1,6 @@
 ---
 description: React component architecture including file structure, naming conventions, composition patterns, and folder organization.
-globs: **/*.tsx
+globs: src/**/*.tsx
 alwaysApply: false
 ---
 

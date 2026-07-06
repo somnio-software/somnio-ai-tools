@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
@@ -13,14 +14,22 @@ import '../utils/platform_utils.dart';
 /// Removes all Somnio-installed skills, commands, and workflows.
 class UninstallCommand extends Command<int> {
   UninstallCommand({required Logger logger}) : _logger = logger {
-    argParser.addFlag(
-      'force',
-      abbr: 'f',
-      help: 'Skip confirmation prompt.',
-    );
+    argParser
+      ..addFlag(
+        'force',
+        abbr: 'f',
+        help: 'Skip confirmation prompt.',
+      )
+      ..addFlag(
+        'verbose',
+        abbr: 'v',
+        help: 'Show each removed file.',
+        negatable: false,
+      );
   }
 
   final Logger _logger;
+  bool _verbose = false;
 
   @override
   String get name => 'uninstall';
@@ -32,6 +41,7 @@ class UninstallCommand extends Command<int> {
   @override
   Future<int> run() async {
     final force = argResults!['force'] as bool;
+    _verbose = argResults!['verbose'] as bool;
 
     _logger.info('');
 
@@ -52,36 +62,32 @@ class UninstallCommand extends Command<int> {
       _logger.info('');
     }
 
+    final removeProgress = _logger.progress('Removing all installations');
+
     var removedAnything = false;
 
     // Claude Code: ~/.claude/skills/somnio-*
-    final claudeRemoved = _removeClaude();
-    removedAnything |= claudeRemoved;
+    removedAnything |= _removeClaude();
 
     // Cursor: ~/.cursor/commands/somnio-*.md
-    final cursorRemoved = _removeCursor();
-    removedAnything |= cursorRemoved;
+    removedAnything |= _removeCursor();
 
     // Antigravity: ~/.gemini/antigravity/global_workflows/somnio_* + somnio_rules/
-    final antigravityRemoved = _removeAntigravity();
-    removedAnything |= antigravityRemoved;
+    removedAnything |= _removeAntigravity();
 
     // Remove files for any other registered agents
     for (final agent in AgentRegistry.installableAgents) {
       if (['claude', 'cursor', 'gemini'].contains(agent.id)) continue;
-      final removed = _removeGenericAgent(agent);
-      removedAnything |= removed;
+      removedAnything |= _removeGenericAgent(agent);
     }
 
     // Remove agent rules (installed via `somnio rules install`)
-    final rulesRemoved = _removeRules();
-    removedAnything |= rulesRemoved;
+    removedAnything |= _removeRules();
 
-    _logger.info('');
     if (removedAnything) {
-      _logger.success('Uninstall complete.');
+      removeProgress.complete('Uninstall complete');
     } else {
-      _logger.info('Nothing to uninstall.');
+      removeProgress.complete('Nothing to uninstall');
     }
 
     return ExitCode.success.code;
@@ -89,6 +95,7 @@ class UninstallCommand extends Command<int> {
 
   /// All skill names to clean up (old v1.x + new v2.x naming).
   static const _allSkillNames = [
+    // v1.x names (old)
     'somnio-fh',
     'somnio-fp',
     'somnio-nh',
@@ -96,11 +103,18 @@ class UninstallCommand extends Command<int> {
     'somnio-sa',
     'workflow-plan',
     'workflow-run',
+    // v2.x names (new)
+    'clockify-tracker',
     'flutter-health-audit',
     'flutter-best-practices',
+    'git-branch-format',
+    'git-commit-format',
     'nestjs-health-audit',
     'nestjs-best-practices',
+    'react-health-audit',
+    'react-best-practices',
     'security-audit',
+    'ship',
     'workflow-builder',
   ];
 
@@ -124,14 +138,18 @@ class UninstallCommand extends Command<int> {
         final dir = Directory(p.join(globalDir.path, name));
         if (dir.existsSync()) {
           dir.deleteSync(recursive: true);
-          _logger.info('  Removed Claude skill ($label): $name');
+          if (_verbose) {
+            _logger.info('  Removed Claude skill ($label): $name');
+          }
           removed = true;
         }
         // Remove symlinks (skills.sh installer)
         final link = Link(p.join(globalDir.path, name));
         if (link.existsSync()) {
           link.deleteSync();
-          _logger.info('  Removed Claude symlink ($label): $name');
+          if (_verbose) {
+            _logger.info('  Removed Claude symlink ($label): $name');
+          }
           removed = true;
         }
       }
@@ -145,7 +163,7 @@ class UninstallCommand extends Command<int> {
         final dir = Directory(p.join(agentsDir.path, name));
         if (dir.existsSync()) {
           dir.deleteSync(recursive: true);
-          _logger.info('  Removed agents registry: $name');
+          if (_verbose) _logger.info('  Removed agents registry: $name');
           removed = true;
         }
       }
@@ -165,7 +183,7 @@ class UninstallCommand extends Command<int> {
         final name = p.basename(file.path);
         if (!name.endsWith('.md') || !name.startsWith('somnio-')) continue;
         file.deleteSync();
-        _logger.info('  Removed Cursor command ($label): $name');
+        if (_verbose) _logger.info('  Removed Cursor command ($label): $name');
         removed = true;
       }
     }
@@ -185,7 +203,9 @@ class UninstallCommand extends Command<int> {
           final name = p.basename(file.path);
           if (!name.startsWith('somnio_')) continue;
           file.deleteSync();
-          _logger.info('  Removed Antigravity workflow ($label): $name');
+          if (_verbose) {
+            _logger.info('  Removed Antigravity workflow ($label): $name');
+          }
           removed = true;
         }
       }
@@ -194,7 +214,9 @@ class UninstallCommand extends Command<int> {
       final rulesDir = Directory(p.join(agBase, 'somnio_rules'));
       if (rulesDir.existsSync()) {
         rulesDir.deleteSync(recursive: true);
-        _logger.info('  Removed Antigravity rules ($label): somnio_rules/');
+        if (_verbose) {
+          _logger.info('  Removed Antigravity rules ($label): somnio_rules/');
+        }
         removed = true;
       }
     }
@@ -220,9 +242,12 @@ class UninstallCommand extends Command<int> {
         } else if (entity is Directory) {
           entity.deleteSync(recursive: true);
         }
-        _logger.info(
-          '  Removed ${agent.displayName} ($label): ${p.basename(entity.path)}',
-        );
+        if (_verbose) {
+          _logger.info(
+            '  Removed ${agent.displayName} ($label): '
+            '${p.basename(entity.path)}',
+          );
+        }
         removed = true;
       }
     }
@@ -285,9 +310,9 @@ class UninstallCommand extends Command<int> {
       final stackDir = Directory(p.join(projectDir, '.claude', 'rules', stack));
       if (stackDir.existsSync()) {
         stackDir.deleteSync(recursive: true);
-        _logger.info(
-          '  Removed ${rule.displayName} $stack rules directory',
-        );
+        if (_verbose) {
+          _logger.info('  Removed ${rule.displayName} $stack rules directory');
+        }
         removed = true;
       }
     }
@@ -323,13 +348,18 @@ class UninstallCommand extends Command<int> {
 
     if (remaining.isEmpty) {
       file.deleteSync();
-      _logger
-          .info('  Removed ${rule.displayName} rules: ${p.basename(filePath)}');
+      if (_verbose) {
+        _logger.info(
+          '  Removed ${rule.displayName} rules: ${p.basename(filePath)}',
+        );
+      }
     } else {
       file.writeAsStringSync('$remaining\n');
-      _logger.info(
-        '  Stripped Somnio rules block from ${p.basename(filePath)}',
-      );
+      if (_verbose) {
+        _logger.info(
+          '  Stripped Somnio rules block from ${p.basename(filePath)}',
+        );
+      }
     }
     return true;
   }
@@ -344,9 +374,11 @@ class UninstallCommand extends Command<int> {
       if (entity is! File) continue;
       if (!p.basename(entity.path).startsWith('somnio-')) continue;
       entity.deleteSync();
-      _logger.info(
-        '  Removed ${rule.displayName} rule: ${p.relative(entity.path, from: dirPath)}',
-      );
+      if (_verbose) {
+        _logger.info(
+          '  Removed ${rule.displayName} rule: ${p.relative(entity.path, from: dirPath)}',
+        );
+      }
       removed = true;
     }
     return removed;

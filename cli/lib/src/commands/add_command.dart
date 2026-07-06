@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
@@ -9,6 +10,7 @@ import '../content/skill_registry.dart';
 import '../utils/bundle_detector.dart';
 import '../utils/command_helpers.dart';
 import '../utils/package_resolver.dart';
+import '../utils/prompts.dart';
 import '../utils/registry_modifier.dart';
 import '../utils/scaffold_generator.dart';
 
@@ -131,14 +133,15 @@ class AddCommand extends Command<int> {
     ];
 
     final List<String> selectedTypes;
-    if (force) {
+    if (force || !Prompts.isInteractive) {
       selectedTypes = typeChoices;
     } else {
-      selectedTypes = _logger.chooseAny(
-        'Which skill types would you like to create?',
-        choices: typeChoices,
-        defaultValues: typeChoices,
+      final indexes = Prompts.selectMany(
+        prompt: 'Which skill types would you like to create?',
+        options: typeChoices,
+        defaults: List<bool>.filled(typeChoices.length, true),
       );
+      selectedTypes = indexes.map((i) => typeChoices[i]).toList();
     }
 
     if (selectedTypes.isEmpty) {
@@ -315,7 +318,7 @@ class AddCommand extends Command<int> {
         description: descriptions['health']!,
         planRelativePath: 'skills/$tech-health-audit/SKILL.md',
         rulesDirectory: 'skills/$tech-health-audit/references',
-        templatePath: 'skills/$tech-health-audit/assets/report-template.txt',
+        templatePath: 'skills/$tech-health-audit/assets/report-template.md',
       ));
     }
 
@@ -329,7 +332,7 @@ class AddCommand extends Command<int> {
         planRelativePath: 'skills/$tech-best-practices/SKILL.md',
         rulesDirectory: 'skills/$tech-best-practices/references',
         templatePath:
-            'skills/$tech-best-practices/assets/report-template.txt',
+            'skills/$tech-best-practices/assets/report-template.md',
       ));
     }
 

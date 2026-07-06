@@ -1,7 +1,30 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 import 'package:somnio/src/workflow/workflow_step.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('loadFrom', () {
+    test('returns null when the file does not exist', () {
+      final tmp = Directory.systemTemp.createTempSync('somnio_step_load_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      expect(WorkflowStep.loadFrom(p.join(tmp.path, 'missing.md')), isNull);
+    });
+
+    test('parses a step file from disk', () {
+      final tmp = Directory.systemTemp.createTempSync('somnio_step_load_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final file = File(p.join(tmp.path, '01-step.md'))
+        ..writeAsStringSync('---\nname: Analyze\nindex: 1\n---\n\n# Body\n');
+
+      final step = WorkflowStep.loadFrom(file.path);
+
+      expect(step, isNotNull);
+      expect(step!.name, 'Analyze');
+    });
+  });
+
   group('WorkflowStep', () {
     group('parse', () {
       test('parses step with full frontmatter and body', () {

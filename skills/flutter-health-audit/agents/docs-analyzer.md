@@ -38,7 +38,7 @@ description: |
   Build command and environment variable documentation is critical for Flutter projects that use --dart-define, and the docs-analyzer checks this specifically.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: blue
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

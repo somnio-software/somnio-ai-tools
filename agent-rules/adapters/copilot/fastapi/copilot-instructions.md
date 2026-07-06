@@ -1,0 +1,203 @@
+# Somnio Coding Standards — GitHub Copilot (Fastapi)
+
+Follow these standards in all code suggestions.
+
+### FastAPI concurrency — async def vs def handler choice, never blocking the event loop, run_in_threadpool offload, and BackgroundTasks vs a real task queue.
+> Applies to: `**/*.py`
+
+## Rules
+
+1. Choose handler type by the official rule: `async def` only when the function body `await`s async-native libraries; plain `def` for blocking libraries; plain `def` when unsure. ([async])
+2. Never call blocking I/O or `time.sleep` inside an `async def` handler without `await`. ([async], [zk])
+3. When you must invoke a synchronous function from an `async def` context, wrap it with `await run_in_threadpool(sync_fn, *args)`. ([zk])
+4. Offload CPU-bound work to a task queue (Celery, ARQ) or worker process — do not use `run_in_threadpool` for CPU-bound code. ([zk])
+5. Use `BackgroundTasks` only for short, non-critical, fire-and-forget work that tolerates silent failure on process restart; use a real task queue for anything that must be retried or audited. ([bg], [zk])
+
+---
+
+**Citation URLs**
+
+- [async] https://fastapi.tiangolo.com/async/
+- [bg] https://fastapi.tiangolo.com/tutorial/background-tasks/
+- [zk] https://github.com/zhanymkanov/fastapi-best-practices
+
+## Rules
+
+- **Choose handler type by the official rule:** if the path operation function uses `await`-able (async) libraries, declare it `async def`; if it calls blocking (synchronous) libraries, declare it as a plain `def` so FastAPI runs it in an external thread pool automatically; when unsure, default to plain `def` — this is safer than a wrong `async def` that blocks the event loop ([async]).
+- **Never block the event loop inside `async def`:** calling synchronous blocking I/O (database drivers without async support, `requests`, `time.sleep`, `open()` for large files) directly inside an `async def` handler stalls every other concurrent request on the same process ([async], [zk]).
+- **Wrap unavoidable blocking calls with `run_in_threadpool`:** when you must call a synchronous function from within an `async def` context (e.g., a sync helper you cannot rewrite), use `starlette.concurrency.run_in_threadpool` to offload it to the thread pool and `await` the result ([zk]).
+- **CPU-bound work belongs in a task queue or worker process:** CPU-intensive operations (image processing, ML inference, large data transforms) must not run in the event loop or even the I/O thread pool — they block threads and starve other requests; delegate to Celery, ARQ, or a subprocess ([zk]).
+- **Use `BackgroundTasks` only for short, non-critical post-response work:** `BackgroundTasks` runs in the same process after the response is sent and provides no retry, persistence, or failure handling; it is appropriate for fire-and-forget notifications or lightweight audit writes, not for operations where failure matters ([bg]).
+- **Promote to a real task queue when work is heavy, long-running, or must be retried:** Celery, ARQ, or equivalent queues provide durability, retries, monitoring, and worker isolation that `BackgroundTasks` cannot offer ([bg], [zk]).
+
+- Avoid declaring a handler `async def` and calling a blocking driver (psycopg2, `requests`, `boto3` sync client, `time.sleep`) directly inside it — this freezes the entire event loop and kills concurrency ([async], [zk]).
+- Avoid using `BackgroundTasks` for critical work such as sending transactional emails, processing payments, or writing primary records — if the process restarts mid-task the work is silently lost ([bg], [zk]).
+- Avoid running CPU-bound computation (e.g., Pillow image resize, `pandas` aggregations) inside an `async def` handler — this blocks the event loop just as much as synchronous I/O ([zk]).
+- Avoid wrapping a CPU-bound function with `run_in_threadpool` — the GIL means threads do not parallelize Python CPU work; use a multiprocessing-based task queue instead ([zk]).
+- Avoid mixing `async def` and `def` handlers without understanding which thread context each runs in — `def` handlers run in a thread pool and may safely call blocking code; `async def` handlers run on the event loop and must not ([async]).
+
+---
+
+### FastAPI data, config, and testing — session-per-request yield dependency, table-model vs API-schema separation, pydantic-settings via lru_cache dependency, and TestClient/AsyncClient with dependency_overrides.
+> Applies to: `**/*.py`
+
+## Rules
+
+1. Session-per-request only: provide the DB session exclusively through a `yield` dependency; never hold a module-level or global session. ([sql])
+2. Keep table models (SQLModel `table=True` / SQLAlchemy `Base`) separate from API schemas; map to a `*Public`/`*Response` schema before returning. ([sql])
+3. Partial updates must use an all-optional `*Update` model and `model_dump(exclude_unset=True)` — never overwrite fields the client did not send. ([sql])
+4. Centralise config in `pydantic-settings` `BaseSettings`; expose it only through a `@lru_cache` dependency; no scattered `os.environ` calls. ([settings], [zk])
+5. **CONTESTED — async vs sync DB. Default: sync session + `def` handlers** (threadpool, per official docs); use async session only when the full driver chain is awaitable. ([async], [sql])
+6. Sync-route tests: use `TestClient` with plain `def` test functions. Async-route tests that must share the event loop: use `AsyncClient` + `ASGITransport` inside an async-aware test decorator. ([testing], [async-tests])
+7. Override real dependencies with `app.dependency_overrides` in tests; always reset the overrides after each test. ([test-deps])
+
+---
+
+**Citation sources:**
+- [sql] https://fastapi.tiangolo.com/tutorial/sql-databases/
+- [response-model] https://fastapi.tiangolo.com/tutorial/response-model/
+- [settings] https://fastapi.tiangolo.com/advanced/settings/
+- [testing] https://fastapi.tiangolo.com/tutorial/testing/
+- [async-tests] https://fastapi.tiangolo.com/advanced/async-tests/
+- [test-deps] https://fastapi.tiangolo.com/advanced/testing-dependencies/
+- [async] https://fastapi.tiangolo.com/async/
+- [zk] https://github.com/zhanymkanov/fastapi-best-practices
+
+## Rules
+
+- Provide the database session as a `yield` dependency injected through an annotated type alias (`SessionDep = Annotated[Session, Depends(get_session)]`); never hold a global session across requests. ([sql])
+- Keep SQLModel/SQLAlchemy table models strictly separate from Pydantic API schemas; never return an ORM row directly from a route. ([sql], [response-model])
+- Implement partial updates by declaring all fields optional in a `*Update` model and applying `model_dump(exclude_unset=True)` before writing to the DB. ([sql])
+- Centralise application configuration in a `pydantic-settings` `BaseSettings` subclass; expose it exclusively through a `@lru_cache` dependency (`get_settings()`) so the environment is read once and overrideable in tests. ([settings], [zk])
+- Prefer `os.environ` / `.env` files managed by `pydantic-settings`; never scatter `os.environ.get(...)` calls across modules. ([settings])
+- Write sync tests with `TestClient` and plain `def` test functions; `TestClient` manages its own event loop and does not require async test support. ([testing])
+- Use httpx `AsyncClient` with `ASGITransport(app=app)` inside `@pytest.mark.anyio` (or equivalent) tests only when you need to exercise async code in the same event loop — not as a default. ([async-tests], [zk])
+- Swap real dependencies for test doubles via `app.dependency_overrides[real_dep] = fake_dep`; always reset the overrides dict after each test (e.g. in a fixture teardown or `finally` block). ([test-deps], [settings])
+- For async DB: only reach for an async session + `AsyncClient` when the entire driver chain is awaitable (e.g. `asyncpg`/`aiosqlite`); mixing sync and async drivers silently deadlocks. ([async], [sql])
+
+**CONTESTED — async vs sync DB.** The official FastAPI docs demonstrate a sync `Session` with `def` handlers running in a threadpool as the primary example [sql]. An async `AsyncSession` with `async def` handlers is valid but requires the full driver chain to be async [async]. **Default chosen: sync session + `def` handlers** (threadpool). Use async only when the whole driver stack is awaitable and the performance requirement justifies the added complexity.
+
+- Avoid opening a DB session inline inside a handler instead of injecting it as a `yield` dependency — the session is never properly closed on exceptions. ([sql])
+- Avoid returning ORM model instances directly from routes — leaks internal columns, `hashed_password`, and server-controlled fields to callers. ([sql], [response-model])
+- Avoid reusing one `*Create` schema for updates without making all fields optional — forces clients to resend unchanged values and breaks partial-patch semantics. ([sql])
+- Avoid reading config with bare `os.environ.get(...)` calls spread across the codebase — impossible to override consistently in tests. ([settings])
+- Avoid writing `async def` tests that call the sync `TestClient` — `TestClient` internally runs its own event loop and raises a `RuntimeError` when called from inside a running loop. ([async-tests])
+- Avoid forgetting to reset `dependency_overrides` after a test — overrides leak into subsequent tests and cause hard-to-diagnose failures. ([test-deps])
+- Avoid hitting real infrastructure (network, production DB) in unit tests instead of overriding dependencies — tests become slow, flaky, and environment-dependent. ([test-deps])
+
+---
+
+### FastAPI dependency injection — Depends, sub-dependency composition, per-request caching, and yield dependencies with correct setup/teardown and re-raise discipline.
+> Applies to: `**/*.py`
+
+## Rules
+
+1. Extract every shared request concern (auth, pagination, existence checks, DB sessions) into a `Depends`-injected function; never duplicate this logic in handlers.
+2. Manage every resource that requires teardown (DB sessions, HTTP clients, file handles) via a `yield` dependency inside a `try/finally` block — never open such resources inline in a handler.
+3. In any `yield` dependency, re-raise every caught exception you are not deliberately converting to an `HTTPException`; swallowing exceptions silently is forbidden.
+4. Rely on FastAPI's per-request dependency caching; do not hand-memoize dependency results or store them in module-level state.
+5. Use `async def` for trivial non-I/O dependencies; use plain `def` only when the dependency itself performs blocking work.
+6. Keep path-parameter names consistent in reusable existence-check dependencies so they are shareable across routes without modification.
+
+## Rules
+
+- Use `Depends` for every shared cross-cutting concern (authentication, pagination parameters, resource existence checks, DB sessions, rate limiting) — do not duplicate this logic in handlers. ([zk](https://github.com/zhanymkanov/fastapi-best-practices), [deps-yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/))
+- Compose sub-dependencies freely: a dependency can itself declare `Depends` parameters; FastAPI resolves the full graph automatically. ([deps-yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/), [zk](https://github.com/zhanymkanov/fastapi-best-practices))
+- Rely on FastAPI's per-request dependency caching — within a single request, the same dependency class/function is called only once and its result is shared with all dependants. Never hand-memoize or store the result in a module-level variable. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+- Use `yield` dependencies (with a `try/finally` block) for any resource that requires deterministic teardown: DB sessions, HTTP clients, file handles. Teardown runs in the reverse order of dependency resolution. ([deps-yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/))
+- You may `raise HTTPException` (or `raise WebSocketException`) after `yield` in a `yield` dependency to signal an error during teardown; however, any *other* exception caught inside the `yield` dep MUST be re-raised — swallowing it causes silent failure. ([deps-yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/))
+- Prefer `async def` for trivial non-I/O dependencies (parameter parsing, header extraction) so they run on the event loop without dispatching to the thread pool. Use plain `def` only when the dependency performs blocking work that cannot be awaited. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+- Keep path-parameter names consistent across reusable existence-check dependencies (e.g. always `user_id: int`) so the same `Depends` can be shared across multiple routes without renaming. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+
+- Avoid catching an exception inside a `yield` dependency without re-raising it: the exception is swallowed, teardown code still runs, but the error is never propagated to the caller — producing a silent 200 or an unrelated downstream failure. ([deps-yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/))
+- Avoid opening DB sessions, HTTP clients, or other resources inline inside a route handler instead of via a `yield` dependency: the resource is never reliably closed on errors, leading to connection leaks. ([deps-yield](https://fastapi.tiangolo.com/tutorial/dependencies/dependencies-with-yield/))
+- Avoid manually caching or re-running a dependency that FastAPI already caches per request — this duplicates work and can produce stale or inconsistent state within the same request lifecycle. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+- Avoid placing business logic or database queries directly in a route handler that could instead be extracted into a `Depends` — this prevents reuse and makes testing harder. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+
+---
+
+### FastAPI exception handling — raise HTTPException, centralized app exception handlers, overriding Starlette HTTPException, and translating domain errors to HTTP at the boundary. Layers on the python stack's error-handling rules.
+> Applies to: `**/*.py`
+
+## Rules
+
+1. Always `raise HTTPException(status_code=..., detail=...)` — never assign it to a variable and return it.
+2. Translate domain exceptions to HTTP responses in a centralized `@app.exception_handler` registration, not via per-route `try/except` blocks.
+3. Register exception handlers against Starlette's `HTTPException` (`from starlette.exceptions import HTTPException`) so middleware and internal framework errors are captured alongside application errors.
+4. Override `RequestValidationError` with a custom handler that returns a 4xx response; never allow Pydantic validation failures to surface as 500s.
+5. Define per-domain exception classes in each domain's `exceptions.py` and raise `HTTPException` (or let a registered handler translate) only at the HTTP boundary — service and repository code must not import from `fastapi` or `starlette`.
+6. When adding logging to a default handler, `await` the original FastAPI/Starlette default handler from within your override rather than reimplementing response construction.
+
+## Rules
+
+- Always `raise HTTPException(status_code=..., detail=..., headers=...)` — never `return` an `HTTPException` instance. Returning it produces a 200 response with the exception object as the body; only raising it activates FastAPI's error machinery. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Register centralized exception handlers with `@app.exception_handler(MyDomainError)` to translate domain exceptions to HTTP responses in one place rather than scattering `try/except` across route handlers. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- When overriding the built-in `HTTPException` handler, register against **Starlette's** `HTTPException` (`from starlette.exceptions import HTTPException`) — not FastAPI's re-export — so that errors raised internally by middleware and Starlette itself are also captured. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Override `RequestValidationError` with a custom `@app.exception_handler(RequestValidationError)` to control the shape of 422 responses; never let validation errors fall through to a 500. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Inside a custom exception handler that replaces a default FastAPI handler, `await` the original default handler (e.g. `await http_exception_handler(request, exc)`) when you only need to add logging — this keeps the default behavior while adding observability without duplicating response-building logic. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Define per-domain exception classes (e.g. `ItemNotFoundError`, `InsufficientFundsError`) in each domain's `exceptions.py` and translate them to `HTTPException` at the router/handler boundary, not deep inside service or repository code. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+- For language-level exception design (custom exception hierarchies, EAFP, never swallowing), see `python/error-handling.md`.
+
+- Avoid `return HTTPException(status_code=404, detail="Not found")` instead of `raise`: the response status is 200 and the body is a serialized exception object; FastAPI's error handler is never invoked. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Avoid scattered per-route `try/except` blocks that build `JSONResponse` directly: produces inconsistent error shapes across endpoints and prevents centralized logging or monitoring. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Avoid overriding only FastAPI's `HTTPException` (imported from `fastapi`) and missing Starlette's: internal framework errors and middleware exceptions bypass the custom handler and may return an unexpected response format. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Avoid letting `RequestValidationError` fall through without a handler: Pydantic validation failures return a 422 by default, but without a handler you cannot customize the response shape, add structured logging, or map field errors to a client-friendly format — and misconfigurations can surface as 500s. ([errors](https://fastapi.tiangolo.com/tutorial/handling-errors/))
+- Avoid raising `HTTPException` deep inside a service or repository function: couples business logic to the HTTP layer, breaks reusability, and makes unit-testing services without a running app difficult. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+
+---
+
+### FastAPI project structure — domain-package layout, APIRouter modularization, and thin route handlers that delegate to a service layer. Layers on the python stack for language-level structure.
+> Applies to: `**/*.py`
+
+## Rules
+
+1. Create one `APIRouter` per domain/resource; register every router in `main.py` with `app.include_router(...)`. Never mount routes directly on `app` outside of `main.py`. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+2. Set `prefix`, `tags`, `dependencies`, and `responses` on the `APIRouter` constructor, not on individual route decorators. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+3. **CONTESTED — layout strategy.** Domain-driven packages (each feature owns `router.py` / `schemas.py` / `models.py` / `service.py` / `dependencies.py` / `exceptions.py`) is the **default** for any non-trivial app. Layout-by-type (`routers/`, `schemas/`, `models/` at the top level) is acceptable only for apps with three or fewer domains. Divergence from the default must be justified in a comment. [zk](https://github.com/zhanymkanov/fastapi-best-practices) vs [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+4. Route handlers must delegate all non-trivial logic to `service.py`. A handler body should be: validate/extract inputs → call service function → return the result. No inline queries, business rules, or external calls. [zk](https://github.com/zhanymkanov/fastapi-best-practices)
+5. Nest routers and version the API via route prefixes (e.g., `app.include_router(users_router, prefix="/api/v1")`). Version promotion requires no handler changes. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+
+## Rules
+
+- Create one `APIRouter` per resource or domain module and assemble all routers in `main.py` via `app.include_router(...)` — keeps the application object slim and the routing tree explicit. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+- Declare `prefix`, `tags`, `dependencies`, and `responses` once on the `APIRouter` object, never per-route decorator — a single change propagates across the whole domain. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+- Organize the codebase by domain/feature package; each package owns `router.py`, `schemas.py`, `models.py`, `service.py`, `dependencies.py`, and `exceptions.py`. A layout-by-type global namespace (`routers/`, `models/`, `schemas/`) is only acceptable for tiny proof-of-concept apps. [zk](https://github.com/zhanymkanov/fastapi-best-practices)
+- Keep business logic out of route handlers — handlers validate input, delegate to `service.py`, and return a response. No SQL queries, third-party calls, or domain logic in the handler body. [zk](https://github.com/zhanymkanov/fastapi-best-practices)
+- Nest routers and mount them under versioned prefixes (e.g., `/api/v1`) so version migration is a single `include_router` change. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+- For language-level concerns (absolute imports, `__init__`/`__all__` exports, layered/clean architecture, packaging via `pyproject.toml`) see `python/module-structure.md`.
+
+- Avoid registering all routes directly on the global `app` object — eliminates modularization and makes the app object a single point of change. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+- Avoid repeating `tags=`, `prefix=`, or shared `dependencies=` on every `@router.get(...)` / `@router.post(...)` decorator instead of setting them once on the router. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)
+- Avoid layout-by-type on a non-trivial application (a flat `routers/` dir full of mixed concerns) — causes cross-domain coupling and makes feature-level isolation impossible. [zk](https://github.com/zhanymkanov/fastapi-best-practices)
+- Avoid fat handlers containing SQL queries, complex business rules, or third-party calls inline — prevents unit testing the logic without spinning up a full HTTP server. [zk](https://github.com/zhanymkanov/fastapi-best-practices)
+
+---
+
+### FastAPI request/response schemas — Pydantic input models, dedicated response_model/return-type output models, and field filtering as a security boundary. Layers on the python stack's data-validation rules.
+> Applies to: `**/*.py`
+
+## Rules
+
+1. Every request body parameter and every route response must use a Pydantic model; bare `dict` return types and untyped `dict` bodies are forbidden.
+2. Declare a dedicated output model (e.g. `*Public`, `*Response`) per endpoint or endpoint group that excludes all secrets and server-controlled fields; never return an ORM instance directly.
+3. Structure schemas in per-operation families — `Base` / `*Create` / `*Update` (all fields `Optional`) / `*Public` — so that write-only, read-only, and mutable fields cannot be mixed accidentally.
+4. Prefer the return-type annotation (`-> MySchema`) over `response_model=MySchema`; use `response_model=` only when the return type and the serialized shape genuinely differ.
+5. Never use `response_model_include` or `response_model_exclude` as a security measure — they do not remove fields from the OpenAPI schema and must not be relied upon to hide sensitive data.
+6. Enforce input constraints (formats, ranges, cross-field invariants) with Pydantic validators that raise `ValueError`; FastAPI converts these automatically to a 422 with a structured error body.
+
+## Rules
+
+- Declare every request body and every response as a dedicated Pydantic model — never accept or return a bare `dict`. ([response-model](https://fastapi.tiangolo.com/tutorial/response-model/), [zk](https://github.com/zhanymkanov/fastapi-best-practices))
+- Always declare a distinct *output* model (e.g. `UserPublic`) that explicitly excludes server-controlled fields and secrets such as `hashed_password`, `internal_id`, or audit timestamps — output filtering is a **security boundary**, not a cosmetic choice. ([response-model](https://fastapi.tiangolo.com/tutorial/response-model/), [sql](https://fastapi.tiangolo.com/tutorial/sql-databases/))
+- Use per-operation model families: a shared `Base` carries common fields; `*Create` adds write-only fields; `*Update` makes every field `Optional` for partial updates; `*Public` is the safe read projection. This pattern avoids accidental field leakage as schemas evolve. ([sql](https://fastapi.tiangolo.com/tutorial/sql-databases/))
+- Prefer the **return-type annotation** on the path-operation function (e.g. `-> UserPublic`) over the `response_model=` parameter — it is more concise, is checked by type-checkers, and produces the same OpenAPI output. ([response-model](https://fastapi.tiangolo.com/tutorial/response-model/))
+- Surface input domain validation errors as `ValueError` (or a Pydantic `field_validator` raising `ValueError`) so FastAPI converts them automatically to a structured 422 response. ([zk](https://github.com/zhanymkanov/fastapi-best-practices))
+- Use `response_model_exclude_unset=True` on endpoints that return partial/sparse projections so fields that were never set are omitted from the JSON body rather than serialized as `null`. ([response-model](https://fastapi.tiangolo.com/tutorial/response-model/))
+- For field-level validation logic (formats, cross-field invariants, business constraints) defer to `python/data-validation.md`; this file covers only FastAPI-specific wiring of those models into route declarations and response filtering.
+
+- Avoid returning an ORM/table model instance directly from a route handler — this leaks columns such as `hashed_password` or internal foreign keys to the client. Always map the ORM row to a `*Public` Pydantic schema before returning. ([response-model](https://fastapi.tiangolo.com/tutorial/response-model/), [sql](https://fastapi.tiangolo.com/tutorial/sql-databases/))
+- Avoid using a single model for create, update, and read operations: a field required on creation (e.g. `password`) must not appear in read responses, and optional update fields must not accidentally become required on create. ([sql](https://fastapi.tiangolo.com/tutorial/sql-databases/))
+- Avoid relying on `response_model_include` or `response_model_exclude` to hide sensitive fields: FastAPI still generates an OpenAPI schema from the *full* model, so the excluded fields remain visible in the docs and in generated clients — this is **not a security mechanism**. ([response-model](https://fastapi.tiangolo.com/tutorial/response-model/))
+- Avoid skipping `response_model` / return-type annotations entirely and letting FastAPI serialize whatever the handler returns: this removes OpenAPI documentation, disables output validation, and makes future refactors silently break the API contract. ([response-model](https://fastapi.tiangolo.com/tutorial/response-model/))
+
+---

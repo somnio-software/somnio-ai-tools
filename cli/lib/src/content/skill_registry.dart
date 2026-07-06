@@ -6,7 +6,7 @@ import 'workflow_skill.dart';
 /// Each bundle maps to a set of source files in `skills/` and defines
 /// how they are installed into each agent.
 class SkillRegistry {
-  SkillRegistry._();
+  SkillRegistry._(); // coverage:ignore-line
 
   /// All registered skill bundles.
   static const List<SkillBundle> skills = [
@@ -28,7 +28,8 @@ class SkillRegistry {
       workflowPath:
           'skills/flutter-health-audit/.agent/workflows/flutter_health_audit.md',
       templatePath:
-          'skills/flutter-health-audit/assets/report-template.txt',
+          'skills/flutter-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/flutter-health-audit/agents',
     ),
     SkillBundle(
       id: 'flutter_plan',
@@ -47,7 +48,8 @@ class SkillRegistry {
       workflowPath:
           'skills/flutter-best-practices/.agent/workflows/flutter_best_practices.md',
       templatePath:
-          'skills/flutter-best-practices/assets/report-template.txt',
+          'skills/flutter-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/flutter-best-practices/agents',
     ),
     SkillBundle(
       id: 'nestjs_health',
@@ -67,7 +69,8 @@ class SkillRegistry {
       workflowPath:
           'skills/nestjs-health-audit/.agent/workflows/nestjs_health_audit.md',
       templatePath:
-          'skills/nestjs-health-audit/assets/report-template.txt',
+          'skills/nestjs-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/nestjs-health-audit/agents',
     ),
     SkillBundle(
       id: 'nestjs_plan',
@@ -87,7 +90,8 @@ class SkillRegistry {
       workflowPath:
           'skills/nestjs-best-practices/.agent/workflows/nestjs_best_practices.md',
       templatePath:
-          'skills/nestjs-best-practices/assets/report-template.txt',
+          'skills/nestjs-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/nestjs-best-practices/agents',
     ),
     SkillBundle(
       id: 'react_health',
@@ -107,7 +111,8 @@ class SkillRegistry {
       workflowPath:
           'skills/react-health-audit/.agent/workflows/react_health_audit.md',
       templatePath:
-          'skills/react-health-audit/assets/report-template.txt',
+          'skills/react-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/react-health-audit/agents',
     ),
     SkillBundle(
       id: 'react_plan',
@@ -127,7 +132,44 @@ class SkillRegistry {
       workflowPath:
           'skills/react-best-practices/.agent/workflows/react_best_practices.md',
       templatePath:
-          'skills/react-best-practices/assets/report-template.txt',
+          'skills/react-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/react-best-practices/agents',
+    ),
+    SkillBundle(
+      id: 'python_health',
+      name: 'python-health-audit',
+      aliases: ['somnio-ph', 'ph'],
+      displayName: 'Python Project Health Audit',
+      description:
+          'Execute a comprehensive Python Project Health Audit. '
+          'Analyzes tech stack, architecture, API/interface design, '
+          'data layer, testing, code quality, CI/CD, and documentation. '
+          'Produces a Google Docs-ready report with section scores and '
+          'weighted overall score.',
+      planRelativePath: 'skills/python-health-audit/SKILL.md',
+      rulesDirectory: 'skills/python-health-audit/references',
+      workflowPath:
+          'skills/python-health-audit/.agent/workflows/python_health_audit.md',
+      templatePath: 'skills/python-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/python-health-audit/agents',
+    ),
+    SkillBundle(
+      id: 'python_plan',
+      name: 'python-best-practices',
+      aliases: ['somnio-pp', 'pp'],
+      displayName: 'Python Best Practices Check',
+      description:
+          'Execute a micro-level Python code quality audit. '
+          'Validates code against live GitHub standards for typing, '
+          'code style, function design, data validation, error handling, '
+          'module structure, and testing. Produces a detailed violations '
+          'report with prioritized action plan.',
+      planRelativePath: 'skills/python-best-practices/SKILL.md',
+      rulesDirectory: 'skills/python-best-practices/references',
+      workflowPath:
+          'skills/python-best-practices/.agent/workflows/python_best_practices.md',
+      templatePath: 'skills/python-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/python-best-practices/agents',
     ),
     SkillBundle(
       id: 'security_audit',
@@ -147,7 +189,8 @@ class SkillRegistry {
       workflowPath:
           'skills/security-audit/.agent/workflows/security_audit.md',
       templatePath:
-          'skills/security-audit/assets/report-template.txt',
+          'skills/security-audit/assets/report-template.md',
+      agentsDirectory: 'skills/security-audit/agents',
     ),
   ];
 
@@ -209,6 +252,32 @@ class SkillRegistry {
       planRelativePath:
           'skills/ship/SKILL.md',
     ),
+    WorkflowSkill(
+      id: 'dart_model_from_json',
+      name: 'dart-model-from-json',
+      displayName: 'Dart Model from JSON',
+      description:
+          'Generates Dart model classes from a JSON structure using '
+          'json_annotation and equatable. Includes copyWith, fromJson, '
+          'toJson, and Equatable props. Handles nested objects and arrays.',
+      planRelativePath:
+          'skills/dart-model-from-json/SKILL.md',
+    ),
+    WorkflowSkill(
+      id: 'optimize_claude_config',
+      name: 'optimize-claude-config',
+      displayName: 'Optimize Claude Config',
+      description:
+          "Audits and optimizes a repository's Claude Code configuration so "
+          'path-scoped rules load lazily and CLAUDE.md stays a lightweight '
+          'always-loaded index. Migrates rule frontmatter to the native '
+          'lazy-load paths: form, validates every glob against the real file '
+          'tree (catching stale and over-broad patterns), slims redundant '
+          'CLAUDE.md content, and installs the read-not-create hook. Runs '
+          'audit-first with confirmation; pass --audit-only to skip applying.',
+      planRelativePath:
+          'skills/optimize-claude-config/SKILL.md',
+    ),
   ];
 
   /// Find a skill bundle by its ID.
@@ -224,6 +293,14 @@ class SkillRegistry {
     for (final skill in skills) {
       if (skill.name == name) return skill;
       if (skill.aliases.contains(name)) return skill;
+    }
+    return null;
+  }
+
+  /// Find a workflow skill by its id or name.
+  static WorkflowSkill? findWorkflowById(String idOrName) {
+    for (final skill in workflowSkills) {
+      if (skill.id == idOrName || skill.name == idOrName) return skill;
     }
     return null;
   }

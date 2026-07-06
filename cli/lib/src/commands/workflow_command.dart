@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
@@ -6,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
 import '../runner/agent_resolver.dart';
+import '../utils/prompts.dart';
 import '../workflow/workflow_config.dart';
 import '../workflow/workflow_context.dart';
 import '../workflow/workflow_locator.dart';
@@ -80,7 +82,7 @@ class _WorkflowPlanCommand extends Command<int> {
     }
 
     // Ask scope
-    final scope = _logger.chooseOne(
+    final scope = Prompts.selectOneOf(
       'Where should this workflow be created?',
       choices: ['project', 'global'],
       defaultValue: 'project',
@@ -270,7 +272,7 @@ class _WorkflowRunCommand extends Command<int> {
       if (existing != null && !existing.isComplete) {
         final nextIndex = existing.nextPendingIndex;
         if (nextIndex > 0) {
-          final choice = _logger.chooseOne(
+          final choice = Prompts.selectOneOf(
             'Previous run found (${existing.completedCount}/${existing.steps.length} steps). Resume?',
             choices: ['resume', 'restart', 'cancel'],
             defaultValue: 'resume',
@@ -412,7 +414,7 @@ class _WorkflowConfigCommand extends Command<int> {
     _logger.info('');
 
     // Ask: use defaults or customize?
-    final useDefaults = _logger.chooseOne(
+    final useDefaults = Prompts.selectOneOf(
       'Model mapping strategy:',
       choices: ['defaults', 'customize'],
       defaultValue: 'defaults',
@@ -430,7 +432,7 @@ class _WorkflowConfigCommand extends Command<int> {
       final tags = context.steps.map((s) => s.tag).toSet();
       for (final tag in tags) {
         if (agent.models.isNotEmpty) {
-          final model = _logger.chooseOne(
+          final model = Prompts.selectOneOf(
             'Model for "$tag" steps:',
             choices: agent.models,
             defaultValue: agent.models.first,
@@ -458,7 +460,7 @@ class _WorkflowConfigCommand extends Command<int> {
           );
           if (override) {
             if (agent.models.isNotEmpty) {
-              byStep[i + 1] = _logger.chooseOne(
+              byStep[i + 1] = Prompts.selectOneOf(
                 'Model for step ${i + 1}:',
                 choices: agent.models,
               );

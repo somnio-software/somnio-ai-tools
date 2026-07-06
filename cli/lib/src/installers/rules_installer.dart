@@ -24,8 +24,9 @@ class RulesInstallResult {
 
 /// Installs agent-rules adapters to global or project-level config paths.
 ///
-/// Adapters are organised per stack (flutter / nestjs / react), so the caller
-/// passes the list of stacks to install. Three install shapes are supported:
+/// Adapters are organised per stack (flutter / nestjs / react / python /
+/// fastapi / django / flask), so the caller passes the list of stacks to
+/// install. Three install shapes are supported:
 ///
 /// - [RulesInstallFormat.singleFile]: concatenates per-stack fragments into a
 ///   single target file, wrapped in somnio block markers so updates are
@@ -47,6 +48,7 @@ class RulesInstaller {
 
   /// Installs [stacks] of [rule] at [targetPath].
   ///
+  /// Supported stacks: flutter, nestjs, react, python, fastapi, django, flask.
   /// [targetPath] should already be resolved (no `{home}` placeholders).
   RulesInstallResult install(
     AgentRule rule,
@@ -92,7 +94,7 @@ class RulesInstaller {
     String targetPath,
     List<String> stacks,
   ) {
-    final fileName = p.basename(targetPath);
+    final fileName = rule.adapterFileName ?? p.basename(targetPath);
     final buffer = StringBuffer();
 
     for (final stack in stacks) {

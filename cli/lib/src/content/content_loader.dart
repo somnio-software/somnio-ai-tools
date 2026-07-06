@@ -100,6 +100,33 @@ class ContentLoader {
     return rules;
   }
 
+  /// Loads the subagent definition files from a bundle's `agents/` directory.
+  ///
+  /// Returns a map of filename (e.g. `orchestrator.md`) to raw file content.
+  /// Returns an empty map when [SkillBundle.agentsDirectory] is `null` or the
+  /// directory does not exist. Only top-level `.md` files are loaded; results
+  /// are sorted by filename for deterministic output.
+  Map<String, String> loadAgentFiles(SkillBundle bundle) {
+    final dirPath = bundle.agentsDirectory;
+    if (dirPath == null) return {};
+
+    final agentsDir = Directory(p.join(repoRoot, dirPath));
+    if (!agentsDir.existsSync()) return {};
+
+    final files = agentsDir
+        .listSync()
+        .whereType<File>()
+        .where((f) => f.path.endsWith('.md'))
+        .toList()
+      ..sort((a, b) => a.path.compareTo(b.path));
+
+    final result = <String, String>{};
+    for (final file in files) {
+      result[p.basename(file.path)] = file.readAsStringSync();
+    }
+    return result;
+  }
+
   /// Loads the template file for a skill bundle, if it exists.
   String? loadTemplate(SkillBundle bundle) {
     if (bundle.templatePath == null) return null;

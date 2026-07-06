@@ -2,8 +2,8 @@
 """
 Generates tool-specific adapter files from the canonical source in rules/.
 
-All outputs are grouped per stack (flutter, nestjs, react) so consumers
-install only what they need.
+All outputs are grouped per stack (flutter, nestjs, react, python, fastapi,
+django, flask) so consumers install only what they need.
 
 Usage:
   python3 scripts/generate.py                    # regenerate all adapters

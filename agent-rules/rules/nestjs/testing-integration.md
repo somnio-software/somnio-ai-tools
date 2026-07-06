@@ -1,6 +1,6 @@
 ---
 description: Integration test patterns for NestJS including database setup, cleanup, and test isolation.
-globs: **/*.integration.spec.ts
+globs: src/**/*.integration.spec.ts
 alwaysApply: false
 ---
 

@@ -1,4 +1,5 @@
 ### Consistent error handling patterns for NestJS - avoid magic strings, use structured approaches.
+> Applies to: `src/**/*exception*.ts, src/**/*error*.ts, src/**/*filter*.ts`
 # NestJS Error Handling Standards
 
 How to implement consistent, maintainable error handling across your NestJS application.

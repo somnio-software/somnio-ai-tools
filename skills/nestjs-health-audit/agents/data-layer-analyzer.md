@@ -38,7 +38,7 @@ description: |
   Repository pattern purity checking ensures clean separation of concerns in the data layer.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: cyan
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

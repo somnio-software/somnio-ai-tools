@@ -1,6 +1,6 @@
 ---
 description: DTO structure with clear request/response naming, validation, transformation, and meaningful Swagger documentation.
-globs: **/*.dto.ts
+globs: src/**/*.dto.ts
 alwaysApply: false
 ---
 

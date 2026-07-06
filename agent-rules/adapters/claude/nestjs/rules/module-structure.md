@@ -1,5 +1,5 @@
 ### Module organization patterns for NestJS including imports, exports, providers, and feature structure.
-> Applies to: `**/*.module.ts`
+> Applies to: `src/**/*.module.ts`
 # NestJS Module Structure Standards
 
 How to organize NestJS modules with proper imports, exports, providers, and feature-based structure.

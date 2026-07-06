@@ -1,0 +1,285 @@
+# NestJS Best Practices Audit Report
+
+**Project:** [PROJECT_NAME]
+**Date:** [AUDIT_DATE]
+**Auditor:** AI-Assisted Analysis
+
+---
+
+## 1. Executive Summary
+
+**Overall Score:** [XX]/100 ([Strong/Fair/Weak])
+
+**Description:**
+[One paragraph summary of the codebase quality and key findings]
+
+**Top Strengths:**
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+**Critical Issues:**
+- [Critical Issue 1]
+- [Critical Issue 2]
+- [Critical Issue 3]
+
+**Immediate Action Items:**
+1. [Most urgent action]
+2. [Second priority action]
+3. [Third priority action]
+
+---
+
+## 2. Score Breakdown
+
+| Section | Score | Label |
+|---------|-------|-------|
+| Testing Quality | [XX]/100 | [Label] |
+| Architecture Compliance | [XX]/100 | [Label] |
+| Code Standards | [XX]/100 | [Label] |
+| DTO Validation | [XX]/100 | [Label] |
+| Error Handling | [XX]/100 | [Label] |
+| **Weighted Overall** | **[XX]/100** | **[Label]** |
+
+> **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+---
+
+## 3. Testing Quality
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of testing quality findings]
+
+**Unit Test Analysis:**
+- Total test files: [XX]
+- Services with tests: [XX]%
+- Controllers with tests: [XX]%
+
+**Integration Test Analysis:**
+- Integration test files: [XX]
+- Database cleanup patterns: [Present/Missing]
+- Test isolation: [Good/Needs Improvement]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+- [Finding 4]
+
+### Violations
+- `[path/to/file.spec.ts:XX]` — [Issue description]
+- `[path/to/file.spec.ts:XX]` — [Issue description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 4. Architecture Compliance
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of architecture compliance findings]
+
+**Layer Separation:**
+- Controller → Service: [Compliant/Violations Found]
+- Service → Repository: [Compliant/Violations Found]
+- Repository → Data: [Compliant/Violations Found]
+
+**Dependency Injection:**
+- Constructor injection: [XX]% compliance
+- Abstract repository pattern: [Used/Not Used]
+
+**Module Organization:**
+- Feature modules: [XX]
+- Proper exports: [Yes/No]
+- Circular dependencies: [None/Found]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.ts:XX]` — [Layer Violation]: [Description]
+- `[path/to/file.ts:XX]` — [DI Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 5. Code Standards
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of code standards findings]
+
+**TypeScript Compliance:**
+- Strict mode: [Enabled/Disabled]
+- Any usage: [XX] occurrences
+- Proper typing: [XX]% coverage
+
+**Naming Conventions:**
+- File naming (kebab-case): [XX]% compliant
+- Class naming (PascalCase): [XX]% compliant
+- Function naming (camelCase + verb): [XX]% compliant
+
+**Function Design:**
+- Average function length: [XX] lines
+- RO-RO pattern usage: [XX]%
+- Early returns: [Good/Needs Improvement]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.ts:XX]` — [Type Issue]: [Description]
+- `[path/to/file.ts:XX]` — [Naming Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 6. DTO Validation
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of DTO validation findings]
+
+**Validation Coverage:**
+- DTOs with validators: [XX]%
+- Nested validation (`@Type`): [XX]% coverage
+- Optional field handling: [Good/Needs Improvement]
+
+**Swagger Documentation:**
+- `@ApiProperty` coverage: [XX]%
+- Descriptions present: [XX]%
+- Examples provided: [XX]%
+
+**DTO Organization:**
+- Create/Update/Query/Response separation: [Yes/Partial/No]
+- `PartialType` usage: [Used/Not Used]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/dto.ts:XX]` — [Validation Issue]: [Description]
+- `[path/to/dto.ts:XX]` — [Swagger Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 7. Error Handling
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of error handling findings]
+
+**Exception Usage:**
+- Specific exceptions: [XX]% of error cases
+- Error codes present: [Yes/Partial/No]
+- Validation before operations: [XX]% coverage
+
+**Error Infrastructure:**
+- Global exception filter: [Present/Missing]
+- Error enums defined: [Yes/No]
+- Error message maps: [Yes/No]
+
+**Logging:**
+- Logger usage: [XX]% of services
+- Proper log levels: [Good/Needs Improvement]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.ts:XX]` — [Exception Issue]: [Description]
+- `[path/to/file.ts:XX]` — [Logging Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 8. Prioritized Recommendations
+
+### 🔴 Critical (Must Fix Immediately)
+1. [Critical recommendation with file reference]
+2. [Critical recommendation with file reference]
+
+### 🟠 High Priority
+1. [High priority recommendation]
+2. [High priority recommendation]
+3. [High priority recommendation]
+
+### 🟡 Medium Priority
+1. [Medium priority recommendation]
+2. [Medium priority recommendation]
+3. [Medium priority recommendation]
+
+### 🟢 Low Priority (Nice to Have)
+1. [Low priority recommendation]
+2. [Low priority recommendation]
+
+---
+
+## 9. Evidence Index
+
+**Testing Files Analyzed:**
+- `[path/to/file.spec.ts]`
+- `[path/to/file.spec.ts]`
+
+**Service Files Analyzed:**
+- `[path/to/file.service.ts]`
+- `[path/to/file.service.ts]`
+
+**Controller Files Analyzed:**
+- `[path/to/file.controller.ts]`
+- `[path/to/file.controller.ts]`
+
+**DTO Files Analyzed:**
+- `[path/to/file.dto.ts]`
+- `[path/to/file.dto.ts]`
+
+**Module Files Analyzed:**
+- `[path/to/file.module.ts]`
+- `[path/to/file.module.ts]`
+
+---
+
+## Report Metadata
+
+| Field | Value |
+|-------|-------|
+| Generated by | [Plugin Name] v[Plugin Version] |
+| Skill | nestjs-best-practices |
+| Date | [YYYY-MM-DD] |
+| Somnio AI Tools | https://github.com/somnio-software/somnio-ai-tools |
+| Standards Source | https://github.com/somnio-software/cursor-rules |

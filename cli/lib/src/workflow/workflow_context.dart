@@ -71,9 +71,13 @@ class WorkflowStepEntry {
         // needs: [1, 3] — 1-based in YAML, convert to 0-based
         return needsValue.map((v) => (v as int) - 1).toList();
       }
+      // Defensive: YAML parsing always yields a YamlList (handled above), so a
+      // plain List only reaches here if `needs` is injected programmatically.
+      // coverage:ignore-start
       if (needsValue is List) {
         return (needsValue).map((v) => (v as int) - 1).toList();
       }
+      // coverage:ignore-end
       if (needsValue is String) {
         if (needsValue == 'all') {
           // Depends on every step before this one

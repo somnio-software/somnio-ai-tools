@@ -47,8 +47,10 @@ your-project/
 | `architecture.md` | Arquitectura en capas: Data, Repository, BLoC, Presentation |
 | `best-practices.md` | Best practices generales: SOLID, estado, navegación, theming |
 | `bloc-test.md` | Estructura y patrones de tests para BLoC |
+| `code-patterns.md` | Patrones de implementación Dart/Flutter: null safety, async, const, routing, serialización |
+| `layout.md` | Patrones de layout: Row/Column, Stack, Overlay, scrolling, LayoutBuilder |
 | `testing.md` | Best practices de testing: mocking, matchers, agrupación |
-| `dart-model-from-json.md` | Generación de modelos JSON con json_serializable y equatable |
+| `ui-theming.md` | UI theming, Material 3, ThemeData, ColorScheme, ThemeExtension, fonts, accesibilidad |
 
 ## Actualizar
 

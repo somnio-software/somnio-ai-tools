@@ -8,7 +8,7 @@ description: >-
   quality, validate best practices, or review frontend code standards.
   Triggers on: 'react best practices', 'react code quality', 'component review',
   'hooks review', 'react standards', 'frontend code quality'.
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 
 # React Micro-Code Audit Plan
@@ -27,8 +27,9 @@ TypeScript standards.
 You are a master at:
 - **Code Quality Analysis**: Analyzing individual components, hooks, and
   test files for implementation quality
-- **Standards Validation**: Validating code against local standards from
-  `agent-rules/rules/` (testing.md, component-architecture.md,
+- **Standards Validation**: Validating code against the standards from
+  `agent-rules/rules/` (local if in the repo, else live from GitHub raw)
+  (testing.md, component-architecture.md,
   hooks-patterns.md, state-management.md, performance.md, typescript.md)
 - **Testing Standards Evaluation**: Assessing test quality using React
   Testing Library, naming conventions, assertions, and test structure
@@ -42,7 +43,7 @@ You are a master at:
 **Responsibilities**:
 - Execute micro-level code quality analysis following the plan steps
   sequentially
-- Validate code against local standards from the somnio-ai-tools repository
+- Validate code against the standards from the somnio-ai-tools repository (local if present, else fetched live via the GitHub raw URL)
 - Report findings objectively based on actual code inspection
 - Focus on code implementation quality, testing standards, and
   architecture compliance
@@ -64,13 +65,15 @@ You are a master at:
   write "Unknown" and specify what would prove it
 
 **Critical Rules**:
-- **ALWAYS validate against local standards** - read from
-  `agent-rules/rules/react/` in the somnio-ai-tools repository
+- **ALWAYS validate against the standards** - read from
+  `agent-rules/rules/react/` if present in the repo, otherwise WebFetch
+  them from the GitHub raw URL
+  (https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/react/)
 - **FOCUS on code quality** - analyze implementation, not infrastructure
 - **REPORT violations clearly** - specify which standard is violated
   and provide code examples
 - **MAINTAIN format consistency** - follow the template structure for
-  plain-text reports
+  Markdown reports
 - **NEVER skip standard validation** - all code must be checked
   against applicable standards
 
@@ -136,28 +139,49 @@ You are a master at:
 - React utility types (ReactNode, ReactElement, CSSProperties, etc.)
 
 ## Step 7: Report Generation
-**Goal**: Aggregate all findings into a final Plain Text report using
+**Goal**: Aggregate all findings into a final Markdown report using
 the template.
 **Rules**:
 - Read and follow the instructions in `references/best-practices-format-enforcer.md`
 - Read and follow the instructions in `references/best-practices-generator.md`
 **Output**: Final report following the template at
-`assets/report-template.txt`
+`assets/report-template.md`
 
 **Rule Execution Order**:
-1.  `references/testing-quality.md`
-2.  `references/component-architecture.md`
-3.  `references/hooks-patterns.md`
-4.  `references/state-management.md`
-5.  `references/performance.md`
-6.  `references/typescript-standards.md`
-7.  `references/best-practices-format-enforcer.md`
-8.  `references/best-practices-generator.md`
+1.  `references/testing-quality.md` {model: mid}
+2.  `references/component-architecture.md` {model: mid}
+3.  `references/hooks-patterns.md` {model: mid}
+4.  `references/state-management.md` {model: mid}
+5.  `references/performance.md` {model: mid}
+6.  `references/typescript-standards.md` {model: cheap}
+7.  `references/best-practices-format-enforcer.md` {model: frontier}
+8.  `references/best-practices-generator.md` {model: frontier}
+
+## Subagent Dispatch (in-session)
+
+When invoked inside a Claude Code session (not via `somnio run`), the orchestrator is the single entry point. It fans out to tiered subagents in three waves, parallelising within each wave, then advances only after confirming artifacts exist.
+
+**Entry point**: `agents/orchestrator.md` (`model: mid`)
+
+### Wave Plan
+
+| Wave | Agent file | Tier | Reference / steps covered | Artifact |
+|------|-----------|------|--------------------------|---------|
+| 1 | `agents/typescript-scanner.md` | cheap | `references/typescript-standards.md` (scan portion) | `reports/.artifacts/react-best-practices/step_01_typescript_scan.md` |
+| 1 | `agents/architecture-scanner.md` | cheap | `references/component-architecture.md` (enumeration) | `reports/.artifacts/react-best-practices/step_02_architecture_scan.md` |
+| 2 | `agents/testing-analyzer.md` | mid | `references/testing-quality.md` | `reports/.artifacts/react-best-practices/step_03_testing_quality.md` |
+| 2 | `agents/architecture-analyzer.md` | mid | `references/component-architecture.md` (consumes step_02) | `reports/.artifacts/react-best-practices/step_04_architecture_analysis.md` |
+| 2 | `agents/hooks-analyzer.md` | mid | `references/hooks-patterns.md` | `reports/.artifacts/react-best-practices/step_05_hooks_analysis.md` |
+| 2 | `agents/state-analyzer.md` | mid | `references/state-management.md` | `reports/.artifacts/react-best-practices/step_06_state_analysis.md` |
+| 2 | `agents/performance-analyzer.md` | mid | `references/performance.md` | `reports/.artifacts/react-best-practices/step_07_performance_analysis.md` |
+| 3 | `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` + all step artifacts | `reports/react-best-practices-report.md` |
+
+**Orchestrator behaviour**: Validates each wave's artifacts before advancing. On a missing artifact, retries the responsible agent once, then logs and skips dependents. Hands the artifact manifest to the report-writer. Never reads source or writes prose.
 
 ## Standards References
 
 All standards are sourced from:
-`agent-rules/rules/react/` (somnio-ai-tools repository)
+`agent-rules/rules/react/` (somnio-ai-tools repo locally, or GitHub raw if installed standalone)
 
 | Standard File | Purpose |
 |---------------|---------|

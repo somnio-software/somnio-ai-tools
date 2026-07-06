@@ -28,14 +28,42 @@ somnio -q status      # Quiet mode (suppress banner)
 | Command | Description |
 |---------|-------------|
 | `somnio setup` | Detect AI CLIs, install missing ones, install skills via skills.sh |
+| `somnio hooks` | Install Claude Code hooks (e.g. the work-log Stop hook) |
 | `somnio run <name-or-alias>` | Execute a multi-step audit from the target project directory |
 | `somnio install` | Install skills to a specific agent or all agents |
 | `somnio add <tech>` | Add a new technology's audit skills (scaffolds + registers) |
 | `somnio status` | Show installed skills across all agents |
 | `somnio update` | Update CLI and reinstall skills |
 | `somnio uninstall` | Remove all Somnio skills from all agents |
+| `somnio rules` | Install coding-standard rules for all detected agents |
 | `somnio workflow` | Create, configure, and run custom workflows |
 | `somnio quote` | Display a random motivational quote |
+
+### somnio hooks
+
+Opt-in installer for Claude Code hooks. Currently installs the **work-log Stop hook**, which appends a Haiku-generated 2-3 sentence summary of each Claude Code session turn to `~/.work-log/YYYY-MM-DD.md`. These logs feed directly into the `clockify-tracker` skill's log-based mode.
+
+```bash
+somnio hooks            # Interactive: shows what will be installed, prompts for confirmation
+somnio hooks --force    # Skip confirmation prompt
+somnio hooks --verbose  # Show each installation step
+```
+
+What it does:
+1. Writes `~/.claude/hooks/work-log-stop.sh` (idempotent — safe to re-run after updates)
+2. Makes the script executable
+3. Merges the Stop hook entry into `~/.claude/settings.json` without overwriting existing config
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip the confirmation prompt |
+| `--verbose` | `-v` | Show each step (file written, chmod, settings.json update) |
+
+**To uninstall:**
+1. `rm ~/.claude/hooks/work-log-stop.sh`
+2. Edit `~/.claude/settings.json` and remove the entry with `"command": "~/.claude/hooks/work-log-stop.sh"` from `hooks.Stop`
+
+> **Note:** `somnio hooks` is intentionally separate from `somnio setup` — hooks modify your Claude Code session behaviour and should be an explicit opt-in. See [docs/work-log-stop-hook.md](work-log-stop-hook.md) for the full hook design.
 
 ### somnio setup
 
@@ -53,6 +81,7 @@ somnio setup --legacy     # Use built-in installer instead of skills.sh
 | `--force` | `-f` | Skip all confirmation prompts |
 | `--skip-cli` | | Skip CLI detection and installation |
 | `--legacy` | | Use built-in installer instead of skills.sh |
+| `--verbose` | `-v` | Show detailed output (npx stdout, file-by-file progress) |
 
 ### somnio run
 
@@ -94,6 +123,49 @@ somnio add flutter     # Auto-detect existing skills/flutter-* bundles
 
 Two modes: **wizard** (when `skills/{tech}-*` does not exist, scaffolds new skill directories) and **auto-detect** (when `skills/{tech}-*` exists, scans and registers valid bundles).
 
+### somnio update
+
+Update the CLI to the latest version and reinstall all skills across all agents.
+
+```bash
+somnio update             # Update CLI + reinstall skills via skills.sh
+somnio update --verbose   # Show each removed file and npx output
+somnio update --legacy    # Use built-in installer instead of skills.sh
+```
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--legacy` | | Use built-in installer instead of skills.sh |
+| `--verbose` | `-v` | Show detailed output (removed files, npx stdout) |
+
+### somnio uninstall
+
+Remove all Somnio-installed skills, commands, workflows, and rules from all agents.
+
+```bash
+somnio uninstall            # Prompts for confirmation, then removes everything
+somnio uninstall --force    # Skip confirmation prompt
+somnio uninstall --verbose  # Show each removed file
+```
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip the confirmation prompt |
+| `--verbose` | `-v` | Show each removed file |
+
+### somnio rules
+
+Install global coding-standard rules into detected agents. Rules are injected into each agent's native rules file (e.g., `CLAUDE.md`, `.cursor/rules/`, `.windsurfrules`).
+
+```bash
+somnio rules install                           # Interactive: detect agents + choose scope
+somnio rules install --agent claude --global   # Claude Code, global scope
+somnio rules install --agent cursor --project  # Cursor, current project
+somnio rules install --all --global            # All detected agents, global
+```
+
+See the [Agent Rules guide](agent-rules.md) for available rule packs and details.
+
 ### somnio workflow
 
 Create, configure, and run custom workflows.
@@ -117,6 +189,10 @@ See the [Workflow Guide](workflows.md) for details.
 | `flutter-best-practices` | `fp`, `somnio-fp` | Flutter code quality check |
 | `nestjs-health-audit` | `nh`, `somnio-nh` | NestJS project health audit (13 steps) |
 | `nestjs-best-practices` | `np`, `somnio-np` | NestJS code quality check |
+| `react-health-audit` | `rh`, `somnio-rh` | React project health audit (13 steps) |
+| `react-best-practices` | `rp`, `somnio-rp` | React code quality check |
+| `python-health-audit` | `ph`, `somnio-ph` | Python project health audit (13 steps) |
+| `python-best-practices` | `pp`, `somnio-pp` | Python code quality check |
 | `security-audit` | `sa`, `somnio-sa` | Security audit (any stack, 11 steps) |
 
 See the [Skills Catalog](skills.md) for full descriptions.
@@ -128,7 +204,7 @@ See the [Skills Catalog](skills.md) for full descriptions.
 When you run `somnio run <alias>`:
 
 1. **Parse arguments** — `--agent`, `--model`, `--skip-validation`, `--no-preflight`
-2. **Validate project type** — Flutter needs `pubspec.yaml`, NestJS needs `package.json` + `@nestjs/core`
+2. **Validate project type** — Flutter needs `pubspec.yaml`, NestJS needs `package.json` + `@nestjs/core`, Python needs `pyproject.toml`
 3. **Run pre-flight steps** — Tool installation, version alignment, test coverage (no AI needed)
 4. **Resolve AI agent and model** — Auto-detect or use `--agent` flag
 5. **Parse SKILL.md** — Extract step order from the execution plan

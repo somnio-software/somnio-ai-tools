@@ -7,17 +7,20 @@
 Goal: Analyze the NestJS codebase for strict adherence to Layered
 Architecture and Separation of Concerns.
 
-STANDARDS SOURCE (local):
-- `agent-rules/rules/nestjs/module-structure.md`
-- `agent-rules/rules/nestjs/service-patterns.md`
-- `agent-rules/rules/nestjs/repository-patterns.md`
+STANDARDS SOURCE (local-first, then live):
+- local: `agent-rules/rules/nestjs/module-structure.md`
+  raw:   https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/nestjs/module-structure.md
+- local: `agent-rules/rules/nestjs/service-patterns.md`
+  raw:   https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/nestjs/service-patterns.md
+- local: `agent-rules/rules/nestjs/repository-patterns.md`
+  raw:   https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/nestjs/repository-patterns.md
 
-To resolve the absolute path: find the directory containing
-`skills/nestjs-best-practices/SKILL.md`, go up two levels to reach
-the somnio-ai-tools repository root, then read the files above.
+RESOLUTION ORDER (per rule, never assume the file is on disk):
+1. If `agent-rules/` exists in the repo, USE the `Read` tool on the local path above.
+2. If `agent-rules/` is absent (standalone install), USE the `WebFetch` tool on the matching raw URL.
 
 INSTRUCTIONS:
-1. USE the `Read` tool to read the local standards files listed above.
+1. Resolve EACH rule above via the order in RESOLUTION ORDER.
 2. Proceed with the analysis below using strict adherence to those rules.
 
 LAYER DEFINITIONS:

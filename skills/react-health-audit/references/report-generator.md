@@ -1,13 +1,13 @@
 # React Health Audit Report Generator
 
-> Generate the final React Project Health Audit report by integrating all analysis results and calculating scores using the standardized format structure from assets/report-template.txt.
+> Generate the final React Project Health Audit report by integrating all analysis results and calculating scores using the standardized format structure from assets/report-template.md.
 
 ---
 
 Goal: Generate the final React Project Health Audit report by
 integrating all analysis results and calculating scores using the
 standardized format structure from
-assets/report-template.txt.
+assets/report-template.md.
 
 Apply the "React Project Health Audit" rule to generate the full
 report with:
@@ -25,7 +25,7 @@ report with:
   * Do NOT recommend deployment-specific workflows - these are
     deployment decisions, not technical requirements
 - Labels: 85-100=Strong, 70-84=Fair, 0-69=Weak
-- Plain-text format ready for Google Docs (NO markdown syntax)
+- Markdown-formatted report ready for reading and sharing
 - All sections with: Description, Score, Key Findings, Evidence,
   Risks, Recommendations, Counts & Metrics
 
@@ -192,7 +192,7 @@ File Paths and Configs by Area:
 - [Continue as needed]
 
 FORMATTING RULES:
-- NO MARKDOWN SYNTAX: Use plain text only
+- USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
 - NO BOLD MARKERS: No **text** or __text__
 - NO CODE FENCES: No ```code``` blocks
 - NO TABLES: Use bullet points instead
@@ -211,5 +211,5 @@ For monorepo repositories (nx, turborepo, lerna):
 - Mention app names in descriptions where relevant
 - Report cross-app consistency in Key Findings
 
-Format: Plain text ready to copy into Google Docs (no markdown
+Format: Markdown-formatted report (use proper Markdown syntax,
 syntax, no # headings, no bold markers, no fenced code blocks).

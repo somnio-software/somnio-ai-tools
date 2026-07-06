@@ -3,7 +3,7 @@
 Follow these standards when generating or editing code.
 
 ### Controller patterns for NestJS including decorators, meaningful documentation, and guards.
-> Applies to: `**/*.controller.ts`
+> Applies to: `src/**/*.controller.ts`
 
 # NestJS Controller Patterns
 
@@ -292,7 +292,7 @@ export class UserOrdersController {
 ---
 
 ### DTO structure with clear request/response naming, validation, transformation, and meaningful Swagger documentation.
-> Applies to: `**/*.dto.ts`
+> Applies to: `src/**/*.dto.ts`
 
 # NestJS DTO Validation Standards
 
@@ -655,6 +655,7 @@ export class CreateUserRequestDto {
 ---
 
 ### Consistent error handling patterns for NestJS - avoid magic strings, use structured approaches.
+> Applies to: `src/**/*exception*.ts, src/**/*error*.ts, src/**/*filter*.ts`
 
 # NestJS Error Handling Standards
 
@@ -1089,7 +1090,7 @@ Maintain consistent error response structure across the API:
 ---
 
 ### Module organization patterns for NestJS including imports, exports, providers, and feature structure.
-> Applies to: `**/*.module.ts`
+> Applies to: `src/**/*.module.ts`
 
 # NestJS Module Structure Standards
 
@@ -1524,7 +1525,7 @@ export class AppModule {}
 ---
 
 ### Repository pattern for NestJS with parameterized methods, soft deletes, and query organization.
-> Applies to: `**/*.repository.ts`
+> Applies to: `src/**/*.repository.ts`
 
 # NestJS Repository Patterns
 
@@ -1915,7 +1916,7 @@ export class PrismaUserRepository implements UserRepository {
 ---
 
 ### Service layer patterns for NestJS including method organization, validation, and error handling.
-> Applies to: `**/*.service.ts`
+> Applies to: `src/**/*.service.ts`
 
 # NestJS Service Patterns
 
@@ -2360,7 +2361,7 @@ export class ImportService {
 ---
 
 ### Integration test patterns for NestJS including database setup, cleanup, and test isolation.
-> Applies to: `**/*.integration.spec.ts`
+> Applies to: `src/**/*.integration.spec.ts`
 
 # NestJS Integration Testing Standards
 
@@ -2871,7 +2872,7 @@ afterAll(async () => {
 ---
 
 ### Unit test patterns for NestJS including mocking, structure, grouping, and assertions.
-> Applies to: `**/*.spec.ts`
+> Applies to: `src/**/*.spec.ts`
 
 # NestJS Unit Testing Standards
 

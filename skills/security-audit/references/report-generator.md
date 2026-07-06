@@ -1,12 +1,12 @@
 # Security Report Generator
 
-> Synthesize all security findings into a comprehensive security audit report with quantitative scoring, severity classifications, and actionable recommendations. MUST follow the exact 13-section structure from assets/report-template.txt. Every section in the template is MANDATORY. Do not merge, skip, or rename sections. Scored detail sections (3-7) MUST be dynamically ordered by score ascending.
+> Synthesize all security findings into a comprehensive security audit report with quantitative scoring, severity classifications, and actionable recommendations. MUST follow the exact 13-section structure from assets/report-template.md. Every section in the template is MANDATORY. Do not merge, skip, or rename sections. Scored detail sections (3-7) MUST be dynamically ordered by score ascending.
 
 ---
 
 Goal: Generate the final Security Audit report by integrating all
 analysis results using the standardized format structure from
-assets/report-template.txt.
+assets/report-template.md.
 
 IMPORTANT EXCLUSIONS (generator instructions only - do NOT include in output):
 - NEVER recommend CODEOWNERS or SECURITY.md files (governance decisions,
@@ -18,7 +18,7 @@ OUTPUT DIRECTIVE: Do NOT include the EXCLUSIONS block above in the
 report output. These are instructions for the generator only.
 
 MANDATORY REPORT STRUCTURE (13 sections):
-1. Security Scoring Breakdown (5 scored lines with weights + Overall + Formula + Posture)
+1. Security Scoring Breakdown (5 scored lines + Overall + Posture)
 2. Executive Summary (Overall Score + top findings + priority recommendations)
 3-7. Scored Detail Sections (DYNAMIC ORDER — sorted by score ascending, lowest first):
    - Sensitive File Protection (scored)
@@ -241,10 +241,9 @@ Scored sections (3-7) MUST each follow this exact format:
 SPECIAL SECTION FORMATS:
 
 Security Scoring Breakdown (Section 1):
-- 5 scored lines, one per scored section, each with weight
-- Each line: "[Section Name]: [Score]/100 ([Label]) - Weight: [X]%"
+- 5 scored lines, one per scored section
+- Each line: "[Section Name]: [Score]/100 ([Label])"
 - Followed by "Overall Score: [Score]/100 ([Label])"
-- Followed by "Formula: Overall = round(File Protection * 0.25 + Secret Detection * 0.30 + Dependency Security * 0.20 + Supply Chain * 0.10 + Automation * 0.15)"
 - Followed by "Security Posture: [Posture]"
 - This is THE FIRST THING a CTO sees when opening the report
 
@@ -253,7 +252,7 @@ Executive Summary (Section 2):
 - Must include Top Findings and Priority Recommendations
 
 FORMATTING RULES:
-- NO MARKDOWN SYNTAX: Use plain text only
+- USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
 - NO BOLD MARKERS: No **text** or __text__
 - NO CODE FENCES: No ```code``` blocks
 - NO TABLES: Use bullet points instead
@@ -266,7 +265,7 @@ FORMATTING RULES:
 VALIDATION CHECKLIST:
 Before finalizing the report, verify:
 - All 13 sections are present
-- Section 1 (Security Scoring Breakdown) has 5 scored lines with weights + Overall + Formula + Posture
+- Section 1 (Security Scoring Breakdown) has 5 scored lines + Overall + Posture
 - All 5 scored sections (3-7) have Score line with [Score]/100 ([Label])
 - All scored sections have Description/Score/Score Breakdown/Key Findings/Evidence/Risks/Recommendations
 - Scored sections (3-7) are ordered by score ascending (lowest first)
@@ -282,7 +281,7 @@ Before finalizing the report, verify:
 - Report is ready for Google Docs copy-paste
 - No duplicate score displays (old At-a-Glance Scorecard and Score Index are gone)
 
-Format: Plain text ready to copy into Google Docs (no markdown
+Format: Markdown-formatted report (use proper Markdown syntax,
 syntax, no # headings, no bold markers, no fenced code blocks).
 
 JSON EXPORT (mandatory):
@@ -312,7 +311,7 @@ with the following schema (extract values from the generated report):
 Run before saving: mkdir -p reports
 
 SCORE HISTORY (mandatory after writing report and JSON):
-After writing reports/security_audit.txt and reports/security_audit.json,
+After writing reports/security_audit.md and reports/security_audit.json,
 write reports/.history/last_scores.json with:
 { "overall": [current overall score], "timestamp": "[ISO8601]",
   "scores": { "sensitiveFile": N, "secretDetection": N, "dependencySecurity": N,

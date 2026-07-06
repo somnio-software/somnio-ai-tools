@@ -38,7 +38,7 @@ description: |
   Path traversal detection is language-specific and requires matching file operation functions combined with user input sources.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

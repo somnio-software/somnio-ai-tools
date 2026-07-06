@@ -8,7 +8,7 @@ description: >-
   run a health check, evaluate frontend quality, or assess technical debt.
   Triggers on: 'react audit', 'health audit', 'react health', 'frontend audit',
   'next.js audit', 'vite audit', 'project quality check'.
-allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
+allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent, Task
 ---
 
 # React Project Health Audit - Modular Execution Plan
@@ -36,7 +36,7 @@ You are a master at:
 - **Technical Risk Assessment**: Identifying technical risks, technical
   debt, and project maturity indicators
 - **Report Integration**: Synthesizing findings from multiple analysis
-  rules into unified Google Docs-ready reports
+  rules into unified Markdown reports
 - **React Best Practices**: Deep knowledge of React patterns, hooks,
   component architecture, state management, and performance optimization
 - **Frontend Architecture**: Understanding of feature-based structure,
@@ -279,20 +279,20 @@ generates the final report.
 
 ## Step 10. Export Final Report
 
-Goal: Save the final Google Docs-ready plain-text report to the reports
+Goal: Save the final Google Docs-ready Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save
 the final React Project Health Audit report to:
-`./reports/react_audit.txt`
+`./reports/react_audit.md`
 
-**Format**: Plain text ready to copy into Google Docs (no markdown
-syntax, no # headings, no bold markers, no fenced code blocks).
+**Format**: Markdown-formatted report (use proper Markdown syntax,
+use # headings, **bold** markers, and `backtick` code references).
 
 **Command**:
 ```bash
 mkdir -p reports
-# Save report content to ./reports/react_audit.txt
+# Save report content to ./reports/react_audit.md
 ```
 
 **Note**: For security analysis, run the standalone Security Audit (`/somnio:security-audit`).
@@ -302,19 +302,19 @@ mkdir -p reports
 **Total Rules**: 13 rules
 
 **Rule Execution Order**:
-1. `references/tool-installer.md`
-2. `references/version-alignment.md` (MANDATORY - stops if nvm fails)
-3. `references/version-validator.md` (verification of nvm setup)
-4. `references/test-coverage.md` (coverage generation)
-5. `references/repository-inventory.md`
-6. `references/config-analysis.md`
-7. `references/cicd-analysis.md`
-8. `references/testing-analysis.md`
-9. `references/code-quality.md`
-10. `references/state-management-analysis.md`
-11. `references/documentation-analysis.md`
-12. `references/report-format-enforcer.md`
-13. `references/report-generator.md`
+1. `references/tool-installer.md` {model: cheap}
+2. `references/version-alignment.md` (MANDATORY - stops if nvm fails) {model: cheap}
+3. `references/version-validator.md` (verification of nvm setup) {model: cheap}
+4. `references/test-coverage.md` (coverage generation) {model: cheap}
+5. `references/repository-inventory.md` {model: cheap}
+6. `references/config-analysis.md` {model: cheap}
+7. `references/cicd-analysis.md` {model: cheap}
+8. `references/testing-analysis.md` {model: mid}
+9. `references/code-quality.md` {model: mid}
+10. `references/state-management-analysis.md` {model: mid}
+11. `references/documentation-analysis.md` {model: cheap}
+12. `references/report-format-enforcer.md` {model: frontier}
+13. `references/report-generator.md` {model: frontier}
 
 **Wave-Based Parallel Execution**:
 - Wave 0 (Sequential): Step 0 — Environment Setup (rules 1-4)
@@ -323,6 +323,41 @@ mkdir -p reports
 - Wave 3 (Parallel): Steps 6 + 7 — State Management + Documentation (rules 10-11)
 - Wave 4 (Sequential): Step 8 — Report Format Enforcement (rule 12)
 - Wave 5 (Sequential): Steps 9 + 10 — Report Generation + Export (rule 13)
+
+## Subagent Dispatch (in-session)
+
+This section describes the **in-session path** when Claude Code dispatches subagents via the Agent/Task tool. The Rule Execution Order above remains the **CLI path** (`somnio run`). Both paths use the same references as the single source of truth; only the dispatch mechanism differs.
+
+**Entry point**: `agents/orchestrator.md` (`model: mid`) — single dispatch target. The orchestrator coordinates all waves and never reads source files or writes report prose.
+
+### Wave Plan
+
+| Wave | Mode | Agents dispatched | Tier |
+|------|------|-------------------|------|
+| Wave 0 | Sequential — MANDATORY gate | `env-setup-agent` | cheap |
+| Wave 1 | Parallel | `repo-analyzer`, `config-analyzer` | cheap, cheap |
+| Wave 2 | Parallel | `cicd-analyzer`, `testing-analyzer`, `code-quality-analyzer` | cheap, mid, mid |
+| Wave 3 | Parallel | `state-management-analyzer`, `docs-analyzer` | mid, cheap |
+| Wave 4 | Sequential | `report-writer` | frontier |
+
+Wave 0 emits a GATE status; the orchestrator halts all subsequent waves on `GATE: FAILED`.
+
+### Dispatch Table
+
+| Agent file | Tier | Reference(s) covered | Artifact path |
+|------------|------|----------------------|---------------|
+| `agents/env-setup-agent.md` | cheap | tool-installer, version-alignment, version-validator, test-coverage | `reports/.artifacts/react-health-audit/step_00_env_setup.md` |
+| `agents/repo-analyzer.md` | cheap | repository-inventory | `reports/.artifacts/react-health-audit/step_01_repository_inventory.md` |
+| `agents/config-analyzer.md` | cheap | config-analysis | `reports/.artifacts/react-health-audit/step_02_config_analysis.md` |
+| `agents/cicd-analyzer.md` | cheap | cicd-analysis | `reports/.artifacts/react-health-audit/step_03_cicd_analysis.md` |
+| `agents/testing-analyzer.md` | mid | testing-analysis | `reports/.artifacts/react-health-audit/step_04_testing_analysis.md` |
+| `agents/code-quality-analyzer.md` | mid | code-quality | `reports/.artifacts/react-health-audit/step_05_code_quality.md` |
+| `agents/state-management-analyzer.md` | mid | state-management-analysis | `reports/.artifacts/react-health-audit/step_06_state_management.md` |
+| `agents/docs-analyzer.md` | cheap | documentation-analysis | `reports/.artifacts/react-health-audit/step_07_documentation.md` |
+| `agents/orchestrator.md` | mid | (routing only — reads no reference) | n/a |
+| `agents/report-writer.md` | frontier | report-generator, report-format-enforcer | `reports/react_audit.md` |
+
+Tiers (`cheap`/`mid`/`frontier`) are symbolic and provider-neutral. The CLI transformer resolves them to concrete model IDs per `AgentConfig.modelTiers` at install time.
 
 **Benefits of Modular Approach**:
 - Each rule can be executed independently

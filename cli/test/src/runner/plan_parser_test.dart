@@ -243,5 +243,72 @@ This is not a step.
       final steps = parser.parse(plan);
       expect(steps, hasLength(1));
     });
+
+    // ---------------------------------------------------------------
+    // Per-step tier token capture
+    // ---------------------------------------------------------------
+    group('per-step model tier', () {
+      test('captures {model: <tier>} token and strips it', () {
+        const plan = '''
+**Rule Execution Order**:
+1. `references/tool-installer.md` {model: cheap}
+2. `references/report-generator.md` {model: frontier}
+''';
+
+        final steps = parser.parse(plan);
+        expect(steps, hasLength(2));
+        expect(steps[0].ruleName, 'tool-installer');
+        expect(steps[0].model, 'cheap');
+        expect(steps[0].isMandatory, isFalse);
+        expect(steps[0].annotation, isNull);
+        expect(steps[1].model, 'frontier');
+      });
+
+      test('model is null when no token present', () {
+        const plan = '''
+**Rule Execution Order**:
+1. `references/tool-installer.md`
+''';
+
+        final steps = parser.parse(plan);
+        expect(steps.single.model, isNull);
+      });
+
+      test('tier token coexists with MANDATORY and parenthetical annotation',
+          () {
+        const plan = '''
+**Rule Execution Order**:
+1. `references/version-alignment.md` (MANDATORY - stops if FVM fails) {model: mid}
+''';
+
+        final steps = parser.parse(plan);
+        expect(steps.single.model, 'mid');
+        expect(steps.single.isMandatory, isTrue);
+        expect(steps.single.annotation, 'MANDATORY - stops if FVM fails');
+      });
+
+      test('tier token does not pollute annotation when it precedes parens',
+          () {
+        const plan = '''
+**Rule Execution Order**:
+1. `references/x.md` {model: cheap} (optional - skip if absent)
+''';
+
+        final steps = parser.parse(plan);
+        expect(steps.single.model, 'cheap');
+        expect(steps.single.annotation, 'optional - skip if absent');
+      });
+
+      test('legacy @format supports a tier token', () {
+        const plan = '''
+**Rule Execution Order**:
+1. `@flutter_tool_installer` {model: cheap}
+''';
+
+        final steps = parser.parse(plan);
+        expect(steps.single.ruleName, 'flutter_tool_installer');
+        expect(steps.single.model, 'cheap');
+      });
+    });
   });
 }

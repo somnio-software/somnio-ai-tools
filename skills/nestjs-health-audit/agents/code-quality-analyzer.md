@@ -38,7 +38,7 @@ description: |
   Code smell detection (circular deps, console.log, TODOs, lint suppressions) is an advanced analysis this agent provides.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: magenta
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

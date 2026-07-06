@@ -3,7 +3,7 @@
 You are an expert software engineer. Follow these coding standards precisely when generating code.
 
 ### Controller patterns for NestJS including decorators, meaningful documentation, and guards.
-> Applies to: `**/*.controller.ts`
+> Applies to: `src/**/*.controller.ts`
 
 # NestJS Controller Patterns
 
@@ -54,7 +54,7 @@ The purpose of Swagger documentation is to generate useful API docs. Documentati
 ---
 
 ### DTO structure with clear request/response naming, validation, transformation, and meaningful Swagger documentation.
-> Applies to: `**/*.dto.ts`
+> Applies to: `src/**/*.dto.ts`
 
 # NestJS DTO Validation Standards
 
@@ -127,6 +127,7 @@ Use inheritance and utility types to avoid code duplication.
 ---
 
 ### Consistent error handling patterns for NestJS - avoid magic strings, use structured approaches.
+> Applies to: `src/**/*exception*.ts, src/**/*error*.ts, src/**/*filter*.ts`
 
 # NestJS Error Handling Standards
 
@@ -198,7 +199,7 @@ Maintain consistent error response structure across the API:
 ---
 
 ### Module organization patterns for NestJS including imports, exports, providers, and feature structure.
-> Applies to: `**/*.module.ts`
+> Applies to: `src/**/*.module.ts`
 
 # NestJS Module Structure Standards
 
@@ -255,7 +256,7 @@ How to organize NestJS modules with proper imports, exports, providers, and feat
 ---
 
 ### Repository pattern for NestJS with parameterized methods, soft deletes, and query organization.
-> Applies to: `**/*.repository.ts`
+> Applies to: `src/**/*.repository.ts`
 
 # NestJS Repository Patterns
 
@@ -329,7 +330,7 @@ Define select objects with type safety for consistent field selection.
 ---
 
 ### Service layer patterns for NestJS including method organization, validation, and error handling.
-> Applies to: `**/*.service.ts`
+> Applies to: `src/**/*.service.ts`
 
 # NestJS Service Patterns
 
@@ -402,7 +403,7 @@ When an operation is very complex, create a dedicated service file.
 ---
 
 ### Integration test patterns for NestJS including database setup, cleanup, and test isolation.
-> Applies to: `**/*.integration.spec.ts`
+> Applies to: `src/**/*.integration.spec.ts`
 
 # NestJS Integration Testing Standards
 
@@ -466,7 +467,7 @@ Create reusable helpers for common operations.
 ---
 
 ### Unit test patterns for NestJS including mocking, structure, grouping, and assertions.
-> Applies to: `**/*.spec.ts`
+> Applies to: `src/**/*.spec.ts`
 
 # NestJS Unit Testing Standards
 

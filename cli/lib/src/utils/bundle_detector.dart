@@ -230,7 +230,7 @@ class BundleDetector {
     final templates = Directory(assetsDir)
         .listSync()
         .whereType<File>()
-        .where((f) => f.path.endsWith('.txt'))
+        .where((f) => f.path.endsWith('.md'))
         .toList();
 
     if (templates.isEmpty) return null;

@@ -1,3 +1,4 @@
+// coverage:ignore-file
 /// A workflow skill bundle — a standalone markdown file for agent installation.
 ///
 /// Unlike [SkillBundle] (audit bundles with YAML rules), workflow skills

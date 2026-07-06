@@ -1,6 +1,6 @@
 ---
 description: React state management patterns including Context API, Zustand, and TanStack Query for server state.
-globs: **/*.tsx,**/*.ts
+globs: src/**/*.tsx, src/**/*.ts
 alwaysApply: false
 ---
 

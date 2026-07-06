@@ -38,7 +38,7 @@ description: |
   Explaining the value of the Gemini analysis step helps users understand whether to invest in setting it up.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: magenta
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

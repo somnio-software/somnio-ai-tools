@@ -1,6 +1,6 @@
 ---
 description: React hooks patterns including useState, useEffect, useReducer, and custom hook guidelines.
-globs: **/*.tsx,**/*.ts
+globs: src/**/*.tsx, src/**/*.ts
 alwaysApply: false
 ---
 

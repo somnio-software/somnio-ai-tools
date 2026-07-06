@@ -8,35 +8,71 @@ description: >-
 
 # React Best Practices Check
 
-Execute the React Micro-Code Audit through sequential, modular rules.
-Each rule validates code against specific standards from the somnio-ai-tools
-repository.
+Execute the React Micro-Code Audit through the orchestrator-driven multi-agent pipeline.
+The orchestrator dispatches subagents in dependency-ordered waves and advances only after
+confirming artifacts exist.
 
-## Step 1: Testing Quality Analysis
+## Orchestrator Entry Point
 
-Read `react-best-practices/references/testing-quality.md` and follow ALL instructions in the prompt field
+Read `react-best-practices/agents/orchestrator.md` and follow ALL instructions.
+The orchestrator drives the full three-wave plan below.
 
-## Step 2: Component Architecture Analysis
+---
 
-Read `react-best-practices/references/component-architecture.md` and follow ALL instructions in the prompt field
+## Wave 1 — Cheap Scanners (parallel) # model: cheap
 
-## Step 3: Hooks Patterns Analysis
+Dispatched by the orchestrator simultaneously:
 
-Read `react-best-practices/references/hooks-patterns.md` and follow ALL instructions in the prompt field
+### Step 1: TypeScript Scan # model: cheap
 
-## Step 4: State Management Analysis
+Read `react-best-practices/agents/typescript-scanner.md` and follow ALL instructions.
+Writes: `reports/.artifacts/react-best-practices/step_01_typescript_scan.md`
 
-Read `react-best-practices/references/state-management.md` and follow ALL instructions in the prompt field
+### Step 2: Architecture Scan # model: cheap
 
-## Step 5: Performance Analysis
+Read `react-best-practices/agents/architecture-scanner.md` and follow ALL instructions.
+Writes: `reports/.artifacts/react-best-practices/step_02_architecture_scan.md`
 
-Read `react-best-practices/references/performance.md` and follow ALL instructions in the prompt field
+---
 
-## Step 6: TypeScript Standards Analysis
+## Wave 2 — Reasoning Analyzers (parallel) # model: mid
 
-Read `react-best-practices/references/typescript-standards.md` and follow ALL instructions in the prompt field
+Only starts after Wave 1 artifacts are confirmed. Dispatched simultaneously:
 
-## Step 7: Report Generation
+### Step 3: Testing Quality Analysis # model: mid
 
-Read `react-best-practices/references/best-practices-format-enforcer.md` and follow ALL instructions in the prompt field
-Read `react-best-practices/references/best-practices-generator.md` and follow ALL instructions in the prompt field
+Read `react-best-practices/agents/testing-analyzer.md` and follow ALL instructions.
+Writes: `reports/.artifacts/react-best-practices/step_03_testing_quality.md`
+
+### Step 4: Architecture Analysis # model: mid
+
+Read `react-best-practices/agents/architecture-analyzer.md` and follow ALL instructions.
+Consumes: `step_02_architecture_scan.md`
+Writes: `reports/.artifacts/react-best-practices/step_04_architecture_analysis.md`
+
+### Step 5: Hooks Patterns Analysis # model: mid
+
+Read `react-best-practices/agents/hooks-analyzer.md` and follow ALL instructions.
+Writes: `reports/.artifacts/react-best-practices/step_05_hooks_analysis.md`
+
+### Step 6: State Management Analysis # model: mid
+
+Read `react-best-practices/agents/state-analyzer.md` and follow ALL instructions.
+Writes: `reports/.artifacts/react-best-practices/step_06_state_analysis.md`
+
+### Step 7: Performance Analysis # model: mid
+
+Read `react-best-practices/agents/performance-analyzer.md` and follow ALL instructions.
+Writes: `reports/.artifacts/react-best-practices/step_07_performance_analysis.md`
+
+---
+
+## Wave 3 — Report Writer (frontier) # model: frontier
+
+Only starts after all Wave 2 artifacts are confirmed.
+
+### Step 8: Report Generation # model: frontier
+
+Read `react-best-practices/agents/report-writer.md` and follow ALL instructions.
+Reads: all seven step artifacts + `assets/report-template.md`
+Writes: `reports/react-best-practices-report.md`

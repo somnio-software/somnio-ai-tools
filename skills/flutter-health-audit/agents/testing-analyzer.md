@@ -38,7 +38,7 @@ description: |
   Cross-app test comparison in monorepos is a key strength of the testing-analyzer.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

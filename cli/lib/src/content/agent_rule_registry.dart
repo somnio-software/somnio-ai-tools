@@ -7,12 +7,22 @@ import 'agent_rule.dart';
 ///
 /// Adding support for a new agent requires only a new [AgentRule] entry here.
 class AgentRuleRegistry {
-  AgentRuleRegistry._();
+  AgentRuleRegistry._(); // coverage:ignore-line
 
   /// Stacks exposed by every adapter — must match subfolder names under
   /// `agent-rules/rules/` and the per-stack subfolders the generator emits
   /// under `agent-rules/adapters/<agent>/`.
-  static const List<String> stacks = ['flutter', 'nestjs', 'react'];
+  static const List<String> stacks = [
+    'django',
+    'fastapi',
+    'flask',
+    'flutter',
+    'functions',
+    'nestjs',
+    'python',
+    'react',
+    'typescript',
+  ];
 
   /// All registered agent-rules packs.
   static const List<AgentRule> rules = [
@@ -59,6 +69,9 @@ class AgentRuleRegistry {
       adapterPath: 'agent-rules/adapters/codex',
       // No well-known global path for Codex — project-level only.
       projectPath: 'AGENTS.md',
+      // Codex's condensed source fragment is named system-prompt.md, but it
+      // installs into the standard AGENTS.md project file.
+      adapterFileName: 'system-prompt.md',
       format: RulesInstallFormat.singleFile,
       stacks: stacks,
     ),

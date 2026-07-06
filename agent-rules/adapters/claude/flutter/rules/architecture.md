@@ -1,4 +1,5 @@
 ### General architecture guidelines when using Flutter.
+> Applies to: `mobile/lib/**/*.dart, mobile/packages/*/lib/**/*.dart`
 # Flutter Layered Architecture
 
 How to build highly scalable, maintainable, and testable Flutter apps using layered architecture. This architecture consists of four layers with clear boundaries and single responsibilities.

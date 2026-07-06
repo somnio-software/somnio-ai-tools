@@ -1,4 +1,5 @@
 import '../agents/agent_config.dart';
+import '../agents/agent_registry.dart';
 import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
@@ -11,6 +12,7 @@ class ClaudeSkillOutput {
     required this.ruleFiles,
     this.templateContent,
     this.templateFileName,
+    this.agentFiles = const {},
   });
 
   /// The SKILL.md content with frontmatter and transformed plan.
@@ -22,8 +24,14 @@ class ClaudeSkillOutput {
   /// Template file content, if available.
   final String? templateContent;
 
-  /// Template file name (e.g., 'flutter_report_template.txt').
+  /// Template file name (e.g., 'flutter_report_template.md').
   final String? templateFileName;
+
+  /// Subagent definition files (filename -> content) from the skill's
+  /// `agents/` directory, with each file's `model: <tier>` frontmatter line
+  /// already resolved to a concrete model ID for the target agent. Empty when
+  /// the bundle has no `agents/` directory.
+  final Map<String, String> agentFiles;
 }
 
 /// Transforms SKILL.md + references into Claude Code skill format.
@@ -34,10 +42,19 @@ class ClaudeSkillOutput {
 /// - assets/ (report templates, copied as-is)
 class ClaudeTransformer implements Transformer {
   /// Transforms a skill bundle into Claude Code format.
-  ClaudeSkillOutput transformBundle(SkillBundle bundle, ContentLoader loader) {
+  ///
+  /// [agent] is the target agent used to resolve subagent `model:` tiers to
+  /// concrete model IDs. Defaults to Claude Code, since the `agents/` directory
+  /// is a Claude skill-dir feature.
+  ClaudeSkillOutput transformBundle(
+    SkillBundle bundle,
+    ContentLoader loader, {
+    AgentConfig? agent,
+  }) {
     final plan = loader.loadPlan(bundle);
     final rules = loader.loadRules(bundle);
     final template = loader.loadTemplate(bundle);
+    final targetAgent = agent ?? AgentRegistry.findById('claude')!;
 
     // Generate SKILL.md
     final skillMd = _generateSkillMd(bundle, plan);
@@ -54,12 +71,39 @@ class ClaudeTransformer implements Transformer {
       templateFileName = bundle.templatePath!.split('/').last;
     }
 
+    // Load subagent files and resolve their model tiers to concrete IDs.
+    final agentFiles = <String, String>{};
+    final rawAgents = loader.loadAgentFiles(bundle);
+    for (final entry in rawAgents.entries) {
+      agentFiles[entry.key] = _resolveAgentModelTiers(
+        entry.value,
+        targetAgent,
+      );
+    }
+
     return ClaudeSkillOutput(
       skillMd: skillMd,
       ruleFiles: ruleFiles,
       templateContent: template,
       templateFileName: templateFileName,
+      agentFiles: agentFiles,
     );
+  }
+
+  /// Rewrites each `model: <cheap|mid|frontier>` frontmatter line in a subagent
+  /// file to the concrete model ID resolved via [agent]'s `modelTiers`.
+  ///
+  /// Only the three known portable tiers are rewritten; any other `model:`
+  /// value (already a concrete ID, `inherit`, etc.) is left unchanged. The
+  /// rest of the file is preserved byte-for-byte.
+  static String _resolveAgentModelTiers(String content, AgentConfig agent) {
+    const knownTiers = {'cheap', 'mid', 'frontier'};
+    final modelLine = RegExp(r'^(\s*model:\s*)(\S+)(\s*)$', multiLine: true);
+    return content.replaceAllMapped(modelLine, (m) {
+      final tier = m.group(2)!;
+      if (!knownTiers.contains(tier)) return m.group(0)!;
+      return '${m.group(1)}${agent.resolveTier(tier)}${m.group(3)}';
+    });
   }
 
   String _generateSkillMd(SkillBundle bundle, String planContent) {
@@ -160,7 +204,7 @@ class ClaudeTransformer implements Transformer {
     ContentLoader loader,
     AgentConfig agent,
   ) {
-    final output = transformBundle(bundle, loader);
+    final output = transformBundle(bundle, loader, agent: agent);
     final files = <String, String>{};
 
     // SKILL.md in skill directory
@@ -175,6 +219,14 @@ class ClaudeTransformer implements Transformer {
     if (output.templateContent != null && output.templateFileName != null) {
       files['${bundle.name}/assets/${output.templateFileName!}'] =
           output.templateContent!;
+    }
+
+    // Subagent files in agents/ subdirectory (Claude skill-dir only).
+    // These are resolved+written by AgentInstaller for the skillDir format so
+    // tier resolution can target the actual install agent; they are exposed on
+    // ClaudeSkillOutput.agentFiles for transformBundle consumers/tests too.
+    for (final entry in output.agentFiles.entries) {
+      files['${bundle.name}/agents/${entry.key}'] = entry.value;
     }
 
     return TransformOutput(files: files);

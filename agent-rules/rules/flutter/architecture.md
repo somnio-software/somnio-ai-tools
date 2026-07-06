@@ -1,8 +1,8 @@
 ---
 description: General architecture guidelines when using Flutter.
+globs: "mobile/lib/**/*.dart, mobile/packages/*/lib/**/*.dart"
 alwaysApply: false
 ---
-
 # Flutter Layered Architecture
 
 How to build highly scalable, maintainable, and testable Flutter apps using layered architecture. This architecture consists of four layers with clear boundaries and single responsibilities.
@@ -441,7 +441,15 @@ export 'login_event.dart';
 export 'login_state.dart';
 ```
 
-## Best Practices
+## Common Anti-Patterns to Avoid
+
+1. **Direct Data Layer Access**: Never access data layer from presentation or business logic
+2. **Cross-Layer Dependencies**: Don't create circular dependencies between layers
+3. **Business Logic in UI**: Keep all business logic in the business logic layer
+4. **Hardcoded Dependencies**: Use dependency injection instead of direct instantiation
+5. **Mixed Responsibilities**: Don't mix conce
+
+## Rules
 
 1. **Layer Isolation**: Each layer should be independent and testable
 2. **Dependency Direction**: Always flow from top to bottom
@@ -451,11 +459,3 @@ export 'login_state.dart';
 6. **Testing**: Test each layer in isolation with mocks
 7. **Documentation**: Document layer boundaries and responsibilities
 8. **Consistency**: Follow the same patterns across all features
-
-## Common Anti-Patterns to Avoid
-
-1. **Direct Data Layer Access**: Never access data layer from presentation or business logic
-2. **Cross-Layer Dependencies**: Don't create circular dependencies between layers
-3. **Business Logic in UI**: Keep all business logic in the business logic layer
-4. **Hardcoded Dependencies**: Use dependency injection instead of direct instantiation
-5. **Mixed Responsibilities**: Don't mix conce

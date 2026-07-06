@@ -5,6 +5,77 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.0] - 2026-06-04
+
+### Added
+
+- **Python Health Audit Skill**: New `python-health-audit` skill (`somnio-ph` / `ph`) that performs a comprehensive Python Project Health Audit. Analyzes tech stack, architecture, API/interface design, data layer, testing, code quality, CI/CD, and documentation. Produces a Google Docs-ready report with section scores and weighted overall score.
+- **Python Best Practices Skill**: New `python-best-practices` skill (`somnio-pp` / `pp`) that runs a micro-level Python code quality audit. Validates code against live GitHub standards for typing, code style, function design, data validation, error handling, module structure, and testing. Produces a detailed violations report with prioritized action plan.
+- **Python agent rules stacks**: Added `django`, `fastapi`, `flask`, and `python` to the `AgentRuleRegistry.stacks` list, enabling `somnio rules install` to target Python and its major frameworks alongside the existing Flutter/NestJS/React stacks.
+- **Multi-model subagent orchestration**: All nine audit skills now fan out into a per-skill orchestrator + tiered analysis subagents (`cheap`/`mid`) + a dedicated frontier-tier report-writer, concentrating premium inference on the single user-facing report.
+- **Portable model-tier convention**: Added the provider-neutral `cheap`/`mid`/`frontier` model-tier convention for audit `agents/*.md`, backed by a `modelTiers` map and a `resolveTier(...)` helper on `AgentConfig` that resolves tiers to per-agent model IDs (populated for Claude, Cursor, Gemini, Codex, Augment, and Qwen).
+- **Subagent bundling/install**: Each in-scope skill's `agents/` directory is now bundled (via `SkillBundle.agentsDirectory` + `ContentLoader.loadAgentFiles`) and, for the Claude skill-dir install format, written under `<skill>/agents/` with each subagent's `model: <tier>` frontmatter resolved to the target agent's concrete model ID at install time; non-skill-dir formats skip `agents/` (no native subagent-dispatch surface).
+
+### Changed
+
+- **Retiered audit subagents**: Audit skills are retiered so mechanical scanners run on the cheap tier while synthesis runs on the frontier tier, concentrating premium inference on the single user-facing report.
+- **`somnio run` per-step tiers**: `somnio run` now captures an optional per-step model tier (`{model: cheap|mid|frontier}` on a Rule Execution Order step) and resolves it via each agent's `modelTiers` before executing that step, with graceful fallback to `defaultModel` for agents lacking distinct tiers; the existing `fallbackModel` quota-retry behavior is preserved.
+
+## [2.5.0] - 2026-05-30
+
+### Added
+
+- **Interactive install wizard**: `somnio install` now lets you pick which agents and skills to install via an arrow-key + spacebar menu instead of installing everything. New `--all-skills` flag installs every skill without prompting, and `--skills <ids>` installs a specific comma-separated subset (skips the wizard). When there is no interactive terminal (CI, pipes) it falls back to installing all skills so automation never hangs.
+- **`somnio update` skill selection**: After updating the CLI, `update` now opens the same agent/skill wizard instead of silently reinstalling everything. Non-interactive runs (CI, pipes) still reinstall all skills, and `--all-skills` forces that behavior in a terminal.
+- **Dart Model from JSON Skill**: New standalone `dart-model-from-json` skill that generates Dart model classes from a JSON structure using `json_annotation` and `equatable` (`copyWith`, `fromJson`, `toJson`, Equatable props; handles nested objects and arrays). Registered in the CLI skill registry.
+- **Optimize Claude Config Skill**: New standalone `optimize-claude-config` skill that audits and optimizes a repo's Claude Code configuration so path-scoped rules load lazily and `CLAUDE.md` stays a lightweight index. Maps the real project tree (`git ls-files`) to validate every glob, migrates rule frontmatter to the native lazy-load `paths:` form, flags stale/over-broad globs, slims redundant `CLAUDE.md` content, and installs the read-not-create `PreToolUse(Write)` hook. Idempotent and conservative; supports `--audit-only` and an optional path argument. Stack-agnostic (requires `git` + `python3`). Registered in the CLI skill registry.
+- **Flutter Rules**: Added `code-patterns`, `layout`, and `ui-theming` rules under `agent-rules/rules/flutter/`.
+- **Test coverage**: Added a comprehensive unit-test suite (~21 new/extended test files, 379 tests) covering transformers, agents, content loaders, installers, runner, workflow, and utils. Every non-excluded source file under `cli/lib/` now has **100% line coverage**.
+
+### Changed
+
+- **Coverage gate (`pre-push`)**: The hook now enforces the threshold **per file** instead of as an aggregate average, and runs `format_coverage --check-ignore` so files marked `// coverage:ignore-file` (entrypoints, command shells, interactive prompts, and process-spawning orchestrators) are excluded from the calculation. It lists every offending file when the gate fails.
+- **Interactive menus**: Migrated all selection prompts (`install`, `add`, `workflow`) from `mason_logger` to `interact_cli` with a Somnio-branded theme. The new menus redraw with relative cursor movement, fixing the jumping / duplicated-line rendering glitches the previous prompts showed when the list reached the bottom of the terminal.
+- **Agent Rules**: Refactored flutter, nestjs, and react rule content across stacks and regenerated all tool adapters (Claude, Cursor, Windsurf, Copilot, Codex, Antigravity).
+- **Docs**: Updated `docs/agent-rules.md` and the Cursor/Antigravity adapter READMEs to reflect the current flutter rule set.
+- **flutter-best-practices Skill**: Updated standards references to point at `code-patterns` instead of the removed `dart-model-from-json` rule.
+
+### Removed
+
+- **Flutter Rule**: Removed `agent-rules/rules/flutter/dart-model-from-json.md`; its functionality now lives in the `dart-model-from-json` skill.
+
+## [2.4.0] - 2026-05-26
+
+### Added
+
+- **Work-Log Hook**: New `hooks/work-log-stop.sh` script (portable, version-controlled) that appends a Haiku-generated 2-3 sentence summary of each Claude Code session turn to `~/.work-log/YYYY-MM-DD.md`. Logs root repo + worktree name (`mini-meta-repo/refactor-flutter_http`) so entries map cleanly to Clockify projects.
+- **CLI `somnio hooks`**: New command to opt-in install the work-log Stop hook — copies the script to `~/.claude/hooks/`, makes it executable, and merges the Stop hook entry into `~/.claude/settings.json`. Idempotent; supports `--force` and `--verbose`.
+- **Clockify log-based mode**: `clockify-tracker` skill now supports a second mode triggered by "use logs" / "usa los logs". Reads `~/.work-log/` daily files, maps repos to Clockify projects via `~/.clockify-prefs.json` (persisted), handles multi-project days with user-defined hour splits, generates 2-sentence executive summaries per entry, and shows a full preview before posting.
+- **Docs**: Added `docs/work-log-stop-hook.md` explaining the hook design, setup, and relation to Clockify.
+
+### Changed
+
+- **Work-Log Hook**: Hook now logs the root git repo name instead of the worktree directory name, and appends the worktree name as a suffix (`root/worktree`) for traceability. Uses `which claude` instead of a hardcoded binary path for portability.
+- **`clockify-tracker` command**: Updated description to document both manual mode (unchanged) and the new log-based mode.
+
+## [2.3.0] - 2026-05-12
+
+### Added
+
+- **Agent Rules**: Multi-tool adapter system with rule files for Claude, Codex, Copilot, and Windsurf across functions and TypeScript stacks
+- **Agent Rules**: Canonical rule sources under `agent-rules/rules/` for functions architecture, functions testing, and TypeScript best practices
+- **Ship Skill**: New `ship` skill for automated PR workflow
+- **Skills**: Report templates (`report-template.md`) added to all audit and best-practices skills (Flutter, NestJS, React, Security)
+
+### Changed
+
+- **CLI**: Updated `add`, `rules`, and `run` commands, registries, transformer, and scaffold generator to support the new agent-rules adapter system
+- **Skills**: Updated SKILL.md files and references for flutter-best-practices, flutter-health-audit, nestjs-best-practices, nestjs-health-audit, react-best-practices, react-health-audit, and security-audit
+
+### Removed
+
+- **Plugins**: Removed legacy plugins — `engineering-management`, `marketing`, and `operations`
+
 ## [2.2.0] - 2026-04-16
 
 ### Added

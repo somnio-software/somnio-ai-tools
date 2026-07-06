@@ -56,4 +56,4 @@ Read `security-audit/references/report-generator.md` and follow ALL instructions
 
 Read `security-audit/references/report-format-enforcer.md` and follow ALL instructions in the prompt field
 
-Save the validated report to `./reports/security_audit.txt`
+Save the validated report to `./reports/security_audit.md`

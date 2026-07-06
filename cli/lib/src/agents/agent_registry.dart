@@ -6,7 +6,7 @@ import 'token_parsers.dart';
 /// Adding a new agent requires only a single [AgentConfig] entry here.
 /// No other files need to change.
 class AgentRegistry {
-  AgentRegistry._();
+  AgentRegistry._(); // coverage:ignore-line
 
   /// All registered agents.
   static const List<AgentConfig> agents = [
@@ -62,6 +62,7 @@ class AgentRegistry {
     autoApproveFlags: ['--allowedTools', 'Read,Bash,Glob,Grep,Write'],
     outputFlags: ['--output-format', 'json'],
     models: ['haiku', 'sonnet', 'opus'],
+    modelTiers: {'cheap': 'haiku', 'mid': 'sonnet', 'frontier': 'opus'},
     defaultModel: 'haiku',
     fallbackModel: 'haiku',
     installFormat: InstallFormat.skillDir,
@@ -110,6 +111,11 @@ class AgentRegistry {
       'grok-code',
       'kimi-k2.5',
     ],
+    modelTiers: {
+      'cheap': 'claude-4.5-haiku',
+      'mid': 'claude-4.6-sonnet',
+      'frontier': 'claude-4.6-opus',
+    },
     defaultModel: 'auto',
     fallbackModel: 'auto',
     installFormat: InstallFormat.singleFile,
@@ -141,6 +147,11 @@ class AgentRegistry {
       'gemini-2.5-pro',
       'gemini-2.5-flash',
     ],
+    modelTiers: {
+      'cheap': 'gemini-3-flash',
+      'mid': 'gemini-2.5-pro',
+      'frontier': 'gemini-3-pro',
+    },
     defaultModel: 'gemini-3-flash',
     fallbackModel: 'gemini-2.5-flash',
     installFormat: InstallFormat.markdown,
@@ -181,6 +192,11 @@ class AgentRegistry {
       'gpt-5.2',
       'gpt-5.1-codex-mini',
     ],
+    modelTiers: {
+      'cheap': 'gpt-5.1-codex-mini',
+      'mid': 'gpt-5.2-codex',
+      'frontier': 'gpt-5.3-codex',
+    },
     defaultModel: 'gpt-5.3-codex',
     fallbackModel: 'gpt-5.1-codex-mini',
     installFormat: InstallFormat.markdown,
@@ -207,6 +223,11 @@ class AgentRegistry {
       'gpt-5.2',
       'gpt-5.1',
     ],
+    modelTiers: {
+      'cheap': 'claude-haiku-4-5',
+      'mid': 'claude-sonnet-4-5',
+      'frontier': 'claude-opus-4-6',
+    },
     defaultModel: 'claude-sonnet-4-5',
     fallbackModel: 'claude-haiku-4-5',
     installFormat: InstallFormat.markdown,
@@ -314,6 +335,11 @@ class AgentRegistry {
       'qwen3-coder-next',
       'qwen3-5-plus',
     ],
+    modelTiers: {
+      'cheap': 'qwen3-coder-next',
+      'mid': 'qwen3-coder-plus',
+      'frontier': 'qwen3-5-plus',
+    },
     defaultModel: 'qwen3-coder-plus',
     fallbackModel: 'qwen3-coder-next',
     installFormat: InstallFormat.markdown,

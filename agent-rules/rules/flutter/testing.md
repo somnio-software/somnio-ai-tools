@@ -1,6 +1,6 @@
 ---
-description: 
-globs: **/*_test.dart, **/test/**/*.dart
+description: Flutter/Dart testing best practices.
+globs: "mobile/test/**/*.dart, mobile/packages/*/test/**/*.dart"
 alwaysApply: false
 ---
 # Flutter/Dart Testing Best Practices
@@ -301,6 +301,21 @@ Use random test ordering to catch flaky tests:
 flutter test --test-randomize-ordering-seed random
 dart test --test-randomize-ordering-seed random
 ```
+
+## Coverage Rule
+
+**≥80% line coverage per file** — not just overall. A module that averages 86% overall but has a file at 40% violates this rule.
+
+```bash
+# Always use --list, not --summary, to see per-file breakdown
+flutter test --coverage && lcov --list coverage/lcov.info
+```
+
+**Exemptions** (do not count against the threshold):
+- Generated files: `*.g.dart`, `app_localizations*.dart`, `*.freezed.dart`
+- Single-line config stubs (≤3 lines of executable code)
+
+Every new `lib/` file added in a phase must have a corresponding test file that brings it to ≥80%. Hiding low coverage behind a high-coverage overall score is not acceptable.
 
 ## Quick Reference
 

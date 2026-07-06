@@ -1,6 +1,6 @@
 ---
 description: TypeScript integration patterns for React including component typing, generics, and type utilities.
-globs: **/*.tsx,**/*.ts
+globs: src/**/*.tsx, src/**/*.ts
 alwaysApply: false
 ---
 

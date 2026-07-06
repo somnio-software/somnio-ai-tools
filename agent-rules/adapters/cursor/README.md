@@ -54,8 +54,10 @@ your-project/
 | `flutter-architecture` | `**/*.dart` | `@flutter-architecture` |
 | `flutter-best-practices` | `**/*.dart` | `@flutter-best-practices` |
 | `flutter-bloc-test` | `**/*bloc_test.dart` | `@flutter-bloc-test` |
-| `flutter-dart-model-from-json` | `**/*.dart` | `@flutter-dart-model-from-json` |
+| `flutter-code-patterns` | `**/*.dart` | `@flutter-code-patterns` |
+| `flutter-layout` | `**/view/**/*.dart` | `@flutter-layout` |
 | `flutter-testing` | `**/*_test.dart` | `@flutter-testing` |
+| `flutter-ui-theming` | `**/view/**/*.dart` | `@flutter-ui-theming` |
 
 ## Actualizar
 

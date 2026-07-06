@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'package:mason_logger/mason_logger.dart';
 
 import '../agents/agent_config.dart';

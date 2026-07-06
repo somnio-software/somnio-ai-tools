@@ -118,6 +118,121 @@ void main() {
       expect(args, ['--print', '--model', 'auto', 'prompt']);
     });
 
+    test('flag style omits prompt when promptFlag is null', () {
+      const agent = AgentConfig(
+        id: 'noflag',
+        displayName: 'No Flag',
+        promptStyle: PromptStyle.flag,
+        outputFlags: ['--json'],
+        installPath: '{home}/.noflag',
+      );
+      final args = agent.buildArgs('ignored prompt', model: 'm');
+      expect(args, ['--json', '--model', 'm']);
+      expect(args, isNot(contains('ignored prompt')));
+    });
+
+    test('subcommand style omits subcommand flag when promptFlag is null', () {
+      const agent = AgentConfig(
+        id: 'sub',
+        displayName: 'Sub',
+        promptStyle: PromptStyle.subcommand,
+        outputFlags: ['--json'],
+        installPath: '{home}/.sub',
+      );
+      final args = agent.buildArgs('the prompt');
+      expect(args, ['--json', 'the prompt']);
+    });
+  });
+
+  group('AgentConfig.contentLabel', () {
+    test('returns "workflow" for InstallFormat.workflow', () {
+      const agent = AgentConfig(
+        id: 'antigravity',
+        displayName: 'Antigravity',
+        installFormat: InstallFormat.workflow,
+        installPath: '{home}/.gemini/antigravity',
+      );
+      expect(agent.contentLabel, 'workflow');
+    });
+
+    test('returns "command" for InstallFormat.singleFile', () {
+      const agent = AgentConfig(
+        id: 'cursor',
+        displayName: 'Cursor',
+        installFormat: InstallFormat.singleFile,
+        installPath: '{home}/.cursor/commands',
+      );
+      expect(agent.contentLabel, 'command');
+    });
+
+    test('returns "skill" for other install formats', () {
+      const skillDir = AgentConfig(
+        id: 'claude',
+        displayName: 'Claude',
+        installFormat: InstallFormat.skillDir,
+        installPath: '{home}/.claude/skills',
+      );
+      const markdown = AgentConfig(
+        id: 'copilot',
+        displayName: 'Copilot',
+        installFormat: InstallFormat.markdown,
+        installPath: '{home}/.copilot/agents',
+      );
+      expect(skillDir.contentLabel, 'skill');
+      expect(markdown.contentLabel, 'skill');
+    });
+  });
+
+  group('AgentConfig.resolvedExecutionRulesPath', () {
+    test('falls back to installPath when executionRulesPath is null', () {
+      const agent = AgentConfig(
+        id: 'claude',
+        displayName: 'Claude',
+        installPath: '{home}/.claude/skills',
+      );
+      final path = agent.resolvedExecutionRulesPath(home: '/home/u');
+      expect(path, '/home/u/.claude/skills');
+    });
+
+    test('uses executionRulesPath and substitutes {home}', () {
+      const agent = AgentConfig(
+        id: 'cursor',
+        displayName: 'Cursor',
+        installPath: '{home}/.cursor/commands',
+        executionRulesPath: '{home}/.cursor/somnio_rules',
+      );
+      final path = agent.resolvedExecutionRulesPath(home: '/Users/u');
+      expect(path, endsWith('/.cursor/somnio_rules'));
+      expect(path, contains('/Users/u/'));
+      expect(path, isNot(contains('{home}')));
+    });
+
+    test('substitutes {name} when provided', () {
+      const agent = AgentConfig(
+        id: 'cursor',
+        displayName: 'Cursor',
+        installPath: '{home}/.cursor/commands',
+        executionRulesPath: '{home}/.cursor/somnio_rules/{name}',
+      );
+      final path = agent.resolvedExecutionRulesPath(
+        home: '/Users/u',
+        name: 'flutter-audit',
+      );
+      expect(path, endsWith('/somnio_rules/flutter-audit'));
+      expect(path, isNot(contains('{name}')));
+    });
+
+    test('leaves {name} unsubstituted when name is null', () {
+      const agent = AgentConfig(
+        id: 'cursor',
+        displayName: 'Cursor',
+        installPath: '{home}/.cursor/commands',
+        executionRulesPath: '{home}/.cursor/somnio_rules/{name}',
+      );
+      final path = agent.resolvedExecutionRulesPath(home: '/Users/u');
+      expect(path, contains('{name}'));
+    });
+
     test('claude buildArgs matches original implementation', () {
       const agent = AgentConfig(
         id: 'claude',
@@ -265,6 +380,56 @@ void main() {
       );
       expect(agent.configDirName, '.test');
       expect(agent.installSubpath, '');
+    });
+  });
+
+  group('AgentConfig.resolveTier', () {
+    const tiered = AgentConfig(
+      id: 'tiered',
+      displayName: 'Tiered',
+      installPath: '{home}/.tiered',
+      models: ['a', 'b', 'c'],
+      modelTiers: {'cheap': 'a', 'mid': 'b', 'frontier': 'c'},
+      defaultModel: 'b',
+      fallbackModel: 'a',
+    );
+
+    test('returns mapped model when tier is present', () {
+      expect(tiered.resolveTier('cheap'), 'a');
+      expect(tiered.resolveTier('mid'), 'b');
+      expect(tiered.resolveTier('frontier'), 'c');
+    });
+
+    test('falls back to defaultModel when tier is absent', () {
+      expect(tiered.resolveTier('unknown'), 'b');
+    });
+
+    test('falls back to fallbackModel when no map and no defaultModel', () {
+      const agent = AgentConfig(
+        id: 'fallbackonly',
+        displayName: 'Fallback Only',
+        installPath: '{home}/.fb',
+        fallbackModel: 'cheapo',
+      );
+      expect(agent.resolveTier('cheap'), 'cheapo');
+    });
+
+    test('passes the tier through when no map, default, or fallback', () {
+      const agent = AgentConfig(
+        id: 'bare',
+        displayName: 'Bare',
+        installPath: '{home}/.bare',
+      );
+      expect(agent.resolveTier('cheap'), 'cheap');
+    });
+
+    test('defaults to an empty modelTiers map', () {
+      const agent = AgentConfig(
+        id: 'empty',
+        displayName: 'Empty',
+        installPath: '{home}/.empty',
+      );
+      expect(agent.modelTiers, isEmpty);
     });
   });
 }

@@ -57,6 +57,25 @@ void main() {
           AgentRegistry.agents.length);
     });
 
+    test('ideAgents only includes non-executable agents', () {
+      final ide = AgentRegistry.ideAgents;
+      expect(ide, isNotEmpty);
+      for (final agent in ide) {
+        expect(agent.canExecute, isFalse,
+            reason: '${agent.id} should not be executable');
+      }
+      final ids = ide.map((a) => a.id).toSet();
+      expect(ids, containsAll(['copilot', 'windsurf', 'roo']));
+      expect(ids, isNot(contains('claude')));
+    });
+
+    test('executableAgents and ideAgents partition the full registry', () {
+      expect(
+        AgentRegistry.executableAgents.length + AgentRegistry.ideAgents.length,
+        AgentRegistry.agents.length,
+      );
+    });
+
     test('all executable agents have a binary', () {
       for (final agent in AgentRegistry.executableAgents) {
         expect(agent.binary, isNotNull,
@@ -168,6 +187,85 @@ void main() {
         expect(agent.outputFlags, entry.value,
             reason: '${entry.key} outputFlags');
       }
+    });
+  });
+
+  group('modelTiers', () {
+    final expected = {
+      'claude': {'cheap': 'haiku', 'mid': 'sonnet', 'frontier': 'opus'},
+      'cursor': {
+        'cheap': 'claude-4.5-haiku',
+        'mid': 'claude-4.6-sonnet',
+        'frontier': 'claude-4.6-opus',
+      },
+      'gemini': {
+        'cheap': 'gemini-3-flash',
+        'mid': 'gemini-2.5-pro',
+        'frontier': 'gemini-3-pro',
+      },
+      'codex': {
+        'cheap': 'gpt-5.1-codex-mini',
+        'mid': 'gpt-5.2-codex',
+        'frontier': 'gpt-5.3-codex',
+      },
+      'auggie': {
+        'cheap': 'claude-haiku-4-5',
+        'mid': 'claude-sonnet-4-5',
+        'frontier': 'claude-opus-4-6',
+      },
+      'qwen': {
+        'cheap': 'qwen3-coder-next',
+        'mid': 'qwen3-coder-plus',
+        'frontier': 'qwen3-5-plus',
+      },
+    };
+
+    test('populated agents have the exact three-tier map', () {
+      for (final entry in expected.entries) {
+        final agent = AgentRegistry.findById(entry.key)!;
+        expect(agent.modelTiers, entry.value, reason: entry.key);
+      }
+    });
+
+    test('every tier model ID exists in the agent models list', () {
+      for (final id in expected.keys) {
+        final agent = AgentRegistry.findById(id)!;
+        for (final model in agent.modelTiers.values) {
+          expect(agent.models, contains(model),
+              reason: '$id tier model $model must be in models');
+        }
+      }
+    });
+
+    test('resolveTier on populated agents returns mapped IDs', () {
+      final claude = AgentRegistry.findById('claude')!;
+      expect(claude.resolveTier('cheap'), 'haiku');
+      expect(claude.resolveTier('frontier'), 'opus');
+    });
+
+    test('agents without a clean three-tier split have an empty map', () {
+      for (final id in [
+        'amp',
+        'aider',
+        'cline',
+        'opencode',
+        'codebuddy',
+        'antigravity',
+        'copilot',
+        'windsurf',
+        'roo',
+        'kilocode',
+        'amazonq',
+      ]) {
+        final agent = AgentRegistry.findById(id)!;
+        expect(agent.modelTiers, isEmpty, reason: id);
+      }
+    });
+
+    test('untiered executable agents fall back via resolveTier', () {
+      final amp = AgentRegistry.findById('amp')!;
+      // amp has no defaultModel/fallbackModel -> passthrough.
+      expect(amp.resolveTier('cheap'), 'cheap');
     });
   });
 }

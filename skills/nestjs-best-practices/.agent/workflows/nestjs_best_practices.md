@@ -12,27 +12,42 @@ Execute the NestJS Micro-Code Audit through sequential, modular rules.
 Each rule validates code against specific standards from the somnio-ai-tools
 repository.
 
+> **In-session (subagent) path**: Read `nestjs-best-practices/agents/orchestrator.md`
+> and follow ALL instructions. The orchestrator dispatches Wave 1 analyzers
+> (mid tier) and Wave 2 scanners (cheap tier) in parallel, then hands off to
+> the frontier-tier report-writer. This is the preferred path inside a Claude
+> Code session.
+>
+> **CLI path** (`somnio run`): The sequential steps below are used by the
+> CLI runner. They remain the authoritative execution order for that path.
+
 ## Step 1: Testing Quality Analysis
+# model: mid
 
 Read `nestjs-best-practices/references/testing-quality.md` and follow ALL instructions in the prompt field
 
 ## Step 2: Architecture Compliance Analysis
+# model: mid
 
 Read `nestjs-best-practices/references/architecture-compliance.md` and follow ALL instructions in the prompt field
 
 ## Step 3: Code Standards Analysis
+# model: mid
 
 Read `nestjs-best-practices/references/code-standards.md` and follow ALL instructions in the prompt field
 
 ## Step 4: DTO Validation Analysis
+# model: cheap
 
 Read `nestjs-best-practices/references/dto-validation.md` and follow ALL instructions in the prompt field
 
 ## Step 5: Error Handling Analysis
+# model: cheap
 
 Read `nestjs-best-practices/references/error-handling.md` and follow ALL instructions in the prompt field
 
 ## Step 6: Report Generation
+# model: frontier
 
 Read `nestjs-best-practices/references/best-practices-format-enforcer.md` and follow ALL instructions in the prompt field
 Read `nestjs-best-practices/references/best-practices-generator.md` and follow ALL instructions in the prompt field

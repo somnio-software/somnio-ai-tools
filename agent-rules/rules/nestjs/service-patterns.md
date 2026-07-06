@@ -1,6 +1,6 @@
 ---
 description: Service layer patterns for NestJS including method organization, validation, and error handling.
-globs: **/*.service.ts
+globs: src/**/*.service.ts
 alwaysApply: false
 ---
 

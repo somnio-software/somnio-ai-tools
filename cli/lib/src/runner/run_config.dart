@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import '../agents/agent_config.dart';
 
 /// Supported AI CLI agents for chunked execution.
@@ -12,6 +13,7 @@ class ExecutionStep {
     required this.ruleName,
     this.isMandatory = false,
     this.annotation,
+    this.model,
   });
 
   /// 1-based step number from the plan.
@@ -25,6 +27,13 @@ class ExecutionStep {
 
   /// Optional annotation text (e.g., 'MANDATORY - stops if FVM global fails').
   final String? annotation;
+
+  /// Optional captured per-step model tier (e.g., 'cheap', 'mid', 'frontier').
+  ///
+  /// Parsed from a trailing `{model: <tier>}` token on the step line. Resolved
+  /// to a concrete model ID via [AgentConfig.resolveTier] before execution.
+  /// `null` means the run-level model is used for this step.
+  final String? model;
 }
 
 /// Resolved configuration for a complete chunked audit run.
@@ -74,7 +83,7 @@ class RunConfig {
   /// Artifact output directory (e.g., `./reports/.artifacts/`).
   final String artifactsDir;
 
-  /// Final report path (e.g., `./reports/flutter_audit.txt`).
+  /// Final report path (e.g., `./reports/flutter_audit.md`).
   final String reportPath;
 
   /// Optional model override passed to the AI CLI via `--model`.

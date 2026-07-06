@@ -1,6 +1,7 @@
 ---
+description: Bloc testing standards — bloc, event, and state test patterns.
+globs: "mobile/test/**/*bloc_test.dart, mobile/test/**/*event_test.dart, mobile/test/**/*state_test.dart, mobile/packages/*/test/**/*bloc_test.dart"
 alwaysApply: false
-globs: **/*bloc_test.dart
 ---
 # Bloc Testing Standards
 
@@ -383,19 +384,6 @@ blocTest<EditTodoBloc, EditTodoState>(
 );
 ```
 
-## Best Practices
-
-1. **Naming**: Use descriptive but concise test names that explain state changes
-2. **Grouping**: Group by Bloc → Event → Test Cases
-3. **Mocking**: Only mock when bloc has dependencies
-4. **Verification**: Always verify repository interactions when testing bloc logic
-5. **State Transitions**: Test the complete state transition sequence
-6. **Error Handling**: Test both success and failure scenarios
-7. **Constants**: Use `const` constructors for events and states when possible
-8. **Helper Functions**: Create `buildBloc()` helper for consistent bloc creation
-9. **Props Testing**: Always test `props` getter for events and states
-10. **Focus**: Focus on state changes that occur in each event
-
 ## Common Patterns
 
 ### Testing Stream-Based Blocs
@@ -472,3 +460,16 @@ blocTest<BlocType, StateType>(
   ],
 );
 ```
+
+## Rules
+
+1. **Naming**: Use descriptive but concise test names that explain state changes
+2. **Grouping**: Group by Bloc → Event → Test Cases
+3. **Mocking**: Only mock when bloc has dependencies
+4. **Verification**: Always verify repository interactions when testing bloc logic
+5. **State Transitions**: Test the complete state transition sequence
+6. **Error Handling**: Test both success and failure scenarios
+7. **Constants**: Use `const` constructors for events and states when possible
+8. **Helper Functions**: Create `buildBloc()` helper for consistent bloc creation
+9. **Props Testing**: Always test `props` getter for events and states
+10. **Focus**: Focus on state changes that occur in each event

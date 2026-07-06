@@ -1,6 +1,6 @@
 ---
 description: Module organization patterns for NestJS including imports, exports, providers, and feature structure.
-globs: **/*.module.ts
+globs: src/**/*.module.ts
 alwaysApply: false
 ---
 

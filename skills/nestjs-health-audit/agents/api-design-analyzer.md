@@ -38,7 +38,7 @@ description: |
   ValidationPipe configuration and DTO validation decorator coverage are critical security concerns this agent addresses.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: green
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

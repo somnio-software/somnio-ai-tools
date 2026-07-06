@@ -11,6 +11,7 @@ class SkillBundle {
     required this.rulesDirectory,
     this.workflowPath,
     this.templatePath,
+    this.agentsDirectory,
   });
 
   /// Internal identifier (e.g., 'flutter_health').
@@ -41,6 +42,16 @@ class SkillBundle {
 
   /// Path to the report template file, relative to repo root.
   final String? templatePath;
+
+  /// Path to the skill's `agents/` directory, relative to repo root.
+  ///
+  /// Optional. When set (e.g. `skills/security-audit/agents`), the directory
+  /// holds the skill's subagent definition files (orchestrator, report-writer,
+  /// analysis subagents) whose YAML frontmatter declares a portable
+  /// `model: cheap|mid|frontier` tier. These are bundled and, for Claude
+  /// skill-dir installs, written under `<installedSkillDir>/agents/` with tiers
+  /// resolved to concrete model IDs. `null` for skills with no subagents.
+  final String? agentsDirectory;
 
   /// Technology prefix derived from the bundle [id].
   ///

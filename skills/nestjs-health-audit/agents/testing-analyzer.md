@@ -38,7 +38,7 @@ description: |
   Test gap detection by cross-referencing source files with test files is a key analysis the testing-analyzer performs.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

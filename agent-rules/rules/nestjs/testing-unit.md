@@ -1,6 +1,6 @@
 ---
 description: Unit test patterns for NestJS including mocking, structure, grouping, and assertions.
-globs: **/*.spec.ts
+globs: src/**/*.spec.ts
 alwaysApply: false
 ---
 

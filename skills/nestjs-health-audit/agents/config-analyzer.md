@@ -38,7 +38,7 @@ description: |
   Cross-app configuration consistency is essential in monorepos and requires reading multiple configuration files.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: cyan
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

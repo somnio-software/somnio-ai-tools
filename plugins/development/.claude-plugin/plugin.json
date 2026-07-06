@@ -1,7 +1,7 @@
 {
   "name": "somnio-development",
   "version": "2.1.0",
-  "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, React, and more.",
+  "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, React, Python / FastAPI / Django / Flask, and more.",
   "author": {
     "name": "Somnio Software"
   },
@@ -11,6 +11,10 @@
     "flutter",
     "nestjs",
     "react",
+    "python",
+    "fastapi",
+    "django",
+    "flask",
     "audit",
     "security",
     "health-check",

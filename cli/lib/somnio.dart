@@ -1,3 +1,4 @@
+// coverage:ignore-file
 /// Somnio CLI - Install AI agent skills from somnio-ai-tools.
 library somnio;
 

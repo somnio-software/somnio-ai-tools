@@ -196,7 +196,7 @@ using the scoring rubrics BEFORE writing any report content. A report
 without computed scores is INVALID.
 
 **Report Sections** (13 sections with quantitative scoring):
-- Security Scoring Breakdown (5 scored lines with weights + Overall + Formula + Posture)
+- Security Scoring Breakdown (5 scored lines + Overall + Posture)
 - Executive Summary with Overall Score
 - Scored Detail Sections (5 sections, dynamically ordered by score ascending — lowest first):
   - Sensitive File Protection (scored, weight 25%)
@@ -217,8 +217,8 @@ Final), Key Findings, Evidence, Risks, and Recommendations.
 
 ## Step 11. Validate and Export Security Report
 
-Goal: Validate the generated report against structural and formatting
-rules, then save the final plain-text report.
+Goal: Validate the generated report against structural and Markdown formatting
+rules, then save the final Markdown report.
 
 Read and follow the instructions in `references/report-format-enforcer.md`
 
@@ -226,18 +226,18 @@ Read and follow the instructions in `references/report-format-enforcer.md`
 from the format enforcer rule: exactly 13 sections, Section 1 has 5 scored
 lines with weights + Overall + Formula + Posture, Sections 3-7 have Score
 lines, sections are ordered by score ascending, score labels match ranges,
-no markdown syntax. Fix any issues in-place. If scores are missing entirely,
+proper Markdown syntax. Fix any issues in-place. If scores are missing entirely,
 re-run step 10 before exporting.
 
-**Export**: Save the validated report to `./reports/security_audit.txt`
+**Export**: Save the validated report to `./reports/security_audit.md`
 
-**Format**: Plain text ready to copy into Google Docs (no markdown syntax,
-no # headings, no bold markers, no fenced code blocks).
+**Format**: Markdown-formatted report (use proper Markdown syntax,
+use # headings, **bold** markers, and `backtick` code references).
 
 **Command**:
 ```bash
 mkdir -p reports
-# Save validated report to ./reports/security_audit.txt
+# Save validated report to ./reports/security_audit.md
 ```
 
 ## Execution Summary
@@ -245,19 +245,19 @@ mkdir -p reports
 **Total Rules**: 10 analysis rules + 1 format enforcement rule
 
 **Rule Execution Order**:
-1. Read and follow the instructions in `references/tool-installer.md` (MANDATORY - tool detection)
-2. Read and follow the instructions in `references/file-analysis.md`
-3. Read and follow the instructions in `references/secret-patterns.md`
-4. Read and follow the instructions in `references/gitleaks.md` (optional - skips if Gitleaks not installed)
-5. Read and follow the instructions in `references/dependency-audit.md`
-6. Read and follow the instructions in `references/dependency-age.md`
-7. Read and follow the instructions in `references/trivy.md` (optional - skips if Trivy not installed)
-8. Read and follow the instructions in `references/sast.md` (SAST OWASP patterns, LOW/MEDIUM findings)
-9. Read and follow the instructions in `references/gemini-analysis.md` (optional - skips if Gemini unavailable)
-10. Read and follow the instructions in `references/report-generator.md` (generates 13-section report with quantitative scoring)
+1. Read and follow the instructions in `references/tool-installer.md` (MANDATORY - tool detection) {model: cheap}
+2. Read and follow the instructions in `references/file-analysis.md` {model: cheap}
+3. Read and follow the instructions in `references/secret-patterns.md` {model: cheap}
+4. Read and follow the instructions in `references/gitleaks.md` (optional - skips if Gitleaks not installed) {model: cheap}
+5. Read and follow the instructions in `references/dependency-audit.md` {model: mid}
+6. Read and follow the instructions in `references/dependency-age.md` {model: mid}
+7. Read and follow the instructions in `references/trivy.md` (optional - skips if Trivy not installed) {model: mid}
+8. Read and follow the instructions in `references/sast.md` (SAST OWASP patterns, LOW/MEDIUM findings) {model: cheap}
+9. Read and follow the instructions in `references/gemini-analysis.md` (optional - skips if Gemini unavailable) {model: mid}
+10. Read and follow the instructions in `references/report-generator.md` (generates 13-section report with quantitative scoring) {model: frontier}
 
 **Post-Generation**: Read and follow the instructions in `references/report-format-enforcer.md` to validate and fix
-the report (runs automatically after step 10)
+the report (runs automatically after step 10) {model: frontier}
 
 **Scoring System**:
 - 5 scored sections with weighted rubrics (0-100 each)
@@ -275,6 +275,38 @@ the report (runs automatically after step 10)
 - Clear separation of concerns
 - Quantitative scoring enables objective comparison across audits
 - Works as standalone or after health audit
+
+## Subagent Dispatch (in-session)
+
+This section describes the **in-session path** — when Claude Code dispatches subagents via the Agent tool within a single session. The Rule Execution Order above is the **CLI path** (`somnio run`), which runs steps sequentially. Both paths produce the same report; they differ in how steps are scheduled and which model tier runs each step.
+
+**Entry point**: `agents/orchestrator.md` (model: mid)
+
+The orchestrator reads this SKILL.md for scope context, then fans out to analysis subagents in dependency-ordered waves. It validates each expected artifact before advancing to the next wave. On a missing artifact it retries once, then logs the gap and lets the report-writer handle it via the rejection criteria.
+
+### Wave Plan
+
+| Wave | Mode | Agents dispatched | Tier |
+|------|------|-------------------|------|
+| Wave 0 | Sequential (stop-on-failure) | `tool-installer` | cheap |
+| Wave 1 | Parallel | `file-analyzer`, `secret-scanner`, `sast-analyzer` | cheap |
+| Wave 2 | Sequential | `dependency-analyzer` | mid |
+| Wave 3 | Conditional (skip if GEMINI_AVAILABLE=false) | `gemini-analyzer` | mid |
+| Wave 4 | Sequential | `report-writer` | frontier |
+
+### Dispatch Table
+
+| Agent file | Tier | References / steps covered | Artifact(s) written |
+|---|---|---|---|
+| `agents/tool-installer.md` | cheap | `references/tool-installer.md` (step 1) | `reports/.artifacts/step_01_security_tool_installer.md` |
+| `agents/file-analyzer.md` | cheap | `references/file-analysis.md` (step 2) | `reports/.artifacts/step_02_security_file_analysis.md` |
+| `agents/secret-scanner.md` | cheap | `references/secret-patterns.md` (step 3) + `references/gitleaks.md` (step 4) | `reports/.artifacts/step_03_security_secret_patterns.md`, `reports/.artifacts/step_04_security_gitleaks.md` |
+| `agents/sast-analyzer.md` | cheap | `references/sast.md` (step 8) | `reports/.artifacts/step_08_security_sast.md` |
+| `agents/dependency-analyzer.md` | mid | `references/dependency-audit.md` (step 5) + `references/dependency-age.md` (step 6) + `references/trivy.md` (step 7) | `reports/.artifacts/step_05_security_dependency_audit.md`, `reports/.artifacts/step_06_security_dependency_age.md`, `reports/.artifacts/step_07_security_trivy.md` |
+| `agents/gemini-analyzer.md` | mid | `references/gemini-analysis.md` (step 9) | `reports/.artifacts/step_09_security_gemini_analysis.md` |
+| `agents/report-writer.md` | frontier | `references/report-generator.md` (step 10) + `references/report-format-enforcer.md` (step 11) + `assets/report-template.md` | `reports/security_audit.md`, `reports/security_audit.json`, `reports/.history/last_scores.json` |
+
+**Model tiers** are provider-neutral symbolic names. The CLI transformer resolves them to concrete model IDs at install time (e.g. for Claude: cheap→haiku, mid→sonnet, frontier→opus).
 
 ## Report Metadata (MANDATORY)
 

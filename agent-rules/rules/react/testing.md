@@ -1,6 +1,6 @@
 ---
 description: React testing patterns using React Testing Library and Jest including component tests, hook tests, and mocking strategies.
-globs: **/*.test.tsx,**/*.spec.tsx,**/*.test.ts
+globs: src/**/*.test.tsx, src/**/*.spec.tsx, src/**/*.test.ts
 alwaysApply: false
 ---
 

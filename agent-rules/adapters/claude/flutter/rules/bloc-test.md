@@ -1,4 +1,5 @@
-> Applies to: `**/*bloc_test.dart`
+### Bloc testing standards — bloc, event, and state test patterns.
+> Applies to: `mobile/test/**/*bloc_test.dart, mobile/test/**/*event_test.dart, mobile/test/**/*state_test.dart, mobile/packages/*/test/**/*bloc_test.dart`
 # Bloc Testing Standards
 
 How to write comprehensive bloc tests following the project's established patterns and conventions.

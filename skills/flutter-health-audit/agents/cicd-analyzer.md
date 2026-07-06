@@ -38,7 +38,7 @@ description: |
   Auxiliary CI tooling like Dependabot and cspell configuration falls within the cicd-analyzer's scope.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: green
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

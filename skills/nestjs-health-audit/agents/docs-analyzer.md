@@ -38,7 +38,7 @@ description: |
   Monorepo documentation consistency requires reading multiple READMEs and checking for monorepo-specific content.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: blue
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

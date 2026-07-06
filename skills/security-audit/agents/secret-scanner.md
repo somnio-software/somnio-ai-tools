@@ -38,7 +38,7 @@ description: |
   Git history scanning catches secrets that were committed and removed, which pattern-based source scanning would miss.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: red
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

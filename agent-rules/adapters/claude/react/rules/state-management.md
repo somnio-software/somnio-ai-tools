@@ -1,5 +1,5 @@
 ### React state management patterns including Context API, Zustand, and TanStack Query for server state.
-> Applies to: `**/*.tsx,**/*.ts`
+> Applies to: `src/**/*.tsx, src/**/*.ts`
 # React State Management
 
 How to choose and implement the right state management approach based on scope and data type.

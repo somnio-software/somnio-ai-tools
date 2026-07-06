@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'dart:io';
 
 import 'package:args/command_runner.dart';
@@ -27,7 +28,7 @@ class RulesCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding standards (Flutter / NestJS / React) '
+      'Install agent coding standards (Flutter / Functions / NestJS / React / TypeScript) '
       'per agent and per stack.';
 }
 
@@ -79,7 +80,7 @@ class _RulesInstallCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding rules per stack (flutter / nestjs / react).\n'
+      'Install agent coding rules per stack (flutter / nestjs / react / python / fastapi / django / flask).\n'
       '\n'
       'Examples:\n'
       '  somnio rules install                                  # interactive\n'

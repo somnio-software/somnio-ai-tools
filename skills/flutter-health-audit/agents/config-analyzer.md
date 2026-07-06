@@ -38,7 +38,7 @@ description: |
   i18n verification requires cross-referencing multiple configuration files, which is exactly what the config-analyzer does.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: cyan
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

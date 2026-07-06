@@ -1,5 +1,5 @@
 ### Integration test patterns for NestJS including database setup, cleanup, and test isolation.
-> Applies to: `**/*.integration.spec.ts`
+> Applies to: `src/**/*.integration.spec.ts`
 # NestJS Integration Testing Standards
 
 How to write comprehensive integration tests with real database interactions, proper setup/cleanup, and test isolation.

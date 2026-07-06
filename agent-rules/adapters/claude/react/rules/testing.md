@@ -1,5 +1,5 @@
 ### React testing patterns using React Testing Library and Jest including component tests, hook tests, and mocking strategies.
-> Applies to: `**/*.test.tsx,**/*.spec.tsx,**/*.test.ts`
+> Applies to: `src/**/*.test.tsx, src/**/*.spec.tsx, src/**/*.test.ts`
 # React Testing Standards
 
 How to write maintainable React tests that validate behavior from the user's perspective using React Testing Library and Jest.

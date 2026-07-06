@@ -49,6 +49,7 @@ class AgentConfig {
     this.autoApproveFlags = const [],
     this.modelFlag = '--model',
     this.models = const [],
+    this.modelTiers = const {},
     this.defaultModel,
     this.fallbackModel,
     this.installFormat = InstallFormat.markdown,
@@ -101,6 +102,17 @@ class AgentConfig {
 
   /// Available models for this agent.
   final List<String> models;
+
+  /// Maps portable capability tiers to concrete model IDs for this agent.
+  ///
+  /// Audit `agents/*.md` files declare a provider-neutral
+  /// `model: cheap|mid|frontier` tier rather than a hard-coded model ID, so a
+  /// single skill file works across every registered agent. This map resolves
+  /// those tiers to the agent's real model IDs (each value MUST already appear
+  /// in [models]). Only executable agents with three distinct tiers populate
+  /// it; agents lacking a clean three-tier split leave it empty and fall back
+  /// via [resolveTier].
+  final Map<String, String> modelTiers;
 
   /// Default model (first in interactive selection).
   final String? defaultModel;
@@ -242,6 +254,24 @@ class AgentConfig {
       path = path.replaceAll('{name}', name);
     }
     return path;
+  }
+
+  /// Resolves a portable capability [tier] to a concrete model ID.
+  ///
+  /// Resolution order:
+  /// 1. If [modelTiers] contains [tier], return its mapped model ID.
+  /// 2. Otherwise fall back to [defaultModel] if set.
+  /// 3. Otherwise fall back to [fallbackModel] if set.
+  /// 4. Otherwise pass [tier] through unchanged (so a literal model ID handed
+  ///    in still works, and agents lacking tiers never emit an invalid model).
+  ///
+  /// Agents without a clean three-tier split (empty [modelTiers]) therefore
+  /// degrade gracefully to their default/fallback model rather than passing an
+  /// unknown tier name to the underlying CLI.
+  String resolveTier(String tier) {
+    final mapped = modelTiers[tier];
+    if (mapped != null) return mapped;
+    return defaultModel ?? fallbackModel ?? tier;
   }
 
   /// Formats the read instruction for a rule file in step prompts.

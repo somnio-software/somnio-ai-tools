@@ -96,7 +96,10 @@ void _renderFrame({
       final gradientT = maxWidth > 0 ? col / maxWidth : 0.0;
       var color = interpolateGradient(gradientT, gradientStops);
 
-      // Wave reveal blending
+      // Wave reveal blending + shimmer pulse — leftover animation hooks that
+      // the instant-render printBanner() never triggers (wavefrontPos is always
+      // past the last column and brightnessBoost defaults to 0).
+      // coverage:ignore-start
       final dist = col - wavefrontPos;
       if (dist > 0 && dist < falloff) {
         color = lerpRgb(color, _dimColor, dist / falloff);
@@ -104,10 +107,10 @@ void _renderFrame({
         color = _dimColor;
       }
 
-      // Shimmer pulse
       if (brightnessBoost > 0) {
         color = lerpRgb(color, const Rgb(255, 255, 255), brightnessBoost);
       }
+      // coverage:ignore-end
 
       buf.write('${_fg(color.r, color.g, color.b)}$char');
     }

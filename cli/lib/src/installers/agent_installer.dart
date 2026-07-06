@@ -56,7 +56,13 @@ class AgentInstaller extends Installer {
           continue;
         }
 
-        // Write all files from the transform output
+        // Write all files from the transform output.
+        //
+        // Subagent files live under `<name>/agents/` and are only produced by
+        // the Claude skill-dir transformer (with cheap/mid/frontier tiers
+        // resolved to concrete model IDs). For single-file / workflow /
+        // markdown formats there is no subagent-dispatch surface, so those
+        // transformers emit no `agents/` files and none are written here.
         for (final entry in output.files.entries) {
           _writeFile(p.join(baseDir, entry.key), entry.value);
           ruleCount++;

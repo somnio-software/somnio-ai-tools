@@ -1,7 +1,33 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 import 'package:somnio/src/workflow/workflow_context.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('loadFrom', () {
+    test('returns null when the file does not exist', () {
+      final tmp = Directory.systemTemp.createTempSync('somnio_ctx_load_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      expect(WorkflowContext.loadFrom(p.join(tmp.path, 'missing.md')), isNull);
+    });
+
+    test('parses a context.md file from disk', () {
+      final tmp = Directory.systemTemp.createTempSync('somnio_ctx_load_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+      final file = File(p.join(tmp.path, 'context.md'))
+        ..writeAsStringSync(
+          '---\nname: cleanup\ndescription: d\nversion: 1\nsteps:\n'
+          '  - file: 01-analyze.md\n---\n',
+        );
+
+      final ctx = WorkflowContext.loadFrom(file.path);
+
+      expect(ctx, isNotNull);
+      expect(ctx!.name, 'cleanup');
+    });
+  });
+
   group('WorkflowContext', () {
     group('parse', () {
       test('parses full context.md with all fields', () {

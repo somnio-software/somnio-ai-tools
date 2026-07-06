@@ -46,8 +46,8 @@ ENVIRONMENT SETUP FAILURE HANDLING:
 - CRITICAL: FVM global configuration is MANDATORY - if it fails,
   document as critical risk
 
-OUTPUT PRINCIPLES (PLAIN TEXT, GOOGLE DOCS–READY, NO MARKDOWN)
-• Produce a plain text document. No Markdown, no bold markers, no
+OUTPUT PRINCIPLES (MARKDOWN FORMAT, READABLE, WELL-STRUCTURED)
+• Produce a Markdown document. Use # headers, **bold** markers, and
   code fences, no tables.
 • Use simple numbered headings and bullet lists. Each section MUST
   include, in this order:
@@ -387,7 +387,7 @@ File Paths and Configs by Area:
 - [Continue as needed]
 
 FORMATTING RULES:
-- NO MARKDOWN SYNTAX: Use plain text only
+- USE MARKDOWN SYNTAX: Use proper Markdown formatting
 - NO BOLD MARKERS: No **text** or __text__
 - NO CODE FENCES: No ```code``` blocks
 - NO TABLES: Use bullet points instead

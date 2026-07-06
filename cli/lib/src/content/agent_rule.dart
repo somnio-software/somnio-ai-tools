@@ -1,7 +1,7 @@
 /// How the agent rule content is organized on disk.
 enum RulesInstallFormat {
   /// Single file concatenated from per-stack fragments.
-  /// Source layout: `<adapterPath>/<stack>/<basename(projectPath)>`.
+  /// Source layout: `<adapterPath>/<stack>/<adapterFileName ?? basename(projectPath)>`.
   /// Target layout: `<projectPath>` wrapped in somnio block markers.
   singleFile,
 
@@ -37,6 +37,7 @@ class AgentRule {
     required this.format,
     this.stacks = const <String>['flutter', 'nestjs', 'react'],
     this.globalPath,
+    this.adapterFileName,
   });
 
   /// Matching `AgentConfig.id` (e.g., 'claude', 'cursor').
@@ -72,6 +73,15 @@ class AgentRule {
   /// installs are intentionally unsupported (e.g. Claude, because rules
   /// should live next to the project they describe).
   final String? globalPath;
+
+  /// Source fragment filename for [RulesInstallFormat.singleFile] adapters,
+  /// when it differs from `basename(projectPath)`.
+  ///
+  /// Most single-file agents name their per-stack source fragment after the
+  /// target file (e.g. Cursor's `.cursorrules`), so this stays null and the
+  /// installer derives the name from [projectPath]. Codex is the exception:
+  /// its condensed fragment is `system-prompt.md` but installs into `AGENTS.md`.
+  final String? adapterFileName;
 
   /// Whether this agent supports global installation.
   bool get supportsGlobal => globalPath != null;

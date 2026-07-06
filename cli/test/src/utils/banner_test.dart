@@ -1,5 +1,46 @@
+import 'dart:convert';
+import 'dart:io' as io;
+
 import 'package:somnio/src/utils/banner.dart';
+import 'package:somnio/src/utils/quotes.dart';
 import 'package:test/test.dart';
+
+/// Captures lines written to stdout and controls terminal capability flags.
+class _FakeStdout implements io.Stdout {
+  _FakeStdout({required this.hasTerminal, required this.supportsAnsiEscapes});
+
+  @override
+  final bool hasTerminal;
+
+  @override
+  final bool supportsAnsiEscapes;
+
+  final List<String> written = <String>[];
+
+  String get output => written.join();
+
+  @override
+  void writeln([Object? obj = '']) => written.add('$obj\n');
+
+  @override
+  void write(Object? obj) => written.add('$obj');
+
+  @override
+  void writeAll(Iterable<dynamic> objects, [String sep = '']) =>
+      written.add(objects.join(sep));
+
+  @override
+  void writeCharCode(int charCode) => written.add(String.fromCharCode(charCode));
+
+  @override
+  void add(List<int> data) => written.add(utf8.decode(data));
+
+  @override
+  Encoding encoding = utf8;
+
+  @override
+  noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
 
 void main() {
   group('lerpRgb', () {
@@ -84,6 +125,61 @@ void main() {
       expect(result.r, 100);
       expect(result.g, 100);
       expect(result.b, 100);
+    });
+  });
+
+  group('printBanner', () {
+    const quote = SomnioQuote('test quote', 'test author');
+
+    test('renders gradient (ANSI) banner when terminal supports ANSI', () {
+      final fake = _FakeStdout(hasTerminal: true, supportsAnsiEscapes: true);
+
+      printBanner(version: '1.2.3', quote: quote, stdout: fake);
+
+      final out = fake.output;
+      // ANSI foreground escape present
+      expect(out, contains('\x1b[38;2;'));
+      // Reset escape present
+      expect(out, contains('\x1b[0m'));
+      // Version appears in the subtitle line. In the gradient banner each
+      // glyph is wrapped in ANSI escapes, so strip them before matching.
+      final stripped = out.replaceAll(RegExp(r'\x1b\[[0-9;]*m'), '');
+      expect(stripped, contains('v1.2.3'));
+      // Quote text rendered (quote line is single-color, not per-glyph).
+      expect(out, contains('test quote'));
+      expect(out, contains('test author'));
+    });
+
+    test('falls back to static banner when no terminal', () {
+      final fake = _FakeStdout(hasTerminal: false, supportsAnsiEscapes: true);
+
+      printBanner(version: '9.9.9', quote: quote, stdout: fake);
+
+      final out = fake.output;
+      // No ANSI escapes in static fallback
+      expect(out, isNot(contains('\x1b[38;2;')));
+      expect(out, contains('v9.9.9'));
+      expect(out, contains('"test quote"'));
+      expect(out, contains('— test author'));
+    });
+
+    test('falls back to static banner when ANSI unsupported', () {
+      final fake = _FakeStdout(hasTerminal: true, supportsAnsiEscapes: false);
+
+      printBanner(version: '0.0.1', quote: quote, stdout: fake);
+
+      final out = fake.output;
+      expect(out, isNot(contains('\x1b[0m')));
+      expect(out, contains('v0.0.1'));
+    });
+
+    test('defaults to io.stdout when no sink is provided', () {
+      // Exercises the `stdout ?? io.stdout` fallback. Under `dart test` stdout
+      // is not a TTY, so this takes the harmless static-banner path.
+      expect(
+        () => printBanner(version: '0.0.0', quote: quote),
+        returnsNormally,
+      );
     });
   });
 }

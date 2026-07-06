@@ -38,7 +38,7 @@ description: |
   Platform folder detection across multiple apps is a specific sub-task this agent handles well.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: blue
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

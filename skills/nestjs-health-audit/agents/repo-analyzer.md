@@ -38,7 +38,7 @@ description: |
   Module organization detection and structure verification is the foundation of the NestJS repo analysis.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: blue
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

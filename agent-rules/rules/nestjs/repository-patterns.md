@@ -1,6 +1,6 @@
 ---
 description: Repository pattern for NestJS with parameterized methods, soft deletes, and query organization.
-globs: **/*.repository.ts
+globs: src/**/*.repository.ts
 alwaysApply: false
 ---
 

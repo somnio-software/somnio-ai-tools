@@ -1,6 +1,6 @@
 # React Best Practices Format Enforcer
 
-> Enforce plain-text report format for all analysis outputs. Ensures consistent, copy-paste friendly reports suitable for documentation.
+> Enforce Markdown report format for all analysis outputs. Ensures consistent, readable reports suitable for documentation.
 
 ---
 
@@ -8,18 +8,17 @@
 
 **CRITICAL**: All analysis outputs MUST follow these rules:
 
-1.  **NO MARKDOWN SYNTAX**:
-    *   NO hash symbols for headers (# ## ###)
-    *   NO asterisks for bold (**text**)
-    *   NO code fences (``` blocks)
-    *   NO bullet points with asterisks (* item)
+1.  **USE MARKDOWN FORMATTING**:
+    *   `#` for main title, `##` for sections, `###` for subsections
+    *   `**bold**` for scores, labels, and key terms
+    *   Backticks for file paths and code references
+    *   `- ` for bullet points
 
-2.  **USE PLAIN TEXT FORMATTING**:
-    *   Headers: ALL CAPS or Title Case followed by colon
-    *   Sub-headers: Indented with numbers (1. 2. 3.)
-    *   Lists: Indented with dashes (- item)
-    *   Code references: Use quotes ("ComponentName")
-    *   File paths: Use quotes ("/src/features/auth/LoginForm.tsx:42")
+2.  **MARKDOWN STRUCTURE**:
+    *   Section headers: `## N. Section Name`
+    *   Sub-headers: `### Key Findings`, `### Violations`, etc.
+    *   Code refs: `` `ComponentName` ``
+    *   File paths: `` `src/features/auth/LoginForm.tsx:42` ``
 
 3.  **SECTION STRUCTURE**:
     Each section must include:
@@ -67,4 +66,4 @@ Recommendations:
 
 ---
 
-ENFORCE THIS FORMAT FOR ALL ANALYSIS OUTPUTS.
+ENFORCE THIS MARKDOWN FORMAT FOR ALL ANALYSIS OUTPUTS.

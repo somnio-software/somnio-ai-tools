@@ -38,7 +38,7 @@ description: |
   Dependency age analysis differentiates between minor version lags (low risk) and major version or deprecation concerns (high risk).
   </commentary>
   </example>
-model: inherit
+model: mid
 color: yellow
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

@@ -53,7 +53,7 @@ plugins/<name>/
   "author": { "name": "Somnio Software" },
   "repository": "https://github.com/somnio-software/somnio-ai-tools",
   "license": "MIT",
-  "keywords": ["flutter", "nestjs", "audit", "security"]
+  "keywords": ["flutter", "nestjs", "react", "python", "audit", "security"]
 }
 ```
 

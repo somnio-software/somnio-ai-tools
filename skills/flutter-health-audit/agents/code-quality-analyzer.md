@@ -38,7 +38,7 @@ description: |
   Cross-project linter consistency is critical in monorepos and is a core comparison task for this agent.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: magenta
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

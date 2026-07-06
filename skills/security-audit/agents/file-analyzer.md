@@ -38,7 +38,7 @@ description: |
   Platform-specific .gitignore verification is important for Flutter projects that have per-platform security concerns.
   </commentary>
   </example>
-model: inherit
+model: cheap
 color: red
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

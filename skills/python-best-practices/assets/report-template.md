@@ -1,0 +1,332 @@
+# Python Best Practices Audit Report
+
+**Project:** [PROJECT_NAME]
+**Date:** [AUDIT_DATE]
+**Auditor:** AI-Assisted Analysis
+
+---
+
+## 1. Executive Summary
+
+**Overall Score:** [XX]/100 ([Strong/Fair/Weak])
+
+**Description:**
+[One paragraph summary of the codebase quality and key findings]
+
+**Top Strengths:**
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+**Critical Issues:**
+- [Critical Issue 1]
+- [Critical Issue 2]
+- [Critical Issue 3]
+
+**Immediate Action Items:**
+1. [Most urgent action]
+2. [Second priority action]
+3. [Third priority action]
+
+---
+
+## 2. Score Breakdown
+
+| Section | Score | Label |
+|---------|-------|-------|
+| Typing | [XX]/100 | [Label] |
+| Code Style | [XX]/100 | [Label] |
+| Function Design | [XX]/100 | [Label] |
+| Data Validation | [XX]/100 | [Label] |
+| Error Handling | [XX]/100 | [Label] |
+| Module Structure | [XX]/100 | [Label] |
+| Testing Quality | [XX]/100 | [Label] |
+| **Weighted Overall** | **[XX]/100** | **[Label]** |
+
+> **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+---
+
+## 3. Typing
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of typing analysis findings]
+
+**Type Annotation Coverage:**
+- Functions with type hints: [XX]%
+- Parameters typed: [XX]%
+- Return types specified: [XX]%
+
+**Type Checking Quality:**
+- Proper use of generics: [Good/Needs Improvement]
+- Union types vs. Any: [XX]% avoiding Any
+- Optional types handling: [Good/Needs Improvement]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+- [Finding 4]
+
+### Violations
+- `[path/to/file.py:XX]` — [Issue description]
+- `[path/to/file.py:XX]` — [Issue description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 4. Code Style
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of code style findings]
+
+**Style Compliance:**
+- PEP 8 adherence: [XX]%
+- Naming conventions (snake_case): [XX]% compliant
+- Line length consistency: [Good/Needs Improvement]
+
+**Documentation:**
+- Module docstrings: [XX]% present
+- Function docstrings: [XX]% present
+- Inline comments clarity: [Good/Needs Improvement]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.py:XX]` — [Style Issue]: [Description]
+- `[path/to/file.py:XX]` — [Naming Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 5. Function Design
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of function design findings]
+
+**Function Quality:**
+- Average function length: [XX] lines
+- Single responsibility principle: [XX]% compliance
+- Early returns usage: [Good/Needs Improvement]
+
+**Parameter Design:**
+- Average parameters per function: [XX]
+- Excessive parameters (>5): [XX] functions
+- Default parameters usage: [Appropriate/Over-used]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.py:XX]` — [Design Issue]: [Description]
+- `[path/to/file.py:XX]` — [Parameter Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 6. Data Validation
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of data validation findings]
+
+**Validation Coverage:**
+- Input validation present: [XX]%
+- Type validation coverage: [Good/Needs Improvement]
+- Boundary checking: [Present/Missing]
+
+**Data Structure Security:**
+- Database query parameterization: [XX]% safe
+- Input sanitization: [Good/Needs Improvement]
+- Configuration validation: [Yes/No]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.py:XX]` — [Validation Issue]: [Description]
+- `[path/to/file.py:XX]` — [Security Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 7. Error Handling
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of error handling findings]
+
+**Exception Usage:**
+- Specific exceptions: [XX]% of error cases
+- Generic Exception usage: [XX] occurrences
+- Error messages quality: [Good/Needs Improvement]
+
+**Error Infrastructure:**
+- Custom exception hierarchy: [Present/Missing]
+- Logging on errors: [XX]% coverage
+- Stack trace preservation: [Good/Needs Improvement]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.py:XX]` — [Exception Issue]: [Description]
+- `[path/to/file.py:XX]` — [Logging Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 8. Module Structure
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of module structure findings]
+
+**Organization:**
+- Logical module separation: [Good/Needs Improvement]
+- Import depth: [Shallow/Excessive]
+- Circular dependencies: [None/Found]
+
+**API Design:**
+- `__all__` exports defined: [Yes/No]
+- Public vs. private interfaces: [Clear/Unclear]
+- Package initialization: [Proper/Missing]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/file.py:XX]` — [Structure Issue]: [Description]
+- `[path/to/__init__.py:XX]` — [Import Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 9. Testing Quality
+
+**Score:** [XX]/100 ([Label])
+
+**Description:**
+[Summary of testing quality findings]
+
+**Test Coverage:**
+- Total test files: [XX]
+- Units with tests: [XX]%
+- Functions with tests: [XX]%
+
+**Test Quality Analysis:**
+- Test isolation: [Good/Needs Improvement]
+- Mock usage patterns: [Appropriate/Over-used]
+- Assertion coverage: [Good/Needs Improvement]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+### Violations
+- `[path/to/test_file.py:XX]` — [Test Issue]: [Description]
+- `[path/to/test_file.py:XX]` — [Coverage Issue]: [Description]
+
+### Recommendations
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+---
+
+## 10. Prioritized Recommendations
+
+### 🔴 Critical (Must Fix Immediately)
+1. [Critical recommendation with file reference]
+2. [Critical recommendation with file reference]
+
+### 🟠 High Priority
+1. [High priority recommendation]
+2. [High priority recommendation]
+3. [High priority recommendation]
+
+### 🟡 Medium Priority
+1. [Medium priority recommendation]
+2. [Medium priority recommendation]
+3. [Medium priority recommendation]
+
+### 🟢 Low Priority (Nice to Have)
+1. [Low priority recommendation]
+2. [Low priority recommendation]
+
+---
+
+## 11. Evidence Index
+
+**Test Files Analyzed:**
+- `[path/to/test_*.py]`
+- `[path/to/*_test.py]`
+
+**Module Files Analyzed:**
+- `[path/to/file.py]`
+- `[path/to/file.py]`
+
+**Model Files Analyzed:**
+- `[path/to/models.py]`
+- `[path/to/schemas.py]`
+
+**Package Files Analyzed:**
+- `[path/to/__init__.py]`
+- `[path/to/__init__.py]`
+
+---
+
+## Report Metadata
+
+| Field | Value |
+|-------|-------|
+| Generated by | [Plugin Name] v[Plugin Version] |
+| Skill | python-best-practices |
+| Date | [YYYY-MM-DD] |
+| Somnio AI Tools | https://github.com/somnio-software/somnio-ai-tools |
+| Standards Source | https://github.com/somnio-software/cursor-rules |

@@ -3,7 +3,7 @@
 You are an expert software engineer. Follow these coding standards precisely when generating code.
 
 ### React component architecture including file structure, naming conventions, composition patterns, and folder organization.
-> Applies to: `**/*.tsx`
+> Applies to: `src/**/*.tsx`
 
 # React Component Architecture
 
@@ -67,7 +67,7 @@ Always use named exports for components. Default exports make refactoring harder
 ---
 
 ### React hooks patterns including useState, useEffect, useReducer, and custom hook guidelines.
-> Applies to: `**/*.tsx,**/*.ts`
+> Applies to: `src/**/*.tsx, src/**/*.ts`
 
 # React Hooks Patterns
 
@@ -137,7 +137,7 @@ When a custom hook returns functions or computed values that will be used as dep
 ---
 
 ### React performance optimization patterns including memoization, code splitting, and list virtualization.
-> Applies to: `**/*.tsx`
+> Applies to: `src/**/*.tsx`
 
 # React Performance Optimization
 
@@ -209,7 +209,7 @@ Apply performance optimizations when profiling shows:
 ---
 
 ### React state management patterns including Context API, Zustand, and TanStack Query for server state.
-> Applies to: `**/*.tsx,**/*.ts`
+> Applies to: `src/**/*.tsx, src/**/*.ts`
 
 # React State Management
 
@@ -264,7 +264,7 @@ Use TanStack Query for all server-fetched data. It handles caching, background r
 ---
 
 ### React testing patterns using React Testing Library and Jest including component tests, hook tests, and mocking strategies.
-> Applies to: `**/*.test.tsx,**/*.spec.tsx,**/*.test.ts`
+> Applies to: `src/**/*.test.tsx, src/**/*.spec.tsx, src/**/*.test.ts`
 
 # React Testing Standards
 
@@ -341,7 +341,7 @@ Use `@testing-library/jest-dom` matchers for readable assertions:
 ---
 
 ### TypeScript integration patterns for React including component typing, generics, and type utilities.
-> Applies to: `**/*.tsx,**/*.ts`
+> Applies to: `src/**/*.tsx, src/**/*.ts`
 
 # React TypeScript Integration
 

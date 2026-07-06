@@ -1,3 +1,4 @@
+// coverage:ignore-file
 import 'package:args/command_runner.dart';
 
 /// Displays the Somnio banner with a random quote.

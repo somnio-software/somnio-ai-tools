@@ -8,15 +8,16 @@ Goal: Analyze the React codebase for performance optimization patterns,
 identify premature or missing memoization, and detect common
 performance anti-patterns.
 
-STANDARDS SOURCE (local):
-- `agent-rules/rules/react/performance.md`
+STANDARDS SOURCE (local-first, then live):
+- local: `agent-rules/rules/react/performance.md`
+  raw:   https://raw.githubusercontent.com/somnio-software/somnio-ai-tools/main/agent-rules/rules/react/performance.md
 
-To resolve the absolute path: find the directory containing
-`skills/react-best-practices/SKILL.md`, go up two levels to reach
-the somnio-ai-tools repository root, then read the file above.
+RESOLUTION ORDER (per rule, never assume the file is on disk):
+1. If `agent-rules/` exists in the repo, USE the `Read` tool on the local path above.
+2. If `agent-rules/` is absent (standalone install), USE the `WebFetch` tool on the matching raw URL.
 
 INSTRUCTIONS:
-1. USE the `Read` tool to read the local standards file listed above.
+1. Resolve EACH rule above via the order in RESOLUTION ORDER.
 2. Proceed with the analysis below using strict adherence to those rules.
 
 ANALYSIS TARGETS:

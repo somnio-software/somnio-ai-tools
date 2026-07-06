@@ -38,7 +38,7 @@ description: |
   Monorepo-specific CI optimization detection (affected builds, caching, path filters) is an advanced capability of this agent.
   </commentary>
   </example>
-model: inherit
+model: mid
 color: green
 tools: ["Read", "Grep", "Glob", "Bash"]
 ---

@@ -292,6 +292,33 @@ void main() {
   // Workflow file naming
   // ---------------------------------------------------------------------------
   group('workflow file naming', () {
+    test('falls back to somnio_<id>.md when workflowPath is null', () {
+      final tmpDir = Directory.systemTemp.createTempSync('somnio_fallback_');
+      addTearDown(() => tmpDir.deleteSync(recursive: true));
+
+      // transformBundle loads the plan before naming the workflow, so the
+      // SKILL.md must exist on disk.
+      final planFile = File(
+        p.join(tmpDir.path, 'skills', 'flutter-health-audit', 'SKILL.md'),
+      )..createSync(recursive: true);
+      planFile.writeAsStringSync('# Plan\n');
+
+      const bundle = SkillBundle(
+        id: 'flutter_health',
+        name: 'flutter-health-audit',
+        displayName: 'Test',
+        description: 'desc',
+        planRelativePath: 'skills/flutter-health-audit/SKILL.md',
+        rulesDirectory: 'skills/flutter-health-audit/references',
+        // workflowPath intentionally omitted (null)
+      );
+
+      final loader = ContentLoader(tmpDir.path);
+      final output = transformer.transformBundle(bundle, loader);
+
+      expect(output.workflowFileName, 'somnio_flutter_health.md');
+    });
+
     test('derives file name from workflowPath basename', () {
       final tmpDir = Directory.systemTemp.createTempSync('somnio_name_');
       addTearDown(() => tmpDir.deleteSync(recursive: true));

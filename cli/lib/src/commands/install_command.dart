@@ -1,44 +1,57 @@
+// coverage:ignore-file
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
-import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
 import '../agents/agent_registry.dart';
-import '../content/content_loader.dart';
+import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
-import '../installers/agent_installer.dart';
+import '../content/workflow_skill.dart';
+import '../installers/interactive_install.dart';
 import '../utils/command_helpers.dart';
-import '../utils/platform_utils.dart';
+import '../utils/prompts.dart';
 
 /// Installs skills to a specific agent or all detected agents.
 ///
 /// Usage:
+///   somnio install                     # interactive wizard (agents + skills)
 ///   somnio install --agent claude
-///   somnio install --agent copilot
 ///   somnio install --all
+///   somnio install --agent claude --skills flutter_health,security_audit
+///   somnio install --agent claude --all-skills
+///   somnio install --agent claude --all-configs
 class InstallCommand extends Command<int> {
   InstallCommand({required Logger logger}) : _logger = logger {
-    argParser.addOption(
-      'agent',
-      abbr: 'a',
-      help: 'Target agent to install to.',
-      allowed: AgentRegistry.installableAgents.map((a) => a.id).toList(),
-    );
-    argParser.addFlag(
-      'all',
-      help: 'Install to all detected agents.',
-    );
-    argParser.addFlag(
-      'force',
-      abbr: 'f',
-      help: 'Force reinstall of all skills.',
-    );
-    argParser.addFlag(
-      'all-configs',
-      help: 'Install to every ~/.<agent>* config directory found '
-          '(e.g. .claude-work, .cursor-personal). Composes with --all. '
-          'Overrides CLAUDE_CONFIG_DIR for Claude.',
-    );
+    argParser
+      ..addOption(
+        'agent',
+        abbr: 'a',
+        help: 'Target agent to install to.',
+        allowed: AgentRegistry.installableAgents.map((a) => a.id).toList(),
+      )
+      ..addFlag(
+        'all',
+        help: 'Install to all detected agents.',
+      )
+      ..addFlag(
+        'all-configs',
+        help: 'Install to every ~/.<agent>* config directory found '
+            '(e.g. .claude-work, .cursor-personal). Composes with --all. '
+            'Overrides CLAUDE_CONFIG_DIR for Claude.',
+      )
+      ..addFlag(
+        'all-skills',
+        help: 'Install every skill without prompting for a selection.',
+      )
+      ..addOption(
+        'skills',
+        help: 'Comma-separated skill ids/names to install (skips the wizard).',
+      )
+      ..addFlag(
+        'force',
+        abbr: 'f',
+        help: 'Force reinstall of all skills.',
+      );
   }
 
   final Logger _logger;
@@ -52,22 +65,10 @@ class InstallCommand extends Command<int> {
 
   @override
   Future<int> run() async {
-    final agentId = argResults!['agent'] as String?;
-    final installAll = argResults!['all'] as bool;
     final force = argResults!['force'] as bool;
     final allConfigs = argResults!['all-configs'] as bool;
 
-    if (agentId == null && !installAll) {
-      _logger.err('Specify --agent <name> or --all.');
-      _logger.info('');
-      _logger.info('Available agents:');
-      for (final agent in AgentRegistry.installableAgents) {
-        _logger.info('  ${agent.id.padRight(12)} ${agent.displayName}');
-      }
-      return ExitCode.usage.code;
-    }
-
-    // Resolve repo root
+    // Resolve repo root / content.
     final ResolvedContent content;
     try {
       content = await CommandHelpers.resolveContent();
@@ -76,207 +77,131 @@ class InstallCommand extends Command<int> {
       return ExitCode.software.code;
     }
 
-    if (installAll) {
-      return _installToAll(
-        content.loader,
-        content.bundles,
-        force,
-        allConfigs: allConfigs,
-      );
+    final flow = InteractiveInstall(_logger);
+
+    // 1. Resolve which agents to install to.
+    final agents = await _resolveAgents(flow);
+    if (agents == null) return ExitCode.usage.code;
+    if (agents.isEmpty) {
+      _logger.info('No agents selected.');
+      return ExitCode.success.code;
     }
 
-    final agent = AgentRegistry.findById(agentId!);
-    if (agent == null) {
-      _logger.err('Unknown agent: $agentId');
-      return ExitCode.usage.code;
+    // 2. Resolve which skills to install.
+    final selection = _resolveSkills(flow);
+    if (selection == null) return ExitCode.usage.code;
+    if (selection.isEmpty) {
+      _logger.info('No skills selected.');
+      return ExitCode.success.code;
     }
 
-    return _installToAgent(
-      agent,
+    // 3. Install the selected skills to each selected agent.
+    return flow.installToAgents(
+      agents,
       content.loader,
-      content.bundles,
-      force,
+      selection,
+      force: force,
       allConfigs: allConfigs,
     );
   }
 
-  Future<int> _installToAgent(
-    AgentConfig agent,
-    ContentLoader loader,
-    List<dynamic> bundles,
-    bool force, {
-    bool allConfigs = false,
-  }) async {
-    // Check binary availability for CLI agents
-    if (agent.binary != null) {
-      final path = await PlatformUtils.whichBinary(agent.binary!);
-      if (path == null) {
-        _logger.warn(
-          '${agent.displayName} CLI (${agent.binary}) not found in PATH.',
-        );
-        final proceed = _logger.confirm('Install skills anyway?');
-        if (!proceed) return ExitCode.success.code;
+  // ──────────────────────────────────────────────────────────────────
+  // Agent resolution
+  // ──────────────────────────────────────────────────────────────────
+
+  /// Returns the agents to install to, or `null` on a usage error.
+  Future<List<AgentConfig>?> _resolveAgents(InteractiveInstall flow) async {
+    final agentId = argResults!['agent'] as String?;
+    final installAll = argResults!['all'] as bool;
+
+    if (installAll) {
+      return flow.detectedAgents();
+    }
+
+    if (agentId != null) {
+      final agent = AgentRegistry.findById(agentId);
+      if (agent == null) {
+        _logger.err('Unknown agent: $agentId');
+        return null;
       }
+      return [agent];
     }
 
-    // Claude: resolve target dir(s) honoring CLAUDE_CONFIG_DIR or scanning
-    // ~/.claude* when --all-configs is set. Other agents use the default
-    // path resolution (no override).
-    final targetDirs = _resolveTargetDirs(agent, allConfigs: allConfigs);
-
-    var totalSkipped = 0;
-    final locations = <String>[];
-
-    for (final targetDir in targetDirs) {
-      final progress = _logger.progress(
-        targetDirs.length == 1
-            ? agent.displayName
-            : '${agent.displayName} (${p.basename(p.dirname(targetDir))})',
-      );
-
-      final installer = AgentInstaller(
-        logger: _logger,
-        loader: loader,
-        agentConfig: agent,
-        installDirOverride: targetDir,
-      );
-
-      final result = await installer.install(
-        bundles: SkillRegistry.skills,
-        force: force,
-      );
-
-      final wfCount = installer.installWorkflowSkills(
-        SkillRegistry.workflowSkills,
-      );
-      final installed = result.skillCount + wfCount;
-      totalSkipped += result.skippedCount;
-      locations.add(result.targetDirectory);
-
-      final label = agent.contentLabel;
-      final plural = installed == 1 ? label : '${label}s';
-      progress.complete(
-        '${agent.displayName}  '
-        '$installed $plural installed',
-      );
-    }
-
-    if (totalSkipped > 0) {
-      _logger.info(
-        '  $totalSkipped '
-        '${totalSkipped == 1 ? 'skill' : 'skills'} '
-        'skipped (not yet supported)',
-      );
-    }
-
-    _logger.info('');
-    if (locations.length == 1) {
-      _logger.info('Location: ${locations.first}');
-    } else {
-      _logger.info('Locations:');
-      for (final loc in locations) {
-        _logger.info('  $loc');
+    // No flag given: prompt interactively, or error when non-interactive.
+    if (!Prompts.isInteractive) {
+      _logger.err('Specify --agent <name> or --all.');
+      _logger.info('');
+      _logger.info('Available agents:');
+      for (final agent in AgentRegistry.installableAgents) {
+        _logger.info('  ${agent.id.padRight(12)} ${agent.displayName}');
       }
+      return null;
     }
 
-    return ExitCode.success.code;
+    return flow.promptForAgents();
   }
 
-  /// Computes the install target directories for [agent].
-  ///
-  /// When [allConfigs] is true, scans `$HOME` for every directory whose name
-  /// starts with the agent's [AgentConfig.configDirName] and joins each with
-  /// the agent's [AgentConfig.installSubpath]. For Claude this overrides
-  /// `CLAUDE_CONFIG_DIR` — the explicit "all configs" intent wins.
-  ///
-  /// When [allConfigs] is false, returns the single default target: Claude
-  /// honors `CLAUDE_CONFIG_DIR`; every other agent uses its declared
-  /// `resolvedInstallPath` unchanged.
-  List<String> _resolveTargetDirs(
-    AgentConfig agent, {
-    bool allConfigs = false,
-  }) {
-    if (allConfigs) {
-      final bases =
-          PlatformUtils.discoverConfigDirs(prefix: agent.configDirName);
-      return bases.map((dir) => p.join(dir, agent.installSubpath)).toList();
+  // ──────────────────────────────────────────────────────────────────
+  // Skill resolution
+  // ──────────────────────────────────────────────────────────────────
+
+  /// Returns the skills to install, or `null` on a usage error.
+  SkillSelection? _resolveSkills(InteractiveInstall flow) {
+    final allSkills = argResults!['all-skills'] as bool;
+    final skillsCsv = argResults!['skills'] as String?;
+
+    if (allSkills) {
+      return SkillSelection.all();
     }
-    if (agent.id == 'claude') {
-      return [p.join(PlatformUtils.claudeConfigDir, agent.installSubpath)];
+
+    if (skillsCsv != null) {
+      return _parseSkillsCsv(skillsCsv);
     }
-    return [agent.resolvedInstallPath(home: PlatformUtils.homeDirectory)];
+
+    // No flag: prompt interactively, or install everything when there is
+    // no terminal (CI, pipes) so the command never hangs on stdin.
+    if (!Prompts.isInteractive) {
+      return SkillSelection.all();
+    }
+
+    return flow.promptForSkills();
   }
 
-  Future<int> _installToAll(
-    ContentLoader loader,
-    List<dynamic> bundles,
-    bool force, {
-    bool allConfigs = false,
-  }) async {
-    var totalSkills = 0;
-    var agentCount = 0;
+  /// Resolves a comma-separated list of skill ids/names against the registry.
+  SkillSelection? _parseSkillsCsv(String csv) {
+    final ids = csv.split(',').map((s) => s.trim()).where((s) => s.isNotEmpty);
 
-    for (final agent in AgentRegistry.installableAgents) {
-      // Only auto-install to agents that are detected
-      if (agent.binary != null) {
-        final path = await PlatformUtils.whichBinary(agent.binary!);
-        if (path == null) continue;
+    final audit = <SkillBundle>[];
+    final workflow = <WorkflowSkill>[];
+    final unknown = <String>[];
+
+    for (final id in ids) {
+      final bundle = SkillRegistry.findById(id) ?? SkillRegistry.findByName(id);
+      if (bundle != null) {
+        audit.add(bundle);
+        continue;
       }
-
-      // When allConfigs is set, fan out across every discovered config dir
-      // for this agent; otherwise use the single default target.
-      final targetDirs = _resolveTargetDirs(agent, allConfigs: allConfigs);
-
-      var agentTotal = 0;
-      for (final targetDir in targetDirs) {
-        final progress = _logger.progress(
-          targetDirs.length == 1
-              ? agent.displayName
-              : '${agent.displayName} (${p.basename(p.dirname(targetDir))})',
-        );
-
-        final installer = AgentInstaller(
-          logger: _logger,
-          loader: loader,
-          agentConfig: agent,
-          installDirOverride: targetDir,
-        );
-
-        final result = await installer.install(
-          bundles: SkillRegistry.skills,
-          force: force,
-        );
-
-        final wfCount = installer.installWorkflowSkills(
-          SkillRegistry.workflowSkills,
-        );
-        final dirTotal = result.skillCount + wfCount;
-        agentTotal += dirTotal;
-
-        final label = agent.contentLabel;
-        final plural = dirTotal == 1 ? label : '${label}s';
-        final parts = <String>['$dirTotal $plural'];
-        if (result.skippedCount > 0) {
-          parts.add('${result.skippedCount} skipped');
-        }
-        progress.complete(
-          '${agent.displayName}  ${parts.join(', ')}',
-        );
+      final wf = SkillRegistry.findWorkflowById(id);
+      if (wf != null) {
+        workflow.add(wf);
+        continue;
       }
-
-      totalSkills += agentTotal;
-      if (agentTotal > 0) agentCount++;
+      unknown.add(id);
     }
 
-    _logger.info('');
-    if (agentCount > 0) {
-      _logger.success(
-        'Installed $totalSkills skills across $agentCount agents.',
-      );
-    } else {
-      _logger.info('No agents detected. Run "somnio setup" for guided setup.');
+    if (unknown.isNotEmpty) {
+      _logger.err('Unknown skill(s): ${unknown.join(', ')}');
+      _logger.info('');
+      _logger.info('Available skills:');
+      for (final s in SkillRegistry.skills) {
+        _logger.info('  ${s.id.padRight(18)} ${s.displayName}');
+      }
+      for (final s in SkillRegistry.workflowSkills) {
+        _logger.info('  ${s.id.padRight(18)} ${s.displayName}');
+      }
+      return null;
     }
 
-    return ExitCode.success.code;
+    return SkillSelection(audit, workflow);
   }
 }

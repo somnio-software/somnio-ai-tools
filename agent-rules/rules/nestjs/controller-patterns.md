@@ -1,6 +1,6 @@
 ---
 description: Controller patterns for NestJS including decorators, meaningful documentation, and guards.
-globs: **/*.controller.ts
+globs: src/**/*.controller.ts
 alwaysApply: false
 ---
 

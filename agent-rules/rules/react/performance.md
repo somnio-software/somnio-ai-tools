@@ -1,6 +1,6 @@
 ---
 description: React performance optimization patterns including memoization, code splitting, and list virtualization.
-globs: **/*.tsx
+globs: src/**/*.tsx
 alwaysApply: false
 ---
 
