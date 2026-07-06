@@ -1,5 +1,6 @@
 // coverage:ignore-file
 import 'package:mason_logger/mason_logger.dart';
+import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
 import '../agents/agent_registry.dart';
@@ -113,49 +114,74 @@ class InteractiveInstall {
   }
 
   /// Installs [selection] to each agent in [agents].
+  ///
+  /// Claude honors `CLAUDE_CONFIG_DIR` by default. When [allConfigs] is
+  /// true, every agent fans out across each `~/.<agent>*` directory found on
+  /// the machine (e.g. `.claude-work`, `.cursor-personal`) instead of just
+  /// its single default target — for Claude this overrides
+  /// `CLAUDE_CONFIG_DIR`, since the explicit "all configs" intent wins.
   Future<int> installToAgents(
     List<AgentConfig> agents,
     ContentLoader loader,
     SkillSelection selection, {
     bool force = false,
+    bool allConfigs = false,
   }) async {
     final single = agents.length == 1;
     var totalSkills = 0;
     var agentCount = 0;
-    String? lastLocation;
+    final locations = <String>[];
+    var multiLocation = false;
 
     for (final agent in agents) {
-      final progress = _logger.progress(agent.displayName);
+      final targetDirs = _resolveTargetDirs(agent, allConfigs: allConfigs);
+      var agentTotal = 0;
+      if (targetDirs.length > 1) multiLocation = true;
 
-      final installer = AgentInstaller(
-        logger: _logger,
-        loader: loader,
-        agentConfig: agent,
-      );
+      for (final targetDir in targetDirs) {
+        final progress = _logger.progress(
+          targetDirs.length == 1
+              ? agent.displayName
+              : '${agent.displayName} (${p.basename(p.dirname(targetDir))})',
+        );
 
-      final result = await installer.install(
-        bundles: selection.audit,
-        force: force,
-      );
-      final wfCount = installer.installWorkflowSkills(selection.workflow);
-      final agentTotal = result.skillCount + wfCount;
+        final installer = AgentInstaller(
+          logger: _logger,
+          loader: loader,
+          agentConfig: agent,
+          installDirOverride: targetDir,
+        );
+
+        final result = await installer.install(
+          bundles: selection.audit,
+          force: force,
+        );
+        final wfCount = installer.installWorkflowSkills(selection.workflow);
+        final dirTotal = result.skillCount + wfCount;
+        agentTotal += dirTotal;
+        locations.add(result.targetDirectory);
+
+        final label = agent.contentLabel;
+        final plural = dirTotal == 1 ? label : '${label}s';
+        final parts = <String>['$dirTotal $plural'];
+        if (result.skippedCount > 0) {
+          parts.add('${result.skippedCount} skipped');
+        }
+        progress.complete('${agent.displayName}  ${parts.join(', ')}');
+      }
 
       totalSkills += agentTotal;
       if (agentTotal > 0) agentCount++;
-      lastLocation = result.targetDirectory;
-
-      final label = agent.contentLabel;
-      final plural = agentTotal == 1 ? label : '${label}s';
-      final parts = <String>['$agentTotal $plural'];
-      if (result.skippedCount > 0) {
-        parts.add('${result.skippedCount} skipped');
-      }
-      progress.complete('${agent.displayName}  ${parts.join(', ')}');
     }
 
     _logger.info('');
-    if (single && lastLocation != null) {
-      _logger.info('Location: $lastLocation');
+    if (single && !multiLocation && locations.length == 1) {
+      _logger.info('Location: ${locations.first}');
+    } else if (single && multiLocation) {
+      _logger.info('Locations:');
+      for (final loc in locations) {
+        _logger.info('  $loc');
+      }
     } else if (agentCount > 0) {
       _logger.success(
         'Installed $totalSkills skills across $agentCount agents.',
@@ -165,5 +191,30 @@ class InteractiveInstall {
     }
 
     return ExitCode.success.code;
+  }
+
+  /// Computes the install target directories for [agent].
+  ///
+  /// When [allConfigs] is true, scans `$HOME` for every directory whose name
+  /// starts with the agent's [AgentConfig.configDirName] and joins each with
+  /// the agent's [AgentConfig.installSubpath]. For Claude this overrides
+  /// `CLAUDE_CONFIG_DIR` — the explicit "all configs" intent wins.
+  ///
+  /// When [allConfigs] is false, returns the single default target: Claude
+  /// honors `CLAUDE_CONFIG_DIR`; every other agent uses its declared
+  /// `resolvedInstallPath` unchanged.
+  List<String> _resolveTargetDirs(
+    AgentConfig agent, {
+    bool allConfigs = false,
+  }) {
+    if (allConfigs) {
+      final bases =
+          PlatformUtils.discoverConfigDirs(prefix: agent.configDirName);
+      return bases.map((dir) => p.join(dir, agent.installSubpath)).toList();
+    }
+    if (agent.id == 'claude') {
+      return [p.join(PlatformUtils.claudeConfigDir, agent.installSubpath)];
+    }
+    return [agent.resolvedInstallPath(home: PlatformUtils.homeDirectory)];
   }
 }

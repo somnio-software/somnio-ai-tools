@@ -107,6 +107,12 @@ Some skills require environment variables to be configured before use:
 | Clockify Tracker | `CLOCKIFY_API_KEY` | Yes | API key from Clockify (Profile → API) |
 | Clockify Tracker | `CLOCKIFY_TZ_OFFSET` | No | Local UTC offset in whole hours (e.g. `-3` for Argentina) |
 
+The CLI itself also honors one environment variable:
+
+| Variable | Required | Purpose |
+|----------|----------|---------|
+| `CLAUDE_CONFIG_DIR` | No | Overrides Claude Code's config directory for `somnio install`/`uninstall` (defaults to `~/.claude`, matching Claude Code's own behavior). Ignored when `--all-configs` is passed — see the [CLI Reference](cli.md#somnio-install). |
+
 ---
 
 ## Verifying Installation
@@ -131,7 +137,7 @@ Updates the CLI to the latest version and reinstalls all skills.
 somnio uninstall
 ```
 
-Removes all Somnio skills from all agents. Prompts for confirmation unless `--force` is passed.
+Removes all Somnio skills from all agents. Prompts for confirmation unless `--force` is passed. This always cleans every discovered `~/.<agent>*` config directory (e.g. `~/.claude`, `~/.claude-work`) plus any external `CLAUDE_CONFIG_DIR`, so nothing is left behind regardless of how it was installed.
 
 ---
 

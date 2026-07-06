@@ -104,13 +104,36 @@ somnio run fh --no-preflight           # Send all steps to AI
 
 ### somnio install
 
-Install skills to a specific agent or all agents at once.
+Install skills to a specific agent or all agents at once. With no flags, runs an interactive wizard to pick agents and skills.
 
 ```bash
-somnio install --agent claude   # Install to Claude Code only
-somnio install --all            # Install to all detected agents
-somnio install --force          # Overwrite existing files
+somnio install                                    # Interactive wizard (agents + skills)
+somnio install --agent claude                     # Install to Claude Code only
+somnio install --all                              # Install to all detected agents
+somnio install --agent claude --all-skills        # Skip the skill picker, install everything
+somnio install --agent claude --skills flutter_health,security_audit
+somnio install --agent claude --all-configs       # Install to every ~/.claude* dir found
+somnio install --force                            # Overwrite existing files
 ```
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--agent` | `-a` | Target agent to install to |
+| `--all` | | Install to all detected agents |
+| `--all-configs` | | Install to every `~/.<agent>*` config directory found (e.g. `.claude-work`, `.cursor-personal`). Composes with `--all`. Overrides `CLAUDE_CONFIG_DIR` for Claude |
+| `--all-skills` | | Install every skill without prompting for a selection |
+| `--skills` | | Comma-separated skill ids/names to install (skips the wizard) |
+| `--force` | `-f` | Force reinstall of all skills |
+
+**Claude config directory resolution:** by default, Claude installs honor the `CLAUDE_CONFIG_DIR` environment variable when set, falling back to `~/.claude` (matching Claude Code's own behavior). Passing `--all-configs` overrides `CLAUDE_CONFIG_DIR` and instead fans out across every `~/.claude*`-prefixed directory found under your home directory — e.g. `~/.claude`, `~/.claude-work`, `~/.claude-personal`. When more than one target directory resolves, the output lists every location:
+
+```
+Locations:
+  /Users/you/.claude/skills
+  /Users/you/.claude-work/skills
+```
+
+`somnio uninstall` mirrors this: it always cleans every discovered `~/.<agent>*` config directory (and any external `CLAUDE_CONFIG_DIR`), so no separate flag is needed there.
 
 ### somnio add
 

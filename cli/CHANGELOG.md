@@ -5,6 +5,17 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.6.1] - 2026-07-06
+
+### Added
+
+- **`--all-configs` flag**: `somnio install` now accepts `--all-configs`, which installs into every `~/.<agent>*` config directory found on the machine (e.g. `.claude-work`, `.cursor-personal`) instead of just the default one. Composes with `--all` and `--agent <name>`.
+- **`CLAUDE_CONFIG_DIR` support**: Claude installs/uninstalls now honor the `CLAUDE_CONFIG_DIR` environment variable, matching Claude Code's own config resolution, and fall back to `~/.claude` when unset. `--all-configs` takes precedence and overrides it.
+
+### Changed
+
+- **`somnio uninstall` is multi-config by default**: uninstall now fans out across every discovered `~/.<agent>*` config directory (plus any external `CLAUDE_CONFIG_DIR`) automatically, so nothing is left behind regardless of how skills were installed.
+
 ## [2.6.0] - 2026-06-04
 
 ### Added
