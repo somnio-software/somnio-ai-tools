@@ -1,0 +1,35 @@
+{
+  "skill_name": "dora-metrics",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Corré las métricas DORA de Example Project.",
+      "expected_output": "Muestra la tabla de confirmación (2 filas: example-frontend y example-backend, rama main, ventana 14 días), verifica autenticación, intenta correr el script y reporta el resultado (o el error de auth de forma clara, sin inventar números).",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Dame el lead time de Example Project de las últimas 2 semanas.",
+      "expected_output": "Interpreta 'últimas 2 semanas' como la ventana default de 14 días (no pregunta por otra ventana), sigue el mismo flujo (tabla, auth, correr, reportar) enfocado en Lead Time.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Corré las métricas DORA del proyecto Delta.",
+      "expected_output": "Delta no está en config/proyectos.json. La skill NO inventa repos ni corre igual — pregunta los datos que faltan (repos, tipo, rama prod) para agregarlo directo al config, en vez de mandar a editar un archivo aparte. No corre nada hasta tener el mapeo.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Agregá el proyecto Omega a las métricas DORA, tiene un solo repo: acme/omega-api, rama prod develop.",
+      "expected_output": "Pregunta el tipo de repo (web/mobile/backend) si no se lo dieron, arma la entrada JSON para config/proyectos.json (repo, tipo, prod_branch=develop, sin deploy_source ni tag_pattern si no aplican overrides), la muestra para confirmar antes de guardar, y recién después sigue con el flujo normal (tabla de confirmación, etc.).",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "example-frontend no publica Releases, solo tags planos vX.Y.Z. Corré las métricas igual.",
+      "expected_output": "Usa deploy_source=tag (via override --deploy-source o actualizando el config), no inventa releases inexistentes ni falla silenciosamente.",
+      "files": []
+    }
+  ]
+}

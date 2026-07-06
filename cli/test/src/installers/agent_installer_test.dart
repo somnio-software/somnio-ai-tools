@@ -368,6 +368,110 @@ void main() {
       expect(out, contains('Body.'));
     });
 
+    test('skillDir: copies assetDirectories verbatim alongside SKILL.md',
+        () {
+      final skill = seedWorkflow(name: 'dora-metrics');
+      _writeFile(repoRoot, 'skills/dora-metrics/scripts/dora_metrics.py',
+          'print("hi")\n');
+      _writeFile(repoRoot, 'skills/dora-metrics/config/proyectos.json', '{}');
+      final withAssets = WorkflowSkill(
+        id: skill.id,
+        name: skill.name,
+        displayName: skill.displayName,
+        description: skill.description,
+        planRelativePath: skill.planRelativePath,
+        assetDirectories: [
+          'skills/dora-metrics/scripts',
+          'skills/dora-metrics/config',
+        ],
+      );
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final count = installer.installWorkflowSkills([withAssets]);
+
+      expect(count, 1);
+      final script = File(p.join(
+        tmp.path,
+        'install',
+        'dora-metrics',
+        'scripts',
+        'dora_metrics.py',
+      ));
+      expect(script.existsSync(), isTrue);
+      expect(script.readAsStringSync(), 'print("hi")\n');
+      final config = File(p.join(
+        tmp.path,
+        'install',
+        'dora-metrics',
+        'config',
+        'proyectos.json',
+      ));
+      expect(config.existsSync(), isTrue);
+      expect(config.readAsStringSync(), '{}');
+    });
+
+    test('assetDirectories are ignored for non-skillDir formats', () {
+      final skill = seedWorkflow(name: 'dora-metrics-2');
+      _writeFile(repoRoot, 'skills/dora-metrics-2/scripts/dora_metrics.py',
+          'print("hi")\n');
+      final withAssets = WorkflowSkill(
+        id: skill.id,
+        name: skill.name,
+        displayName: skill.displayName,
+        description: skill.description,
+        planRelativePath: skill.planRelativePath,
+        assetDirectories: ['skills/dora-metrics-2/scripts'],
+      );
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agentFor(format: InstallFormat.singleFile),
+      );
+
+      final count = installer.installWorkflowSkills([withAssets]);
+
+      expect(count, 1);
+      final script = File(p.join(
+        tmp.path,
+        'install',
+        'scripts',
+        'dora_metrics.py',
+      ));
+      expect(script.existsSync(), isFalse);
+    });
+
+    test('missing assetDirectories are skipped without error', () {
+      final skill = seedWorkflow(name: 'dora-metrics-3');
+      final withAssets = WorkflowSkill(
+        id: skill.id,
+        name: skill.name,
+        displayName: skill.displayName,
+        description: skill.description,
+        planRelativePath: skill.planRelativePath,
+        assetDirectories: ['skills/dora-metrics-3/scripts'],
+      );
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final count = installer.installWorkflowSkills([withAssets]);
+
+      expect(count, 1);
+      final scriptDir = Directory(p.join(
+        tmp.path,
+        'install',
+        'dora-metrics-3',
+        'scripts',
+      ));
+      expect(scriptDir.existsSync(), isFalse);
+    });
+
     test('skips skills whose plan file is missing', () {
       const skill = WorkflowSkill(
         id: 'gone',

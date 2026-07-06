@@ -5,6 +5,13 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.7.0] - 2026-07-06
+
+### Added
+
+- **DORA Metrics Skill**: New `dora-metrics` skill that fetches Deployment Frequency and Lead Time for Changes per project and per repo from the GitHub API (never local git), so lead time stays accurate across merge strategies including squash merges. Reads a project-to-repos mapping from `config/proyectos.json`, asks for missing projects instead of guessing, and reports both metrics with process-gap warnings. Read-only: never ranks, scores, or compares projects or people. Registered in the CLI skill registry.
+- **`WorkflowSkill.assetDirectories`**: Workflow skills can now declare extra directories (e.g. `scripts/`, `config/`) copied verbatim alongside their `SKILL.md` for Claude Code `skillDir` installs, so skills backed by real executable code — not just markdown instructions — install correctly via `somnio add`/`somnio install`. Used by the new `dora-metrics` skill.
+
 ## [2.6.0] - 2026-06-04
 
 ### Added

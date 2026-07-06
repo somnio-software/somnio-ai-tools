@@ -1,0 +1,23 @@
+{
+  "_comment": "Única fuente de verdad del mapeo proyecto -> repos. Se mantiene a mano: para agregar un proyecto nuevo, pedírselo directo a la skill (ver README.md / SKILL.md Paso 1) en vez de editar esto a mano, salvo que prefieras hacerlo vos mismo.",
+  "tag_pattern": "^v\\d+\\.\\d+\\.\\d+$",
+  "window_days": 14,
+  "proyectos": [
+    {
+      "nombre": "Example Project",
+      "notas": "Multi-repo, orgs distintas (example-org vs example-partner-org) — no asumir una sola org al agregar credenciales. Deployment Frequency: conteo independiente por repo (frontend y backend deployan desacoplados, no requiere tag simultáneo en ambos).",
+      "repos": [
+        {
+          "repo": "example-org/example-frontend",
+          "tipo": ["web", "mobile"],
+          "prod_branch": "main"
+        },
+        {
+          "repo": "example-partner-org/example-backend",
+          "tipo": ["backend"],
+          "prod_branch": "main"
+        }
+      ]
+    }
+  ]
+}

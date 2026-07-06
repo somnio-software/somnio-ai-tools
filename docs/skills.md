@@ -439,4 +439,29 @@ Not Flutter-specific — the domain/extension map adapts to any stack (detects `
 
 ---
 
+## DORA Metrics
+
+Fetches two DORA metrics per project and per repo — **Deployment Frequency** and **Lead Time for Changes** — from the GitHub API only (never a local git clone), so lead time stays accurate regardless of merge strategy (including squash merges).
+
+> **Read-only and non-judgmental.** This skill only fetches and reports the numbers — it never ranks, scores, or compares projects or people. Interpreting the data is a separate, deliberate step left to whoever runs it: mixing measurement with evaluation is how metrics stop being useful (Goodhart's Law).
+
+Projects map to their GitHub repos in `config/proyectos.json` (mono-repo or multi-repo). If a project isn't in the config yet, the skill asks for its repos instead of guessing, and offers to add it.
+
+**Example prompts:**
+```
+Run the DORA metrics for Example Project.
+```
+```
+What's the lead time for Example Project over the last 2 weeks?
+```
+```
+Add project Omega to DORA metrics, single repo acme/omega-api, prod branch develop.
+```
+
+**Requires:** a GitHub credential with read access to the relevant orgs — the `GITHUB_TOKEN` env var, or `gh auth token` if the GitHub CLI is already logged in locally.
+
+**Output:** Deployment Frequency and median Lead Time per repo for the requested window (14 days by default), plus process-gap warnings (e.g. merged PRs with no release yet, a release with no prior release to measure against). Optionally saved as a portable JSON file.
+
+---
+
 **See also:** [Installation](installation.md) | [CLI Reference](cli.md) | [Workflow Guide](workflows.md)

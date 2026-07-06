@@ -278,6 +278,25 @@ class SkillRegistry {
       planRelativePath:
           'skills/optimize-claude-config/SKILL.md',
     ),
+    WorkflowSkill(
+      id: 'dora_metrics',
+      name: 'dora-metrics',
+      displayName: 'DORA Metrics',
+      description:
+          'Fetches DORA Deployment Frequency and Lead Time for Changes from '
+          'the GitHub API (never local git), per project and per repo. Reads '
+          'a project-to-repos mapping, prompts for missing projects instead '
+          'of guessing, verifies GitHub auth, and reports both metrics with '
+          'process-gap warnings. Use when asked to run or update DORA '
+          'metrics, measure deployment frequency or lead time for a '
+          'project, or generate the biweekly metrics report.',
+      planRelativePath:
+          'skills/dora-metrics/SKILL.md',
+      assetDirectories: [
+        'skills/dora-metrics/scripts',
+        'skills/dora-metrics/config',
+      ],
+    ),
   ];
 
   /// Find a skill bundle by its ID.
