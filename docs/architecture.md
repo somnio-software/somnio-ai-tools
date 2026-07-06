@@ -58,7 +58,7 @@ cli/lib/src/
 
 ### Key Layers
 
-**Skill Registry** (`content/skill_registry.dart`) — Static registry of all audit skill bundles. Each `SkillBundle` defines paths to its SKILL.md, references directory, and assets.
+**Skill Registry** (`content/skill_registry.dart`) — Static registry of all audit skill bundles and workflow skills. Each `SkillBundle` defines paths to its SKILL.md, references directory, and assets. Each `WorkflowSkill` is a standalone SKILL.md; it may also declare `assetDirectories` (e.g. `scripts/`, `config/`) for skills backed by real executable code — those directories are copied verbatim alongside the installed SKILL.md for the Claude Code `skillDir` format only.
 
 **Agent Registry** (`agents/agent_registry.dart`) — Data-driven definitions for all supported agents. Each `AgentConfig` declares binary, prompt style, install format, models, and token parser. Adding a new agent requires only a single entry here.
 
