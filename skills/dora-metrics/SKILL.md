@@ -1,198 +1,221 @@
 ---
 name: dora-metrics
 description: >
-  Obtiene las métricas DORA Deployment Frequency y Lead Time for Changes, por
-  proyecto y por repo, desde GitHub (API, no git local). Usar esta skill
-  siempre que el usuario pida correr o actualizar las métricas DORA, medir
-  deployment frequency o lead time de un proyecto (ej. "Example Project"), generar
-  el reporte quincenal de métricas, o pregunte cuántos deploys hizo un
-  proyecto o cuánto tarda un cambio en llegar a producción.
-  Disparar también con frases como: "corré las métricas DORA", "métricas de
-  Example Project", "deployment frequency de [proyecto]", "lead time de
-  [proyecto]", "reporte quincenal de métricas", "cuántos deploys hicimos este
+  Fetches the DORA metrics Deployment Frequency and Lead Time for Changes, per
+  project and per repo, from GitHub (API, not local git). Use this skill
+  whenever the user asks to run or update the DORA metrics, measure the
+  deployment frequency or lead time of a project (e.g. "Example Project"),
+  generate the biweekly metrics report, or asks how many deploys a project made
+  or how long a change takes to reach production.
+  Also trigger on phrases like: "run the DORA metrics", "metrics for
+  Example Project", "deployment frequency for [project]", "lead time for
+  [project]", "biweekly metrics report", "how many deploys did we do this
   sprint".
 allowed-tools: Read, Write, Edit, Bash
 ---
 
 # DORA Metrics — Deployment Frequency & Lead Time for Changes
 
-> Esta skill **solo obtiene y agrega el dato** — no interpreta, no rankea, no
-> compara personas ni proyectos entre sí. Eso es un paso posterior y separado,
-> fuera del alcance de esta skill.
+> This skill **only fetches and aggregates the data** — it does not interpret,
+> rank, or compare people or projects against one another. That is a separate,
+> later step, outside the scope of this skill.
 
-## Contexto
+## Context
 
-Se miden dos métricas DORA por proyecto: **Deployment Frequency** (con qué
-frecuencia se deploya a prod) y **Lead Time for Changes** (cuánto tarda un
-cambio en llegar a prod). Es la etapa de **calibración**: el objetivo es que
-el equipo tenga un dato consistente y ejecutable por sí mismo — no que se use
-para evaluar personas. La obtención del dato y su interpretación son pasos
-deliberadamente separados: en cuanto una métrica se usa para evaluar personas,
-deja de ser una buena métrica (Ley de Goodhart).
+Two DORA metrics are measured per project: **Deployment Frequency** (how often
+we deploy to prod) and **Lead Time for Changes** (how long a change takes to
+reach prod). This is the **calibration** stage: the goal is for the team to
+have a consistent number they can act on themselves — not one used to evaluate
+people. Fetching the data and interpreting it are deliberately separate steps:
+the moment a metric is used to evaluate people, it stops being a good metric
+(Goodhart's Law).
 
-CI es uniforme (GitHub Actions) pero CD es heterogéneo (mobile/web/backend
-deployan distinto), así que en vez de medir el CD real se usa un marcador
-uniforme: un **GitHub Release con tag semver `vX.Y.Z`** sobre la rama de
-producción de cada repo. Todo el dato sale de la **API de GitHub** — nunca de
-un clon local de git — porque el lead time depende del primer commit real de
-cada PR, y eso solo es confiable leyendo el objeto PR de GitHub (sigue siendo
-correcto incluso si el merge fue squash; el git log de `main` no lo garantiza).
+CI is uniform (GitHub Actions) but CD is heterogeneous (mobile/web/backend
+deploy differently), so instead of measuring the actual CD we use a uniform
+marker: a **GitHub Release with a semver tag `vX.Y.Z`** on each repo's
+production branch. All data comes from the **GitHub API** — never a local git
+clone — because lead time depends on the real first commit of each PR, and that
+is only reliable when read from the GitHub PR object (it stays correct even if
+the merge was a squash; the git log of `main` does not guarantee it).
 
-Los proyectos pueden ser mono-repo o multi-repo. En multi-repo, cada repo se
-mide y reporta **independiente, sin combinar**: si un proyecto deploya
-frontend y backend en momentos distintos, mezclarlos en un solo número
-ocultaría justamente la señal que la calibración busca exponer.
+Projects can be mono-repo or multi-repo. In multi-repo, each repo is measured
+and reported **independently, never combined**: if a project deploys the
+frontend and backend at different times, merging them into a single number
+would hide the very signal that calibration is meant to expose.
 
-Definiciones formales de cada métrica (atributo, población, cálculo exacto):
-`references/deployment-frequency.md` y `references/lead-time-for-changes.md`.
+Formal definitions of each metric (attribute, population, exact calculation):
+`references/deployment-frequency.md` and `references/lead-time-for-changes.md`.
 
 ## Input
 
-- **Nombre del proyecto** (ej. "Example Project"). Si el usuario no especifica uno,
-  correr todos los proyectos de `config/proyectos.json`.
-- Ventana de medición: fija en 14 días por default (config `window_days`) — no
-  pedirla salvo que el usuario explícitamente quiera otra cosa.
+- **Project name** (e.g. "Example Project"). If the user does not specify one,
+  run all projects in `config/proyectos.json`.
+- Measurement window: fixed at 14 days by default (config `window_days`) — do
+  not ask for it unless the user explicitly wants something else.
 
 ## Output
 
-- Resumen humano por consola, por proyecto y por repo: deployment frequency,
-  lead time mediana, y warnings de casos borde.
-- Opcionalmente, un JSON portable en la carpeta indicada con `--out-dir` (ej.
-  `outputs/YYYY-MM-DD_dora.json`), si se pide guardar el resultado.
+- Human-readable console summary, per project and per repo: deployment
+  frequency, median lead time, and edge-case warnings.
+- Optionally, a portable JSON file in the folder given by `--out-dir` (e.g.
+  `outputs/YYYY-MM-DD_dora.json`), if saving the result is requested.
 
 ---
 
 ## Workflow
 
-### Paso 1 — Identificar el/los proyecto(s)
+### Step 1 — Identify the project(s)
 
-Leer `config/proyectos.json`. Buscar el proyecto pedido por nombre
+Read `config/proyectos.json`. Look up the requested project by name
 (case-insensitive).
 
-**Si el proyecto no está en el config**: no inventar repos ni asumir un
-mapeo. En vez de frenar y mandar al usuario a editar un archivo aparte,
-preguntarle directamente los datos que faltan y agregarlos vos mismo a
-`config/proyectos.json`:
+**If the project is not in the config**: do not invent repos or assume a
+mapping. Instead of stopping and sending the user off to edit a separate file,
+ask them directly for the missing details and add them to
+`config/proyectos.json` yourself:
 
-- Nombre del proyecto.
-- Repo(s) de GitHub que lo componen (`org/repo`), uno o varios (multi-repo).
-- Tipo de cada repo (web / mobile / backend).
-- Rama de producción de cada repo (default razonable: `main`, pero
-  confirmar — no asumir).
-- Opcional: si algún repo no usa GitHub Releases sino tags planos
-  (`deploy_source: "tag"`), o un `tag_pattern` distinto al global. Default:
-  hereda `deploy_source: "release"` y el `tag_pattern` global si no se
-  especifica nada.
-- Opcional: alguna nota corta si hay algo no obvio del proyecto (ej. multi-repo
-  con orgs distintas, deploys desacoplados entre repos) — va en un campo
-  `"notas"` del proyecto. No hace falta si no hay nada particular que aclarar.
+- Project name.
+- The GitHub repo(s) that make it up (`org/repo`), one or several (multi-repo).
+- Type of each repo (web / mobile / backend).
+- Production branch of each repo (reasonable default: `main`, but
+  confirm — do not assume).
+- Optional: whether any repo uses plain tags instead of GitHub Releases
+  (`deploy_source: "tag"`), or a `tag_pattern` different from the global one.
+  Default: inherits `deploy_source: "release"` and the global `tag_pattern` if
+  nothing is specified.
+- Optional: a short note if there is anything non-obvious about the project
+  (e.g. multi-repo across different orgs, deploys decoupled between repos) —
+  goes in a `"notas"` field on the project. Not needed if there is nothing
+  particular to call out.
 
-Mostrar el JSON resultante antes de guardarlo y pedir confirmación (es un
-archivo compartido por todo el equipo). Una vez guardado, seguir con el
-Paso 2 normalmente.
+Show the resulting JSON before saving it and ask for confirmation (it is a file
+shared by the whole team). Once saved, continue with Step 2 as usual.
 
-### Paso 2 — Mostrar tabla de confirmación
+### Step 2 — Show the confirmation table
 
-Antes de llamar a la API, mostrar una tabla con lo que se va a medir. A
-diferencia de una skill que genera un documento (donde la tabla es un gate
-obligatorio antes de crear algo difícil de deshacer), acá es informativa: la
-skill solo lee datos y arma un reporte, así que se puede seguir de largo salvo
-que algo llame la atención (un repo que no correspondería, una rama rara).
-Mostrarla siempre igual, para que quien la corra vea de un vistazo qué se está
-midiendo:
+Before calling the API, show a table with what is going to be measured. Unlike
+a skill that generates a document (where the table is a mandatory gate before
+creating something hard to undo), here it is informational: the skill only
+reads data and builds a report, so you can go straight through unless something
+stands out (a repo that shouldn't be there, an odd branch). Show it regardless,
+so whoever runs it can see at a glance what is being measured:
 
-| Proyecto | Repo | Tipo | Rama prod | Ventana |
+| Project | Repo | Type | Prod branch | Window |
 |---|---|---|---|---|
-| Example Project | `example-org/example-frontend` | web, mobile | main | últimos 14 días |
-| Example Project | `example-partner-org/example-backend` | backend | main | últimos 14 días |
+| Example Project | `example-org/example-frontend` | web, mobile | main | last 14 days |
+| Example Project | `example-partner-org/example-backend` | backend | main | last 14 days |
 
-Si algo en la tabla no coincide con lo que el usuario esperaba, parar y
-preguntar antes de correr el script.
+If anything in the table doesn't match what the user expected, stop and ask
+before running the script.
 
-### Paso 3 — Verificar autenticación
+### Step 3 — Verify authentication
 
-El script (`scripts/dora_metrics.py`) necesita una credencial de GitHub con
-acceso de lectura a **todas** las orgs de los repos del proyecto (ej. si es
-multi-org: `example-org` y `example-partner-org`). Orden de precedencia,
-automático:
+The script (`scripts/dora_metrics.py`) needs a GitHub credential with read
+access to **all** the orgs of the project's repos (e.g. if it's multi-org:
+`example-org` and `example-partner-org`). Precedence order, automatic:
 
-1. Variable de entorno `GITHUB_TOKEN`.
-2. `gh auth token` — si la CLI de GitHub ya está logueada localmente, no hace
-   falta pedir ni pegar nada.
+1. `GITHUB_TOKEN` environment variable.
+2. `gh auth token` — if the GitHub CLI is already logged in locally, there is
+   nothing to ask for or paste.
 
-Si ninguna de las dos está disponible, el script lo va a decir explícitamente
-al correr (no falla en silencio). En ese caso, explicarle al usuario las dos
-opciones — no le pidas que pegue un token en el chat si el flujo es Cowork; en
-Claude Code local, sugerí `gh auth login` si no lo tiene hecho.
+If neither is available, the script will say so explicitly when it runs (it
+does not fail silently). In that case, explain the two options to the user — do
+not ask them to paste a token in the chat if the flow is Cowork; in local
+Claude Code, suggest `gh auth login` if they haven't done it.
 
-### Paso 4 — Correr el script
+### Step 4 — Run the script
 
 ```bash
-pip install requests --break-system-packages   # si hace falta
+pip install requests --break-system-packages   # if needed
 
 python3 scripts/dora_metrics.py --proyecto "Example Project" --out-dir outputs
 ```
 
-Flags disponibles:
-- `--config`: path al config (default: `config/proyectos.json`).
-- `--proyecto`: nombre exacto del proyecto (default: corre todos los del config).
-- `--out-dir`: si se pasa, además de imprimir por stdout guarda
-  `YYYY-MM-DD_dora.json` ahí.
-- `--branch <rama>`: override puntual de `prod_branch` para esta corrida
-  (requiere `--proyecto`). No modifica el config — usar solo para pruebas
-  puntuales contra una rama distinta a la configurada.
-- `--deploy-source {release,tag}`: override puntual de `deploy_source`
-  (requiere `--proyecto`). No modifica el config.
-- `--window-days N`: override puntual de la ventana en días. No modifica
-  el config.
+Available flags:
+- `--config`: path to the config (default: `config/proyectos.json`).
+- `--proyecto`: exact project name (default: runs all projects in the config).
+- `--out-dir`: if passed, in addition to printing to stdout it saves
+  `YYYY-MM-DD_dora.json` there.
+- `--branch <branch>`: one-off override of `prod_branch` for this run
+  (requires `--proyecto`). Does not modify the config — use only for one-off
+  tests against a branch different from the configured one.
+- `--deploy-source {release,tag}`: one-off override of `deploy_source`
+  (requires `--proyecto`). Does not modify the config.
+- `--window-days N`: one-off override of the window in days. Does not modify
+  the config.
 
-Ver `README.md` (sección "Configuración") para el detalle de qué hace cada
-campo del config y cuándo usar cada override.
+See `README.md` (the "Configuration" section) for the details of what each
+config field does and when to use each override.
 
-### Paso 5 — Reportar
+### Step 5 — Report
 
-**Siempre responder en el chat con los dos valores directos** (Deployment
-Frequency y Lead Time mediana) por cada repo, aunque también se guarde el
-JSON — nunca reemplazar la respuesta por un simple "guardé el archivo,
-revisalo ahí". Mostrar el resumen humano tal cual lo imprime el script — no
-reinterpretar ni rankear los números, eso es un paso posterior, fuera del
-alcance de esta skill. Si
-hubo `warnings` en el output (release sin release anterior, PR sin commits
-recuperables, 0 PRs en el rango), mostrarlos también: son señal de gaps de
-proceso, justo lo que esta etapa de calibración busca exponer, no ruido a
-esconder.
+Do not improvise the human-readable summary yourself. Dispatch the
+`report-writer` subagent (via the Agent tool), passing it the JSON the script
+printed to stdout (and the saved file path, if `--out-dir` was used), and have
+it render the reply following `assets/report-template.md`.
 
-Si se guardó el JSON, decir dónde quedó, además de reportar los valores.
+**Model to dispatch with (parametrizable):** by default dispatch the
+`report-writer` with `model: sonnet`. If the user explicitly asks for something
+faster or cheaper, use `model: haiku`. If they explicitly ask for something
+more thorough, use `model: opus`. Do not switch models on your own — only in
+response to an explicit request.
+
+The `report-writer` formats numbers only; it never interprets, ranks, scores,
+or compares projects, repos, or people. The rules it must follow (and that this
+step guarantees) are:
+
+- **Always reply in the chat with the two values directly** (Deployment
+  Frequency and median Lead Time) for each repo, even if the JSON is also
+  saved — never replace the reply with a bare "I saved the file, check it
+  there".
+- Show the numbers exactly as the script produced them — do not reinterpret or
+  rank them, that is a later step, outside the scope of this skill.
+- If there were `warnings` in the output (a release with no prior release, a PR
+  with no recoverable commits, 0 PRs in the range), show them **verbatim**:
+  they are a sign of process gaps, exactly what this calibration stage is meant
+  to expose, not noise to hide. In addition to the verbatim text, the
+  `report-writer` consults `references/troubleshooting.md` and, under each
+  warning it renders, includes that reference's **What / How to check / Where to
+  fix** guidance so whoever ran the skill can check or fix the measurement setup
+  without asking the maintainers. This is additive — the raw warning still shows
+  exactly as the script produced it — and the guidance stays strictly on the
+  measurement-setup side (wrong branch, missing token scope, tagging setup); it
+  never comments on whether a number is good or bad. The `report-writer` (the
+  subagent rendering the final reply) is responsible for this lookup.
+- If the JSON was saved, say where it ended up, in addition to reporting the
+  values.
 
 ---
 
-## Mantenimiento del config
+## Maintaining the config
 
-`config/proyectos.json` es la **única fuente de verdad** del mapeo proyecto →
-repos — no hay un doc aparte que mantener sincronizado. Se agregan proyectos
-nuevos vía el Paso 1 de este workflow (conversación con el usuario), o
-editando el JSON directamente. La skill no infiere el mapeo por sí sola: si
-falta, pregunta.
+`config/proyectos.json` is the **single source of truth** for the project →
+repos mapping — there is no separate doc to keep in sync. New projects are
+added via Step 1 of this workflow (a conversation with the user), or by editing
+the JSON directly. The skill does not infer the mapping on its own: if it's
+missing, it asks.
 
-## Limitaciones conocidas (piloto)
+## Known limitations (pilot)
 
-- Primer Release histórico de un repo: se excluye del cálculo de Lead Time (no
-  hay forma de acotar la población de PRs anterior a él).
-- Usa la Search API de GitHub (rate limits más bajos que la REST normal); con
-  1-2 proyectos no debería ser problema, pero al escalar a más proyectos
-  puede requerir batching/caching.
-- Lead time va a salir alto en las primeras corridas — esperable en
-  calibración, no leer como performance hasta 3-4 ventanas limpias.
-- `deploy_source: "tag"`: si el tag/release se crea a 1-2 segundos del merge
-  (ej. un pipeline que auto-taggea), un PR puede quedar excluido o mal
-  atribuido al intervalo siguiente. Ver detalle en el docstring de
-  `scripts/dora_metrics.py`. Irrelevante con cadencias reales (días/semanas).
+- A repo's first historical Release: excluded from the Lead Time calculation
+  (there is no way to bound the PR population before it).
+- Uses GitHub's Search API (lower rate limits than the regular REST API); with
+  1-2 projects it shouldn't be an issue, but scaling to more projects may
+  require batching/caching.
+- Lead time will come out high on the first runs — expected during
+  calibration, do not read it as performance until 3-4 clean windows.
+- `deploy_source: "tag"`: if the tag/release is created 1-2 seconds after the
+  merge (e.g. a pipeline that auto-tags), a PR can end up excluded or
+  misattributed to the next interval. See the detail in the docstring of
+  `scripts/dora_metrics.py`. Irrelevant with real cadences (days/weeks).
 
-## Notas importantes
+## Important notes
 
-- Esta skill **solo obtiene y reporta**. Nunca interpreta, rankea, ni compara
-  personas — mezclar obtención con evaluación contamina el dato (Ley de Goodhart).
-- Multi-repo: cada repo se mide y reporta independiente, nunca combinado.
-- Fuente única: API de GitHub. Nunca leer del `.git` local del repo clonado.
-- Si el proyecto pedido no está en `config/proyectos.json`, no lo inventes —
-  preguntar los datos y agregarlo (Paso 1), nunca asumir repos o ramas.
+- This skill **only fetches and reports**. It never interprets, ranks, or
+  compares people — mixing fetching with evaluation contaminates the data
+  (Goodhart's Law).
+- Multi-repo: each repo is measured and reported independently, never combined.
+- Single source: the GitHub API. Never read from the cloned repo's local
+  `.git`.
+- If the requested project isn't in `config/proyectos.json`, don't invent it —
+  ask for the details and add it (Step 1), never assume repos or branches.

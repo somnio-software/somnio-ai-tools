@@ -295,6 +295,9 @@ class SkillRegistry {
       assetDirectories: [
         'skills/dora-metrics/scripts',
         'skills/dora-metrics/config',
+        'skills/dora-metrics/agents',
+        'skills/dora-metrics/assets',
+        'skills/dora-metrics/references',
       ],
     ),
   ];

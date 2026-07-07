@@ -1,10 +1,10 @@
-"""Unit tests para scripts/dora_metrics.py.
+"""Unit tests for scripts/dora_metrics.py.
 
-Sin red: todas las llamadas a GitHub se mockean a nivel de función
+No network: all GitHub calls are mocked at the function level
 (get_prod_releases, get_prod_tags, get_merged_prs_between,
-get_pr_first_commit_ts). Corren en segundos.
+get_pr_first_commit_ts). They run in seconds.
 
-Uso:
+Usage:
     python3 -m unittest discover -s tests -p "test_*.py" -v
 """
 
@@ -66,19 +66,19 @@ class TestValidateScopedOverrides(unittest.TestCase):
 
     def test_with_proyecto_ok(self):
         args = SimpleNamespace(branch="main", proyecto="Example Project", deploy_source="tag")
-        dora_metrics.validate_scoped_overrides(args)  # no debe tirar
+        dora_metrics.validate_scoped_overrides(args)  # should not raise
 
     def test_no_overrides_ok(self):
         args = SimpleNamespace(branch=None, proyecto=None, deploy_source=None)
-        dora_metrics.validate_scoped_overrides(args)  # no debe tirar
+        dora_metrics.validate_scoped_overrides(args)  # should not raise
 
 
 class TestValidateDeploySources(unittest.TestCase):
     def test_valid_sources_ok(self):
         proyectos = [{"repos": [{"repo": "a/b", "deploy_source": "release"},
                                  {"repo": "a/c", "deploy_source": "tag"},
-                                 {"repo": "a/d"}]}]  # sin campo -> default release
-        dora_metrics.validate_deploy_sources(proyectos)  # no debe tirar
+                                 {"repo": "a/d"}]}]  # no field -> default release
+        dora_metrics.validate_deploy_sources(proyectos)  # should not raise
 
     def test_invalid_source_raises(self):
         proyectos = [{"repos": [{"repo": "a/b", "deploy_source": "ci_pipeline"}]}]
@@ -87,15 +87,15 @@ class TestValidateDeploySources(unittest.TestCase):
 
 
 class TestComputeRepoMetrics(unittest.TestCase):
-    """Todas mockean get_prod_releases/get_prod_tags/get_merged_prs_between/
-    get_pr_first_commit_ts — compute_repo_metrics no debe pegarle a la red."""
+    """All of these mock get_prod_releases/get_prod_tags/get_merged_prs_between/
+    get_pr_first_commit_ts — compute_repo_metrics must not hit the network."""
 
     def _releases(self, tags_and_dates):
         return [{"tag": t, "published_at": dt(d), "url": f"https://x/{t}"} for t, d in tags_and_dates]
 
     def test_deployment_frequency_counts_releases_in_window(self):
         releases = self._releases([
-            ("v1.0.0", "2026-06-01T00:00:00Z"),  # fuera de ventana
+            ("v1.0.0", "2026-06-01T00:00:00Z"),  # outside the window
             ("v1.1.0", "2026-07-01T00:00:00Z"),
             ("v1.2.0", "2026-07-02T00:00:00Z"),
         ])
@@ -114,8 +114,8 @@ class TestComputeRepoMetrics(unittest.TestCase):
                 session=None, repo="a/b", branch="main", tag_pattern=r"^v",
                 window_days=14, now=dt("2026-07-03T00:00:00Z"),
             )
-        self.assertEqual(r["deployment_frequency"], 0)  # 0 real, no None (ver comentario en el script)
-        self.assertIsNone(r["lead_time_median_hours"])  # sin dato computable, no 0.0
+        self.assertEqual(r["deployment_frequency"], 0)  # real 0, not None (see the comment in the script)
+        self.assertIsNone(r["lead_time_median_hours"])  # no computable data, not 0.0
         self.assertEqual(r["lead_time_n"], 0)
 
     def test_first_release_excluded_from_lead_time_with_warning(self):
@@ -127,7 +127,7 @@ class TestComputeRepoMetrics(unittest.TestCase):
             )
         self.assertEqual(r["deployment_frequency"], 1)
         self.assertIsNone(r["lead_time_median_hours"])
-        self.assertTrue(any("no tiene release anterior" in w for w in r["warnings"]))
+        self.assertTrue(any("no known prior release" in w for w in r["warnings"]))
 
     def test_zero_prs_between_releases_warns(self):
         releases = self._releases([
@@ -141,7 +141,7 @@ class TestComputeRepoMetrics(unittest.TestCase):
                 window_days=14, now=dt("2026-07-03T00:00:00Z"),
             )
         self.assertIsNone(r["lead_time_median_hours"])
-        self.assertTrue(any("0 PRs mergeados" in w for w in r["warnings"]))
+        self.assertTrue(any("0 merged PRs" in w for w in r["warnings"]))
 
     def test_lead_time_computed_from_first_commit_to_release(self):
         releases = self._releases([
@@ -167,9 +167,9 @@ class TestComputeRepoMetrics(unittest.TestCase):
             ("v1.1.0", "2026-07-01T00:00:00Z"),
         ])
         commit_dates = {
-            1: dt("2026-06-30T00:00:00Z"),   # 24h antes del release
-            2: dt("2026-06-29T00:00:00Z"),   # 48h antes
-            3: dt("2026-06-30T12:00:00Z"),   # 12h antes
+            1: dt("2026-06-30T00:00:00Z"),   # 24h before the release
+            2: dt("2026-06-29T00:00:00Z"),   # 48h before
+            3: dt("2026-06-30T12:00:00Z"),   # 12h before
         }
         with patch.object(dora_metrics, "get_prod_releases", return_value=releases), \
              patch.object(dora_metrics, "get_merged_prs_between",
@@ -181,7 +181,7 @@ class TestComputeRepoMetrics(unittest.TestCase):
                 window_days=14, now=dt("2026-07-03T00:00:00Z"),
             )
         self.assertEqual(r["lead_time_n"], 3)
-        self.assertEqual(r["lead_time_median_hours"], 24.0)  # mediana de [12, 24, 48]
+        self.assertEqual(r["lead_time_median_hours"], 24.0)  # median of [12, 24, 48]
 
     def test_pr_without_recoverable_commit_is_excluded_with_warning(self):
         releases = self._releases([
@@ -198,7 +198,7 @@ class TestComputeRepoMetrics(unittest.TestCase):
             )
         self.assertEqual(r["lead_time_n"], 0)
         self.assertIsNone(r["lead_time_median_hours"])
-        self.assertTrue(any("no se pudo obtener el primer commit" in w for w in r["warnings"]))
+        self.assertTrue(any("could not fetch the first commit" in w for w in r["warnings"]))
 
     def test_deploy_source_tag_dispatches_to_get_prod_tags(self):
         tags = self._releases([("v1.0.0", "2026-07-01T00:00:00Z")])

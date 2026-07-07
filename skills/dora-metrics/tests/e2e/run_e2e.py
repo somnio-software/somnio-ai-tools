@@ -1,27 +1,27 @@
 #!/usr/bin/env python3
 """
-E2E de scripts/dora_metrics.py contra un repo de GitHub real y descartable.
+E2E of scripts/dora_metrics.py against a real, throwaway GitHub repo.
 
-Reproduce los 7 casos validados manualmente en sesión (release mode con lead
-time realista, mediana con n>1, tag anotado, tag liviano, warning de 0 PRs,
---window-days, --branch). No requiere esperas reales de minutos: usa
-GIT_AUTHOR_DATE/GIT_COMMITTER_DATE para simular lead times y ventanas
-realistas, y solo un sleep corto (unos segundos) donde hace falta evitar la
-condición de carrera puntual entre un merge commit y el `merged_at` del PR
-(ver docstring de dora_metrics.py).
+Reproduces the 7 cases validated manually in session (release mode with
+realistic lead time, median with n>1, annotated tag, lightweight tag, 0-PRs
+warning, --window-days, --branch). It does not require real minute-long waits:
+it uses GIT_AUTHOR_DATE/GIT_COMMITTER_DATE to simulate realistic lead times and
+windows, and only a short sleep (a few seconds) where needed to avoid the
+specific race condition between a merge commit and the PR's `merged_at`
+(see the docstring of dora_metrics.py).
 
-ADVERTENCIA: al arrancar, este script BORRA todo el contenido de --repo
-(releases, tags, branches salvo main, e historia de main vía force-push) para
-que cada corrida sea reproducible. --repo tiene que ser un repo 100%
-descartable tuyo — nunca uno real. No tiene default: pasá tu propio repo
-descartable con --repo.
+WARNING: on startup, this script DELETES all the contents of --repo
+(releases, tags, branches except main, and the history of main via force-push)
+so that each run is reproducible. --repo must be a 100% throwaway repo of your
+own — never a real one. It has no default: pass your own throwaway repo with
+--repo.
 
-Requiere: gh CLI autenticado con permisos de admin sobre --repo (borrar
-releases/tags/branches, forzar push a main).
+Requires: gh CLI authenticated with admin permissions on --repo (delete
+releases/tags/branches, force-push to main).
 
-Uso:
-    python3 tests/e2e/run_e2e.py --repo tu-usuario/tu-repo-descartable
-    python3 tests/e2e/run_e2e.py --repo tu-usuario/tu-repo-descartable --yes
+Usage:
+    python3 tests/e2e/run_e2e.py --repo your-user/your-throwaway-repo
+    python3 tests/e2e/run_e2e.py --repo your-user/your-throwaway-repo --yes
 """
 
 import argparse
@@ -48,7 +48,7 @@ def check(case, condition, detail=""):
 def run(cmd, cwd=None, env=None, check_rc=True, input_text=None):
     result = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True, input=input_text)
     if check_rc and result.returncode != 0:
-        raise RuntimeError(f"Comando falló ({' '.join(cmd)}):\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}")
+        raise RuntimeError(f"Command failed ({' '.join(cmd)}):\nSTDOUT: {result.stdout}\nSTDERR: {result.stderr}")
     return result
 
 
@@ -70,15 +70,16 @@ def backdated_env(hours_ago):
 
 
 def reset_repo(repo, workdir):
-    print(f"Reseteando {repo} a un estado limpio (borra releases, tags, branches != main)...")
+    print(f"Resetting {repo} to a clean state (deletes releases, tags, branches != main)...")
 
     out = gh(["release", "list", "--repo", repo, "--json", "tagName", "-q", ".[].tagName"], check_rc=False)
     for tag in out.stdout.split():
         gh(["release", "delete", tag, "--repo", repo, "--yes", "--cleanup-tag"], check_rc=False)
 
-    # Tags sin Release (anotados o livianos) — borrar vía API, no via git push
-    # a una URL suelta (depende de un credential helper que puede no estar
-    # configurado; la API con gh siempre usa la sesión ya autenticada).
+    # Tags without a Release (annotated or lightweight) — delete via the API, not
+    # via a git push to a bare URL (that depends on a credential helper that may
+    # not be configured; the API through gh always uses the already-authenticated
+    # session).
     out = gh(["api", f"repos/{repo}/tags", "--paginate", "-q", ".[].name"], check_rc=False)
     for name in out.stdout.split():
         gh(["api", "-X", "DELETE", f"repos/{repo}/git/refs/tags/{name}"], check_rc=False)
@@ -88,9 +89,9 @@ def reset_repo(repo, workdir):
         if branch != "main":
             gh(["api", "-X", "DELETE", f"repos/{repo}/git/refs/heads/{branch}"], check_rc=False)
 
-    # El clone inicial (antes de este reset) ya trajo los tags viejos del
-    # repo a nivel LOCAL — borrarlos remotamente no los saca del clone, y
-    # git se niega a recrear un tag que ya existe localmente.
+    # The initial clone (before this reset) already brought the repo's old tags
+    # in LOCALLY — deleting them remotely doesn't remove them from the clone, and
+    # git refuses to recreate a tag that already exists locally.
     out = git(["tag", "-l"], cwd=workdir, check_rc=False)
     for name in out.stdout.split():
         git(["tag", "-d", name], cwd=workdir, check_rc=False)
@@ -103,12 +104,12 @@ def reset_repo(repo, workdir):
     git(["commit", "-m", "Reset for e2e run"], cwd=workdir)
     git(["branch", "-M", "main"], cwd=workdir)
     git(["push", "--force", "origin", "main"], cwd=workdir)
-    print("Repo reseteado.\n")
+    print("Repo reset.\n")
 
 
 def merge_pr_with_backdated_commit(repo, workdir, branch_name, base, hours_ago, title):
-    """Crea una rama desde `base`, commitea con fecha falseada (hours_ago),
-    abre PR contra `base` y lo mergea. Devuelve el número de PR."""
+    """Creates a branch from `base`, commits with a backdated date (hours_ago),
+    opens a PR against `base` and merges it. Returns the PR number."""
     git(["checkout", base, "-q"], cwd=workdir)
     git(["pull", "-q", "origin", base], cwd=workdir)
     git(["checkout", "-b", branch_name, "-q"], cwd=workdir)
@@ -128,10 +129,10 @@ def merge_pr_with_backdated_commit(repo, workdir, branch_name, base, hours_ago, 
 
 def run_dora(repo, prod_branch="main", deploy_source="release", tag_pattern=None,
              window_days=3650, extra_args=None):
-    # Margen corto: un release/tag recién creado puede tardar un instante en
-    # aparecer en el endpoint de listado de GitHub (lag de propagación
-    # observado empíricamente entre `gh release create` y que la corrida
-    # siguiente lo vea) — no es un bug de dora_metrics.py, es la API.
+    # Short margin: a just-created release/tag can take a moment to show up in
+    # GitHub's listing endpoint (propagation lag observed empirically between
+    # `gh release create` and the next run seeing it) — it's not a bug in
+    # dora_metrics.py, it's the API.
     time.sleep(6)
     cfg = {
         "tag_pattern": tag_pattern or r"^v\d+\.\d+\.\d+$",
@@ -160,21 +161,21 @@ def repo_metrics(dora_output, repo):
         for r in p["repos"]:
             if r.get("repo") == repo:
                 return r
-    raise KeyError(f"repo {repo} no encontrado en el output: {dora_output}")
+    raise KeyError(f"repo {repo} not found in the output: {dora_output}")
 
 
 def seed_baseline_release(repo, workdir):
-    """Release inicial sin PRs, para que v0.1.0 (Caso A) no quede como el
-    primer release histórico del repo — ese siempre se excluye del Lead Time
-    por diseño (no hay release anterior contra la cual acotar la búsqueda de
-    PRs), y el Caso A necesita que SU PR sea medible."""
-    gh(["release", "create", "v0.0.1", "--repo", repo, "--title", "v0.0.1", "--notes", "baseline, sin PRs", "--target", "main"])
+    """Initial release with no PRs, so that v0.1.0 (Case A) isn't the repo's
+    first historical release — that one is always excluded from the Lead Time
+    by design (there's no prior release against which to bound the PR search),
+    and Case A needs ITS PR to be measurable."""
+    gh(["release", "create", "v0.0.1", "--repo", repo, "--title", "v0.0.1", "--notes", "baseline, no PRs", "--target", "main"])
 
 
 def case_a_release_lead_time(repo, workdir):
-    print("Caso A — release, lead time realista (commit backdateado 30h)")
+    print("Case A — release, realistic lead time (commit backdated 30h)")
     merge_pr_with_backdated_commit(repo, workdir, "e2e-case-a", "main", hours_ago=30, title="Case A")
-    time.sleep(7)  # margen real, evita la carrera merge-commit vs merged_at
+    time.sleep(7)  # real margin, avoids the merge-commit vs merged_at race
     git(["checkout", "main", "-q"], cwd=workdir)
     git(["pull", "-q", "origin", "main"], cwd=workdir)
     gh(["release", "create", "v0.1.0", "--repo", repo, "--title", "v0.1.0", "--notes", "case a", "--target", "main"])
@@ -187,7 +188,7 @@ def case_a_release_lead_time(repo, workdir):
 
 
 def case_b_median(repo, workdir):
-    print("Caso B — mediana con n>1 (commits backdateados 40h y 20h)")
+    print("Case B — median with n>1 (commits backdated 40h and 20h)")
     merge_pr_with_backdated_commit(repo, workdir, "e2e-case-b-1", "main", hours_ago=40, title="Case B 1")
     merge_pr_with_backdated_commit(repo, workdir, "e2e-case-b-2", "main", hours_ago=20, title="Case B 2")
     time.sleep(7)
@@ -198,20 +199,20 @@ def case_b_median(repo, workdir):
     r = repo_metrics(out, repo)
     check("B.DF == 3 (v0.0.1 + v0.1.0 + v0.2.0)", r["deployment_frequency"] == 3, f"DF={r['deployment_frequency']}")
     titles = {d["title"] for d in r["lead_time_detail"]}
-    # n puede dar 2 o 3: el PR del Caso A a veces se cuela acá por la
-    # condición de carrera de 1-2 segundos entre merge y release ya
-    # documentada en dora_metrics.py (todo el flujo corre en segundos, el
-    # escenario exacto donde ese desfase importa). No es un bug de esta
-    # suite ni del script — se valida contenido, no un conteo exacto.
-    check("B.lead_time_n >= 2 (Case B 1 y 2 presentes)",
+    # n can come out as 2 or 3: Case A's PR sometimes slips in here due to the
+    # 1-2 second race condition between merge and release already documented in
+    # dora_metrics.py (the whole flow runs in seconds, the exact scenario where
+    # that offset matters). It's not a bug in this suite or in the script — we
+    # validate content, not an exact count.
+    check("B.lead_time_n >= 2 (Case B 1 and 2 present)",
           r["lead_time_n"] >= 2 and {"Case B 1", "Case B 2"} <= titles,
           f"n={r['lead_time_n']} titles={titles}")
     lt = r["lead_time_median_hours"] or 0
-    check("B.mediana ~= 30h (mediana de 40 y 20)", 29.5 <= lt <= 30.5, f"mediana={lt}h")
+    check("B.median ~= 30h (median of 40 and 20)", 29.5 <= lt <= 30.5, f"median={lt}h")
 
 
 def case_c_annotated_tag(repo, workdir):
-    print("Caso C — tag anotado (usa su propia fecha, no la del commit)")
+    print("Case C — annotated tag (uses its own date, not the commit's)")
     merge_pr_with_backdated_commit(repo, workdir, "e2e-case-c", "main", hours_ago=15, title="Case C")
     time.sleep(7)
     git(["checkout", "main", "-q"], cwd=workdir)
@@ -221,15 +222,15 @@ def case_c_annotated_tag(repo, workdir):
     out = run_dora(repo, deploy_source="tag")
     r = repo_metrics(out, repo)
     tags = [d["tag"] for d in r["deploys_in_window"]]
-    check("C.v0.3.0 presente en modo tag", "v0.3.0" in tags, f"tags={tags}")
+    check("C.v0.3.0 present in tag mode", "v0.3.0" in tags, f"tags={tags}")
     detail = [d for d in r["lead_time_detail"] if d["deploy_tag"] == "v0.3.0"]
-    check("C.PR de case-c encontrado con lead time ~15h",
+    check("C.case-c PR found with lead time ~15h",
           bool(detail) and 14.5 <= detail[0]["lead_time_hours"] <= 15.5,
           f"detail={detail}")
 
 
 def case_d_lightweight_tag(repo, workdir):
-    print("Caso D — tag liviano (fallback a fecha del commit)")
+    print("Case D — lightweight tag (fallback to the commit's date)")
     git(["checkout", "main", "-q"], cwd=workdir)
     git(["pull", "-q", "origin", "main"], cwd=workdir)
     git(["tag", "v0.4.0"], cwd=workdir)
@@ -237,37 +238,37 @@ def case_d_lightweight_tag(repo, workdir):
     out = run_dora(repo, deploy_source="tag")
     r = repo_metrics(out, repo)
     tags = [d["tag"] for d in r["deploys_in_window"]]
-    check("D.v0.4.0 presente en modo tag (liviano)", "v0.4.0" in tags, f"tags={tags}")
+    check("D.v0.4.0 present in tag mode (lightweight)", "v0.4.0" in tags, f"tags={tags}")
 
 
 def case_e_zero_prs_warning(repo, workdir):
-    print("Caso E — 0 PRs mergeados entre releases consecutivas")
+    print("Case E — 0 merged PRs between consecutive releases")
     gh(["release", "create", "v0.5.0", "--repo", repo, "--title", "v0.5.0", "--notes", "case e r1", "--target", "main"])
     gh(["release", "create", "v0.6.0", "--repo", repo, "--title", "v0.6.0", "--notes", "case e r2", "--target", "main"])
     out = run_dora(repo)
     r = repo_metrics(out, repo)
-    check("E.warning de 0 PRs para v0.6.0",
-          any("v0.6.0" in w and "0 PRs mergeados" in w for w in r["warnings"]),
+    check("E.0-PRs warning for v0.6.0",
+          any("v0.6.0" in w and "0 merged PRs" in w for w in r["warnings"]),
           f"warnings={r['warnings']}")
 
 
 def case_f_window_days(repo, workdir):
-    print("Caso F — --window-days filtra por ventana (tag anotado backdateado 20 días)")
+    print("Case F — --window-days filters by window (annotated tag backdated 20 days)")
     git(["checkout", "main", "-q"], cwd=workdir)
     git(["pull", "-q", "origin", "main"], cwd=workdir)
     env = backdated_env(hours_ago=20 * 24)
-    git(["tag", "-a", "v0.7.0", "-m", "case f, 20 dias atras"], cwd=workdir, env=env)
+    git(["tag", "-a", "v0.7.0", "-m", "case f, 20 days ago"], cwd=workdir, env=env)
     git(["push", "-q", "origin", "v0.7.0"], cwd=workdir)
     out_14 = run_dora(repo, deploy_source="tag", window_days=14)
     out_60 = run_dora(repo, deploy_source="tag", window_days=60)
     tags_14 = [d["tag"] for d in repo_metrics(out_14, repo)["deploys_in_window"]]
     tags_60 = [d["tag"] for d in repo_metrics(out_60, repo)["deploys_in_window"]]
-    check("F.v0.7.0 excluido con ventana de 14d", "v0.7.0" not in tags_14, f"tags_14={tags_14}")
-    check("F.v0.7.0 incluido con ventana de 60d", "v0.7.0" in tags_60, f"tags_60={tags_60}")
+    check("F.v0.7.0 excluded with a 14d window", "v0.7.0" not in tags_14, f"tags_14={tags_14}")
+    check("F.v0.7.0 included with a 60d window", "v0.7.0" in tags_60, f"tags_60={tags_60}")
 
 
 def case_g_branch_override(repo, workdir):
-    print("Caso G — --branch aisla la búsqueda de PRs por base branch")
+    print("Case G — --branch isolates the PR search by base branch")
     git(["checkout", "main", "-q"], cwd=workdir)
     git(["pull", "-q", "origin", "main"], cwd=workdir)
     git(["checkout", "-b", "staging", "-q"], cwd=workdir)
@@ -281,29 +282,29 @@ def case_g_branch_override(repo, workdir):
     out_staging = run_dora(repo, extra_args=["--branch", "staging"])
     r_staging = repo_metrics(out_staging, repo)
     detail = [d for d in r_staging["lead_time_detail"] if d["deploy_tag"] == "v0.8.0"]
-    check("G.--branch staging encuentra el PR de case-g",
+    check("G.--branch staging finds the case-g PR",
           bool(detail) and 9.5 <= detail[0]["lead_time_hours"] <= 10.5,
           f"detail={detail}")
 
-    out_main = run_dora(repo)  # default: prod_branch=main, no debe ver el PR de staging
+    out_main = run_dora(repo)  # default: prod_branch=main, must not see the staging PR
     r_main = repo_metrics(out_main, repo)
-    check("G.default (branch=main) NO mezcla el PR mergeado a staging",
-          any("v0.8.0" in w and "0 PRs mergeados" in w for w in r_main["warnings"]),
+    check("G.default (branch=main) does NOT mix in the PR merged to staging",
+          any("v0.8.0" in w and "0 merged PRs" in w for w in r_main["warnings"]),
           f"warnings={r_main['warnings']}")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--repo", required=True,
-                     help="Repo descartable propio (org/repo). Obligatorio — nunca apuntes a un repo real.")
-    ap.add_argument("--yes", action="store_true", help="Salta la confirmación interactiva antes de borrar el repo.")
+                     help="Your own throwaway repo (org/repo). Required — never point at a real repo.")
+    ap.add_argument("--yes", action="store_true", help="Skips the interactive confirmation before deleting the repo.")
     args = ap.parse_args()
 
-    print(f"Este script va a BORRAR releases, tags y branches (!= main) de {args.repo}, y forzar un push a main.")
+    print(f"This script will DELETE releases, tags and branches (!= main) of {args.repo}, and force-push to main.")
     if not args.yes:
-        confirm = input("Confirmás? escribí el nombre del repo para continuar: ")
+        confirm = input("Confirm? type the repo name to continue: ")
         if confirm.strip() != args.repo:
-            print("Cancelado.")
+            print("Cancelled.")
             sys.exit(1)
 
     with tempfile.TemporaryDirectory() as workdir:
@@ -322,7 +323,7 @@ def main():
     print(f"=== {passed}/{total} checks OK ===")
     for name, ok in RESULTS:
         if not ok:
-            print(f"  FALLÓ: {name}")
+            print(f"  FAILED: {name}")
     sys.exit(0 if passed == total else 1)
 
 

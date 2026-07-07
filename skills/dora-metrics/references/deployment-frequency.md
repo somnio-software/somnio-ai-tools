@@ -1,47 +1,47 @@
 # Spec — Deployment Frequency
 
-> Estado: **cerrado** (ejemplo ilustrativo: Example Project).
-> Contrato de medición para la skill de obtención.
+> Status: **closed** (illustrative example: Example Project).
+> Measurement contract for the fetching skill.
 
-## Atributo
-Con qué frecuencia un proyecto deploya a producción.
+## Attribute
+How often a project deploys to production.
 
-## Marcador de deploy a prod (Paso 2)
-**GitHub Release sobre tag con formato semver `vX.Y.Z`**, creado en la rama de
-producción de cada repo (`main`). El timestamp del Release = momento del deploy.
-Convención única entre los tres tipos de proyecto (mobile/web/backend).
+## Prod deploy marker (Step 2)
+**GitHub Release on a tag with semver format `vX.Y.Z`**, created on each repo's
+production branch (`main`). The Release timestamp = the moment of the deploy.
+A single convention across the three project types (mobile/web/backend).
 
-## Definición operativa
-Cantidad de **tags de prod** (`vX.Y.Z` sobre `main`) por proyecto, dentro de una
-ventana de 14 días.
+## Operational definition
+Number of **prod tags** (`vX.Y.Z` on `main`) per project, within a 14-day
+window.
 
-## Fuente
-GitHub — tags / Releases de los repos del proyecto (ver `../config/proyectos.json`).
+## Source
+GitHub — tags / Releases of the project's repos (see `../config/proyectos.json`).
 
-## Nivel de agregación
-Por proyecto. **En multi-repo, conteo independiente por repo** (no se requiere
-tag simultáneo en todos los repos del proyecto): cada repo deploya de forma
-desacoplada, y la métrica del proyecto es la suma/serie de tags de prod de
-*cualquiera* de sus repos. Decisión validada con un caso real multi-repo (ej. Example Project: frontend y backend
-deployan en momentos distintos) — aplica como convención general salvo que un
-proyecto puntual justifique otra cosa.
+## Aggregation level
+Per project. **In multi-repo, independent count per repo** (a simultaneous tag
+in all of the project's repos is not required): each repo deploys in a decoupled
+way, and the project's metric is the sum/series of prod tags from *any* of its
+repos. A decision validated with a real multi-repo case (e.g. Example Project:
+frontend and backend deploy at different times) — it applies as the general
+convention unless a specific project justifies otherwise.
 
-## Ventana
-14 días (cadencia quincenal).
+## Window
+14 days (biweekly cadence).
 
-## Cálculo
-`deployment_frequency = count(tags_prod en la ventana)` por proyecto (sumando
-tags de todos los repos del proyecto).
+## Calculation
+`deployment_frequency = count(prod_tags in the window)` per project (summing
+tags from all of the project's repos).
 
-## Reporte
-**Conteo absoluto por ventana de 14 días** (no normalizado). Como la ventana es
-fija, un conteo absoluto y una tasa semanal son equivalentes (dividir por 2 es
-un paso de interpretación, no de obtención) — se deja el número crudo y que la
-lectura de tendencia sea un paso posterior, fuera de esta skill.
-*(Propuesta por default; avisame si preferís que la skill ya entregue
-deploys/semana.)*
+## Reporting
+**Absolute count per 14-day window** (not normalized). Since the window is
+fixed, an absolute count and a weekly rate are equivalent (dividing by 2 is an
+interpretation step, not a fetching step) — the raw number is left as is, and
+reading the trend is a later step, outside this skill.
+*(Proposed as the default; let me know if you'd prefer the skill to deliver
+deploys/week directly.)*
 
-## Ejemplo resuelto — Example Project
+## Worked example — Example Project
 - Repos: `example-org/example-frontend`, `example-partner-org/example-backend`.
-- Rama prod: `main` en ambos.
-- Conteo: independiente por repo.
+- Prod branch: `main` in both.
+- Count: independent per repo.

@@ -1,85 +1,87 @@
 # dora-metrics
 
-Skill + script de **obtención** (no interpretación) de dos métricas DORA por
-proyecto y por repo: **Deployment Frequency** y **Lead Time for Changes**.
-Todo el dato sale de la API de GitHub — nunca de un clon local de git. El
-contrato completo (qué mide, qué NO hace, el rationale de cada decisión) está
-en `SKILL.md`; este README es la puerta de entrada para un humano que abre la
-carpeta.
+Skill + script that **fetches** (does not interpret) two DORA metrics per
+project and per repo: **Deployment Frequency** and **Lead Time for Changes**.
+All data comes from the GitHub API — never a local git clone. The full contract
+(what it measures, what it does NOT do, the rationale behind each decision) is
+in `SKILL.md`; this README is the entry point for a human opening the folder.
 
-Carpeta 100% autocontenida: no depende de nada fuera de `dora-metrics/` salvo
-`gh` (GitHub CLI) y Python 3 con `requests`.
+Fully self-contained folder: it depends on nothing outside `dora-metrics/`
+except `gh` (GitHub CLI) and Python 3 with `requests`.
 
-## Qué hace y qué no
+## What it does and doesn't do
 
-- Calcula Deployment Frequency (conteo de deploys en una ventana) y Lead Time
-  for Changes (mediana, primer commit del PR → deploy), por repo.
-- **No interpreta ni rankea.** No clasifica en tiers, no compara proyectos ni
-  personas. Eso es un paso posterior y deliberadamente separado — en cuanto una métrica se usa para evaluar personas, deja de ser una buena métrica (Ley de Goodhart).
-- Definiciones formales de cada métrica: `references/deployment-frequency.md` y
+- Computes Deployment Frequency (count of deploys in a window) and Lead Time
+  for Changes (median, PR's first commit → deploy), per repo.
+- **Does not interpret or rank.** It does not classify into tiers, does not
+  compare projects or people. That is a separate, deliberately later step — the
+  moment a metric is used to evaluate people, it stops being a good metric
+  (Goodhart's Law).
+- Formal definitions of each metric: `references/deployment-frequency.md` and
   `references/lead-time-for-changes.md`.
 
-## Cómo correrlo
+## How to run it
 
-### Opción A — pidiéndoselo a la skill (Claude Code)
+### Option A — asking the skill (Claude Code)
 
-Cualquier frase natural la dispara: "corré las métricas DORA de Example Project",
-"deployment frequency de X", "reporte quincenal de métricas". Ver `SKILL.md`
-para el detalle del flujo (tabla de confirmación, auth, reporte).
+Any natural phrase triggers it: "run the DORA metrics for Example Project",
+"deployment frequency for X", "biweekly metrics report". See `SKILL.md`
+for the details of the flow (confirmation table, auth, reporting).
 
-### Opción B — a mano
+### Option B — by hand
 
 ```bash
-pip install requests --break-system-packages   # si hace falta
+pip install requests --break-system-packages   # if needed
 
-export GITHUB_TOKEN=ghp_xxxx    # o simplemente tené `gh auth login` hecho
+export GITHUB_TOKEN=ghp_xxxx    # or just have `gh auth login` done
 
 python3 scripts/dora_metrics.py --proyecto "Example Project" --out-dir outputs
 ```
 
-Auth: el script busca `GITHUB_TOKEN` en el entorno, y si no está, prueba
-`gh auth token` (si tenés la GitHub CLI logueada, no hace falta generar ni
-pegar nada). El token necesita acceso de lectura a **todas** las orgs de los
-repos del proyecto — un proyecto multi-repo, por ejemplo, puede tener repos en `example-org` y `example-partner-org`.
+Auth: the script looks for `GITHUB_TOKEN` in the environment, and if it's not
+there, tries `gh auth token` (if you have the GitHub CLI logged in, there's
+nothing to generate or paste). The token needs read access to **all** the orgs
+of the project's repos — a multi-repo project, for example, can have repos in
+`example-org` and `example-partner-org`.
 
 ### Flags
 
-| Flag | Default | Qué hace |
+| Flag | Default | What it does |
 |---|---|---|
-| `--config` | `config/proyectos.json` | Path al config a usar. |
-| `--proyecto` | todos los del config | Nombre exacto del proyecto a correr. |
-| `--out-dir` | no guarda | Si se pasa, además de stdout guarda `YYYY-MM-DD_dora.json` ahí. |
-| `--branch <rama>` | — | Override puntual de `prod_branch` para esta corrida (requiere `--proyecto`). No toca el config. |
-| `--deploy-source {release,tag}` | — | Override puntual de `deploy_source` (requiere `--proyecto`). No toca el config. |
-| `--window-days N` | — | Override puntual de la ventana en días. No toca el config. |
+| `--config` | `config/proyectos.json` | Path to the config to use. |
+| `--proyecto` | all in the config | Exact name of the project to run. |
+| `--out-dir` | doesn't save | If passed, in addition to stdout it saves `YYYY-MM-DD_dora.json` there. |
+| `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--proyecto`). Doesn't touch the config. |
+| `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--proyecto`). Doesn't touch the config. |
+| `--window-days N` | — | One-off override of the window in days. Doesn't touch the config. |
 
-Los overrides (`--branch`, `--deploy-source`, `--window-days`) son para
-pruebas puntuales — la corrida real de cada quincena usa lo que dice el
-config, sin flags extra.
+The overrides (`--branch`, `--deploy-source`, `--window-days`) are for one-off
+tests — the real biweekly run uses whatever the config says, with no extra
+flags.
 
-## Cómo agregar un proyecto nuevo
+## How to add a new project
 
-**La forma recomendada es pedírselo directo a la skill** ("agregá el proyecto
-X, tiene estos repos...") — va a preguntar los datos que falten y editar
-`config/proyectos.json` por vos, mostrando el resultado antes de guardar.
+**The recommended way is to ask the skill directly** ("add project X, it has
+these repos...") — it will ask for any missing details and edit
+`config/proyectos.json` for you, showing the result before saving.
 
-Si preferís editarlo a mano, para cada proyecto necesitás resolver:
+If you prefer to edit it by hand, for each project you need to resolve:
 
-- **¿Mono-repo o multi-repo?** Listar todos los repos de GitHub que lo
-  componen.
-- **¿Qué rama es "producción"** en cada repo? (no asumas `main` — confirmalo).
-- **En multi-repo, ¿los repos deployan acoplados o independientes?** Si un
-  deploy del proyecto no implica tag en todos los repos a la vez (caso más
-  común), cada repo se cuenta y reporta por separado, nunca
-  combinado. Esto ya es el comportamiento default de la skill, no hace falta
-  configurar nada extra para esto.
-- **¿El repo usa GitHub Releases, o solo tags planos?** Ver "Configuración"
-  abajo (`deploy_source`).
+- **Mono-repo or multi-repo?** List all the GitHub repos that make it up.
+- **Which branch is "production"** in each repo? (don't assume `main` — confirm
+  it).
+- **In multi-repo, do the repos deploy coupled or independently?** If a deploy
+  of the project does not imply a tag in all repos at once (the more common
+  case), each repo is counted and reported separately, never combined. This is
+  already the skill's default behavior; nothing extra needs to be configured
+  for it.
+- **Does the repo use GitHub Releases, or only plain tags?** See "Configuration"
+  below (`deploy_source`).
 
-## Configuración
+## Configuration
 
-Todo vive en `config/proyectos.json`. Dos niveles: global (aplica a todos los
-proyectos salvo que un repo lo pise) y por repo.
+Everything lives in `config/proyectos.json`. Two levels: global (applies to all
+projects unless a repo overrides it) and per repo.
 
 ```json
 {
@@ -88,7 +90,7 @@ proyectos salvo que un repo lo pise) y por repo.
   "proyectos": [
     {
       "nombre": "Example Project",
-      "notas": "Texto libre opcional: lo no obvio de este proyecto puntual.",
+      "notas": "Optional free text: the non-obvious details of this specific project.",
       "repos": [
         {
           "repo": "example-org/example-frontend",
@@ -103,30 +105,30 @@ proyectos salvo que un repo lo pise) y por repo.
 }
 ```
 
-| Campo | Nivel | Default si se omite | Qué es |
+| Field | Level | Default if omitted | What it is |
 |---|---|---|---|
-| `tag_pattern` | global | — (obligatorio) | Regex que debe matchear el tag para contar como deploy. |
-| `window_days` | global | — (obligatorio) | Ventana de medición en días. |
-| `proyectos[].nombre` | proyecto | — (obligatorio) | Nombre por el que se busca el proyecto (case-insensitive). |
-| `proyectos[].notas` | proyecto | ninguna | Texto libre: rationale o aclaraciones específicas de ese proyecto (no metodología general — esa vive acá, en el README). |
-| `repos[].repo` | repo | — (obligatorio) | `org/repo` de GitHub. |
-| `repos[].tipo` | repo | `[]` | Lista informativa (web/mobile/backend), solo se usa para mostrar en el output. |
-| `repos[].prod_branch` | repo | — (obligatorio) | Rama de producción de ese repo. |
-| `repos[].deploy_source` | repo | `"release"` | `"release"` = GitHub Release con tag semver. `"tag"` = tag plano sin Release (git tag anotado o liviano), para proyectos que taguean pero no publican Releases. |
-| `repos[].tag_pattern` | repo | el `tag_pattern` global | Override si ese repo puntual usa un formato de tag distinto (ej. con build number). |
+| `tag_pattern` | global | — (required) | Regex the tag must match to count as a deploy. |
+| `window_days` | global | — (required) | Measurement window in days. |
+| `proyectos[].nombre` | project | — (required) | Name the project is looked up by (case-insensitive). |
+| `proyectos[].notas` | project | none | Free text: rationale or clarifications specific to that project (not general methodology — that lives here, in the README). |
+| `repos[].repo` | repo | — (required) | GitHub `org/repo`. |
+| `repos[].tipo` | repo | `[]` | Informational list (web/mobile/backend), only used for display in the output. |
+| `repos[].prod_branch` | repo | — (required) | Production branch of that repo. |
+| `repos[].deploy_source` | repo | `"release"` | `"release"` = GitHub Release with a semver tag. `"tag"` = plain tag with no Release (annotated or lightweight git tag), for projects that tag but don't publish Releases. |
+| `repos[].tag_pattern` | repo | the global `tag_pattern` | Override if that specific repo uses a different tag format (e.g. with a build number). |
 
-## Ejemplo de output
+## Output example
 
-Resumen humano (stdout):
+Human-readable summary (stdout):
 
 ```
 === Example Project ===
   [example-org/example-frontend] (web, mobile) [deploy_source: release]
-    Deployment Frequency (ventana 14d): 2
-    Lead Time mediana: 4.3h  (n=3)
+    Deployment Frequency (window 14d): 2
+    Median Lead Time: 4.3h  (n=3)
 ```
 
-JSON portable (si se usa `--out-dir`), un repo dentro de `proyectos[].repos[]`:
+Portable JSON (if `--out-dir` is used), one repo inside `proyectos[].repos[]`:
 
 ```json
 {
@@ -150,50 +152,51 @@ JSON portable (si se usa `--out-dir`), un repo dentro de `proyectos[].repos[]`:
 
 ## Testing
 
-Dos niveles, con propósitos distintos:
+Two levels, with distinct purposes:
 
-### Unit tests — lógica del script, sin red
+### Unit tests — script logic, no network
 
 ```bash
 python3 -m unittest discover -s tests -p "test_*.py" -v
 ```
 
-Mockean `requests.Session`, corren en segundos. Cubren el cálculo de DF/LT,
-la mediana, la exclusión del primer deploy, los warnings, y las validaciones
-de config/CLI. Correr esto siempre que se toque `scripts/dora_metrics.py`.
+They mock `requests.Session` and run in seconds. They cover the DF/LT
+calculation, the median, the exclusion of the first deploy, the warnings, and
+the config/CLI validations. Run these whenever `scripts/dora_metrics.py` is
+touched.
 
-### E2E — contra un repo real de GitHub
+### E2E — against a real GitHub repo
 
 ```bash
-python3 tests/e2e/run_e2e.py --repo tu-usuario/algun-repo-descartable
+python3 tests/e2e/run_e2e.py --repo your-user/some-throwaway-repo
 ```
 
-Valida el pipeline completo (crear rama, PR, merge, release/tag, correr el
-script, verificar el resultado) contra un repo real. **Requiere un repo
-descartable propio** (el `--repo` es un parámetro obligatorio, no tiene default) y `gh` autenticado con permisos sobre ese repo. Resetea el
-repo a un estado limpio al arrancar, así es repetible. Tarda ~1 minuto (usa
-fechas de commit falseadas para simular lead times realistas sin esperar
-minutos reales — solo espera unos segundos donde hace falta evitar una
-condición de carrera puntual entre el merge y el tag, documentada en
-`scripts/dora_metrics.py`).
+Validates the full pipeline (create branch, PR, merge, release/tag, run the
+script, verify the result) against a real repo. **Requires a throwaway repo of
+your own** (`--repo` is a required parameter, it has no default) and `gh`
+authenticated with permissions on that repo. It resets the repo to a clean
+state on startup, so it's repeatable. It takes ~1 minute (it uses backdated
+commit dates to simulate realistic lead times without waiting real minutes — it
+only waits a few seconds where needed to avoid a specific race condition
+between the merge and the tag, documented in `scripts/dora_metrics.py`).
 
-No corre en CI ni se dispara solo — es una herramienta para quien mantiene
-el script, no parte del uso normal de la skill.
+It does not run in CI nor trigger on its own — it's a tool for whoever
+maintains the script, not part of the normal use of the skill.
 
-## Limitaciones conocidas
+## Known limitations
 
-Ver la sección correspondiente en `SKILL.md` y el docstring de
-`scripts/dora_metrics.py` (ahí está el detalle técnico de cada una).
+See the corresponding section in `SKILL.md` and the docstring of
+`scripts/dora_metrics.py` (the technical detail of each is there).
 
-## Estructura
+## Structure
 
 ```
 dora-metrics/
-├── README.md              # este archivo
-├── SKILL.md                # instrucciones para Claude (fuente de verdad del workflow)
-├── config/proyectos.json   # mapeo proyecto -> repos, única fuente de verdad
-├── references/              # contrato formal de cada métrica
-├── scripts/dora_metrics.py # el script de obtención
+├── README.md              # this file
+├── SKILL.md                # instructions for Claude (source of truth for the workflow)
+├── config/proyectos.json   # project -> repos mapping, single source of truth
+├── references/              # formal contract of each metric
+├── scripts/dora_metrics.py # the fetching script
 ├── tests/                   # unit tests + e2e
-└── evals/                   # evals de la skill (¿dispara y conversa bien?, no valida el cálculo)
+└── evals/                   # skill evals (does it trigger and converse well?, does not validate the calculation)
 ```

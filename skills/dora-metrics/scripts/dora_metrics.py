@@ -1,43 +1,42 @@
 #!/usr/bin/env python3
 """
-Skill de obtención — DORA (Deployment Frequency + Lead Time for Changes)
+Fetching skill — DORA (Deployment Frequency + Lead Time for Changes)
 
-Fuente: API de GitHub (REST + Search), NO git local — el lead time depende
-del primer commit real de cada PR, algo que solo la API de GitHub garantiza
-de forma confiable independientemente de la estrategia de merge (incluido
-squash).
+Source: GitHub API (REST + Search), NOT local git — lead time depends on the
+real first commit of each PR, something only the GitHub API guarantees
+reliably regardless of the merge strategy (including squash).
 
-Contrato: SOLO obtiene y agrega. No interpreta ni rankea — eso es un paso
-posterior, fuera del alcance de esta skill.
+Contract: it ONLY fetches and aggregates. It does not interpret or rank — that
+is a later step, outside the scope of this skill.
 
-Uso:
-    export GITHUB_TOKEN=ghp_xxx   # o token con scope 'repo' (read) para los repos del org
+Usage:
+    export GITHUB_TOKEN=ghp_xxx   # or a token with 'repo' (read) scope for the org's repos
     python3 dora_metrics.py [--config config/proyectos.json] [--proyecto "Example Project"] [--out-dir outputs]
-        [--branch rama] [--deploy-source release|tag] [--window-days N]
+        [--branch branch] [--deploy-source release|tag] [--window-days N]
 
-Marcador de deploy configurable por repo (campo "deploy_source" en el config,
-default "release"): "release" usa GitHub Releases (tag_name matchea
-tag_pattern); "tag" usa git tags planos (sin pasar por Releases) resolviendo
-la fecha vía el commit al que apuntan, para proyectos que taguean pero no
-publican Releases.
+Deploy marker configurable per repo (the "deploy_source" field in the config,
+default "release"): "release" uses GitHub Releases (tag_name matches
+tag_pattern); "tag" uses plain git tags (without going through Releases),
+resolving the date via the commit they point to, for projects that tag but
+don't publish Releases.
 
-Limitación conocida (deploy_source=tag o release con tag liviano apuntando
-al merge commit): el timestamp de ese commit puede diferir en 1-2 segundos
-del `merged_at` que GitHub termina de persistir en el PR. Verificado
-empíricamente en pruebas E2E (ver tests/e2e/) que esto puede fallar en ambas
-direcciones:
-- Excluir un PR que en realidad sí se mergeó dentro de la ventana (el PR
-  queda justo afuera del límite superior).
-- Atribuir un PR al intervalo de deploy SIGUIENTE en vez del que realmente
-  lo incluyó (si el PR se mergeó 1-2 segundos después del deploy anterior).
-Con ventanas reales (días/semanas entre deploys) este desfase de segundos
-nunca alcanza a importar; solo se reprodujo en pruebas donde el flujo
-completo (tag/release → merge → siguiente tag/release) se comprimió en
-minutos. No se agrega un margen artificial para este caso — el costo de
-acertar el margen "correcto" no se justifica para un escenario que en
-producción solo ocurriría con un pipeline de CI que auto-taggea al mergear.
+Known limitation (deploy_source=tag, or release with a lightweight tag pointing
+at the merge commit): the timestamp of that commit can differ by 1-2 seconds
+from the `merged_at` that GitHub ends up persisting on the PR. Verified
+empirically in E2E tests (see tests/e2e/) that this can fail in both
+directions:
+- Excluding a PR that was in fact merged within the window (the PR lands just
+  outside the upper bound).
+- Attributing a PR to the NEXT deploy interval instead of the one that actually
+  included it (if the PR was merged 1-2 seconds after the previous deploy).
+With real windows (days/weeks between deploys) this few-second offset never
+gets close to mattering; it only reproduced in tests where the full flow
+(tag/release → merge → next tag/release) was compressed into minutes. No
+artificial margin is added for this case — the cost of guessing the "right"
+margin isn't justified for a scenario that in production would only happen with
+a CI pipeline that auto-tags on merge.
 
-Requiere: requests  (pip install requests --break-system-packages)
+Requires: requests  (pip install requests --break-system-packages)
 """
 
 import argparse
@@ -56,10 +55,10 @@ API_ROOT = "https://api.github.com"
 
 
 def get_github_token():
-    """Orden de precedencia: 1) GITHUB_TOKEN env var, 2) `gh auth token`
-    (si la CLI de GitHub está instalada y logueada localmente). Así cualquiera
-    del equipo que ya use `gh` a diario puede correr esta skill sin generar ni
-    pegar un token nuevo en ningún lado."""
+    """Precedence order: 1) GITHUB_TOKEN env var, 2) `gh auth token`
+    (if the GitHub CLI is installed and logged in locally). This way anyone on
+    the team who already uses `gh` day to day can run this skill without
+    generating or pasting a new token anywhere."""
     env_token = os.environ.get("GITHUB_TOKEN")
     if env_token:
         return env_token
@@ -89,7 +88,7 @@ def gh_session(token: str) -> requests.Session:
 
 
 def gh_paginate(session: requests.Session, url: str, params: dict = None):
-    """GET con paginación via Link header. Yields items de cada página."""
+    """GET with pagination via the Link header. Yields items from each page."""
     params = dict(params or {})
     params.setdefault("per_page", 100)
     next_url = url
@@ -98,15 +97,15 @@ def gh_paginate(session: requests.Session, url: str, params: dict = None):
         resp = session.get(next_url, params=next_params)
         if resp.status_code == 401:
             raise GitHubError(
-                "401 Unauthorized. Revisá que GITHUB_TOKEN sea válido y tenga "
-                "acceso a TODAS las orgs de los repos del proyecto (si es multi-org)."
+                "401 Unauthorized. Check that GITHUB_TOKEN is valid and has "
+                "access to ALL the orgs of the project's repos (if multi-org)."
             )
         if resp.status_code == 403 and "rate limit" in resp.text.lower():
-            raise GitHubError(f"Rate limit alcanzado: {resp.text[:300]}")
+            raise GitHubError(f"Rate limit reached: {resp.text[:300]}")
         if resp.status_code == 404:
-            raise GitHubError(f"404 Not Found en {next_url} — ¿el repo existe y el token tiene acceso?")
+            raise GitHubError(f"404 Not Found at {next_url} — does the repo exist and does the token have access?")
         if not resp.ok:
-            raise GitHubError(f"GitHub API error {resp.status_code} en {next_url}: {resp.text[:300]}")
+            raise GitHubError(f"GitHub API error {resp.status_code} at {next_url}: {resp.text[:300]}")
         data = resp.json()
         items = data.get("items", data) if isinstance(data, dict) else data
         for item in items:
@@ -126,7 +125,7 @@ def fmt_ts(dt: datetime) -> str:
 
 
 def get_prod_releases(session: requests.Session, repo: str, tag_pattern: str):
-    """Releases publicados (no draft) cuyo tag matchea tag_pattern, orden ascendente."""
+    """Published Releases (not draft) whose tag matches tag_pattern, ascending order."""
     pattern = re.compile(tag_pattern)
     releases = []
     for r in gh_paginate(session, f"{API_ROOT}/repos/{repo}/releases"):
@@ -144,14 +143,14 @@ def get_prod_releases(session: requests.Session, repo: str, tag_pattern: str):
 
 
 def get_prod_tags(session: requests.Session, repo: str, tag_pattern: str):
-    """Tags (sin Release) cuyo nombre matchea tag_pattern, orden ascendente.
+    """Tags (without a Release) whose name matches tag_pattern, ascending order.
 
-    Distingue tag anotado de liviano vía Git Data API: un tag anotado tiene
-    su propio objeto con fecha de "tageo" (tagger.date) — la señal más
-    cercana a "cuándo se marcó esto como deploy", que puede ser bastante
-    posterior a cuando se escribió el código. Usar directamente la fecha del
-    commit subyacente (como hacíamos antes) perdía esa distinción. Un tag
-    liviano no tiene objeto propio, así que cae a la fecha del commit."""
+    Distinguishes an annotated tag from a lightweight one via the Git Data API:
+    an annotated tag has its own object with a "tagging" date (tagger.date) —
+    the signal closest to "when this was marked as a deploy", which can be quite
+    a bit later than when the code was written. Using the underlying commit's
+    date directly (as we did before) lost that distinction. A lightweight tag
+    has no object of its own, so it falls back to the commit's date."""
     pattern = re.compile(tag_pattern)
     tag_names = [t.get("name", "") for t in gh_paginate(session, f"{API_ROOT}/repos/{repo}/tags")]
     tags = []
@@ -187,8 +186,8 @@ def get_prod_tags(session: requests.Session, repo: str, tag_pattern: str):
 
 
 def get_pr_first_commit_ts(session: requests.Session, repo: str, pr_number: int):
-    """Timestamp del primer commit del PR (vía objeto PR, no via git log de main —
-    esto sigue siendo correcto aunque el merge a main haya sido squash)."""
+    """Timestamp of the PR's first commit (via the PR object, not the git log of
+    main — this stays correct even if the merge to main was a squash)."""
     commits = list(gh_paginate(session, f"{API_ROOT}/repos/{repo}/pulls/{pr_number}/commits"))
     if not commits:
         return None
@@ -206,8 +205,8 @@ def get_pr_first_commit_ts(session: requests.Session, repo: str, pr_number: int)
 
 
 def get_merged_prs_between(session: requests.Session, repo: str, branch: str, start: datetime, end: datetime):
-    """PRs mergeados a `branch` en (start, end], vía Search API (search/issues),
-    independiente de la estrategia de merge (squash/merge commit/rebase)."""
+    """PRs merged to `branch` in (start, end], via the Search API (search/issues),
+    regardless of the merge strategy (squash/merge commit/rebase)."""
     start_s = fmt_ts(start)
     end_s = fmt_ts(end)
     q = f"repo:{repo} is:pr is:merged base:{branch} merged:{start_s}..{end_s}"
@@ -235,9 +234,9 @@ def compute_repo_metrics(session: requests.Session, repo: str, branch: str,
     deploys_in_window = [d for d in all_deploys if window_start <= d["published_at"] <= now]
     tag_to_idx = {d["tag"]: i for i, d in enumerate(all_deploys)}
 
-    # DF se queda como conteo entero (0 incluido): "0 deploys en la ventana"
-    # es un valor real y medible, no un "no aplica" (mismo criterio que usa
-    # minister:dora-metrics para su propia deployment_frequency).
+    # DF stays an integer count (0 included): "0 deploys in the window" is a
+    # real, measurable value, not a "not applicable" (same criterion that
+    # minister:dora-metrics uses for its own deployment_frequency).
     deployment_frequency = len(deploys_in_window)
 
     lead_times_hours = []
@@ -246,19 +245,19 @@ def compute_repo_metrics(session: requests.Session, repo: str, branch: str,
         idx = tag_to_idx[dep["tag"]]
         if idx == 0:
             warnings.append(
-                f"{marker_label} {dep['tag']} no tiene {marker_label.lower()} anterior conocido — "
-                "no se puede acotar la población de PRs, se excluye del Lead Time."
+                f"{marker_label} {dep['tag']} has no known prior {marker_label.lower()} — "
+                "the PR population can't be bounded, it's excluded from the Lead Time."
             )
             continue
         prev_dep = all_deploys[idx - 1]
         prs = get_merged_prs_between(session, repo, branch, prev_dep["published_at"], dep["published_at"])
         if not prs:
-            warnings.append(f"{marker_label} {dep['tag']}: 0 PRs mergeados encontrados en el rango — revisar base branch/convención.")
+            warnings.append(f"{marker_label} {dep['tag']}: 0 merged PRs found in the range — check the base branch/convention.")
             continue
         for pr in prs:
             first_commit_ts = get_pr_first_commit_ts(session, repo, pr["number"])
             if first_commit_ts is None:
-                warnings.append(f"PR #{pr['number']}: no se pudo obtener el primer commit, se excluye.")
+                warnings.append(f"PR #{pr['number']}: could not fetch the first commit, it's excluded.")
                 continue
             lead_time_h = (dep["published_at"] - first_commit_ts).total_seconds() / 3600
             lead_times_hours.append(lead_time_h)
@@ -271,9 +270,10 @@ def compute_repo_metrics(session: requests.Session, repo: str, branch: str,
                 "lead_time_hours": round(lead_time_h, 1),
             })
 
-    # None (no 0) cuando no hay lead times computables: "sin deploys medibles
-    # en la ventana" no es lo mismo que "lead time de 0 horas" — confundirlos
-    # clasificaría una ventana sin señal como si fuera una entrega instantánea.
+    # None (not 0) when there are no computable lead times: "no measurable
+    # deploys in the window" is not the same as "lead time of 0 hours" —
+    # confusing the two would classify a window with no signal as if it were an
+    # instant delivery.
     lead_time_median_hours = round(statistics.median(lead_times_hours), 1) if lead_times_hours else None
 
     return {
@@ -295,45 +295,45 @@ def _positive_int(value: str) -> int:
     try:
         ivalue = int(value)
     except ValueError as exc:
-        raise argparse.ArgumentTypeError(f"debe ser un entero positivo, recibido {value!r}") from exc
+        raise argparse.ArgumentTypeError(f"must be a positive integer, got {value!r}") from exc
     if ivalue < 1:
-        raise argparse.ArgumentTypeError(f"debe ser >= 1, recibido {ivalue}")
+        raise argparse.ArgumentTypeError(f"must be >= 1, got {ivalue}")
     return ivalue
 
 
 def validate_scoped_overrides(args) -> None:
-    """--branch y --deploy-source son overrides puntuales de UN proyecto;
-    no tiene sentido aplicarlos a todos si no se especifica --proyecto.
-    Separado de main() para poder testear la validación sin invocar el CLI."""
+    """--branch and --deploy-source are one-off overrides of a SINGLE project;
+    it makes no sense to apply them to all if --proyecto isn't specified.
+    Separated from main() so the validation can be tested without invoking the CLI."""
     if args.branch and not args.proyecto:
-        raise ValueError("--branch requiere --proyecto (el override es puntual, no se aplica a todos los proyectos).")
+        raise ValueError("--branch requires --proyecto (the override is one-off, it isn't applied to all projects).")
     if args.deploy_source and not args.proyecto:
-        raise ValueError("--deploy-source requiere --proyecto (el override es puntual, no se aplica a todos los proyectos).")
+        raise ValueError("--deploy-source requires --proyecto (the override is one-off, it isn't applied to all projects).")
 
 
 def validate_deploy_sources(proyectos) -> None:
-    """Valida que deploy_source de cada repo sea uno de los valores soportados.
-    Separado de main() para poder testear la validación sin tocar el config real."""
+    """Validates that each repo's deploy_source is one of the supported values.
+    Separated from main() so the validation can be tested without touching the real config."""
     for proyecto in proyectos:
         for repo_cfg in proyecto["repos"]:
             ds = repo_cfg.get("deploy_source", "release")
             if ds not in VALID_DEPLOY_SOURCES:
                 raise ValueError(
-                    f"deploy_source inválido '{ds}' en repo {repo_cfg['repo']} "
-                    f"(válidos: {', '.join(VALID_DEPLOY_SOURCES)})."
+                    f"invalid deploy_source '{ds}' in repo {repo_cfg['repo']} "
+                    f"(valid: {', '.join(VALID_DEPLOY_SOURCES)})."
                 )
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Obtención DORA (Deployment Frequency + Lead Time) desde GitHub API.")
+    ap = argparse.ArgumentParser(description="DORA fetching (Deployment Frequency + Lead Time) from the GitHub API.")
     ap.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "..", "config", "proyectos.json"))
-    ap.add_argument("--proyecto", default=None, help="Nombre de proyecto a correr (default: todos los del config).")
-    ap.add_argument("--out-dir", default=None, help="Carpeta donde guardar el JSON de output (default: no guarda, solo stdout).")
-    ap.add_argument("--branch", default=None, help="Override puntual de prod_branch para esta corrida (requiere --proyecto). No modifica el config.")
+    ap.add_argument("--proyecto", default=None, help="Project name to run (default: all projects in the config).")
+    ap.add_argument("--out-dir", default=None, help="Folder where the output JSON is saved (default: doesn't save, stdout only).")
+    ap.add_argument("--branch", default=None, help="One-off override of prod_branch for this run (requires --proyecto). Doesn't modify the config.")
     ap.add_argument("--deploy-source", default=None, choices=list(VALID_DEPLOY_SOURCES),
-                     help="Override puntual de deploy_source para esta corrida (requiere --proyecto). No modifica el config.")
+                     help="One-off override of deploy_source for this run (requires --proyecto). Doesn't modify the config.")
     ap.add_argument("--window-days", type=_positive_int, default=None,
-                     help="Override puntual de window_days para esta corrida. No modifica el config.")
+                     help="One-off override of window_days for this run. Doesn't modify the config.")
     args = ap.parse_args()
 
     try:
@@ -345,10 +345,10 @@ def main():
     token = get_github_token()
     if not token:
         print(
-            "ERROR: no encontré credencial de GitHub.\n"
-            "  Opción 1: export GITHUB_TOKEN=ghp_xxxx\n"
-            "  Opción 2: correr `gh auth login` una vez (si tenés la CLI de GitHub "
-            "instalada) — el script la detecta sola, no hace falta exportar nada.",
+            "ERROR: no GitHub credential found.\n"
+            "  Option 1: export GITHUB_TOKEN=ghp_xxxx\n"
+            "  Option 2: run `gh auth login` once (if you have the GitHub CLI "
+            "installed) — the script detects it on its own, nothing to export.",
             file=sys.stderr,
         )
         sys.exit(1)
@@ -362,7 +362,7 @@ def main():
     if args.proyecto:
         proyectos = [p for p in proyectos if p["nombre"].lower() == args.proyecto.lower()]
         if not proyectos:
-            print(f"ERROR: proyecto '{args.proyecto}' no está en {args.config}.", file=sys.stderr)
+            print(f"ERROR: project '{args.proyecto}' is not in {args.config}.", file=sys.stderr)
             sys.exit(1)
         if args.branch:
             for repo_cfg in proyectos[0]["repos"]:
@@ -410,9 +410,9 @@ def main():
         fname = os.path.join(args.out_dir, f"{now.strftime('%Y-%m-%d')}_dora.json")
         with open(fname, "w") as f:
             f.write(output_json)
-        print(f"Output guardado en {fname}\n")
+        print(f"Output saved to {fname}\n")
 
-    # Resumen humano — SOLO obtiene y reporta, no interpreta.
+    # Human-readable summary — it ONLY fetches and reports, does not interpret.
     for p in result["proyectos"]:
         print(f"=== {p['nombre']} ===")
         for r in p["repos"]:
@@ -420,11 +420,11 @@ def main():
                 print(f"  [{r['repo']}] ERROR: {r['error']}")
                 continue
             print(f"  [{r['repo']}] ({', '.join(r.get('tipo', []))}) [deploy_source: {r.get('deploy_source', 'release')}]")
-            print(f"    Deployment Frequency (ventana {window_days}d): {r['deployment_frequency']}")
+            print(f"    Deployment Frequency (window {window_days}d): {r['deployment_frequency']}")
             if r["lead_time_median_hours"] is not None:
-                print(f"    Lead Time mediana: {r['lead_time_median_hours']}h  (n={r['lead_time_n']})")
+                print(f"    Median Lead Time: {r['lead_time_median_hours']}h  (n={r['lead_time_n']})")
             else:
-                print("    Lead Time mediana: sin datos en la ventana")
+                print("    Median Lead Time: no data in the window")
             for w in r["warnings"]:
                 print(f"    ! {w}")
         print()

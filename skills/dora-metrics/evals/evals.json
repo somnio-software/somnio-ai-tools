@@ -3,32 +3,32 @@
   "evals": [
     {
       "id": 1,
-      "prompt": "Corré las métricas DORA de Example Project.",
-      "expected_output": "Muestra la tabla de confirmación (2 filas: example-frontend y example-backend, rama main, ventana 14 días), verifica autenticación, intenta correr el script y reporta el resultado (o el error de auth de forma clara, sin inventar números).",
+      "prompt": "Run the DORA metrics for Example Project.",
+      "expected_output": "Shows the confirmation table (2 rows: example-frontend and example-backend, main branch, 14-day window), verifies authentication, attempts to run the script and reports the result (or the auth error clearly, without inventing numbers).",
       "files": []
     },
     {
       "id": 2,
-      "prompt": "Dame el lead time de Example Project de las últimas 2 semanas.",
-      "expected_output": "Interpreta 'últimas 2 semanas' como la ventana default de 14 días (no pregunta por otra ventana), sigue el mismo flujo (tabla, auth, correr, reportar) enfocado en Lead Time.",
+      "prompt": "Give me the lead time for Example Project over the last 2 weeks.",
+      "expected_output": "Interprets 'last 2 weeks' as the default 14-day window (does not ask for another window), follows the same flow (table, auth, run, report) focused on Lead Time.",
       "files": []
     },
     {
       "id": 3,
-      "prompt": "Corré las métricas DORA del proyecto Delta.",
-      "expected_output": "Delta no está en config/proyectos.json. La skill NO inventa repos ni corre igual — pregunta los datos que faltan (repos, tipo, rama prod) para agregarlo directo al config, en vez de mandar a editar un archivo aparte. No corre nada hasta tener el mapeo.",
+      "prompt": "Run the DORA metrics for the Delta project.",
+      "expected_output": "Delta is not in config/proyectos.json. The skill does NOT invent repos or run anyway — it asks for the missing details (repos, type, prod branch) to add it straight to the config, instead of sending the user to edit a separate file. It does not run anything until it has the mapping.",
       "files": []
     },
     {
       "id": 4,
-      "prompt": "Agregá el proyecto Omega a las métricas DORA, tiene un solo repo: acme/omega-api, rama prod develop.",
-      "expected_output": "Pregunta el tipo de repo (web/mobile/backend) si no se lo dieron, arma la entrada JSON para config/proyectos.json (repo, tipo, prod_branch=develop, sin deploy_source ni tag_pattern si no aplican overrides), la muestra para confirmar antes de guardar, y recién después sigue con el flujo normal (tabla de confirmación, etc.).",
+      "prompt": "Add the Omega project to the DORA metrics, it has a single repo: acme/omega-api, prod branch develop.",
+      "expected_output": "Asks for the repo type (web/mobile/backend) if it wasn't given, builds the JSON entry for config/proyectos.json (repo, tipo, prod_branch=develop, without deploy_source or tag_pattern if no overrides apply), shows it for confirmation before saving, and only then continues with the normal flow (confirmation table, etc.).",
       "files": []
     },
     {
       "id": 5,
-      "prompt": "example-frontend no publica Releases, solo tags planos vX.Y.Z. Corré las métricas igual.",
-      "expected_output": "Usa deploy_source=tag (via override --deploy-source o actualizando el config), no inventa releases inexistentes ni falla silenciosamente.",
+      "prompt": "example-frontend doesn't publish Releases, only plain tags vX.Y.Z. Run the metrics anyway.",
+      "expected_output": "Uses deploy_source=tag (via the --deploy-source override or by updating the config), does not invent non-existent releases nor fail silently.",
       "files": []
     }
   ]
