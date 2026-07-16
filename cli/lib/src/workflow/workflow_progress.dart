@@ -119,11 +119,22 @@ class WorkflowProgress {
   // ── File I/O ───────────────────────────────────────────────────────
 
   /// Loads progress from a JSON file.
+  ///
+  /// Returns null when the file is missing OR unparseable, so callers can
+  /// treat both as "no saved progress" instead of crashing on a bad file.
+  /// TypeError is caught because the JSON casts throw an Error, not an
+  /// Exception, when a field has an unexpected shape.
   static WorkflowProgress? loadFrom(String path) {
     final file = File(path);
     if (!file.existsSync()) return null;
-    final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-    return WorkflowProgress.fromJson(json);
+    try {
+      final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      return WorkflowProgress.fromJson(json);
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
   }
 
   /// Saves progress to a JSON file.

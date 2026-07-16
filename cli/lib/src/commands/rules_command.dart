@@ -28,8 +28,9 @@ class RulesCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding standards (Flutter / Functions / NestJS / React / TypeScript) '
-      'per agent and per stack.';
+      'Install agent coding standards (Django / FastAPI / Flask / Flutter / '
+      'Functions / NestJS / Python / React / TypeScript) per agent and per '
+      'stack.';
 }
 
 // ── Install subcommand ────────────────────────────────────────────────────────
@@ -66,11 +67,6 @@ class _RulesInstallCommand extends Command<int> {
           'Stacks to install (comma-separated). Skip to select interactively.',
       allowed: AgentRuleRegistry.stacks,
     );
-    argParser.addFlag(
-      'force',
-      abbr: 'f',
-      help: 'Overwrite without prompting.',
-    );
   }
 
   final Logger _logger;
@@ -80,7 +76,8 @@ class _RulesInstallCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding rules per stack (flutter / nestjs / react / python / fastapi / django / flask).\n'
+      'Install agent coding rules per stack '
+      '(${AgentRuleRegistry.stacks.join(' / ')}).\n'
       '\n'
       'Examples:\n'
       '  somnio rules install                                  # interactive\n'
@@ -230,6 +227,16 @@ class _RulesInstallCommand extends Command<int> {
     // and skip the prompt — the alternative is a confusing warning loop.
     final anyGlobalCapable = targets.any((t) => t.rule.supportsGlobal);
 
+    // --global against agents that only ever install per project can never
+    // succeed, so reject the combination instead of skipping every target.
+    if (forceGlobal && !anyGlobalCapable) {
+      _logger.err(
+        'None of the selected agents support global install — '
+        'use --project instead.',
+      );
+      return ExitCode.usage.code;
+    }
+
     RulesInstallScope scope;
     if (forceGlobal) {
       scope = RulesInstallScope.global;
@@ -295,7 +302,7 @@ class _RulesInstallCommand extends Command<int> {
       _logger.err('No rules were installed.');
     }
 
-    return ExitCode.success.code;
+    return successCount > 0 ? ExitCode.success.code : ExitCode.software.code;
   }
 
   /// Runs the adapter generation script to produce up-to-date output files.

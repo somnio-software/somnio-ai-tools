@@ -42,6 +42,7 @@ Priority Recommendations:
 - Performance: [XX]/100 ([Label])
 - Documentation & Operations: [XX]/100 ([Label])
 - CI/CD (Configs Found in Repo): [XX]/100 ([Label])
+- AI Harness & Adoption: [XX]/100 ([Label])
 - Overall: [XX]/100 ([Label])
 
 ================================================================================
@@ -301,7 +302,45 @@ Counts & Metrics:
 - Deploy step present: [Yes/No]
 
 ================================================================================
-11. ADDITIONAL METRICS
+11. AI HARNESS & ADOPTION
+================================================================================
+
+Description: [One-sentence description of the state of the harness]
+
+Score: [XX]/100 ([Label])
+Maturity: [sin harness | harness básico | harness sólido | paved path]
+
+Coverage:
+- CLAUDE.md: [Status] - [XX]/14
+- Rules: [Status] - [XX]/10
+- Permissions: [Status] - [XX]/14
+- Hooks: [Status] - [XX]/16
+- Pre-push git hook: [Status] - [XX]/12
+- Agents: [Status] - [XX]/12
+- Commands / Skills: [Status] - [XX]/10
+- Advanced orchestration: [Status] - [XX]/6
+- Lifecycle & versioning: [Status] - [XX]/6
+- Total: [XX]/100
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+
+Evidence:
+- [Real file path or configuration reference, never invented]
+
+Risks:
+- [Risk item 1]
+
+Actions to Raise the Score:
+1. [+N] [Concrete how-to for this repo]. -> dimension D, X/Y -> Y/Y.
+2. [Continue, sorted by points recovered descending]
+
+Counts & Metrics:
+- [Metric name]: [Value]
+
+================================================================================
+12. ADDITIONAL METRICS
 ================================================================================
 
 - Node.js version: [Version]
@@ -319,7 +358,7 @@ Counts & Metrics:
 - Styling approach: [CSS Modules/Styled Components/Tailwind/Other]
 
 ================================================================================
-12. QUALITY INDEX
+13. QUALITY INDEX
 ================================================================================
 
 Section Summary with Scores:
@@ -331,11 +370,12 @@ Section Summary with Scores:
 - Performance: [XX]/100 ([Label])
 - Documentation & Operations: [XX]/100 ([Label])
 - CI/CD: [XX]/100 ([Label])
+- AI Harness & Adoption: [XX]/100 ([Label])
 Overall Score: [XX]/100 ([Label])
 [One-sentence interpretation]
 
 ================================================================================
-13. RISKS & OPPORTUNITIES
+14. RISKS & OPPORTUNITIES
 ================================================================================
 
 - [Risk/Opportunity 1]
@@ -345,7 +385,7 @@ Overall Score: [XX]/100 ([Label])
 - [Risk/Opportunity 5]
 
 ================================================================================
-14. RECOMMENDATIONS
+15. RECOMMENDATIONS
 ================================================================================
 
 1. [Priority Level]: [Recommendation 1]
@@ -356,7 +396,7 @@ Overall Score: [XX]/100 ([Label])
 6. [Priority Level]: [Recommendation 6]
 
 ================================================================================
-15. APPENDIX: EVIDENCE INDEX
+16. APPENDIX: EVIDENCE INDEX
 ================================================================================
 
 File Paths and Configs by Area:
@@ -377,6 +417,9 @@ Stores/State:
 - [File path or config reference]
 
 CI/CD Workflows:
+- [File path or config reference]
+
+AI Harness & Adoption:
 - [File path or config reference]
 
 ================================================================================

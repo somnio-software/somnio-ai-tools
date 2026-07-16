@@ -122,6 +122,7 @@ class CommandHelpers {
 
     logger.info('');
     var totalSkills = 0;
+    var totalFailed = 0;
 
     for (final agentConfig in detectedAgents) {
       final progress = logger.progress(agentConfig.displayName);
@@ -132,27 +133,35 @@ class CommandHelpers {
         agentConfig: agentConfig,
       );
       final result = await installer.install(bundles: content.bundles);
-      final wfCount = installer.installWorkflowSkills(
+      final wf = installer.installWorkflowSkillsDetailed(
         SkillRegistry.workflowSkills,
       );
-      totalSkills += result.skillCount + wfCount;
+      totalSkills += result.skillCount + wf.installed;
+      totalFailed += result.failedCount + wf.failed;
 
       progress.complete(
         '${agentConfig.displayName}  '
-        '${installSummary(result, agentConfig, extraCount: wfCount)}',
+        '${installSummary(result, agentConfig, extraCount: wf.installed)}',
       );
     }
 
     logger.info('');
-    logger.success(
-      'Done! Installed $totalSkills skills '
-      'across ${detectedAgents.length} agents.',
-    );
+    if (totalFailed > 0) {
+      logger.err(
+        'Done with errors: $totalFailed failed, $totalSkills skills '
+        'installed across ${detectedAgents.length} agents.',
+      );
+    } else {
+      logger.success(
+        'Done! Installed $totalSkills skills '
+        'across ${detectedAgents.length} agents.',
+      );
+    }
     logger.info('');
 
     printNextSteps(logger);
 
-    return ExitCode.success.code;
+    return totalFailed > 0 ? ExitCode.software.code : ExitCode.success.code;
   }
 }
 

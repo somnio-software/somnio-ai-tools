@@ -10,12 +10,13 @@ standardized format structure from assets/report-template.md.
 
 Apply the "Flutter Project Health Audit" rule to generate the full
 report with:
-- 8 section scores (0-100 integer): Tech Stack, Architecture, State
+- 9 section scores (0-100 integer): Tech Stack, Architecture, State
   Management, Repositories & Data Layer, Testing, Code Quality,
-  Documentation & Operations, CI/CD
-- Weighted overall score using: Tech Stack 0.20, Architecture 0.20,
-  State Management 0.20, Repositories & Data Layer 0.11, Testing 0.11,
-  Code Quality 0.11, Documentation & Operations 0.035, CI/CD 0.035
+  Documentation & Operations, CI/CD, AI Harness & Adoption
+- Weighted overall score using: Tech Stack 0.18, Architecture 0.18,
+  State Management 0.18, Repositories & Data Layer 0.10, Testing 0.10,
+  Code Quality 0.10, Documentation & Operations 0.03, CI/CD 0.03,
+  AI Harness & Adoption 0.10
 - ROUNDING RULE: Use standard mathematical rounding (0.5 rounds up).
   Do NOT apply subjective adjustments.
 - Important exclusions:
@@ -32,7 +33,7 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (15 sections in exact order):
+MANDATORY REPORT STRUCTURE (16 sections in exact order):
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -43,11 +44,12 @@ MANDATORY REPORT STRUCTURE (15 sections in exact order):
 8. Code Quality (Linter & Warnings)
 9. Documentation & Operations
 10. CI/CD (Configs Found in Repo)
-11. Additional Metrics
-12. Quality Index
-13. Risks & Opportunities
-14. Recommendations
-15. Appendix: Evidence Index
+11. AI Harness & Adoption
+12. Additional Metrics
+13. Quality Index
+14. Risks & Opportunities
+15. Recommendations
+16. Appendix: Evidence Index
 
 Integrate results from all previous analysis steps:
 - Flutter Version Alignment results
@@ -57,6 +59,7 @@ Integrate results from all previous analysis steps:
 - Testing Analysis results
 - Code Quality Analysis results
 - Documentation Analysis results
+- AI Harness & Adoption Analysis results
 
 Verify the Overall Score calculation:
 - Check that the Overall Score uses the correct weighted formula
@@ -81,13 +84,17 @@ Key Findings. MUST also include "Coverage Breakdown:" immediately after
 "Code Coverage:", listing per-component coverage (one line per
 lib/package).
 
-HOW TO EXTRACT: Read the artifact file at
-  reports/.artifacts/flutter_health/step_00_test_coverage.md
+HOW TO EXTRACT: In this run's artifacts directory (the directory
+under reports/.artifacts/ where this audit's step artifacts were
+written), find the single file matching the glob:
+  step_*_test?coverage.md
+(this matches both step_NN_test-coverage.md and
+step_NN_test_coverage.md, whatever the step index). Read that file.
 Copy the "Code Coverage:" and "Coverage Breakdown:" lines VERBATIM
 from that file into Section 7 of the report. Do NOT summarize,
 reformat, or omit any line.
 
-If the artifact file does not exist or is empty, output:
+If no file matches the glob, or the matching file is empty, output:
   Code Coverage: 0% (coverage data unavailable)
   Coverage Breakdown:
     (no coverage data — artifact missing)
@@ -182,9 +189,41 @@ Priority Recommendations:
 - Code Quality (Linter & Warnings): [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
 
-11. Additional Metrics:
+11. AI Harness & Adoption:
+Description: [One-sentence description of the harness analysis].
+Score: [Score]/100 ([Label])
+Maturity: [sin harness | harness básico | harness sólido | paved path]
+Coverage:
+- CLAUDE.md: [Status] — [Points]/14
+- Rules: [Status] — [Points]/10
+- Permissions: [Status] — [Points]/14
+- Hooks: [Status] — [Points]/16
+- Pre-push git hook: [Status] — [Points]/12
+- Agents: [Status] — [Points]/12
+- Commands / Skills: [Status] — [Points]/10
+- Advanced orchestration: [Status] — [Points]/6
+- Lifecycle & versioning: [Status] — [Points]/6
+- Total: [Score]/100
+Key Findings:
+- [Finding 1]
+- [Continue as needed]
+Evidence:
+- [Real file path only, never invented]
+- [Continue as needed]
+Risks:
+- [Risk item 1]
+- [Continue as needed]
+Actions to Raise the Score:
+1. [+N] [Action naming the file/key to add and the how-to] → dimension D, X/Y → Y/Y.
+2. [Continue as needed, sorted by points recovered descending]
+Counts & Metrics:
+- [Metric name]: [Value]
+- [Continue as needed]
+
+12. Additional Metrics:
 - Supported platforms: [Platform list]
 - Number of feature folders: [Count] ([App breakdown if multi-app])
 - Packages count: [Count]
@@ -200,7 +239,7 @@ Priority Recommendations:
 - Spell-check scope: [Scope]
 - Public API docs enforcement: [Status]
 
-12. Quality Index:
+13. Quality Index:
 Section Summary with Scores:
 - Tech Stack: [Score]/100 ([Label])
 - Architecture: [Score]/100 ([Label])
@@ -210,20 +249,21 @@ Section Summary with Scores:
 - Code Quality: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD: [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 Overall Score: [Score]/100 ([Label])
 [One-sentence interpretation]
 
-13. Risks & Opportunities:
+14. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-14. Recommendations:
+15. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-15. Appendix: Evidence Index:
+16. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
@@ -251,7 +291,7 @@ For multi-app repositories:
 
 VALIDATION CHECKLIST:
 Before finalizing the report, verify:
-✓ All 15 sections are present
+✓ All 16 sections are present
 ✓ All sections follow the required format
 ✓ All scores are integers with proper labels
 ✓ All evidence references actual files

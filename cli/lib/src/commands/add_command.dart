@@ -398,6 +398,30 @@ class AddCommand extends Command<int> {
     // Filter registrable bundles
     final registrable = results.where((r) => r.isRegistrable).toList();
 
+    // Two directories classifying to the same bundle type would collapse
+    // onto the same id/name, silently clobbering each other at install.
+    final byType = <String, List<String>>{};
+    for (final r in registrable) {
+      byType.putIfAbsent(r.bundleType, () => []).add(r.subdirectory);
+    }
+    final ambiguous = byType.entries.where((e) => e.value.length > 1);
+    if (ambiguous.isNotEmpty) {
+      for (final e in ambiguous) {
+        _logger.err(
+          'Multiple "${e.key}" bundles found for "$tech": '
+          '${e.value.join(', ')}.',
+        );
+      }
+      _logger.info('');
+      _logger.info(
+        'Each technology supports exactly one health-audit and one '
+        'best-practices bundle. Rename or remove the extra directories '
+        'so only skills/$tech-health-audit/ and '
+        'skills/$tech-best-practices/ remain, then re-run.',
+      );
+      return ExitCode.usage.code;
+    }
+
     if (registrable.isEmpty) {
       _logger.err(
         'No bundles are ready to register. '
@@ -566,6 +590,11 @@ class AddCommand extends Command<int> {
       // Rollback
       File(registryPath).writeAsStringSync(originalContent);
       _logger.info('Restored original registry file.');
+      _logger.info(
+        'Any scaffolded skills/ directories were left in place; '
+        're-running "somnio add <technology>" will pick them up in '
+        'auto-detect mode.',
+      );
       return ExitCode.software.code;
     }
 
@@ -646,8 +675,10 @@ class AddCommand extends Command<int> {
         _claimedSuffixes.add(candidate);
         return candidate;
       }
-      for (var i = 1; i <= 99; i++) {
-        final alt = '${tech[0]}$i';
+      const alphabet = 'abcdefghijklmnopqrstuvwxyz0123456789';
+      for (var i = 0; i < alphabet.length; i++) {
+        final alt = '${tech[0]}${alphabet[i]}';
+        if (alt == candidate) continue; // already tried above
         if (_isShortNameAvailable(alt)) {
           _claimedSuffixes.add(alt);
           return alt;

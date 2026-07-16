@@ -14,9 +14,12 @@ import '../runner/agent_resolver.dart';
 import '../runner/plan_parser.dart';
 import '../runner/preflight.dart';
 import '../runner/project_validator.dart';
+import '../runner/rule_names.dart';
 import '../runner/run_config.dart';
 import '../runner/step_executor.dart';
 import '../utils/command_helpers.dart';
+import '../utils/step_timeout_parser.dart';
+import '../utils/usage_summary.dart';
 
 /// Executes a health audit or security audit step-by-step using an AI CLI.
 ///
@@ -48,6 +51,10 @@ class RunCommand extends Command<int> {
     argParser.addFlag(
       'no-preflight',
       help: 'Skip CLI pre-flight (version setup, pub get, test coverage).',
+    );
+    argParser.addOption(
+      'step-timeout',
+      help: 'Per-step timeout in minutes (default: 30).',
     );
   }
 
@@ -278,6 +285,16 @@ class RunCommand extends Command<int> {
       _logger.info('${lightGreen.wrap('✓')} Model: $model');
     }
 
+    // 4c. Parse step timeout
+    final stepTimeoutFlag = argResults!['step-timeout'] as String?;
+    final Duration stepTimeout;
+    try {
+      stepTimeout = parseStepTimeoutMinutes(stepTimeoutFlag);
+    } on StepTimeoutParseException catch (e) {
+      _logger.err(e.message);
+      return ExitCode.usage.code;
+    }
+
     // 5. Resolve repo root
     final ResolvedContent resolvedContent;
     try {
@@ -294,12 +311,13 @@ class RunCommand extends Command<int> {
       model: model,
       cwd: cwd,
       repoRoot: resolvedContent.repoRoot,
-      skipValidation: skipValidation,
       noPreflight: noPreflight,
       agentResolver: agentResolver,
       preflightResult: preflightResult,
+      stepTimeout: stepTimeout,
     );
     final aborted = result.aborted;
+    var followUpAborted = false;
 
     // 7. After a successful health audit, prompt for Best Practices and Security Audit
     if (!aborted && bundle.id.endsWith('_health')) {
@@ -325,52 +343,44 @@ class RunCommand extends Command<int> {
         if (answer == 'y' || answer == 'yes') {
           for (final followUp in followUpBundles) {
             _logger.info('');
-            await _executeBundle(
+            final followUpResult = await _executeBundle(
               bundle: followUp,
               agent: agent,
               model: model,
               cwd: cwd,
               repoRoot: resolvedContent.repoRoot,
-              skipValidation: true,
               noPreflight: noPreflight,
               agentResolver: agentResolver,
               preflightResult: null,
+              stepTimeout: stepTimeout,
             );
+            if (followUpResult.aborted) followUpAborted = true;
           }
         }
       }
     }
 
-    return aborted ? ExitCode.software.code : ExitCode.success.code;
+    return (aborted || followUpAborted)
+        ? ExitCode.software.code
+        : ExitCode.success.code;
   }
 
   /// Executes a single audit bundle.
+  ///
+  /// The project type is validated once by [run] before any bundle executes,
+  /// so this does not re-validate.
   Future<_ExecuteBundleResult> _executeBundle({
     required SkillBundle bundle,
     required AgentConfig agent,
     required String? model,
     required String cwd,
     required String repoRoot,
-    required bool skipValidation,
     required bool noPreflight,
     required AgentResolver agentResolver,
     PreflightResult? preflightResult,
+    Duration stepTimeout = defaultStepTimeout,
   }) async {
     final techPrefix = bundle.techPrefix;
-
-    // Validate project type
-    if (!skipValidation) {
-      final validator = ProjectValidator();
-      final error = validator.validate(techPrefix, cwd);
-      if (error != null) {
-        _logger.err(error);
-        return _ExecuteBundleResult(aborted: true);
-      }
-      _logger.info(
-        '${lightGreen.wrap('✓')} ${bundle.displayName.split(' ').first} '
-        'project detected.',
-      );
-    }
 
     // Run pre-flight if not provided
     var result = preflightResult ?? PreflightResult();
@@ -407,10 +417,14 @@ class RunCommand extends Command<int> {
       return _ExecuteBundleResult(aborted: true);
     }
 
-    final preflightRuleNames = preflightResultForSteps.artifacts.keys.toSet();
+    final preflightArtifactKeys =
+        preflightResultForSteps.artifacts.keys.toSet();
     final ruleNames = steps
         .map((s) => s.ruleName)
-        .where((name) => !preflightRuleNames.contains(name))
+        .where(
+          (name) =>
+              !preflightArtifactKeys.contains(preflightKey(techPrefix, name)),
+        )
         .toList();
     if (ruleNames.isNotEmpty) {
       final verifyError = agentResolver.verifyInstallation(
@@ -446,8 +460,12 @@ class RunCommand extends Command<int> {
     Directory(artifactsDir).createSync(recursive: true);
 
     final agentName = agent.displayName;
+    final modelLabel = model != null ? ' ($model)' : '';
     final preflightCount = steps
-        .where((s) => preflightResultForSteps.artifacts.containsKey(s.ruleName))
+        .where(
+          (s) => preflightResultForSteps.artifacts
+              .containsKey(preflightKey(techPrefix, s.ruleName)),
+        )
         .length;
     final aiCount = steps.length - preflightCount;
     _logger.info('');
@@ -456,15 +474,21 @@ class RunCommand extends Command<int> {
     _logger.info(
       'Steps: ${steps.length} '
       '($preflightCount pre-flight, $aiCount AI) | '
-      'Agent: $agentName ($model)',
+      'Agent: $agentName$modelLabel',
     );
     _logger.info('Artifacts: $artifactsDir');
     _logger.info('Report: $reportPath');
     _logger.info('');
 
-    final executor = StepExecutor(config: config, logger: _logger)
-      ..fallbackModel = agent.fallbackModel;
+    final executor = StepExecutor(
+      config: config,
+      logger: _logger,
+      stepTimeout: stepTimeout,
+    )..fallbackModel = agent.fallbackModel;
     final results = <StepResult>[];
+    final stepResults = <StepResult>[];
+    var preflightTime = 0;
+    var aiTime = 0;
     var aborted = false;
 
     for (final step in steps) {
@@ -475,21 +499,27 @@ class RunCommand extends Command<int> {
       );
 
       StepResult stepResult;
-      final preflightArtifact =
-          preflightResultForSteps.artifacts[step.ruleName];
+      final preflightArtifact = preflightResultForSteps
+          .artifacts[preflightKey(techPrefix, step.ruleName)];
 
       if (preflightArtifact != null) {
         stepResult = await executor.writePreflightArtifact(
           step,
           preflightArtifact,
         );
-      } else if (step.ruleName.endsWith('_report_generator')) {
+      } else if (isReportGeneratorRule(step.ruleName)) {
         stepResult = await executor.executeReportGenerator(step);
       } else {
         stepResult = await executor.execute(step);
       }
 
       results.add(stepResult);
+      stepResults.add(stepResult);
+      if (preflightArtifact != null) {
+        preflightTime += stepResult.durationSeconds;
+      } else {
+        aiTime += stepResult.durationSeconds;
+      }
 
       if (stepResult.success) {
         if (preflightArtifact != null) {
@@ -504,11 +534,8 @@ class RunCommand extends Command<int> {
           );
         }
 
-        if (step.ruleName.endsWith('_report_generator')) {
-          final enforcerRuleName = step.ruleName.replaceFirst(
-            '_report_generator',
-            '_report_format_enforcer',
-          );
+        final enforcerRuleName = formatEnforcerRuleFor(step.ruleName);
+        if (enforcerRuleName != null) {
           final enforcerProgress = _logger.progress(
             'Step ${step.index}/${steps.length}: format enforcement',
           );
@@ -517,6 +544,7 @@ class RunCommand extends Command<int> {
             enforcerRuleName,
           );
           results.add(enforcerResult);
+          aiTime += enforcerResult.durationSeconds;
           if (enforcerResult.success) {
             final hasWarning = enforcerResult.errorMessage != null;
             enforcerProgress.complete(
@@ -561,16 +589,12 @@ class RunCommand extends Command<int> {
 
     _logger.info('');
 
-    final succeeded = results.where((r) => r.success).length;
-    final failed = results.where((r) => !r.success).length;
+    final succeeded = stepResults.where((r) => r.success).length;
+    final failed = stepResults.where((r) => !r.success).length;
     final totalTime = results.fold<int>(
       0,
       (sum, r) => sum + r.durationSeconds,
     );
-    final aiTime = results
-        .where((r) => r.tokenUsage != null)
-        .fold<int>(0, (sum, r) => sum + r.durationSeconds);
-    final preflightTime = totalTime - aiTime;
 
     if (aborted) {
       _logger.err(
@@ -586,11 +610,17 @@ class RunCommand extends Command<int> {
       _logger.success(
         'Audit completed successfully! '
         '$succeeded/${steps.length} steps in '
-        '${_formatDuration(totalTime)}.',
+        '${UsageSummary.formatDuration(totalTime)}.',
       );
     }
 
-    _printUsageSummary(results, totalTime, aiTime, preflightTime);
+    UsageSummary.printUsageSummary(
+      _logger,
+      results.map((r) => r.tokenUsage).whereType<TokenUsage>().toList(),
+      totalTime: totalTime,
+      aiTime: aiTime,
+      preflightTime: preflightTime,
+    );
 
     if (!aborted && File(reportPath).existsSync()) {
       _logger.info('');
@@ -600,75 +630,21 @@ class RunCommand extends Command<int> {
     return _ExecuteBundleResult(aborted: aborted);
   }
 
-  String _formatDuration(int seconds) {
-    if (seconds < 60) return '${seconds}s';
-    final minutes = seconds ~/ 60;
-    final remaining = seconds % 60;
-    return '${minutes}m ${remaining}s';
-  }
-
-  String _formatTokens(int tokens) {
-    if (tokens < 1000) return '$tokens';
-    final k = tokens / 1000;
-    return '${k.toStringAsFixed(1)}K';
-  }
-
   String _formatStepStats(StepResult result) {
     final usage = result.tokenUsage;
-    if (usage == null) return _formatDuration(result.durationSeconds);
+    if (usage == null) {
+      return UsageSummary.formatDuration(result.durationSeconds);
+    }
 
-    final it = _formatTokens(usage.totalInputTokens);
-    final ot = _formatTokens(usage.outputTokens);
-    final time = _formatDuration(result.durationSeconds);
+    final it = UsageSummary.formatTokens(usage.totalInputTokens);
+    final ot = UsageSummary.formatTokens(usage.outputTokens);
+    final time = UsageSummary.formatDuration(result.durationSeconds);
 
     final buffer = StringBuffer('IT: $it  OT: $ot  Time: $time');
     if (usage.costUsd != null) {
       buffer.write('  Cost: \$${usage.costUsd!.toStringAsFixed(2)}');
     }
     return buffer.toString();
-  }
-
-  void _printUsageSummary(
-    List<StepResult> results,
-    int totalTime,
-    int aiTime,
-    int preflightTime,
-  ) {
-    final aiResults = results.where((r) => r.tokenUsage != null).toList();
-    if (aiResults.isEmpty) return;
-
-    var totalInput = 0;
-    var totalOutput = 0;
-    var totalCost = 0.0;
-    var hasCost = false;
-
-    for (final r in aiResults) {
-      final u = r.tokenUsage!;
-      totalInput += u.totalInputTokens;
-      totalOutput += u.outputTokens;
-      if (u.costUsd != null) {
-        totalCost += u.costUsd!;
-        hasCost = true;
-      }
-    }
-
-    const divider = '────────────────────────────────────────────────────';
-    _logger.info(divider);
-    _logger.info(
-      'Total tokens  ─  Input: ${_formatTokens(totalInput)}  '
-      'Output: ${_formatTokens(totalOutput)}',
-    );
-    if (hasCost) {
-      _logger.info(
-        'Total cost    ─  \$${totalCost.toStringAsFixed(2)}',
-      );
-    }
-    _logger.info(
-      'Total time    ─  ${_formatDuration(totalTime)}  '
-      '(AI: ${_formatDuration(aiTime)} | '
-      'Pre-flight: ~${_formatDuration(preflightTime)})',
-    );
-    _logger.info(divider);
   }
 
   /// Removes previous run artifacts and report to prevent stale data.

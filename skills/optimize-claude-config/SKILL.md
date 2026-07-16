@@ -13,7 +13,7 @@ description: |
   that works around the read-not-create caveat. Audits first, shows a report,
   asks for confirmation, then applies. Pass --audit-only to skip applying.
 argument-hint: "[--audit-only] [path]"
-allowed-tools: Bash Read Edit Write
+allowed-tools: Bash, Read, Edit, Write
 ---
 
 # optimize-claude-config

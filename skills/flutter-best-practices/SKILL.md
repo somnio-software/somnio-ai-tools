@@ -98,8 +98,7 @@ You are a master at:
 1. Read and follow the instructions in `references/testing-quality.md` {model: mid}
 2. Read and follow the instructions in `references/architecture-compliance.md` {model: mid}
 3. Read and follow the instructions in `references/code-standards.md` {model: mid}
-4. Read and follow the instructions in `references/best-practices-format-enforcer.md` {model: frontier}
-5. Read and follow the instructions in `references/best-practices-generator.md` {model: frontier}
+4. Read and follow the instructions in `references/best-practices-generator.md` {model: frontier}
 
 ## Report Metadata (MANDATORY)
 

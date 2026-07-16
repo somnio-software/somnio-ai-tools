@@ -1,7 +1,10 @@
 // coverage:ignore-file
+import 'dart:io';
+
 import 'package:mason_logger/mason_logger.dart';
 
 import '../agents/agent_config.dart';
+import '../runner/step_executor.dart' show defaultStepTimeout;
 import 'workflow_config.dart';
 import 'workflow_context.dart';
 import 'workflow_locator.dart';
@@ -36,6 +39,7 @@ class WorkflowRunner {
     required this.config,
     required this.agentConfig,
     required this.logger,
+    this.stepTimeout = defaultStepTimeout,
   });
 
   final WorkflowLocation location;
@@ -44,34 +48,58 @@ class WorkflowRunner {
   final AgentConfig agentConfig;
   final Logger logger;
 
+  /// Per-step deadline passed through to [WorkflowStepExecutor].
+  final Duration stepTimeout;
+
   /// Runs all pending steps in the workflow using wave-based parallelism.
   ///
-  /// If [startFromIndex] is provided, skips completed steps up to that index.
-  /// Returns the overall success status.
-  Future<WorkflowRunResult> run({int startFromIndex = 0}) async {
+  /// If [resume] is true, saved progress is reconciled with the current
+  /// context by file name and already-completed steps are skipped wherever
+  /// they sit in the wave graph. Returns the overall success status.
+  Future<WorkflowRunResult> run({bool resume = false}) async {
     final wallClock = Stopwatch()..start();
 
     final executor = WorkflowStepExecutor(
       agentConfig: agentConfig,
       logger: logger,
+      stepTimeout: stepTimeout,
     );
 
-    // Initialize or load progress
-    final loaded = WorkflowProgress.loadFrom(location.progressPath);
-    final progress = (loaded != null && startFromIndex != 0)
-        ? loaded
-        : WorkflowProgress(
-            workflow: context.name,
-            agent: agentConfig.id,
-            steps: context.steps
-                .map((s) => StepProgress(file: s.file))
-                .toList(),
-          );
-    progress.saveTo(location.progressPath);
+    // Initialize or load progress, reconciling saved entries with the current
+    // context by file name (context.md may have changed between runs). This
+    // keeps progress.steps positionally aligned with context.steps, which the
+    // wave filter and the pre-population loop below both rely on.
+    final loaded =
+        resume ? WorkflowProgress.loadFrom(location.progressPath) : null;
+    final loadedByFile = <String, StepProgress>{
+      if (loaded != null)
+        for (final s in loaded.steps) s.file: s,
+    };
+    final progress = WorkflowProgress(
+      workflow: context.name,
+      agent: agentConfig.id,
+      steps: context.steps
+          .map((s) => loadedByFile[s.file] ?? StepProgress(file: s.file))
+          .toList(),
+    );
 
-    // Plan waves
+    // Plan waves before touching progress on disk: an invalid dependency
+    // graph is a workflow-definition error, not a CLI usage error, and must
+    // not clobber a previous run's progress.json.
     const planner = WavePlanner();
-    final waves = planner.plan(context.steps);
+    final List<Wave> waves;
+    try {
+      waves = planner.plan(context.steps);
+    } on FormatException catch (e) {
+      wallClock.stop();
+      return WorkflowRunResult(
+        success: false,
+        results: const [],
+        errorMessage: 'Invalid workflow dependency graph: ${e.message}',
+        wallClockSeconds: wallClock.elapsed.inSeconds,
+      );
+    }
+    progress.saveTo(location.progressPath);
     final totalSteps = context.steps.length;
     final allResults = <WorkflowStepResult>[];
 
@@ -202,9 +230,25 @@ class WorkflowRunner {
     final stepEntry = context.steps[stepIndex];
     final stepNum = stepIndex + 1; // 1-based
 
-    // Parse step file
+    // Parse step file. A broken step file must degrade to a normal step
+    // failure: this runs inside Future.wait, so a throw here would discard
+    // every sibling result in the wave and skip the progress save below.
     final stepPath = location.stepPath(stepEntry.file);
-    final step = WorkflowStep.loadFrom(stepPath);
+    final WorkflowStep? step;
+    try {
+      step = WorkflowStep.loadFrom(stepPath);
+    } catch (e) {
+      return _WaveStepResult(
+        stepIndex: stepIndex,
+        result: WorkflowStepResult(
+          stepFile: stepEntry.file,
+          success: false,
+          outputPath: location.outputPath(stepEntry.file),
+          durationSeconds: 0,
+          errorMessage: 'Invalid step file $stepPath: $e',
+        ),
+      );
+    }
     if (step == null) {
       return _WaveStepResult(
         stepIndex: stepIndex,
@@ -213,7 +257,9 @@ class WorkflowRunner {
           success: false,
           outputPath: location.outputPath(stepEntry.file),
           durationSeconds: 0,
-          errorMessage: 'Step file not found: $stepPath',
+          errorMessage: File(stepPath).existsSync()
+              ? 'Invalid step file: $stepPath'
+              : 'Step file not found: $stepPath',
         ),
       );
     }
@@ -222,13 +268,15 @@ class WorkflowRunner {
     final model = config.resolveModel(stepNum, stepEntry.tag) ??
         agentConfig.defaultModel;
 
-    // Resolve placeholders
+    // Resolve placeholders. {previous_output} comes from the completion map
+    // rather than the positional predecessor: under wave parallelism the
+    // previous step may still be running (or may have failed), in which case
+    // the placeholder is left unreplaced — same semantics as {step_N_output}.
+    // stepOutputPaths is keyed 1-based, so key stepIndex is the previous step.
     final outputPath = location.outputPath(stepEntry.file);
     String? previousOutputPath;
     if (stepIndex > 0) {
-      previousOutputPath = location.outputPath(
-        context.steps[stepIndex - 1].file,
-      );
+      previousOutputPath = stepOutputPaths[stepIndex];
     }
 
     final resolvedBody = step.resolveBody(
@@ -259,10 +307,17 @@ class WorkflowRunner {
   }
 
   /// Gets the step name from its file, or falls back to the filename.
+  ///
+  /// Never throws: this runs while recording wave results, before the
+  /// progress save, so a broken step file must not abort the run.
   String _stepName(int stepIndex) {
     final stepPath = location.stepPath(context.steps[stepIndex].file);
-    final step = WorkflowStep.loadFrom(stepPath);
-    return step?.name ?? context.steps[stepIndex].file;
+    try {
+      return WorkflowStep.loadFrom(stepPath)?.name ??
+          context.steps[stepIndex].file;
+    } catch (_) {
+      return context.steps[stepIndex].file;
+    }
   }
 }
 

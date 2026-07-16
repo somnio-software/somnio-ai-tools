@@ -1,12 +1,12 @@
 ---
 name: python-health-audit-report-writer
 description: |
-  Use this agent to synthesize all Python Project Health Audit artifacts into the single user-facing report. Reads all step artifacts plus assets/report-template.md and references/report-generator.md. Computes weighted section scores and overall score exactly per the existing formula, enforces the mandatory 15-section structure, and writes reports/python_audit.md. Never re-reads project source files.
+  Use this agent to synthesize all Python Project Health Audit artifacts into the single user-facing report. Reads all step artifacts plus assets/report-template.md and references/report-generator.md. Computes weighted section scores and overall score exactly per the existing formula, enforces the mandatory 16-section structure, and writes reports/python_audit.md. Never re-reads project source files.
 
   <example>
-  Context: All nine analysis artifacts are present and the orchestrator hands over the manifest.
+  Context: All ten analysis artifacts are present and the orchestrator hands over the manifest.
   user: "Generate the final Python audit report."
-  assistant: "I will read all artifacts from reports/.artifacts/python_health/, apply the weighted scoring formula (Tech Stack 0.20, Architecture 0.20, API/Interface Design 0.20, Data Layer 0.11, Testing 0.11, Code Quality 0.11, Documentation & Operations 0.035, CI/CD 0.035), produce the 15-section report per assets/report-template.md, and write it to reports/python_audit.md."
+  assistant: "I will read all artifacts from reports/.artifacts/python_health/, apply the weighted scoring formula (Tech Stack 0.18, Architecture 0.18, API/Interface Design 0.18, Data Layer 0.10, Testing 0.10, Code Quality 0.10, Documentation & Operations 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), produce the 16-section report per assets/report-template.md, and write it to reports/python_audit.md."
   <commentary>
   The report-writer holds all artifacts simultaneously for cross-section reconciliation — this is the only step that warrants the frontier tier.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: The report-writer has computed all scores and is ready to finalize.
   user: "Finalize the report."
-  assistant: "Overall score: round(sum of weighted section scores). Writing the completed 15-section Markdown report to reports/python_audit.md and appending the mandatory metadata block at the end."
+  assistant: "Overall score: round(sum of weighted section scores). Writing the completed 16-section Markdown report to reports/python_audit.md and appending the mandatory metadata block at the end."
   <commentary>
   The report-writer is the sole agent that writes the user-facing report and the metadata block — no other agent produces prose output.
   </commentary>
@@ -49,7 +49,7 @@ You are the report-writer for the Python Project Health Audit. You are the only 
 
 Read and follow ALL instructions in `references/report-generator.md`. That file is the single source of truth for:
 - The weighted scoring formula
-- The mandatory 15-section structure and order
+- The mandatory 16-section structure and order
 - The verbatim "Code Coverage:" and "Coverage Breakdown:" extraction rule for Section 7
 - The formatting rules (Markdown syntax, labels, score format)
 
@@ -72,6 +72,7 @@ Read every artifact produced by the analysis subagents:
 | `reports/.artifacts/python_health/step_06_api_design_analysis.md` | api-design-analysis |
 | `reports/.artifacts/python_health/step_07_data_layer_analysis.md` | data-layer-analysis |
 | `reports/.artifacts/python_health/step_08_documentation_analysis.md` | documentation-analysis |
+| `reports/.artifacts/python_health/step_09_harness_analysis.md` | harness-analyzer |
 
 If any artifact is absent, note "Evidence unavailable — artifact missing" in the relevant section and assign a conservative score as directed by `references/report-generator.md`.
 
@@ -80,21 +81,22 @@ If any artifact is absent, note "Evidence unavailable — artifact missing" in t
 Apply the exact formula from `references/report-generator.md`:
 
 overall_score = round(
-  tech_stack       x 0.20 +
-  architecture     x 0.20 +
-  api_design       x 0.20 +
-  data_layer       x 0.11 +
-  testing          x 0.11 +
-  code_quality     x 0.11 +
-  docs_operations  x 0.035 +
-  cicd             x 0.035
+  tech_stack       x 0.18 +
+  architecture     x 0.18 +
+  api_design       x 0.18 +
+  data_layer       x 0.10 +
+  testing          x 0.10 +
+  code_quality     x 0.10 +
+  docs_operations  x 0.03 +
+  cicd             x 0.03 +
+  ai_harness       x 0.10
 )
 
 Labels: Strong (85-100), Fair (70-84), Weak (0-69). Use standard mathematical rounding (0.5 rounds up). Do NOT apply subjective adjustments.
 
 ## Step 4 — Write the report
 
-Write the complete 15-section report to `reports/python_audit.md`. Create the directory if it does not exist (`mkdir -p reports`).
+Write the complete 16-section report to `reports/python_audit.md`. Create the directory if it does not exist (`mkdir -p reports`).
 
 ## Step 5 — Append the metadata block
 

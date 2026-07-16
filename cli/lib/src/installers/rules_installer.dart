@@ -177,18 +177,26 @@ class RulesInstaller {
         throw Exception('Rules directory not found: ${stackRulesSrc.path}');
       }
       final stackRulesDest = Directory(p.join(rulesRoot.path, stack));
-      if (stackRulesDest.existsSync()) {
-        stackRulesDest.deleteSync(recursive: true);
-      }
+      // Remove only what a previous somnio install wrote (per the manifest),
+      // so rules dropped upstream go away while user-authored files in the
+      // same directory survive.
+      removeManifestFiles(stackRulesDest);
       stackRulesDest.createSync(recursive: true);
 
+      final installed = <String>[];
       for (final entity in stackRulesSrc.listSync(recursive: true)) {
         if (entity is! File) continue;
         final rel = p.relative(entity.path, from: stackRulesSrc.path);
         final destFile = File(p.join(stackRulesDest.path, rel));
+        // A directory sitting where a rule file belongs would make the write
+        // throw; the copy itself already overwrites plain files.
+        final conflict = Directory(destFile.path);
+        if (conflict.existsSync()) conflict.deleteSync(recursive: true);
         destFile.parent.createSync(recursive: true);
         destFile.writeAsStringSync(entity.readAsStringSync());
+        installed.add(p.split(rel).join('/'));
       }
+      _writeManifest(stackRulesDest, installed);
     }
 
     final block = '$_beginMarker\n${buffer.toString().trim()}\n$_endMarker';
@@ -221,6 +229,96 @@ class RulesInstaller {
 
     final separator = content.endsWith('\n') ? '\n' : '\n\n';
     return '$content$separator$block\n';
+  }
+
+  // ── Claude modular manifest ─────────────────────────────────────────────────
+  //
+  // The claudeModular format cannot use the `somnio-` filename prefix the
+  // directory format relies on: the generated CLAUDE.md fragments @import
+  // unprefixed paths (`@.claude/rules/flutter/architecture.md`), so renaming
+  // the copied files would break every import. Instead each installed stack
+  // dir carries a manifest of the paths somnio wrote, which is what uninstall
+  // and the next reinstall are allowed to delete.
+
+  static const _manifestFileName = '.somnio-manifest';
+
+  /// Records the relative paths somnio installed under [stackDir].
+  void _writeManifest(Directory stackDir, List<String> relativePaths) {
+    final sorted = [...relativePaths]..sort();
+    File(p.join(stackDir.path, _manifestFileName))
+        .writeAsStringSync('${sorted.join('\n')}\n');
+  }
+
+  /// Deletes the files [stackDir]'s manifest says somnio installed, along with
+  /// the manifest and any directories left empty. Returns true if anything was
+  /// removed.
+  ///
+  /// A stack dir with no manifest predates manifest tracking: its somnio files
+  /// are indistinguishable from user files, so nothing is deleted rather than
+  /// risk the user's own content.
+  static bool removeManifestFiles(Directory stackDir) {
+    if (!stackDir.existsSync()) return false;
+    final manifest = File(p.join(stackDir.path, _manifestFileName));
+    if (!manifest.existsSync()) return false;
+
+    final entries = manifest
+        .readAsLinesSync()
+        .map((l) => l.trim())
+        .where((l) => l.isNotEmpty);
+    for (final rel in entries) {
+      final file = File(p.joinAll([stackDir.path, ...rel.split('/')]));
+      if (file.existsSync()) file.deleteSync();
+    }
+    manifest.deleteSync();
+    _pruneEmptyDirs(stackDir);
+    // The manifest's presence means somnio owned content here, so this always
+    // counts as a removal even if a user had already deleted the rule files.
+    return true;
+  }
+
+  /// Deletes from [stackDir] only the files that `<repoRoot>/<adapterPath>/
+  /// <stack>/rules/**` would have installed, for stack dirs written before
+  /// [_writeManifest] existed.
+  ///
+  /// Mirrors the file layout [_installClaudeModular] derives from the
+  /// adapter source, so the set of relative paths deleted here is exactly
+  /// the set it would have written — same conservative "only what somnio
+  /// provably wrote" semantics as [removeManifestFiles], just computed from
+  /// the adapter instead of a persisted list. Returns true if anything was
+  /// removed.
+  static bool removeKnownAdapterFiles(
+    Directory stackDir,
+    String repoRoot,
+    String adapterPath,
+    String stack,
+  ) {
+    if (!stackDir.existsSync()) return false;
+    final stackRulesSrc =
+        Directory(p.join(repoRoot, adapterPath, stack, 'rules'));
+    if (!stackRulesSrc.existsSync()) return false;
+
+    var removed = false;
+    for (final entity in stackRulesSrc.listSync(recursive: true)) {
+      if (entity is! File) continue;
+      final rel = p.relative(entity.path, from: stackRulesSrc.path);
+      final file = File(p.join(stackDir.path, rel));
+      if (file.existsSync()) {
+        file.deleteSync();
+        removed = true;
+      }
+    }
+    _pruneEmptyDirs(stackDir);
+    return removed;
+  }
+
+  /// Deletes empty subdirectories of [dir], deepest first.
+  static void _pruneEmptyDirs(Directory dir) {
+    if (!dir.existsSync()) return;
+    final subDirs = dir.listSync(recursive: true).whereType<Directory>().toList()
+      ..sort((a, b) => b.path.length.compareTo(a.path.length));
+    for (final sub in subDirs) {
+      if (sub.existsSync() && sub.listSync().isEmpty) sub.deleteSync();
+    }
   }
 
   /// Removes any file starting with `somnio-` in [dir] recursively.

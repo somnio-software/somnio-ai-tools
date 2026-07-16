@@ -26,6 +26,40 @@ void main() {
       expect(ctx, isNotNull);
       expect(ctx!.name, 'cleanup');
     });
+
+    group('returns null instead of throwing when the file is malformed', () {
+      final cases = {
+        'no frontmatter': '# Just markdown\n',
+        'unclosed frontmatter': '---\nname: cleanup\n',
+        'frontmatter is a list': '---\n- a\n- b\n---\n',
+        'frontmatter is a scalar': '---\njust a string\n---\n',
+        'version is a string': '---\nname: c\nversion: "one"\n---\n',
+        'invalid yaml': '---\nname: [unclosed\n---\n',
+        'step entry missing file key': '---\nname: c\nsteps:\n  - tag: x\n---\n',
+        'needs holds a non-int':
+            '---\nname: c\nsteps:\n  - file: 01.md\n    needs: [a]\n---\n',
+        'needs is an unrecognized comma-separated string':
+            '---\nname: c\nsteps:\n  - file: 01.md\n  - file: 02.md\n'
+                '  - file: 03.md\n    needs: 1,3\n---\n',
+        'needs is a capitalized "All"':
+            '---\nname: c\nsteps:\n  - file: 01.md\n  - file: 02.md\n'
+                '    needs: All\n---\n',
+        'needs is a bool':
+            '---\nname: c\nsteps:\n  - file: 01.md\n  - file: 02.md\n'
+                '    needs: true\n---\n',
+      };
+
+      cases.forEach((label, content) {
+        test(label, () {
+          final tmp = Directory.systemTemp.createTempSync('somnio_ctx_bad_');
+          addTearDown(() => tmp.deleteSync(recursive: true));
+          final file = File(p.join(tmp.path, 'context.md'))
+            ..writeAsStringSync(content);
+
+          expect(WorkflowContext.loadFrom(file.path), isNull);
+        });
+      });
+    });
   });
 
   group('WorkflowContext', () {
@@ -331,6 +365,22 @@ name: broken
 name: empty
 description: no steps
 steps: []
+---
+''';
+
+        final context = WorkflowContext.parse(content);
+        expect(context.steps, isEmpty);
+      });
+
+      test('defaults to empty steps when `steps:` key is missing entirely',
+          () {
+        // Distinct from `steps: []`: the planner AI may omit the frontmatter
+        // key altogether. The parser is deliberately lenient here — rejecting
+        // a stepless workflow is the command layer's job, not the parser's.
+        const content = '''
+---
+name: empty
+description: no steps key at all
 ---
 ''';
 

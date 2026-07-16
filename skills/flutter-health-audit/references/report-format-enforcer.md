@@ -33,9 +33,9 @@ The report MUST contain exactly these 16 sections in this order:
 6. Repositories & Data Layer
 7. Testing
 8. Code Quality (Linter & Warnings)
-9. Security
-10. Documentation & Operations
-11. CI/CD (Configs Found in Repo)
+9. Documentation & Operations
+10. CI/CD (Configs Found in Repo)
+11. AI Harness & Adoption
 12. Additional Metrics
 13. Quality Index
 14. Risks & Opportunities
@@ -131,11 +131,41 @@ Priority Recommendations:
 - Repositories & Data Layer: [Score]/100 ([Label])
 - Testing: [Score]/100 ([Label])
 - Code Quality (Linter & Warnings): [Score]/100 ([Label])
-- Security: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
-- Workflows with min_coverage < 70: [Count]
+- AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
+
+11. AI Harness & Adoption:
+Description: [One-sentence description of the harness analysis].
+Score: [Score]/100 ([Label])
+Maturity: [sin harness | harness básico | harness sólido | paved path]
+Coverage:
+- CLAUDE.md: [Status] — [Points]/14
+- Rules: [Status] — [Points]/10
+- Permissions: [Status] — [Points]/14
+- Hooks: [Status] — [Points]/16
+- Pre-push git hook: [Status] — [Points]/12
+- Agents: [Status] — [Points]/12
+- Commands / Skills: [Status] — [Points]/10
+- Advanced orchestration: [Status] — [Points]/6
+- Lifecycle & versioning: [Status] — [Points]/6
+- Total: [Score]/100
+Key Findings:
+- [Finding 1]
+- [Continue as needed]
+Evidence:
+- [Real file path only, never invented]
+- [Continue as needed]
+Risks:
+- [Risk item 1]
+- [Continue as needed]
+Actions to Raise the Score:
+1. [+N] [Action naming the file/key to add and the how-to] → dimension D, X/Y → Y/Y.
+2. [Continue as needed, sorted by points recovered descending]
+Counts & Metrics:
+- [Metric name]: [Value]
+- [Continue as needed]
 
 12. Additional Metrics:
 - Supported platforms: [Platform list]
@@ -161,9 +191,9 @@ Section Summary with Scores:
 - Repositories & Data Layer: [Score]/100 ([Label])
 - Testing: [Score]/100 ([Label])
 - Code Quality: [Score]/100 ([Label])
-- Security: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label]) (min_coverage check included)
+- CI/CD: [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 Overall Score: [Score]/100 ([Label])
 [One-sentence interpretation]
 

@@ -174,8 +174,7 @@ the template.
 5.  `references/error-handling.md` {model: mid}
 6.  `references/module-structure.md` {model: cheap}
 7.  `references/testing-quality.md` {model: mid}
-8.  `references/best-practices-format-enforcer.md` {model: frontier}
-9.  `references/best-practices-generator.md` {model: frontier}
+8.  `references/best-practices-generator.md` {model: frontier}
 
 ## Subagent Dispatch (in-session)
 
@@ -202,7 +201,7 @@ When running inside a Claude session with the Agent tool available, the orchestr
 | `agents/data-validation-analyzer.md` | mid | `references/data-validation.md` (step 4) | `reports/.artifacts/python-best-practices/step_04_data_validation.md` |
 | `agents/error-handling-analyzer.md` | mid | `references/error-handling.md` (step 5) | `reports/.artifacts/python-best-practices/step_05_error_handling.md` |
 | `agents/testing-quality-analyzer.md` | mid | `references/testing-quality.md` (step 7) | `reports/.artifacts/python-best-practices/step_07_testing_quality.md` |
-| `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` (steps 8–9) | `reports/python_best_practices_report.md` |
+| `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` (step 8) | `reports/python_best_practices_report.md` |
 
 > **Note**: The Rule Execution Order above is the CLI runner path (`somnio run`). The Subagent Dispatch section documents the in-session path. Both paths produce the same report at `reports/python_best_practices_report.md`.
 

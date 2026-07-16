@@ -23,6 +23,28 @@ void main() {
       expect(step, isNotNull);
       expect(step!.name, 'Analyze');
     });
+
+    group('returns null instead of throwing when the file is malformed', () {
+      final cases = {
+        'no frontmatter': '# Just a body\n',
+        'unclosed frontmatter': '---\nname: Analyze\n',
+        'frontmatter is a list': '---\n- a\n- b\n---\n\n# Body\n',
+        'frontmatter is a scalar': '---\njust a string\n---\n\n# Body\n',
+        'index is a string': '---\nname: A\nindex: "one"\n---\n\n# Body\n',
+        'invalid yaml': '---\nname: [unclosed\n---\n\n# Body\n',
+      };
+
+      cases.forEach((label, content) {
+        test(label, () {
+          final tmp = Directory.systemTemp.createTempSync('somnio_step_bad_');
+          addTearDown(() => tmp.deleteSync(recursive: true));
+          final file = File(p.join(tmp.path, '01-step.md'))
+            ..writeAsStringSync(content);
+
+          expect(WorkflowStep.loadFrom(file.path), isNull);
+        });
+      });
+    });
   });
 
   group('WorkflowStep', () {

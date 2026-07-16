@@ -40,10 +40,14 @@
 
 5.  **SPECIAL SECTIONS**:
     - Section 6 (Testing) MUST include "Code Coverage:" line after Score
-    - Section 11 (Additional Metrics) uses flat bullet list format
-    - Section 12 (Quality Index) repeats all scores then overall
+    - Section 11 (AI Harness & Adoption) uses the richer shape: Description,
+      Score, Maturity, Coverage table (or bullet list), Key Findings,
+      Evidence, Risks, Actions to Raise the Score (each with a `[+N]`
+      delta and a `→ dimension D, X/Y → Y/Y` trace), Counts & Metrics
+    - Section 12 (Additional Metrics) uses flat bullet list format
+    - Section 13 (Quality Index) repeats all scores then overall
 
-6.  **TOTAL SECTIONS**: Report MUST have exactly 15 sections:
+6.  **TOTAL SECTIONS**: Report MUST have exactly 16 sections:
     1. Executive Summary
     2. At-a-Glance Scorecard
     3. Tech Stack
@@ -54,23 +58,25 @@
     8. Performance
     9. Documentation & Operations
     10. CI/CD (Configs Found in Repo)
-    11. Additional Metrics
-    12. Quality Index
-    13. Risks & Opportunities
-    14. Recommendations
-    15. Appendix: Evidence Index
+    11. AI Harness & Adoption
+    12. Additional Metrics
+    13. Quality Index
+    14. Risks & Opportunities
+    15. Recommendations
+    16. Appendix: Evidence Index
 
 ## WEIGHTED SCORE CALCULATION
 
 Overall Score = round(
-  Tech Stack × 0.20 +
-  Architecture × 0.20 +
-  State Management × 0.15 +
-  Testing × 0.15 +
-  Code Quality × 0.15 +
-  Performance × 0.08 +
-  Documentation × 0.035 +
-  CI/CD × 0.035
+  Tech Stack × 0.18 +
+  Architecture × 0.18 +
+  State Management × 0.135 +
+  Testing × 0.135 +
+  Code Quality × 0.135 +
+  Performance × 0.075 +
+  Documentation × 0.03 +
+  CI/CD × 0.03 +
+  AI Harness & Adoption × 0.10
 )
 
 ROUNDING RULE: Use standard mathematical rounding (0.5 rounds up).
@@ -79,7 +85,7 @@ Do NOT apply subjective adjustments.
 ## VALIDATION CHECKLIST
 
 Before finalizing the report, verify:
-- All 15 sections are present
+- All 16 sections are present
 - All sections follow the required format
 - All scores are integers with proper labels
 - All evidence references actual files

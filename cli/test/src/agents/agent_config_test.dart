@@ -382,13 +382,23 @@ void main() {
       expect(agent.resolveTier('cheap'), 'cheapo');
     });
 
-    test('passes the tier through when no map, default, or fallback', () {
-      const agent = AgentConfig(
-        id: 'bare',
-        displayName: 'Bare',
-        installPath: '{home}/.bare',
-      );
-      expect(agent.resolveTier('cheap'), 'cheap');
+    const bare = AgentConfig(
+      id: 'bare',
+      displayName: 'Bare',
+      installPath: '{home}/.bare',
+    );
+
+    test('returns null for a portable tier with no map, default, or fallback',
+        () {
+      // The literal tier name is not a valid model for any CLI, so callers
+      // must omit the model flag instead.
+      expect(bare.resolveTier('cheap'), isNull);
+      expect(bare.resolveTier('mid'), isNull);
+      expect(bare.resolveTier('frontier'), isNull);
+    });
+
+    test('passes a concrete model ID through when nothing is configured', () {
+      expect(bare.resolveTier('some-real-model'), 'some-real-model');
     });
 
     test('defaults to an empty modelTiers map', () {

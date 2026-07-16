@@ -144,11 +144,11 @@ def condense(body: str) -> str:
             i = _strip_section(lines, i, "##")
             continue
 
-        if stripped == "#### Bad":
+        if re.match(r"#### Bad\b", stripped):
             i = _strip_section(lines, i, "####")
             continue
 
-        if stripped == "#### Good":
+        if re.match(r"#### Good\b", stripped):
             # Drop the heading, keep the content
             i += 1
             continue

@@ -201,6 +201,7 @@ class AgentRegistry {
     fallbackModel: 'gpt-5.1-codex-mini',
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.codex/skills',
+    executionRulesPath: '{home}/.codex/somnio_rules',
     filePrefix: 'somnio',
     npmPackage: '@openai/codex',
     installUrl: 'https://github.com/openai/codex',
@@ -232,6 +233,7 @@ class AgentRegistry {
     fallbackModel: 'claude-haiku-4-5',
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.augment/skills',
+    executionRulesPath: '{home}/.augment/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://www.augmentcode.com',
     installInstructions:
@@ -249,6 +251,7 @@ class AgentRegistry {
     outputFlags: ['--stream-json'],
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.amp/skills',
+    executionRulesPath: '{home}/.amp/somnio_rules',
     filePrefix: 'somnio',
     npmPackage: 'amp',
     installUrl: 'https://ampcode.com',
@@ -264,6 +267,7 @@ class AgentRegistry {
     autoApproveFlags: ['--yes-always'],
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.aider/skills',
+    executionRulesPath: '{home}/.aider/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://aider.chat',
     installInstructions:
@@ -281,6 +285,7 @@ class AgentRegistry {
     outputFlags: ['--json'],
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.cline/skills',
+    executionRulesPath: '{home}/.cline/somnio_rules',
     filePrefix: 'somnio',
     npmPackage: 'cline',
     installUrl: 'https://cline.bot',
@@ -296,6 +301,7 @@ class AgentRegistry {
     outputFlags: ['-f', 'json'],
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.opencode/skills',
+    executionRulesPath: '{home}/.opencode/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://opencode.ai',
     installInstructions:
@@ -314,6 +320,7 @@ class AgentRegistry {
     outputFlags: ['--output-format', 'json'],
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.codebuddy/skills',
+    executionRulesPath: '{home}/.codebuddy/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://codebuddy.dev',
     installInstructions:
@@ -344,6 +351,7 @@ class AgentRegistry {
     fallbackModel: 'qwen3-coder-next',
     installFormat: InstallFormat.markdown,
     installPath: '{home}/.qwen/skills',
+    executionRulesPath: '{home}/.qwen/somnio_rules',
     filePrefix: 'somnio',
     npmPackage: 'qwen-code',
     installUrl: 'https://qwen.ai',

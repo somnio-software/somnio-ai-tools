@@ -164,13 +164,14 @@ Include:
 
 Step prompts can use these placeholders (resolved at runtime):
 - `{output_path}` - Where this step should save its output
-- `{previous_output}` - Path to the previous step's output
-- `{step_N_output}` - Path to step N's output (1-based, e.g., `{step_1_output}`, `{step_3_output}`)
+- `{previous_output}` - Path to the previous step's output. ONLY use this in a step that declares `needs: previous`; otherwise the previous step may still be running in the same wave and the placeholder is left unresolved.
+- `{step_N_output}` - Path to step N's output (1-based, e.g., `{step_1_output}`, `{step_3_output}`). ONLY use this in a step whose `needs` includes step N.
 - `{outputs_dir}` - The outputs directory
 - `{workflow_dir}` - The workflow root directory
 
 Use `{step_N_output}` when a step depends on specific earlier steps (e.g., a report step
-that consolidates findings from steps 1, 2, and 3).
+that consolidates findings from steps 1, 2, and 3). Independent steps that run in parallel
+must not read another step's output — declare a `needs` edge first, or read nothing.
 
 ## Rules
 

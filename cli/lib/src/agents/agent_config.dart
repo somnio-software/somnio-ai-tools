@@ -148,7 +148,11 @@ class AgentConfig {
   final TokenUsageParser? tokenUsageParser;
 
   /// Prefix for installed files (default: 'somnio').
-  /// Used by uninstall to identify files to remove.
+  ///
+  /// Only workflow-format files are actually written with this prefix. The
+  /// other formats install skills under their raw bundle name, so status /
+  /// uninstall / update match names via `InstalledSkillNames` and use this
+  /// prefix solely to keep cleaning up legacy v1.x installations.
   final String filePrefix;
 
   // ── Discovery ─────────────────────────────────────────────────────
@@ -238,22 +242,28 @@ class AgentConfig {
     return path;
   }
 
+  /// The provider-neutral capability tiers audit skills may declare.
+  static const _portableTiers = {'cheap', 'mid', 'frontier'};
+
   /// Resolves a portable capability [tier] to a concrete model ID.
   ///
   /// Resolution order:
   /// 1. If [modelTiers] contains [tier], return its mapped model ID.
   /// 2. Otherwise fall back to [defaultModel] if set.
   /// 3. Otherwise fall back to [fallbackModel] if set.
-  /// 4. Otherwise pass [tier] through unchanged (so a literal model ID handed
-  ///    in still works, and agents lacking tiers never emit an invalid model).
+  /// 4. Otherwise return null for a portable tier, or pass [tier] through
+  ///    unchanged when it is already a concrete model ID.
   ///
-  /// Agents without a clean three-tier split (empty [modelTiers]) therefore
-  /// degrade gracefully to their default/fallback model rather than passing an
-  /// unknown tier name to the underlying CLI.
-  String resolveTier(String tier) {
+  /// Agents with a default/fallback model degrade gracefully to it. Agents
+  /// with no models at all (e.g. amp) resolve to null so callers omit the
+  /// model flag entirely rather than passing the literal tier name — which is
+  /// not a valid model for any CLI.
+  String? resolveTier(String tier) {
     final mapped = modelTiers[tier];
     if (mapped != null) return mapped;
-    return defaultModel ?? fallbackModel ?? tier;
+    final fallback = defaultModel ?? fallbackModel;
+    if (fallback != null) return fallback;
+    return _portableTiers.contains(tier) ? null : tier;
   }
 
   /// Formats the read instruction for a rule file in step prompts.

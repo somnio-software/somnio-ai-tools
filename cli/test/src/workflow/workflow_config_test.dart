@@ -172,6 +172,28 @@ void main() {
         expect(loaded, isNull);
       });
 
+      group('loadFrom returns null instead of throwing for malformed', () {
+        final cases = {
+          'not json': 'not json at all',
+          'truncated json': '{"ide": "claudecode"',
+          'top level is a list': '[1, 2, 3]',
+          'top level is a scalar': '"claudecode"',
+          'model_assignments is a string': '{"model_assignments": "nope"}',
+          'by_role value is not a string':
+              '{"model_assignments": {"by_role": {"research": 7}}}',
+          'by_step key is not an int':
+              '{"model_assignments": {"by_step": {"first": "opus"}}}',
+        };
+
+        cases.forEach((label, content) {
+          test(label, () {
+            final path = '${tempDir.path}/config.bad.json';
+            File(path).writeAsStringSync(content);
+            expect(WorkflowConfig.loadFrom(path), isNull);
+          });
+        });
+      });
+
       test('saveTo creates parent directories', () {
         const config = WorkflowConfig(ide: 'test');
         final path = '${tempDir.path}/nested/dir/config.json';

@@ -59,6 +59,9 @@ STEP 4 COMPLETED: [log result] # model: mid
 Read `react-health-audit/references/code-quality.md` and follow ALL instructions in the prompt field
 STEP 5 COMPLETED: [log result] # model: mid
 
+Read `react-health-audit/references/harness-analysis.md` and follow ALL instructions in the prompt field
+STEP 8 COMPLETED: [log result] # model: mid
+
 ## Wave 3: Domain Analysis (Parallelizable)
 
 These steps are independent and can be executed in parallel if supported:
@@ -72,12 +75,12 @@ STEP 7 COMPLETED: [log result] # model: cheap
 ## Wave 4: Report Format Enforcement (Sequential) # model: frontier
 
 Read `react-health-audit/references/report-format-enforcer.md` and follow ALL instructions in the prompt field
-STEP 8 COMPLETED: [log result] # model: frontier
+STEP 9 COMPLETED: [log result] # model: frontier
 
 ## Wave 5: Report (Sequential - Requires ALL previous results) # model: frontier
 
 Read `react-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field
-STEP 9 COMPLETED: [log result] # model: frontier
+STEP 10 COMPLETED: [log result] # model: frontier
 
 Save the final Markdown report to `./reports/react_audit.md`
-STEP 10 COMPLETED: Report exported # model: frontier
+STEP 11 COMPLETED: Report exported # model: frontier

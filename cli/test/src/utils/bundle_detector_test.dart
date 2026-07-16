@@ -260,6 +260,37 @@ rules:
       final r = (await _detector().detectBundles('flutter')).single;
       expect(r.templatePath, isNull);
     });
+
+    test(
+        'multiple templates: prefers report-template.md regardless of '
+        'filesystem listing order', () async {
+      final base = _bundleDir('flutter-health-audit');
+      _writeFile(p.join(base, 'SKILL.md'), '# Plan');
+      _writeFile(p.join(base, 'references', 'a.md'), '# A\ntext');
+      // Alphabetically first, but not the canonical name.
+      _writeFile(p.join(base, 'assets', 'aaa-other.md'), '# Other');
+      _writeFile(p.join(base, 'assets', 'report-template.md'), '# Template');
+      final r = (await _detector().detectBundles('flutter')).single;
+      expect(
+        r.templatePath,
+        'skills/flutter-health-audit/assets/report-template.md',
+      );
+    });
+
+    test(
+        'multiple templates without report-template.md: falls back to '
+        'alphabetical order deterministically', () async {
+      final base = _bundleDir('flutter-health-audit');
+      _writeFile(p.join(base, 'SKILL.md'), '# Plan');
+      _writeFile(p.join(base, 'references', 'a.md'), '# A\ntext');
+      _writeFile(p.join(base, 'assets', 'zzz-last.md'), '# Last');
+      _writeFile(p.join(base, 'assets', 'aaa-first.md'), '# First');
+      final r = (await _detector().detectBundles('flutter')).single;
+      expect(
+        r.templatePath,
+        'skills/flutter-health-audit/assets/aaa-first.md',
+      );
+    });
   });
 
   group('printReport', () {

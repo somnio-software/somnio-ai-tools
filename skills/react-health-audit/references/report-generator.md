@@ -11,12 +11,13 @@ assets/report-template.md.
 
 Apply the "React Project Health Audit" rule to generate the full
 report with:
-- 8 section scores (0-100 integer): Tech Stack, Architecture, State
+- 9 section scores (0-100 integer): Tech Stack, Architecture, State
   Management, Testing, Code Quality, Performance, Documentation
-  & Operations, CI/CD
-- Weighted overall score using: Tech Stack 0.20, Architecture 0.20,
-  State Management 0.15, Testing 0.15, Code Quality 0.15,
-  Performance 0.08, Documentation & Operations 0.035, CI/CD 0.035
+  & Operations, CI/CD, AI Harness & Adoption
+- Weighted overall score using: Tech Stack 0.18, Architecture 0.18,
+  State Management 0.135, Testing 0.135, Code Quality 0.135,
+  Performance 0.075, Documentation & Operations 0.03, CI/CD 0.03,
+  AI Harness & Adoption 0.10
 - ROUNDING RULE: Use standard mathematical rounding (0.5 rounds up).
   Do NOT apply subjective adjustments.
 - Important exclusions:
@@ -31,7 +32,7 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (15 sections in exact order):
+MANDATORY REPORT STRUCTURE (16 sections in exact order):
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -42,11 +43,12 @@ MANDATORY REPORT STRUCTURE (15 sections in exact order):
 8. Performance
 9. Documentation & Operations
 10. CI/CD (Configs Found in Repo)
-11. Additional Metrics
-12. Quality Index
-13. Risks & Opportunities
-14. Recommendations
-15. Appendix: Evidence Index
+11. AI Harness & Adoption
+12. Additional Metrics
+13. Quality Index
+14. Risks & Opportunities
+15. Recommendations
+16. Appendix: Evidence Index
 
 Integrate results from all previous analysis steps:
 - Node.js Version Alignment results
@@ -57,6 +59,7 @@ Integrate results from all previous analysis steps:
 - Code Quality Analysis results
 - State Management Analysis results
 - Documentation Analysis results
+- AI Harness & Adoption Analysis results
 - Coverage results from test-coverage step
 
 PERFORMANCE SECTION (Section 8):
@@ -145,9 +148,42 @@ Priority Recommendations:
 - Performance: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
 
-11. Additional Metrics:
+11. AI Harness & Adoption:
+Description: [One-sentence description of the state of the harness]
+Score: [Score]/100 ([Label])
+Maturity: [sin harness | harness básico | harness sólido | paved path]
+Coverage:
+- CLAUDE.md: [Status] — [Points]/14
+- Rules: [Status] — [Points]/10
+- Permissions: [Status] — [Points]/14
+- Hooks: [Status] — [Points]/16
+- Pre-push git hook: [Status] — [Points]/12
+- Agents: [Status] — [Points]/12
+- Commands / Skills: [Status] — [Points]/10
+- Advanced orchestration: [Status] — [Points]/6
+- Lifecycle & versioning: [Status] — [Points]/6
+- Total: [Points]/100
+Key Findings:
+- [Bullet point 1]
+- [Bullet point 2]
+- [Continue as needed]
+Evidence:
+- [Real file path or configuration reference, never invented]
+- [Continue as needed]
+Risks:
+- [Risk item 1]
+- [Continue as needed]
+Actions to Raise the Score:
+1. [+N] [Concrete how-to for this repo] -> dimension D, X/Y -> Y/Y.
+2. [Continue, sorted by points recovered descending]
+Counts & Metrics:
+- [Metric name]: [Value]
+- [Continue as needed]
+
+12. Additional Metrics:
 - Node.js version: [Version]
 - React version: [Version]
 - TypeScript version: [Version or Not used]
@@ -162,7 +198,7 @@ Priority Recommendations:
 - Rendering strategy: [CSR/SSR/SSG/ISR/Mixed]
 - Styling approach: [CSS Modules/Styled Components/Tailwind/Other]
 
-12. Quality Index:
+13. Quality Index:
 Section Summary with Scores:
 - Tech Stack: [Score]/100 ([Label])
 - Architecture: [Score]/100 ([Label])
@@ -172,20 +208,21 @@ Section Summary with Scores:
 - Performance: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD: [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 Overall Score: [Score]/100 ([Label])
 [One-sentence interpretation]
 
-13. Risks & Opportunities:
+14. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-14. Recommendations:
+15. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-15. Appendix: Evidence Index:
+16. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]

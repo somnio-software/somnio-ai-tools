@@ -91,6 +91,14 @@ class WorkflowStepEntry {
         // Single int: needs: 1
         return [needsValue - 1];
       }
+      // Unrecognized shape: fail loud rather than silently dropping the
+      // dependency edge (which would place this step in the same wave as the
+      // step it depends on).
+      throw FormatException(
+        'Step ${index + 1} (${map['file']}) has an invalid `needs` value: '
+        '"$needsValue". Valid forms: a list ([1, 3]), a single int (1), '
+        '"all", or "previous".',
+      );
     }
 
     // Backward compat: needs_previous: true → depends on previous step
@@ -170,10 +178,23 @@ class WorkflowContext {
   }
 
   /// Loads and parses a context.md file from disk.
+  ///
+  /// Returns null when the file is missing OR unparseable, so callers can
+  /// treat both as "no usable context" instead of crashing on a bad file.
+  /// TypeError is caught because the frontmatter casts throw an Error, not an
+  /// Exception, when a field has an unexpected shape.
   static WorkflowContext? loadFrom(String path) {
     final file = File(path);
     if (!file.existsSync()) return null;
-    return WorkflowContext.parse(file.readAsStringSync());
+    try {
+      return WorkflowContext.parse(file.readAsStringSync());
+    } on YamlException {
+      return null;
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
   }
 
   // ── Private ────────────────────────────────────────────────────────

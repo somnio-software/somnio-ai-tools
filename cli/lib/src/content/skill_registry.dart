@@ -239,6 +239,7 @@ class SkillRegistry {
           'parallel waves.',
       planRelativePath:
           'skills/workflow-builder/SKILL.md',
+      referencesRelativePath: 'skills/workflow-builder/references',
     ),
     WorkflowSkill(
       id: 'ship',
@@ -297,8 +298,8 @@ class SkillRegistry {
         'skills/dora-metrics/config',
         'skills/dora-metrics/agents',
         'skills/dora-metrics/assets',
-        'skills/dora-metrics/references',
       ],
+      referencesRelativePath: 'skills/dora-metrics/references',
     ),
   ];
 

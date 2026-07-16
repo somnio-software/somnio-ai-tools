@@ -79,6 +79,64 @@ void main() {
   tearDown(() => tmp.deleteSync(recursive: true));
 
   // ---------------------------------------------------------------------------
+  // loadPlanFrontmatter
+  // ---------------------------------------------------------------------------
+  group('loadPlanFrontmatter', () {
+    test('normalises a block-sequence value to the comma-separated form', () {
+      _bundle(
+        repoRoot: tmp.path,
+        planContent: '---\n'
+            'name: demo\n'
+            'description: A demo\n'
+            'allowed-tools:\n'
+            '  - Bash\n'
+            '  - Read\n'
+            '  - AskUserQuestion\n'
+            '---\n\n'
+            '# Demo',
+      );
+
+      final fm = loader.loadPlanFrontmatter('skills/demo-skill/SKILL.md');
+
+      // Keeping only String values would drop the list entirely and silently
+      // fall back to the installer's generic default, costing the skill tools
+      // its own plan calls.
+      expect(fm['allowed-tools'], 'Bash, Read, AskUserQuestion');
+    });
+
+    test('reads the real ship skill, whose allowed-tools is a block sequence',
+        () {
+      // Anchored on the shipped file rather than a fixture: this is the skill
+      // that regressed, and a fixture would not catch it drifting again.
+      final repoRoot = p.dirname(Directory.current.path);
+      final fm =
+          ContentLoader(repoRoot).loadPlanFrontmatter('skills/ship/SKILL.md');
+
+      expect(
+        fm['allowed-tools'],
+        contains('AskUserQuestion'),
+        reason: "ship's plan calls AskUserQuestion, so it must be declared",
+      );
+    });
+
+    test('keeps a plain string value unchanged', () {
+      _bundle(
+        repoRoot: tmp.path,
+        planContent: '---\n'
+            'name: demo\n'
+            'allowed-tools: Bash, Read\n'
+            '---\n\n'
+            '# Demo',
+      );
+
+      expect(
+        loader.loadPlanFrontmatter('skills/demo-skill/SKILL.md')['allowed-tools'],
+        'Bash, Read',
+      );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // loadPlan
   // ---------------------------------------------------------------------------
   group('loadPlan', () {

@@ -59,20 +59,30 @@ STEP 4 COMPLETED: [log result]
 Read `flutter-health-audit/references/code-quality.md` and follow ALL instructions in the prompt field # model: mid
 STEP 5 COMPLETED: [log result]
 
-## Wave 3: Documentation (Sequential) # model: cheap
+## Wave 3: State Management + Documentation (Parallelizable) # model: mid/cheap
+
+These steps are independent and can be executed in parallel if supported:
+
+Read `flutter-health-audit/references/state-management-analysis.md` and follow ALL instructions in the prompt field # model: mid
+STEP 6 COMPLETED: [log result]
 
 Read `flutter-health-audit/references/documentation-analysis.md` and follow ALL instructions in the prompt field # model: cheap
-STEP 6 COMPLETED: [log result]
+STEP 7 COMPLETED: [log result]
+
+## Step 8: AI Harness & Adoption (joins Wave 2 — Parallelizable, depends on no prior step) # model: mid
+
+Read `flutter-health-audit/references/harness-analysis.md` and follow ALL instructions in the prompt field # model: mid
+STEP 8 COMPLETED: [log result]
 
 ## Wave 4: Report (Sequential - Requires ALL previous results) # model: frontier
 
 Read `flutter-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field # model: frontier
-STEP 7 COMPLETED: [log result]
+STEP 9 COMPLETED: [log result]
 
 Save the final Markdown report to `./reports/flutter_audit.md` # model: frontier
-STEP 8 COMPLETED: Report exported
+STEP 10 COMPLETED: Report exported
 
-## Step 9: Optional Best Practices Check
+## Step 11: Optional Best Practices Check
 
 After completing the export, ask the user if they want to execute the Flutter
 Best Practices Check for micro-level code quality analysis.

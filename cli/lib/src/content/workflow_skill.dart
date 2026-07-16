@@ -12,6 +12,7 @@ class WorkflowSkill {
     required this.description,
     required this.planRelativePath,
     this.assetDirectories = const [],
+    this.referencesRelativePath,
   });
 
   /// Internal identifier.
@@ -38,5 +39,13 @@ class WorkflowSkill {
   /// the only install target that installs a directory able to hold
   /// non-markdown files alongside a skill. Empty for skills that are pure
   /// markdown instructions.
+  ///
+  /// For a `references/` directory of markdown files a skill's plan links
+  /// to, prefer [referencesRelativePath] instead — it installs across every
+  /// format (inline for flat-file targets), not just `skillDir`.
   final List<String> assetDirectories;
+
+  /// Directory of reference markdown files, relative to repo root.
+  /// Null when the skill is self-contained.
+  final String? referencesRelativePath;
 }

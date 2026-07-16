@@ -93,6 +93,7 @@ somnio run nh --agent gemini           # NestJS health audit with Gemini CLI
 somnio run sa --model opus             # Security audit with a specific model
 somnio run fh --skip-validation        # Skip project type check
 somnio run fh --no-preflight           # Send all steps to AI
+somnio run fh --step-timeout 45        # Per-step timeout of 45 minutes
 ```
 
 | Flag | Short | Description |
@@ -101,6 +102,7 @@ somnio run fh --no-preflight           # Send all steps to AI
 | `--model` | `-m` | Model to use (skips interactive selection) |
 | `--skip-validation` | | Skip project type check |
 | `--no-preflight` | | Skip pre-flight and send all steps to AI |
+| `--step-timeout` | | Per-step timeout in minutes (default: 30) |
 
 ### somnio install
 
@@ -109,7 +111,6 @@ Install skills to a specific agent or all agents at once.
 ```bash
 somnio install --agent claude   # Install to Claude Code only
 somnio install --all            # Install to all detected agents
-somnio install --force          # Overwrite existing files
 ```
 
 ### somnio add
@@ -173,6 +174,7 @@ Create, configure, and run custom workflows.
 ```bash
 somnio workflow plan <name>   # Create a new workflow
 somnio workflow run <name>    # Execute a workflow
+somnio workflow run <name> --step-timeout 45  # Per-step timeout of 45 minutes
 somnio workflow config        # Configure model assignments
 somnio workflow list          # List available workflows
 ```

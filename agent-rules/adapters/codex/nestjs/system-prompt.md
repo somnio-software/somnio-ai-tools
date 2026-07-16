@@ -153,10 +153,6 @@ Choose one approach and stick with it across the entire codebase.
 
 Regardless of approach, errors should be thrown with structured data.
 
-#### Good - Consistent, No Magic Strings
-
-#### Bad - Magic Strings
-
 ## Error File Organization
 
 ## Exception Filters

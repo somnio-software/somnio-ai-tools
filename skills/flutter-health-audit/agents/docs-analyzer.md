@@ -4,11 +4,11 @@ description: |
   Use this agent when analyzing technical documentation, README files, build instructions, environment setup documentation, and changelog presence for Flutter projects during a health audit.
 
   <example>
-  Context: The health audit reaches the documentation analysis step, the final analysis before report generation.
+  Context: The health audit reaches the documentation analysis step in Wave 3, alongside state management analysis.
   user: "Audit this Flutter project."
   assistant: "Now I will analyze the project documentation by reviewing the README for build instructions and environment setup, checking for sample.env.jsonc, and verifying changelog and onboarding documentation."
   <commentary>
-  Documentation analysis is the sixth and final analysis step in a Flutter health audit, assessing developer experience through documentation quality.
+  Documentation analysis runs in Wave 3 of a Flutter health audit, in parallel with state management analysis, assessing developer experience through documentation quality.
   </commentary>
   </example>
 

@@ -630,12 +630,15 @@ After completing ALL coverage analysis, you MUST save the coverage
 summary to a persistent artifact file. This is NON-NEGOTIABLE because
 the report generator depends on this file to extract coverage data.
 
-```bash
-mkdir -p reports/.artifacts/flutter_health
-```
+Write the coverage summary to the exact path your invoker gave you:
 
-Write the coverage summary to:
-  reports/.artifacts/flutter_health/step_00_test_coverage.md
+- Via `somnio run`: the step prompt names the path ("Save your
+  complete findings to: ..."). Use it verbatim.
+- Via in-session dispatch: use the path in this skill's Dispatch Table
+  in SKILL.md.
+
+Create the parent directory first (`mkdir -p` on the artifact file's
+directory). Never invent, shorten, or re-derive the path.
 
 The artifact file MUST contain AT MINIMUM these two mandatory sections
 at the very top of the file, before any other content:

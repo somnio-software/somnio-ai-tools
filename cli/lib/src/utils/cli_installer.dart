@@ -47,7 +47,11 @@ class CliInstaller {
   /// Check if npm is available on the system.
   Future<bool> isNpmAvailable() async {
     try {
-      final result = await Process.run('npm', ['--version']);
+      final result = await Process.run(
+        'npm',
+        ['--version'],
+        runInShell: true,
+      );
       return result.exitCode == 0;
     } catch (_) {
       return false;

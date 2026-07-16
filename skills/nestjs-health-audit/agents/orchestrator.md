@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A user asks to run the NestJS health audit in a Claude session using parallel subagents.
   user: "Run the NestJS health audit using the multi-agent approach."
-  assistant: "I will coordinate the audit across five waves: Wave 0 (env-setup-agent, sequential), Wave 1 (repo-analyzer + config-analyzer in parallel), Wave 2 (cicd-analyzer + testing-analyzer + code-quality-analyzer in parallel), Wave 3 (api-design-analyzer + data-layer-analyzer in parallel), Wave 4 (docs-analyzer, sequential), then Wave 5 (report-writer-agent). I validate each artifact exists before advancing."
+  assistant: "I will coordinate the audit across five waves: Wave 0 (env-setup-agent, sequential), Wave 1 (repo-analyzer + config-analyzer in parallel), Wave 2 (cicd-analyzer + testing-analyzer + code-quality-analyzer + harness-analyzer in parallel), Wave 3 (api-design-analyzer + data-layer-analyzer in parallel), Wave 4 (docs-analyzer, sequential), then Wave 5 (report-writer-agent). I validate each artifact exists before advancing."
   <commentary>
   The orchestrator never reads source code — it only dispatches subagents, checks artifact existence, and manages wave progression.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: All waves complete; the orchestrator hands off to report-writer-agent.
   user: "Run the NestJS health audit."
-  assistant: "All analysis waves complete. I am handing the following artifact manifest to report-writer-agent: step_00_env_setup.md, step_00_test_coverage.md, step_01_repository_inventory.md, step_02_config_analysis.md, step_03_cicd_analysis.md, step_04_testing_analysis.md, step_05_code_quality.md, step_06_api_design_analysis.md, step_07_data_layer_analysis.md, step_08_documentation_analysis.md. Report writer will produce reports/nestjs_audit.md."
+  assistant: "All analysis waves complete. I am handing the following artifact manifest to report-writer-agent: step_00_env_setup.md, step_00_test_coverage.md, step_01_repository_inventory.md, step_02_config_analysis.md, step_03_cicd_analysis.md, step_04_testing_analysis.md, step_05_code_quality.md, step_06_api_design_analysis.md, step_07_data_layer_analysis.md, step_08_documentation_analysis.md, step_09_harness_analysis.md. Report writer will produce reports/nestjs_audit.md."
   <commentary>
   The orchestrator assembles the artifact list and passes it explicitly — it does not read artifact content itself.
   </commentary>
@@ -84,6 +84,7 @@ Dispatch in parallel:
 - Agent A: "Read agents/cicd-analyzer.md and follow ALL instructions. Return the artifact path when complete."
 - Agent B: "Read agents/testing-analyzer.md and follow ALL instructions. Return the artifact path when complete."
 - Agent C: "Read agents/code-quality-analyzer.md and follow ALL instructions. Return the artifact path when complete."
+- Agent D: "Read agents/harness-analyzer.md and follow ALL instructions. Return the artifact path when complete."
 
 Validate:
 
@@ -92,6 +93,7 @@ Validate:
 | `reports/.artifacts/nestjs_health/step_03_cicd_analysis.md` | Retry cicd-analyzer once; log skip if still absent |
 | `reports/.artifacts/nestjs_health/step_04_testing_analysis.md` | Retry testing-analyzer once; log skip if still absent |
 | `reports/.artifacts/nestjs_health/step_05_code_quality.md` | Retry code-quality-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs_health/step_09_harness_analysis.md` | Retry harness-analyzer once; log skip if still absent |
 
 ### Wave 3 — Domain Analysis (Parallel)
 
@@ -135,6 +137,7 @@ step_05_code_quality.md: reports/.artifacts/nestjs_health/step_05_code_quality.m
 step_06_api_design_analysis.md: reports/.artifacts/nestjs_health/step_06_api_design_analysis.md [PRESENT|UNAVAILABLE]
 step_07_data_layer_analysis.md: reports/.artifacts/nestjs_health/step_07_data_layer_analysis.md [PRESENT|UNAVAILABLE]
 step_08_documentation_analysis.md: reports/.artifacts/nestjs_health/step_08_documentation_analysis.md [PRESENT|UNAVAILABLE]
+step_09_harness_analysis.md: reports/.artifacts/nestjs_health/step_09_harness_analysis.md [PRESENT|UNAVAILABLE]
 ```
 
 Dispatch report-writer-agent with the manifest:

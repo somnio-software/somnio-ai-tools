@@ -102,7 +102,7 @@ When running from the terminal:
 6. **Execute each step** — spawn a fresh AI CLI process with the step prompt, save output to `./reports/.artifacts/`
 7. **Generate report** — combine artifacts into final report at `./reports/`
 
-Each step runs in a **fresh AI context** to avoid context window exhaustion on large audits. This is a deliberate design choice — 13-step audits would exceed context limits in a single session.
+Each step runs in a **fresh AI context** to avoid context window exhaustion on large audits. This is a deliberate design choice — audits of up to 14 steps (flutter: 12, nestjs/python/react: 14) would exceed context limits in a single session.
 
 ---
 
@@ -132,7 +132,7 @@ This means:
 
 ## Key Design Decisions
 
-**Fresh AI context per step** — Multi-step audits (13 steps for health audits) would overflow a single context window. Running each step in a fresh process ensures consistent quality and avoids degradation as context fills.
+**Fresh AI context per step** — Multi-step audits (12–14 steps for health audits: flutter 12, nestjs/python/react 14) would overflow a single context window. Running each step in a fresh process ensures consistent quality and avoids degradation as context fills.
 
 **Data-driven agent registry** — Instead of if/else chains for each agent, a single `AgentConfig` model captures all agent differences (binary name, prompt style, install format, models). This makes the codebase scale linearly as new agents are added.
 

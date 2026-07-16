@@ -56,31 +56,35 @@ STEP 4 COMPLETED: [log result]
 Read `python-health-audit/references/code-quality.md` and follow ALL instructions in the prompt field
 STEP 5 COMPLETED: [log result]
 
+<!-- model: mid -->
+Read `python-health-audit/references/harness-analysis.md` and follow ALL instructions in the prompt field
+STEP 6 COMPLETED: [log result]
+
 ## Wave 3: Domain Analysis (Parallelizable)
 <!-- model: mid -->
 
 These steps are independent and can be executed in parallel if supported:
 
 Read `python-health-audit/references/api-design-analysis.md` and follow ALL instructions in the prompt field
-STEP 6 COMPLETED: [log result]
+STEP 7 COMPLETED: [log result]
 
 Read `python-health-audit/references/data-layer-analysis.md` and follow ALL instructions in the prompt field
-STEP 7 COMPLETED: [log result]
+STEP 8 COMPLETED: [log result]
 
 ## Wave 4: Documentation (Sequential)
 <!-- model: cheap -->
 
 Read `python-health-audit/references/documentation-analysis.md` and follow ALL instructions in the prompt field
-STEP 8 COMPLETED: [log result]
+STEP 9 COMPLETED: [log result]
 
 ## Wave 5: Report (Sequential - Requires ALL previous results)
 <!-- model: frontier -->
 
 Read `python-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field
-STEP 9 COMPLETED: [log result]
+STEP 10 COMPLETED: [log result]
 
 Save the final Markdown report to `./reports/python_audit.md`
-STEP 10 COMPLETED: Report exported
+STEP 11 COMPLETED: Report exported
 
 ---
 

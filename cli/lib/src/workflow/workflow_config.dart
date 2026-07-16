@@ -64,11 +64,22 @@ class WorkflowConfig {
   // ── File I/O ───────────────────────────────────────────────────────
 
   /// Reads a config file from disk.
+  ///
+  /// Returns null when the file is missing OR unparseable, so callers can
+  /// treat both as "no usable config" instead of crashing on a bad file.
+  /// TypeError is caught because the JSON casts throw an Error, not an
+  /// Exception, when a field has an unexpected shape.
   static WorkflowConfig? loadFrom(String path) {
     final file = File(path);
     if (!file.existsSync()) return null;
-    final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
-    return WorkflowConfig.fromJson(json);
+    try {
+      final json = jsonDecode(file.readAsStringSync()) as Map<String, dynamic>;
+      return WorkflowConfig.fromJson(json);
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
   }
 
   /// Writes this config to disk as formatted JSON.

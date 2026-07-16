@@ -10,6 +10,7 @@ class InstallResult {
     required this.ruleCount,
     required this.targetDirectory,
     this.skippedCount = 0,
+    this.failedCount = 0,
   });
 
   final int skillCount;
@@ -17,8 +18,19 @@ class InstallResult {
   final String targetDirectory;
 
   /// Number of bundles skipped (e.g., missing workflow files).
+  ///
+  /// A skip is a normal outcome, not an error — see [failedCount].
   final int skippedCount;
+
+  /// Number of bundles that threw while installing.
+  ///
+  /// Callers map a non-zero count to a non-zero process exit code so CI can
+  /// tell a broken install from a clean one.
+  final int failedCount;
 }
+
+/// How many workflow skills were written, and how many threw.
+typedef WorkflowInstallCounts = ({int installed, int failed});
 
 /// Abstract base class for agent-specific installers.
 abstract class Installer {
@@ -29,12 +41,9 @@ abstract class Installer {
 
   /// Installs all skill bundles to the agent's global directory.
   ///
-  /// [bundles] - The skill bundles to install.
-  /// [force] - If true, overwrite existing files without prompting.
-  Future<InstallResult> install({
-    required List<SkillBundle> bundles,
-    bool force = false,
-  });
+  /// Existing somnio-owned files are always overwritten; installs are
+  /// idempotent and never prompt.
+  Future<InstallResult> install({required List<SkillBundle> bundles});
 
   /// Checks if skills are already installed.
   bool isInstalled();

@@ -114,7 +114,7 @@ class BundleDetector {
     var validRuleCount = 0;
 
     if (Directory(refsDir).existsSync()) {
-      refsRelPath = p.relative(refsDir, from: repoRoot);
+      refsRelPath = _toPosixRelative(refsDir);
       final ruleValidation = await _validateReferences(refsDir);
       ruleCount = ruleValidation.total;
       validRuleCount = ruleValidation.valid;
@@ -135,18 +135,23 @@ class BundleDetector {
     return BundleDetectionResult(
       bundleType: bundleType,
       subdirectory: subdirectory,
-      planFile: planFile != null
-          ? p.relative(planFile, from: repoRoot)
-          : null,
+      planFile: planFile != null ? _toPosixRelative(planFile) : null,
       rulesDirectory: refsRelPath,
       ruleCount: ruleCount,
       validRuleCount: validRuleCount,
-      templatePath: templatePath != null
-          ? p.relative(templatePath, from: repoRoot)
-          : null,
+      templatePath:
+          templatePath != null ? _toPosixRelative(templatePath) : null,
       errors: errors,
     );
   }
+
+  /// Relative path from [repoRoot], always POSIX-separated.
+  ///
+  /// These values are emitted into `skill_registry.dart`, which is checked-in
+  /// source consumed on every platform, so a Windows `\` separator would be
+  /// wrong there even if the generated string literal survived escaping.
+  String _toPosixRelative(String path) =>
+      p.posix.joinAll(p.split(p.relative(path, from: repoRoot)));
 
   /// Finds a SKILL.md file in the bundle directory.
   String? _findPlanFile(String baseDir, String bundleType) {
@@ -231,10 +236,18 @@ class BundleDetector {
         .listSync()
         .whereType<File>()
         .where((f) => f.path.endsWith('.md'))
-        .toList();
+        .toList()
+      ..sort((a, b) => a.path.compareTo(b.path));
 
     if (templates.isEmpty) return null;
-    return templates.first.path;
+    // Prefer the canonical filename used everywhere else in the repo,
+    // falling back to alphabetical order for deterministic selection.
+    return templates
+        .firstWhere(
+          (f) => p.basename(f.path) == 'report-template.md',
+          orElse: () => templates.first,
+        )
+        .path;
   }
 
   /// Prints a detection report for the given results.

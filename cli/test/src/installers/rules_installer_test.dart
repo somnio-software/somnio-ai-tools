@@ -248,24 +248,129 @@ void main() {
       );
     });
 
-    test('deletes an existing stack rules dir before re-copying', () {
+    test('removes rules a previous somnio install wrote but keeps user files',
+        () {
       seedStack('react');
       final projectDir = Directory(p.join(tmp.path, 'proj'))
         ..createSync(recursive: true);
       final target = p.join(projectDir.path, 'CLAUDE.md');
-      // Pre-existing stale file under .claude/rules/react/
-      _writeFile(projectDir.path, '.claude/rules/react/stale.md', 'stale');
+      final stackDir = p.join(projectDir.path, '.claude', 'rules', 'react');
+
+      installer.install(rule, target, const ['react']);
+      // Dropped upstream, replaced by a renamed rule.
+      File(p.join(repoRoot, 'adapters/claude/react/rules/core.md')).deleteSync();
+      _writeFile(repoRoot, 'adapters/claude/react/rules/testing.md', 'testing');
+      // The user's own file, added after the first install.
+      _writeFile(stackDir, 'my-notes.md', 'mine');
 
       installer.install(rule, target, const ['react']);
 
-      expect(
-        File(p.join(projectDir.path, '.claude', 'rules', 'react', 'stale.md'))
-            .existsSync(),
-        isFalse,
+      expect(File(p.join(stackDir, 'core.md')).existsSync(), isFalse,
+          reason: 'a rule somnio installed and then dropped must be removed');
+      expect(File(p.join(stackDir, 'testing.md')).existsSync(), isTrue);
+      expect(File(p.join(stackDir, 'my-notes.md')).readAsStringSync(), 'mine',
+          reason: 'user-authored files must survive a reinstall');
+    });
+
+    test('does not delete pre-existing user files on a first install', () {
+      seedStack('flutter');
+      final projectDir = Directory(p.join(tmp.path, 'proj'))
+        ..createSync(recursive: true);
+      final target = p.join(projectDir.path, 'CLAUDE.md');
+      final stackDir = p.join(projectDir.path, '.claude', 'rules', 'flutter');
+      // Predates any somnio install, so no manifest lists it.
+      _writeFile(stackDir, 'user-authored.md', 'keep');
+
+      installer.install(rule, target, const ['flutter']);
+
+      expect(File(p.join(stackDir, 'user-authored.md')).readAsStringSync(),
+          'keep');
+      expect(File(p.join(stackDir, 'core.md')).existsSync(), isTrue);
+    });
+
+    test('removeManifestFiles deletes only manifest-listed files', () {
+      seedStack('nestjs');
+      final projectDir = Directory(p.join(tmp.path, 'proj'))
+        ..createSync(recursive: true);
+      final target = p.join(projectDir.path, 'CLAUDE.md');
+      final stackDir = p.join(projectDir.path, '.claude', 'rules', 'nestjs');
+
+      installer.install(rule, target, const ['nestjs']);
+      _writeFile(stackDir, 'my-notes.md', 'mine');
+
+      final removed = RulesInstaller.removeManifestFiles(Directory(stackDir));
+
+      expect(removed, isTrue);
+      expect(File(p.join(stackDir, 'core.md')).existsSync(), isFalse);
+      expect(File(p.join(stackDir, 'my-notes.md')).existsSync(), isTrue);
+    });
+
+    test('removeManifestFiles is a no-op without a manifest', () {
+      final stackDir = Directory(p.join(tmp.path, '.claude', 'rules', 'react'));
+      _writeFile(stackDir.path, 'user-authored.md', 'keep');
+
+      final removed = RulesInstaller.removeManifestFiles(stackDir);
+
+      expect(removed, isFalse);
+      expect(File(p.join(stackDir.path, 'user-authored.md')).existsSync(),
+          isTrue);
+    });
+
+    test(
+        'removeKnownAdapterFiles deletes only files the adapter would have '
+        'installed, keeping user files', () {
+      seedStack('django');
+      final stackDir = Directory(p.join(tmp.path, '.claude', 'rules', 'django'));
+      _writeFile(stackDir.path, 'core.md', 'django core');
+      _writeFile(stackDir.path, 'my-notes.md', 'mine');
+
+      final removed = RulesInstaller.removeKnownAdapterFiles(
+        stackDir,
+        repoRoot,
+        'adapters/claude',
+        'django',
       );
+
+      expect(removed, isTrue);
+      expect(File(p.join(stackDir.path, 'core.md')).existsSync(), isFalse);
       expect(
-        File(p.join(projectDir.path, '.claude', 'rules', 'react', 'core.md'))
-            .existsSync(),
+        File(p.join(stackDir.path, 'my-notes.md')).existsSync(),
+        isTrue,
+      );
+    });
+
+    test('removeKnownAdapterFiles is a no-op when the stack dir is absent',
+        () {
+      seedStack('flutter');
+      final stackDir =
+          Directory(p.join(tmp.path, 'nonexistent', 'rules', 'flutter'));
+
+      final removed = RulesInstaller.removeKnownAdapterFiles(
+        stackDir,
+        repoRoot,
+        'adapters/claude',
+        'flutter',
+      );
+
+      expect(removed, isFalse);
+    });
+
+    test(
+        'removeKnownAdapterFiles is a no-op when the adapter rules dir no '
+        'longer exists upstream', () {
+      final stackDir = Directory(p.join(tmp.path, '.claude', 'rules', 'react'));
+      _writeFile(stackDir.path, 'user-authored.md', 'keep');
+
+      final removed = RulesInstaller.removeKnownAdapterFiles(
+        stackDir,
+        repoRoot,
+        'adapters/claude',
+        'react',
+      );
+
+      expect(removed, isFalse);
+      expect(
+        File(p.join(stackDir.path, 'user-authored.md')).existsSync(),
         isTrue,
       );
     });

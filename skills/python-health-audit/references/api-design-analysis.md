@@ -5,7 +5,7 @@
 ---
 
 Goal: Analyze API design focusing on clarity, consistency, and
-production-ready patterns. This is a 0.20-weight pillar.
+production-ready patterns. This is a 0.18-weight pillar.
 
 IMPORTANT: Apply REASONABLE production standards. The bar is
 consistency and correctness, not perfection. A well-structured

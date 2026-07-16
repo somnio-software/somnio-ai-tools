@@ -60,6 +60,8 @@ class PackageResolver {
   }
 
   bool _validateRepoRoot(String path) {
-    return Directory(p.join(path, 'skills')).existsSync();
+    return Directory(p.join(path, 'skills')).existsSync() &&
+        Directory(p.join(path, 'agent-rules')).existsSync() &&
+        File(p.join(path, 'cli', 'pubspec.yaml')).existsSync();
   }
 }

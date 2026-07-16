@@ -66,6 +66,61 @@ class ContentLoader {
     return content.trimLeft();
   }
 
+  /// Parses the YAML frontmatter of an authored SKILL.md into scalar strings.
+  ///
+  /// [planRelativePath] is relative to [repoRoot]. Returns an empty map when
+  /// the file is missing, has no frontmatter, or the frontmatter cannot be
+  /// parsed.
+  ///
+  /// Values may be multi-line: a folded (`>-`) block is collapsed by the YAML
+  /// loader, but a literal (`|`) block keeps its newlines, and
+  /// `skills/optimize-claude-config/SKILL.md` authors its description that way.
+  /// Callers that re-emit a value must handle that themselves — see
+  /// `foldYamlBlock` for YAML frontmatter and the `markdown` branch of
+  /// `AgentInstaller` for a blockquote.
+  ///
+  /// Deliberately separate from [loadPlan], which strips the frontmatter from
+  /// the body it returns so callers that re-emit their own header do not
+  /// produce two blocks. Callers that want the authored `description` /
+  /// `allowed-tools` — which carry the trigger phrases that drive skill
+  /// auto-activation — read them from here.
+  ///
+  /// The closing delimiter is anchored to `\n---` rather than the first bare
+  /// `---`, so a `---` inside a folded description cannot terminate it early.
+  Map<String, String> loadPlanFrontmatter(String planRelativePath) {
+    final file = File(p.join(repoRoot, planRelativePath));
+    if (!file.existsSync()) return {};
+    final content = file.readAsStringSync();
+    if (!content.startsWith('---')) return {};
+    final endIndex = content.indexOf('\n---', 3);
+    if (endIndex == -1) return {};
+    try {
+      final doc = loadYaml(content.substring(3, endIndex));
+      if (doc is! YamlMap) return {};
+      final out = <String, String>{};
+      for (final entry in doc.entries) {
+        final v = entry.value;
+        if (v is String) {
+          out['${entry.key}'] = v.trim();
+        } else if (v is YamlList) {
+          // A block sequence is an equally valid way to author a list-valued
+          // key — `skills/ship/SKILL.md` writes `allowed-tools` that way.
+          // Keeping only String values would drop it and silently fall back to
+          // the generic default, costing the skill tools its own plan calls.
+          // Normalise to the comma-separated form the emitters expect.
+          final items = v
+              .whereType<String>()
+              .map((s) => s.trim())
+              .where((s) => s.isNotEmpty);
+          if (items.isNotEmpty) out['${entry.key}'] = items.join(', ');
+        }
+      }
+      return out;
+    } catch (_) {
+      return {};
+    }
+  }
+
   /// Parses all reference files from the references/ directory of a bundle.
   ///
   /// Supports both Markdown (.md) reference files and legacy YAML (.yaml)
@@ -143,9 +198,11 @@ class ContentLoader {
     return file.readAsStringSync();
   }
 
-  /// Lists all files in the references directory including assets subdirectory.
+  /// Recursively lists every file under the bundle's references directory.
   ///
-  /// Returns paths relative to the references directory.
+  /// Returns paths relative to that directory. Note this covers `references/`
+  /// only: a bundle's `assets/` (and its report template) is a sibling of
+  /// references/, not a child, so it is never listed here — use [loadTemplate].
   List<String> listAllRuleFiles(SkillBundle bundle) {
     final rulesDir = Directory(p.join(repoRoot, bundle.rulesDirectory));
     if (!rulesDir.existsSync()) return [];

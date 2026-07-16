@@ -32,9 +32,9 @@ The report MUST contain exactly these 16 sections in this order:
 6. Data Layer
 7. Testing
 8. Code Quality (Linter & Warnings)
-9. Security
-10. Documentation & Operations
-11. CI/CD (Configs Found in Repo)
+9. Documentation & Operations
+10. CI/CD (Configs Found in Repo)
+11. AI Harness & Adoption
 12. Additional Metrics
 13. Quality Index
 14. Risks & Opportunities
@@ -109,10 +109,33 @@ Priority Recommendations:
 - Data Layer: [Score]/100 ([Label])
 - Testing: [Score]/100 ([Label])
 - Code Quality (Linter & Warnings): [Score]/100 ([Label])
-- Security: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
+
+11. AI Harness & Adoption:
+Description: [One-sentence description of the harness's state]
+Score: [Score]/100 ([Label])
+Maturity: [sin harness | harness básico | harness sólido | paved path]
+Coverage: one row per rubric dimension (CLAUDE.md, Rules, Permissions,
+Hooks, Pre-push git hook, Agents, Commands / Skills, Advanced
+orchestration, Lifecycle & versioning) plus a bold Total row
+Key Findings:
+- [Finding 1]
+- [Continue as needed]
+Evidence:
+- [File path or configuration reference]
+- [Continue as needed]
+Risks:
+- [Risk item 1]
+- [Continue as needed]
+Actions to Raise the Score:
+1. [+N] [Concrete how-to] -> dimension D, X/Y -> Y/Y.
+2. [Continue, sorted by points recovered descending]
+Counts & Metrics:
+- [Metric name]: [Value]
+- [Continue as needed]
 
 12. Additional Metrics:
 - Python version: [Version]
@@ -138,9 +161,9 @@ Section Summary with Scores:
 - Data Layer: [Score]/100 ([Label])
 - Testing: [Score]/100 ([Label])
 - Code Quality: [Score]/100 ([Label])
-- Security: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD: [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 Overall Score: [Score]/100 ([Label])
 [One-sentence interpretation]
 

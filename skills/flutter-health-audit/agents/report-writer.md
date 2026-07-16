@@ -1,12 +1,12 @@
 ---
 name: report-writer
 description: |
-  Use this agent as the final step in a Flutter Project Health Audit. It reads ALL analysis artifacts produced by the preceding waves, plus `assets/report-template.md` and `references/report-format-enforcer.md`, computes the eight weighted section scores and the overall score, enforces the mandatory 15-section structure, and writes the single user-facing report to `reports/flutter_audit.md`. It never re-reads raw source files — it operates on compact artifacts only.
+  Use this agent as the final step in a Flutter Project Health Audit. It reads ALL analysis artifacts produced by the preceding waves, plus `assets/report-template.md` and `references/report-format-enforcer.md`, computes the nine weighted section scores and the overall score, enforces the mandatory 16-section structure, and writes the single user-facing report to `reports/flutter_audit.md`. It never re-reads raw source files — it operates on compact artifacts only.
 
   <example>
   Context: All analysis waves are complete and the orchestrator has handed the artifact manifest to the report-writer.
   user: "Generate the Flutter health audit report."
-  assistant: "I will read all step artifacts from reports/.artifacts/flutter_health/, compute the eight section scores using the weighted formula from references/report-generator.md (Tech Stack 0.20, Architecture 0.20, State Management 0.20, Repositories & Data Layer 0.11, Testing 0.11, Code Quality 0.11, Documentation & Operations 0.035, CI/CD 0.035), enforce the 15-section structure from references/report-format-enforcer.md, and write the final report to reports/flutter_audit.md."
+  assistant: "I will read all step artifacts from reports/.artifacts/flutter_health/, compute the nine section scores using the weighted formula from references/report-generator.md (Tech Stack 0.18, Architecture 0.18, State Management 0.18, Repositories & Data Layer 0.10, Testing 0.10, Code Quality 0.10, Documentation & Operations 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), enforce the 16-section structure from references/report-format-enforcer.md, and write the final report to reports/flutter_audit.md."
   <commentary>
   The report-writer is always the last agent. It holds all artifacts simultaneously to reconcile cross-section scores and produce the prioritized recommendations.
   </commentary>
@@ -24,7 +24,7 @@ description: |
   <example>
   Context: An architect wants to understand how the overall score is calculated.
   user: "How is the overall score computed?"
-  assistant: "The overall score is: round( Tech_Stack×0.20 + Architecture×0.20 + State_Mgmt×0.20 + Repos_Data×0.11 + Testing×0.11 + Code_Quality×0.11 + Docs_Ops×0.035 + CICD×0.035 ). Standard mathematical rounding applies (0.5 rounds up). Labels: 85-100=Strong, 70-84=Fair, 0-69=Weak."
+  assistant: "The overall score is: round( Tech_Stack×0.18 + Architecture×0.18 + State_Mgmt×0.18 + Repos_Data×0.10 + Testing×0.10 + Code_Quality×0.10 + Docs_Ops×0.03 + CICD×0.03 + Harness×0.10 ). Standard mathematical rounding applies (0.5 rounds up). Labels: 85-100=Strong, 70-84=Fair, 0-69=Weak."
   <commentary>
   The exact weights and formula come from references/report-generator.md. The report-writer reproduces them faithfully without modification.
   </commentary>
@@ -56,23 +56,26 @@ Read ALL of the following artifacts (read only what exists; handle missing files
 - `reports/.artifacts/flutter_health/step_04_testing_analysis.md`
 - `reports/.artifacts/flutter_health/step_05_code_quality.md`
 - `reports/.artifacts/flutter_health/step_06_documentation_analysis.md`
+- `reports/.artifacts/flutter_health/step_07_harness_analysis.md`
+- `reports/.artifacts/flutter_health/step_08_state_management_analysis.md`
 
 Do NOT re-read any raw source files from the project under audit.
 
 ## Scoring
 
-Compute eight section scores (0–100 integers) from the artifact evidence, then compute the overall score using the exact weighted formula from `references/report-generator.md`:
+Compute nine section scores (0–100 integers) from the artifact evidence, then compute the overall score using the exact weighted formula from `references/report-generator.md`:
 
 ```
 overall_score = round(
-  Tech_Stack       × 0.20 +
-  Architecture     × 0.20 +
-  State_Mgmt       × 0.20 +
-  Repos_Data_Layer × 0.11 +
-  Testing          × 0.11 +
-  Code_Quality     × 0.11 +
-  Docs_Ops         × 0.035 +
-  CICD             × 0.035
+  Tech_Stack       × 0.18 +
+  Architecture     × 0.18 +
+  State_Mgmt       × 0.18 +
+  Repos_Data_Layer × 0.10 +
+  Testing          × 0.10 +
+  Code_Quality     × 0.10 +
+  Docs_Ops         × 0.03 +
+  CICD             × 0.03 +
+  Harness          × 0.10
 )
 ```
 
@@ -84,7 +87,7 @@ Labels: 85–100 = Strong, 70–84 = Fair, 0–69 = Weak. Standard mathematical 
 
 Create the directory first: `mkdir -p reports`
 
-The report MUST contain all 15 sections in the exact order specified by `references/report-format-enforcer.md`. Section 7 (Testing) MUST include the `Code Coverage:` and `Coverage Breakdown:` lines copied VERBATIM from `reports/.artifacts/flutter_health/step_00_test_coverage.md`.
+The report MUST contain all 16 sections in the exact order specified by `references/report-format-enforcer.md`. Section 7 (Testing) MUST include the `Code Coverage:` and `Coverage Breakdown:` lines copied VERBATIM from `reports/.artifacts/flutter_health/step_00_test_coverage.md`.
 
 After the final section, append the mandatory metadata block as specified in `SKILL.md`:
 
@@ -102,7 +105,7 @@ To resolve the source and version: look for `.claude-plugin/plugin.json` by trav
 ## Validation
 
 Before writing the report, verify:
-- All 15 sections are present and in order
+- All 16 sections are present and in order
 - All scores are integers with correct labels
 - The overall score matches the weighted formula
 - Section 7 contains verbatim coverage lines

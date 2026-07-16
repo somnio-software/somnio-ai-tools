@@ -65,10 +65,23 @@ class WorkflowStep {
   }
 
   /// Loads and parses a step file from disk.
+  ///
+  /// Returns null when the file is missing OR unparseable, so callers can
+  /// treat both as "no usable step" instead of crashing on a bad file.
+  /// TypeError is caught because the frontmatter casts throw an Error, not an
+  /// Exception, when a field has an unexpected shape.
   static WorkflowStep? loadFrom(String path) {
     final file = File(path);
     if (!file.existsSync()) return null;
-    return WorkflowStep.parse(file.readAsStringSync());
+    try {
+      return WorkflowStep.parse(file.readAsStringSync());
+    } on YamlException {
+      return null;
+    } on FormatException {
+      return null;
+    } on TypeError {
+      return null;
+    }
   }
 
   // ── Placeholder Resolution ─────────────────────────────────────────

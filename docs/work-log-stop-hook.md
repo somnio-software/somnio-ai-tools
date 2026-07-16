@@ -71,12 +71,6 @@ DATE=$(date '+%Y-%m-%d')
 LOG=~/.work-log/$DATE.md
 mkdir -p ~/.work-log
 
-# Debounce: skip if the log was written less than 5 seconds ago.
-# python3 is used for mtime because stat flags differ between macOS (-f %m) and Linux (-c %Y).
-LAST=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$LOG" 2>/dev/null || echo 0)
-AGE=$(( $(date +%s) - LAST ))
-[ "$AGE" -lt 5 ] && exit 0
-
 STDIN=$(cat)
 
 CWD=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("cwd",""))' 2>/dev/null || true)
@@ -87,11 +81,12 @@ BRANCH=$(cd "$CWD" && git rev-parse --abbrev-ref HEAD 2>/dev/null || echo 'no-gi
 # Log root repo + worktree so Clockify mapping works at the repo level.
 GIT_COMMON=$(cd "$CWD" && git rev-parse --git-common-dir 2>/dev/null || echo "")
 if [ -n "$GIT_COMMON" ]; then
-  # git rev-parse --git-common-dir returns a relative path (.git) for main checkouts.
+  # git rev-parse --git-common-dir returns a relative path (possibly with ..
+  # segments) for main checkouts, e.g. ../.git from a subdirectory.
   # Resolve to absolute before dirname/basename so ROOT_REPO is correct in both cases.
   case "$GIT_COMMON" in /*) ;; *) GIT_COMMON="$CWD/$GIT_COMMON" ;; esac
-  ROOT_REPO=$(basename "$(dirname "$GIT_COMMON")")
-  WORKTREE=$(basename "$CWD")
+  ROOT_REPO=$(basename "$(cd "$(dirname "$GIT_COMMON")" 2>/dev/null && pwd)")
+  WORKTREE=$(basename "$(cd "$CWD" && git rev-parse --show-toplevel 2>/dev/null || echo "$CWD")")
   if [ "$ROOT_REPO" = "$WORKTREE" ]; then
     PROJ="$ROOT_REPO"
   else
@@ -105,6 +100,17 @@ LAST_MSG=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); 
 
 # Skip trivially short turns (one-liners, empty responses) without a Haiku call.
 [ "${#LAST_MSG}" -lt 300 ] && exit 0
+
+# Debounce per session (falls back to cwd) so concurrent projects never block
+# each other. Stamped synchronously here: the daily log's own mtime is useless
+# as a key because the write happens later, in the background Haiku subprocess.
+SESSION=$(echo "$STDIN" | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("session_id",""))' 2>/dev/null || true)
+KEY=$(printf '%s' "${SESSION:-$CWD}" | shasum | awk '{print $1}')
+mkdir -p ~/.work-log/.debounce
+STAMP=~/.work-log/.debounce/$KEY
+LAST=$(python3 -c "import os,sys; print(int(os.path.getmtime(sys.argv[1])))" "$STAMP" 2>/dev/null || echo 0)
+[ $(( $(date +%s) - LAST )) -lt 5 ] && exit 0
+touch "$STAMP"
 
 GIT_STAT=$(cd "$CWD" && { git log --oneline -3 2>/dev/null; echo "---"; git diff --stat HEAD 2>/dev/null | head -5; } || true)
 
@@ -188,9 +194,9 @@ Parsing the JSONL transcript would add complexity and, for long-running sessions
 
 `WORK_LOG_CHILD=1` is set as an environment variable when spawning the Haiku subprocess. The subprocess's `claude -p` session also triggers the Stop hook when it finishes. The guard at the top of the script detects this variable and exits immediately, preventing an infinite loop.
 
-### 5-second debounce
+### Per-session 5-second debounce
 
-When multiple Claude sessions are running simultaneously and stop within the same second, they can race to write to the log. The debounce skips the hook if the log was written less than 5 seconds ago, which prevents duplicate entries for rapid back-and-forth while still allowing concurrent sessions to log within a few seconds of each other.
+The debounce is keyed per session (falling back to `cwd` when no `session_id` is available), not on the shared daily log file. A stamp file at `~/.work-log/.debounce/<sha of session/cwd>` is touched synchronously as soon as the key is known, and the hook skips if that stamp was touched less than 5 seconds ago. This prevents duplicate entries for rapid back-and-forth turns within the *same* session, while unrelated concurrent projects/sessions never block each other — the previous global per-day-file debounce could silently drop another project's entry just because it happened to write to the same day's log a few seconds earlier.
 
 `python3` is used to read the file mtime instead of `stat` because `stat` flag syntax differs between macOS (`-f %m`) and Linux (`-c %Y`). `python3 os.path.getmtime` works on both.
 

@@ -42,6 +42,7 @@
 | Performance | [XX]/100 | [Label] |
 | Documentation & Operations | [XX]/100 | [Label] |
 | CI/CD (Configs Found in Repo) | [XX]/100 | [Label] |
+| AI Harness & Adoption | [XX]/100 | [Label] |
 | **Overall** | **[XX]/100** | **[Label]** |
 
 > **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
@@ -281,7 +282,52 @@
 
 ---
 
-## 11. Additional Metrics
+## 11. AI Harness & Adoption
+
+**Description:** [One-sentence description of the state of the harness]
+
+**Score:** [XX]/100 ([Label])
+
+**Maturity:** [sin harness | harness básico | harness sólido | paved path]
+
+### Coverage
+| Dimension | Status | Points |
+|---|---|---|
+| CLAUDE.md | [Status] | [XX]/14 |
+| Rules | [Status] | [XX]/10 |
+| Permissions | [Status] | [XX]/14 |
+| Hooks | [Status] | [XX]/16 |
+| Pre-push git hook | [Status] | [XX]/12 |
+| Agents | [Status] | [XX]/12 |
+| Commands / Skills | [Status] | [XX]/10 |
+| Advanced orchestration | [Status] | [XX]/6 |
+| Lifecycle & versioning | [Status] | [XX]/6 |
+| **Total** | | **[XX]/100** |
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [Real file path or configuration reference, never invented]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Actions to Raise the Score
+1. **[+N]** [Concrete how-to for this repo]. → dimension D, X/Y → Y/Y.
+2. [Continue, sorted by points recovered descending]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 12. Additional Metrics
 
 - **Framework:** [React/Next.js/Remix/Vite] version [X.Y.Z]
 - **State management detected:** [Pattern]
@@ -292,7 +338,7 @@
 
 ---
 
-## 12. Quality Index
+## 13. Quality Index
 
 | Section | Score | Label |
 |---------|-------|-------|
@@ -304,13 +350,14 @@
 | Performance | [XX]/100 | [Label] |
 | Documentation & Operations | [XX]/100 | [Label] |
 | CI/CD | [XX]/100 | [Label] |
+| AI Harness & Adoption | [XX]/100 | [Label] |
 | **Overall** | **[XX]/100** | **[Label]** |
 
 [One-sentence interpretation of the overall score]
 
 ---
 
-## 13. Risks & Opportunities
+## 14. Risks & Opportunities
 
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
@@ -320,7 +367,7 @@
 
 ---
 
-## 14. Recommendations
+## 15. Recommendations
 
 1. **[Priority Level]:** [Recommendation 1]
 2. **[Priority Level]:** [Recommendation 2]
@@ -335,7 +382,7 @@
 
 ---
 
-## 15. Appendix: Evidence Index
+## 16. Appendix: Evidence Index
 
 **Tech Stack:**
 - [File path or config reference]
@@ -366,6 +413,10 @@
 - [Continue as needed]
 
 **CI/CD:**
+- [File path or config reference]
+- [Continue as needed]
+
+**AI Harness & Adoption:**
 - [File path or config reference]
 - [Continue as needed]
 

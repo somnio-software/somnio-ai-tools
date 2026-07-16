@@ -45,6 +45,7 @@
 | Code Quality (Linter & Warnings) | [Score]/100 | [Label] |
 | Documentation & Operations | [Score]/100 | [Label] |
 | CI/CD (Configs Found in Repo) | [Score]/100 | [Label] |
+| AI Harness & Adoption | [Score]/100 | [Label] |
 | **Overall** | **[Score]/100** | **[Label]** |
 
 > **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
@@ -291,7 +292,53 @@
 
 ---
 
-## 11. Additional Metrics
+## 11. AI Harness & Adoption
+
+**Description:** [One-sentence description of the AI harness state].
+
+**Score:** [Score]/100 ([Label])
+
+**Maturity:** [sin harness | harness básico | harness sólido | paved path]
+
+### Coverage
+| Dimension | Status | Points |
+|---|---|---|
+| CLAUDE.md | [Status] | [Score]/14 |
+| Rules | [Status] | [Score]/10 |
+| Permissions | [Status] | [Score]/14 |
+| Hooks | [Status] | [Score]/16 |
+| Pre-push git hook | [Status] | [Score]/12 |
+| Agents | [Status] | [Score]/12 |
+| Commands / Skills | [Status] | [Score]/10 |
+| Advanced orchestration | [Status] | [Score]/6 |
+| Lifecycle & versioning | [Status] | [Score]/6 |
+| **Total** | | **[Score]/100** |
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Actions to Raise the Score
+1. **[+N] [Action 1].** [Concrete how-to] → dimension D, X/Y → Y/Y.
+2. **[+N] [Action 2].** [Concrete how-to] → dimension D, X/Y → Y/Y.
+- [Continue as needed, sorted by points recovered descending]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 12. Additional Metrics
 
 - **Supported platforms:** [Platform list]
 - **Packages count:** [Count]
@@ -302,7 +349,7 @@
 
 ---
 
-## 12. Quality Index
+## 13. Quality Index
 
 | Section | Score | Label |
 |---------|-------|-------|
@@ -314,13 +361,14 @@
 | Code Quality | [Score]/100 | [Label] |
 | Documentation & Operations | [Score]/100 | [Label] |
 | CI/CD | [Score]/100 | [Label] |
+| AI Harness & Adoption | [Score]/100 | [Label] |
 | **Overall** | **[Score]/100** | **[Label]** |
 
 [One-sentence interpretation of the overall score]
 
 ---
 
-## 13. Risks & Opportunities
+## 14. Risks & Opportunities
 
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
@@ -333,7 +381,7 @@
 
 ---
 
-## 14. Recommendations
+## 15. Recommendations
 
 1. **[Priority Level]:** [Recommendation 1]
 2. **[Priority Level]:** [Recommendation 2]
@@ -348,7 +396,7 @@
 
 ---
 
-## 15. Appendix: Evidence Index
+## 16. Appendix: Evidence Index
 
 **Tech Stack:**
 - [File path or config reference]
@@ -379,6 +427,10 @@
 - [Continue as needed]
 
 **CI/CD:**
+- [File path or config reference]
+- [Continue as needed]
+
+**AI Harness & Adoption:**
 - [File path or config reference]
 - [Continue as needed]
 

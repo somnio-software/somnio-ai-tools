@@ -39,10 +39,14 @@ class WorkflowStepExecutor {
   WorkflowStepExecutor({
     required this.agentConfig,
     required this.logger,
+    this.stepTimeout = defaultStepTimeout,
   });
 
   final AgentConfig agentConfig;
   final Logger logger;
+
+  /// Per-step deadline; a step that outlives it is killed and fails.
+  final Duration stepTimeout;
 
   /// Executes a single workflow step.
   ///
@@ -61,6 +65,15 @@ class WorkflowStepExecutor {
     final outputDir = File(outputPath).parent;
     if (!outputDir.existsSync()) {
       outputDir.createSync(recursive: true);
+    }
+
+    // Remove any output left by a previous run. The existence check after
+    // _runProcess is what proves the AI produced output for *this* invocation;
+    // a stale file from an earlier run would satisfy it silently and feed
+    // outdated content to every downstream {step_N_output} consumer.
+    final outputFile = File(outputPath);
+    if (outputFile.existsSync()) {
+      outputFile.deleteSync();
     }
 
     final prompt = _buildPrompt(
@@ -88,6 +101,16 @@ class WorkflowStepExecutor {
             : (!outputExists
                 ? 'Output not created: $outputPath'
                 : null),
+      );
+    } on StepTimeoutException catch (e) {
+      stopwatch.stop();
+      return WorkflowStepResult(
+        stepFile: stepFile,
+        success: false,
+        outputPath: outputPath,
+        durationSeconds: stopwatch.elapsed.inSeconds,
+        model: model,
+        errorMessage: e.message,
       );
     } catch (e) {
       stopwatch.stop();
@@ -118,22 +141,18 @@ class WorkflowStepExecutor {
         'mkdir -p $outputDir';
   }
 
+  /// Spawns the AI CLI for one step, bounded by [stepTimeout].
+  ///
+  /// Shares [runBoundedProcess] with the audit runner: a hung workflow step
+  /// would otherwise block the whole workflow forever.
+  ///
+  /// Throws [StepTimeoutException] if the process outlives [stepTimeout].
   Future<ProcessResult> _runProcess(String prompt, {String? model}) {
-    // Build args manually: skip outputFlags (no --output-format json)
-    // so the user sees the AI's output in real time.
-    final args = <String>[];
-    if (agentConfig.promptFlag != null) {
-      args.addAll([agentConfig.promptFlag!, prompt]);
-    }
-    args.addAll(agentConfig.autoApproveFlags);
-    if (model != null) {
-      args.addAll([agentConfig.modelFlag, model]);
-    }
-
-    return Process.run(
+    return runBoundedProcess(
       agentConfig.binary!,
-      args,
+      agentConfig.buildArgs(prompt, model: model),
       workingDirectory: Directory.current.path,
+      timeout: stepTimeout,
     );
   }
 

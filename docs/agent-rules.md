@@ -58,6 +58,22 @@ somnio rules status                           # check what is installed
 
 > Global installs wrap the content in `<!-- BEGIN/END SOMNIO RULES -->` markers so updates are idempotent and existing file content is preserved.
 
+### Tracking Installed Rules
+
+When you install rules for a stack (e.g. `somnio rules install --agent claude --project`), Somnio creates a manifest file to track which files it manages:
+
+```
+.claude/rules/<stack>/.somnio-manifest
+```
+
+This is a plain-text file listing the relative paths of all installed rule files, one per line (e.g., `architecture.md`, `testing/patterns.md`). It allows Somnio to safely uninstall only the files it wrote, without removing rules from earlier versions or user-authored files.
+
+#### Committing `.somnio-manifest`
+
+Since `.claude/rules/<stack>/*.md` and `CLAUDE.md` are shared team standards (meant to be committed to version control), the manifest will appear in `git status` on every install/uninstall cycle. **We recommend committing it.** The file contains no secrets, no machine-specific paths — only the list of relative filenames Somnio installed. Committing it ensures that teammates who clone the repo get the correct uninstall behavior immediately, without re-running `somnio rules install`.
+
+The only downside is a small amount of diff noise when the rule set changes upstream.
+
 ---
 
 ## Available Rules

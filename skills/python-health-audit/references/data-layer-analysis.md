@@ -6,7 +6,7 @@
 
 Goal: Analyze the data layer implementation focusing on clean,
 maintainable, and performant database access patterns.
-This is a 0.11-weight pillar.
+This is a 0.10-weight pillar.
 
 IMPORTANT: Apply REASONABLE production standards. Not every project
 needs a full repository pattern or Unit-of-Work abstraction. Focus on

@@ -113,14 +113,18 @@ class InteractiveInstall {
   }
 
   /// Installs [selection] to each agent in [agents].
+  ///
+  /// Returns [ExitCode.software] if any bundle or workflow skill failed to
+  /// install, so CI can tell a broken install from a clean one. Skips are not
+  /// failures — a transformer legitimately skips bundles it can't represent.
   Future<int> installToAgents(
     List<AgentConfig> agents,
     ContentLoader loader,
-    SkillSelection selection, {
-    bool force = false,
-  }) async {
+    SkillSelection selection,
+  ) async {
     final single = agents.length == 1;
     var totalSkills = 0;
+    var totalFailed = 0;
     var agentCount = 0;
     String? lastLocation;
 
@@ -133,14 +137,13 @@ class InteractiveInstall {
         agentConfig: agent,
       );
 
-      final result = await installer.install(
-        bundles: selection.audit,
-        force: force,
-      );
-      final wfCount = installer.installWorkflowSkills(selection.workflow);
-      final agentTotal = result.skillCount + wfCount;
+      final result = await installer.install(bundles: selection.audit);
+      final wf = installer.installWorkflowSkillsDetailed(selection.workflow);
+      final agentTotal = result.skillCount + wf.installed;
+      final agentFailed = result.failedCount + wf.failed;
 
       totalSkills += agentTotal;
+      totalFailed += agentFailed;
       if (agentTotal > 0) agentCount++;
       lastLocation = result.targetDirectory;
 
@@ -150,7 +153,16 @@ class InteractiveInstall {
       if (result.skippedCount > 0) {
         parts.add('${result.skippedCount} skipped');
       }
-      progress.complete('${agent.displayName}  ${parts.join(', ')}');
+      if (agentFailed > 0) {
+        parts.add('$agentFailed failed');
+      }
+
+      final line = '${agent.displayName}  ${parts.join(', ')}';
+      if (agentTotal == 0 && agentFailed > 0) {
+        progress.fail(line);
+      } else {
+        progress.complete(line);
+      }
     }
 
     _logger.info('');
@@ -164,6 +176,6 @@ class InteractiveInstall {
       _logger.info('No agents detected. Run "somnio setup" for guided setup.');
     }
 
-    return ExitCode.success.code;
+    return totalFailed > 0 ? ExitCode.software.code : ExitCode.success.code;
   }
 }

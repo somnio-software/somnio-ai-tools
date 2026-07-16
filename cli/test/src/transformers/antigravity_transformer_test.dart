@@ -17,6 +17,9 @@ SkillBundle _setupBundle({
   required String skillId,
   required String workflowContent,
   Map<String, String> ruleFiles = const {},
+  Map<String, String> agentFiles = const {},
+  String? templateContent,
+  bool writeWorkflowFile = true,
 }) {
   final workflowDir = Directory(
     p.join(repoRoot, 'skills', skillName, '.agent', 'workflows'),
@@ -24,8 +27,19 @@ SkillBundle _setupBundle({
   workflowDir.createSync(recursive: true);
 
   final workflowFileName = '${skillId}.md';
-  File(p.join(workflowDir.path, workflowFileName))
-      .writeAsStringSync(workflowContent);
+  if (writeWorkflowFile) {
+    File(p.join(workflowDir.path, workflowFileName))
+        .writeAsStringSync(workflowContent);
+  }
+
+  // assets/ is a sibling of references/, mirroring the real skills/ layout.
+  String? templatePath;
+  if (templateContent != null) {
+    templatePath = 'skills/$skillName/assets/report-template.md';
+    final templateFile = File(p.join(repoRoot, templatePath))
+      ..parent.createSync(recursive: true);
+    templateFile.writeAsStringSync(templateContent);
+  }
 
   final refsDir = Directory(
     p.join(repoRoot, 'skills', skillName, 'references'),
@@ -33,6 +47,17 @@ SkillBundle _setupBundle({
   refsDir.createSync(recursive: true);
   for (final entry in ruleFiles.entries) {
     File(p.join(refsDir.path, entry.key)).writeAsStringSync(entry.value);
+  }
+
+  // agents/ is another sibling of references/, mirroring the real layout.
+  String? agentsDirectory;
+  if (agentFiles.isNotEmpty) {
+    agentsDirectory = 'skills/$skillName/agents';
+    final agentsDir = Directory(p.join(repoRoot, agentsDirectory))
+      ..createSync(recursive: true);
+    for (final entry in agentFiles.entries) {
+      File(p.join(agentsDir.path, entry.key)).writeAsStringSync(entry.value);
+    }
   }
 
   File(p.join(repoRoot, 'skills', skillName, 'SKILL.md'))
@@ -47,6 +72,8 @@ SkillBundle _setupBundle({
     rulesDirectory: 'skills/$skillName/references',
     workflowPath:
         'skills/$skillName/.agent/workflows/$workflowFileName',
+    templatePath: templatePath,
+    agentsDirectory: agentsDirectory,
   );
 }
 
@@ -79,6 +106,88 @@ void main() {
 
       expect(output.skipped, isTrue);
       expect(output.files, isEmpty);
+    });
+
+    test('returns skipped:true when workflowPath points at a missing file', () {
+      final tmpDir = Directory.systemTemp.createTempSync('somnio_no_wf_');
+      addTearDown(() => tmpDir.deleteSync(recursive: true));
+
+      // workflowPath is set, but nothing was written to it. Installing an empty
+      // workflow would clobber a previously installed good one.
+      final bundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'flutter-health-audit',
+        skillId: 'flutter_health_audit',
+        workflowContent: '# Never written\n',
+        writeWorkflowFile: false,
+      );
+
+      final loader = ContentLoader(tmpDir.path);
+      final agent = AgentRegistry.findById('antigravity')!;
+
+      final output = transformer.transform(bundle, loader, agent);
+
+      expect(output.skipped, isTrue);
+      expect(output.files, isEmpty);
+    });
+
+    test('places the report template under somnio_rules/<skill>/assets/', () {
+      final tmpDir = Directory.systemTemp.createTempSync('somnio_asset_');
+      addTearDown(() => tmpDir.deleteSync(recursive: true));
+
+      final bundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'python-health-audit',
+        skillId: 'python_health_audit',
+        workflowContent: '# Python Health Audit\n',
+        templateContent: '# Report Template\n',
+      );
+
+      final loader = ContentLoader(tmpDir.path);
+      final agent = AgentRegistry.findById('antigravity')!;
+
+      final output = transformer.transform(bundle, loader, agent);
+
+      expect(
+        output.files['somnio_rules/python-health-audit/assets/'
+            'report-template.md'],
+        '# Report Template\n',
+      );
+    });
+
+    test('rewrites bare assets/report-template.md refs in copied references',
+        () {
+      final tmpDir = Directory.systemTemp.createTempSync('somnio_asset_ref_');
+      addTearDown(() => tmpDir.deleteSync(recursive: true));
+
+      final bundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'python-health-audit',
+        skillId: 'python_health_audit',
+        workflowContent: '# Python Health Audit\n',
+        ruleFiles: {
+          'report-generator.md':
+              'Use the structure from assets/report-template.md '
+              'and `assets/report-template.md`.',
+        },
+        templateContent: '# Report Template\n',
+      );
+
+      final loader = ContentLoader(tmpDir.path);
+      final agent = AgentRegistry.findById('antigravity')!;
+
+      final output = transformer.transform(bundle, loader, agent);
+
+      final generator = output.files[
+          'somnio_rules/python-health-audit/references/report-generator.md']!;
+      const installed = '~/.gemini/antigravity/somnio_rules/'
+          'python-health-audit/assets/report-template.md';
+      expect(generator, contains(installed));
+      expect(
+        generator.replaceAll(installed, ''),
+        isNot(contains('assets/report-template.md')),
+        reason: 'no bare template path may survive the rewrite',
+      );
     });
 
     test('places workflow under global_workflows/ when workflowPath is set',
@@ -131,6 +240,40 @@ void main() {
           'somnio_rules/nestjs-health-audit/references/architecture.md',
           'somnio_rules/nestjs-health-audit/references/testing.md',
         ]),
+      );
+    });
+
+    test('emits the bundle\'s agents/ files under somnio_rules/<skill>/agents/',
+        () {
+      final tmpDir = Directory.systemTemp.createTempSync('somnio_agents_');
+      addTearDown(() => tmpDir.deleteSync(recursive: true));
+
+      final bundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'react-best-practices',
+        skillId: 'react_plan',
+        workflowContent: '# React Best Practices\n',
+        agentFiles: {
+          'orchestrator.md': '# Orchestrator\n',
+          'report-writer.md': '# Report Writer\n',
+        },
+      );
+
+      final loader = ContentLoader(tmpDir.path);
+      final agent = AgentRegistry.findById('antigravity')!;
+
+      final output = transformer.transform(bundle, loader, agent);
+
+      expect(
+        output.files.keys,
+        containsAll([
+          'somnio_rules/react-best-practices/agents/orchestrator.md',
+          'somnio_rules/react-best-practices/agents/report-writer.md',
+        ]),
+      );
+      expect(
+        output.files['somnio_rules/react-best-practices/agents/orchestrator.md'],
+        '# Orchestrator\n',
       );
     });
 
@@ -265,6 +408,76 @@ void main() {
 
       expect(output.workflowContent, isNot(contains('somnio_rules')));
       expect(output.workflowContent, isNot(contains('somnio_nestjs_best_practices')));
+    });
+
+    test('rewrites prefixed agents/ subagent-definition paths', () {
+      final bundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'react-best-practices',
+        skillId: 'react_plan',
+        workflowContent:
+            'Read `react-best-practices/agents/orchestrator.md` and follow '
+            'ALL instructions.',
+      );
+      loader = ContentLoader(tmpDir.path);
+
+      final output = transformer.transformBundle(bundle, loader);
+
+      expect(
+        output.workflowContent,
+        contains(
+          '`~/.gemini/antigravity/somnio_rules/'
+          'react-best-practices/agents/orchestrator.md`',
+        ),
+      );
+      expect(
+        output.workflowContent,
+        isNot(contains('`react-best-practices/agents/')),
+      );
+    });
+
+    test('rewrites bare agents/ subagent-definition paths (no skill prefix)',
+        () {
+      final bundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'flutter-best-practices',
+        skillId: 'flutter_plan',
+        workflowContent:
+            'Read `agents/orchestrator.md` and follow ALL instructions.',
+      );
+      loader = ContentLoader(tmpDir.path);
+
+      final output = transformer.transformBundle(bundle, loader);
+
+      expect(
+        output.workflowContent,
+        contains(
+          '`~/.gemini/antigravity/somnio_rules/'
+          'flutter-best-practices/agents/orchestrator.md`',
+        ),
+      );
+      expect(output.workflowContent, isNot(contains('`agents/orchestrator.md`')));
+    });
+
+    test('rewrites bare assets/report-template.md refs in workflow content',
+        () {
+      final bundle = _setupBundle(
+        repoRoot: tmpDir.path,
+        skillName: 'react-best-practices',
+        skillId: 'react_best_practices',
+        workflowContent:
+            'Reads: all seven step artifacts + `assets/report-template.md`\n',
+        templateContent: '# Report Template\n',
+      );
+      loader = ContentLoader(tmpDir.path);
+      final output = transformer.transformBundle(bundle, loader);
+      const installed = '~/.gemini/antigravity/somnio_rules/'
+          'react-best-practices/assets/report-template.md';
+      expect(output.workflowContent, contains(installed));
+      expect(
+        output.workflowContent.replaceAll(installed, ''),
+        isNot(contains('assets/report-template.md')),
+      );
     });
 
     test('rewrites multiple occurrences of the same pattern', () {

@@ -4,7 +4,7 @@
     "name": "Somnio Software"
   },
   "metadata": {
-    "description": "AI-powered tools for developers, marketing, and operations by Somnio Software.",
+    "description": "AI-powered tools for developers by Somnio Software.",
     "version": "1.0.0"
   },
   "plugins": [
@@ -12,21 +12,6 @@
       "name": "somnio-development",
       "source": "./plugins/development",
       "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, React, Python (incl. FastAPI/Django/Flask), and more."
-    },
-    {
-      "name": "somnio-marketing",
-      "source": "./plugins/marketing",
-      "description": "AI-powered marketing tools — content strategy, ASO audits, and campaign analysis."
-    },
-    {
-      "name": "somnio-operations",
-      "source": "./plugins/operations",
-      "description": "Define user stories, manage backlogs, and streamline project workflows. Connect to Jira, Linear, or Slack to turn ideas into actionable tickets."
-    },
-    {
-      "name": "somnio-engineering-management",
-      "source": "./plugins/engineering-management",
-      "description": "AI-powered engineering management tools — performance reviews, HandShake acknowledgement generation, and career path evaluation."
     }
   ]
 }

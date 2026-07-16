@@ -1,6 +1,6 @@
 # Python Test Coverage Runner
 
-> Execute pytest with branch coverage, generate coverage.xml and term-missing output, parse results, and emit verbatim "Code Coverage:" + "Coverage Breakdown:" into reports/.artifacts/python_health/step_00_test_coverage.md
+> Execute pytest with branch coverage, generate coverage.xml and term-missing output, parse results, and emit verbatim "Code Coverage:" + "Coverage Breakdown:" into the artifact file at the exact path the invoker specified
 
 ---
 
@@ -13,8 +13,8 @@ When requested to run tests and generate coverage, you will:
    percentages
 3. Emit a verbatim `Code Coverage: X%` line for the report generator
 4. Emit a verbatim `Coverage Breakdown:` table per source package
-5. Write all findings to
-   `reports/.artifacts/python_health/step_00_test_coverage.md`
+5. Write all findings to the exact artifact path your invoker gave you
+   (see the ARTIFACT FILE section below)
 
 ----------------------------------------------------------------------
 MONOREPO DETECTION
@@ -86,7 +86,7 @@ PKG_NAME=$(resolve_pkg_name ".")
 echo "Coverage target package: ${PKG_NAME:-<not detected — using '.' as fallback>}"
 COV_TARGET="${PKG_NAME:-.}"
 
-mkdir -p reports/.artifacts/python_health
+mkdir -p "$(dirname "${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python_health/step_00_test_coverage.md}")"
 
 # Run pytest with branch coverage
 uv run pytest \
@@ -105,7 +105,7 @@ MONOREPO EXECUTION:
 
 ```bash
 echo "=== Running Tests with Coverage (monorepo) ==="
-mkdir -p reports/.artifacts/python_health
+mkdir -p "$(dirname "${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python_health/step_00_test_coverage.md}")"
 
 run_member_coverage() {
   local dir="$1"
@@ -215,12 +215,24 @@ echo "| Overall        |        | ${OVERALL_PCT}%       |"
 ARTIFACT FILE
 ----------------------------------------------------------------------
 
-Write findings to the artifact path. This file is consumed by the
-report generator in the final step.
+Write findings to the exact artifact path your invoker gave you. This
+file is consumed by the report generator in the final step.
+
+- Via `somnio run`: the runner exports SOMNIO_ARTIFACT_FILE with the
+  exact artifact path, so the bash blocks below resolve it
+  automatically. The step prompt names the same path ("Save your
+  complete findings to: ..."); they always agree.
+- Via in-session dispatch: SOMNIO_ARTIFACT_FILE is not set, and the
+  fallback literal below IS the in-session path from this skill's
+  Dispatch Table in SKILL.md, so the blocks work as-is.
+
+Never invent, shorten, or re-derive the path. Do not export
+SOMNIO_ARTIFACT_FILE yourself — shell state does not persist between
+your tool calls, so a manual export would be silently lost.
 
 ```bash
-ARTIFACT_DIR="reports/.artifacts/python_health"
-ARTIFACT_FILE="$ARTIFACT_DIR/step_00_test_coverage.md"
+ARTIFACT_FILE="${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python_health/step_00_test_coverage.md}"
+ARTIFACT_DIR="$(dirname "$ARTIFACT_FILE")"
 mkdir -p "$ARTIFACT_DIR"
 
 cat > "$ARTIFACT_FILE" << EOF

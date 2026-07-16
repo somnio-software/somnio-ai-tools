@@ -144,8 +144,7 @@ the template.
 3.  `references/code-standards.md` {model: mid}
 4.  `references/dto-validation.md` {model: cheap}
 5.  `references/error-handling.md` {model: cheap}
-6.  `references/best-practices-format-enforcer.md` {model: frontier}
-7.  `references/best-practices-generator.md` {model: frontier}
+6.  `references/best-practices-generator.md` {model: frontier}
 
 ## Subagent Dispatch (in-session)
 

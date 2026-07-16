@@ -5,6 +5,9 @@ import 'dart:io';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+/// A resolved, invocable `fvm` binary and its reported version.
+typedef FvmExecutable = ({String exe, String version});
+
 /// Result of a single pre-flight phase.
 class _PhaseResult {
   _PhaseResult(this.label);
@@ -84,32 +87,45 @@ class PreflightRunner {
 
     // Phase 1: Tool Installer
     final toolPhase = _PhaseResult('Tool Installation');
-    String? fvmVersion;
 
-    final fvmWhich = await Process.run('which', ['fvm']);
-    if (fvmWhich.exitCode == 0) {
-      final vr = await Process.run('fvm', ['--version']);
-      fvmVersion = (vr.stdout as String).trim();
-      toolPhase.ok('FVM installed ($fvmVersion)');
-      logger.info('  ${lightGreen.wrap('OK')} FVM ($fvmVersion)');
-    } else {
+    var fvm = await _resolveFvm();
+    if (fvm == null) {
       logger.info('  FVM not found. Installing...');
-      final install = await Process.run(
+      final install = await _run(
         'dart',
         ['pub', 'global', 'activate', 'fvm'],
       );
       if (install.exitCode == 0) {
-        final vr = await Process.run('fvm', ['--version']);
-        fvmVersion = (vr.stdout as String).trim();
-        toolPhase.ok('FVM installed ($fvmVersion)');
-        logger.info('  ${lightGreen.wrap('OK')} FVM installed');
+        // Activation can succeed while ~/.pub-cache/bin is not on PATH, so
+        // re-resolve instead of assuming `fvm` is now invocable.
+        fvm = await _resolveFvm();
+        if (fvm == null) {
+          toolPhase.fail(
+            'fvm not on PATH after activation — add ~/.pub-cache/bin to PATH',
+          );
+          logger.err(
+            '  fvm not on PATH after activation — '
+            'add ~/.pub-cache/bin to your PATH and re-run',
+          );
+        }
       } else {
         toolPhase.fail('FVM installation failed');
         logger.err('  FVM installation failed');
       }
     }
 
-    final flutterVr = await Process.run('fvm', ['flutter', '--version']);
+    if (fvm == null) {
+      // Every remaining phase shells out to fvm. Record them as failed rather
+      // than crashing, so all four artifacts exist and the run reaches the AI
+      // steps.
+      return _flutterPreflightWithoutFvm(techPrefix, result, toolPhase);
+    }
+
+    final fvmExe = fvm.exe;
+    toolPhase.ok('FVM installed (${fvm.version})');
+    logger.info('  ${lightGreen.wrap('OK')} FVM (${fvm.version})');
+
+    final flutterVr = await _run(fvmExe, ['flutter', '--version']);
     final flutterVersionOutput = (flutterVr.stdout as String).trim();
     final flutterFirstLine = flutterVersionOutput.split('\n').first;
     toolPhase.info('Flutter SDK: $flutterFirstLine');
@@ -131,8 +147,8 @@ class PreflightRunner {
       final installProgress = logger.progress(
         '  fvm install $requiredVersion',
       );
-      final install = await Process.run(
-        'fvm',
+      final install = await _run(
+        fvmExe,
         ['install', requiredVersion],
         workingDirectory: cwd,
       );
@@ -148,8 +164,8 @@ class PreflightRunner {
       final globalProgress = logger.progress(
         '  fvm global $requiredVersion',
       );
-      final global = await Process.run(
-        'fvm',
+      final global = await _run(
+        fvmExe,
         ['global', requiredVersion],
         workingDirectory: cwd,
       );
@@ -167,8 +183,8 @@ class PreflightRunner {
 
     // Pub get (root)
     final pubProgress = logger.progress('  flutter pub get');
-    final pubResult = await Process.run(
-      'fvm',
+    final pubResult = await _run(
+      fvmExe,
       ['flutter', 'pub', 'get'],
       workingDirectory: cwd,
     );
@@ -185,8 +201,8 @@ class PreflightRunner {
     for (final dir in monoDirs) {
       final label = _monoLabel(dir);
       final mp = logger.progress('  flutter pub get ($label)');
-      final mr = await Process.run(
-        'fvm',
+      final mr = await _run(
+        fvmExe,
         ['flutter', 'pub', 'get'],
         workingDirectory: dir,
       );
@@ -204,8 +220,8 @@ class PreflightRunner {
     for (final dir in brDirs) {
       final label = dir == cwd ? 'root' : p.basename(dir);
       final bp = logger.progress('  build_runner ($label)');
-      final br = await Process.run(
-        'fvm',
+      final br = await _run(
+        fvmExe,
         [
           'dart',
           'run',
@@ -230,8 +246,8 @@ class PreflightRunner {
     // Phase 3: Version Validator
     final validPhase = _PhaseResult('Version Validation');
 
-    final checkVersion = await Process.run(
-      'fvm',
+    final checkVersion = await _run(
+      fvmExe,
       ['flutter', '--version'],
       workingDirectory: cwd,
     );
@@ -253,8 +269,8 @@ class PreflightRunner {
     }
 
     // Check deps resolve
-    final depsResult = await Process.run(
-      'fvm',
+    final depsResult = await _run(
+      fvmExe,
       ['flutter', 'pub', 'deps', '--style=compact'],
       workingDirectory: cwd,
     );
@@ -270,8 +286,8 @@ class PreflightRunner {
     // Phase 4: Test Coverage (root app)
     final coveragePhase = _PhaseResult('Test Coverage');
     final tcProgress = logger.progress('  flutter test --coverage');
-    final tcResult = await Process.run(
-      'fvm',
+    final tcResult = await _run(
+      fvmExe,
       ['flutter', 'test', '--coverage', '--reporter=compact'],
       workingDirectory: cwd,
     );
@@ -288,10 +304,11 @@ class PreflightRunner {
     }
 
     // Parse test counts from compact reporter output
-    final testCounts = _parseCompactTestOutput(tcStdout, tcStderr);
+    final testCounts = parseCompactTestOutput(tcStdout, tcStderr);
     coveragePhase.info(
       'Root app tests: ${testCounts.total} total, '
-      '${testCounts.passed} passed, ${testCounts.failed} failed',
+      '${testCounts.passed} passed, ${testCounts.failed} failed, '
+      '${testCounts.skipped} skipped',
     );
 
     if (testCounts.failedNames.isNotEmpty) {
@@ -320,6 +337,7 @@ class PreflightRunner {
     var pkgTotalTests = 0;
     var pkgTotalPassed = 0;
     var pkgTotalFailed = 0;
+    var pkgTotalSkipped = 0;
 
     for (final dir in packageDirs) {
       final label = _monoLabel(dir);
@@ -327,8 +345,8 @@ class PreflightRunner {
       if (!testDir.existsSync()) continue;
 
       final pp = logger.progress('  flutter test --coverage ($label)');
-      final pr = await Process.run(
-        'fvm',
+      final pr = await _run(
+        fvmExe,
         ['flutter', 'test', '--coverage', '--reporter=compact'],
         workingDirectory: dir,
       );
@@ -343,10 +361,11 @@ class PreflightRunner {
         coveragePhase.fail('flutter test --coverage ($label)');
       }
 
-      final pkgCounts = _parseCompactTestOutput(prStdout, prStderr);
+      final pkgCounts = parseCompactTestOutput(prStdout, prStderr);
       pkgTotalTests += pkgCounts.total;
       pkgTotalPassed += pkgCounts.passed;
       pkgTotalFailed += pkgCounts.failed;
+      pkgTotalSkipped += pkgCounts.skipped;
 
       final pkgLcov = File(p.join(dir, 'coverage', 'lcov.info'));
       if (pkgLcov.existsSync()) {
@@ -364,7 +383,8 @@ class PreflightRunner {
     if (packageDirs.isNotEmpty) {
       coveragePhase.info(
         'Package totals: $pkgTotalTests tests, '
-        '$pkgTotalPassed passed, $pkgTotalFailed failed',
+        '$pkgTotalPassed passed, $pkgTotalFailed failed, '
+        '$pkgTotalSkipped skipped',
       );
     }
 
@@ -374,6 +394,32 @@ class PreflightRunner {
 
     result.artifacts['${techPrefix}_test_coverage'] =
         _buildArtifact('Test Coverage', coveragePhase);
+
+    logger.info('');
+    return result;
+  }
+
+  /// Emits the Flutter pre-flight artifacts when fvm cannot be invoked.
+  ///
+  /// Phases 2-4 all shell out to fvm, so they are recorded as failed. All four
+  /// artifacts are still produced so `somnio run` continues to the AI steps.
+  PreflightResult _flutterPreflightWithoutFvm(
+    String techPrefix,
+    PreflightResult result,
+    _PhaseResult toolPhase,
+  ) {
+    result.artifacts['${techPrefix}_tool_installer'] =
+        _buildArtifact('Tool Installer', toolPhase);
+
+    const reason = 'Skipped — fvm is not available';
+    for (final phase in [
+      (title: 'Version Alignment', rule: '${techPrefix}_version_alignment'),
+      (title: 'Version Validator', rule: '${techPrefix}_version_validator'),
+      (title: 'Test Coverage', rule: '${techPrefix}_test_coverage'),
+    ]) {
+      final phaseResult = _PhaseResult(phase.title)..fail(reason);
+      result.artifacts[phase.rule] = _buildArtifact(phase.title, phaseResult);
+    }
 
     logger.info('');
     return result;
@@ -485,7 +531,7 @@ class PreflightRunner {
     // Phase 1: Tool Installer
     final toolPhase = _PhaseResult('Tool Installation');
 
-    final nodeResult = await Process.run('node', ['--version']);
+    final nodeResult = await _run('node', ['--version']);
     if (nodeResult.exitCode == 0) {
       final nodeVer = (nodeResult.stdout as String).trim();
       toolPhase.ok('Node.js installed ($nodeVer)');
@@ -495,15 +541,16 @@ class PreflightRunner {
       logger.err('  Node.js not found');
     }
 
-    final npmResult = await Process.run('npm', ['--version']);
+    final npmResult = await _run('npm', ['--version']);
     if (npmResult.exitCode == 0) {
       toolPhase.ok('npm installed (${(npmResult.stdout as String).trim()})');
+    } else {
+      toolPhase.fail('npm not found');
     }
 
     for (final pm in ['yarn', 'pnpm']) {
-      final r = await Process.run('which', [pm]);
-      if (r.exitCode == 0) {
-        final vr = await Process.run(pm, ['--version']);
+      final vr = await _run(pm, ['--version']);
+      if (vr.exitCode == 0) {
         toolPhase.ok('$pm installed (${(vr.stdout as String).trim()})');
       }
     }
@@ -522,7 +569,11 @@ class PreflightRunner {
       logger.info('  ${lightGreen.wrap('OK')} Required: $requiredVersion');
 
       final nvmProgress = logger.progress('  nvm use $requiredVersion');
-      final nvmResult = await Process.run(
+      // `requiredVersion` is interpolated raw into this shell script — it
+      // must be allowlist-validated at the source (`_readNodeVersion`)
+      // before it ever reaches here. This is the runner's only shell
+      // invocation; anything interpolated below must stay validated.
+      final nvmResult = await _run(
         'bash',
         [
           '-c',
@@ -543,7 +594,7 @@ class PreflightRunner {
 
     // Install deps
     final installProgress = logger.progress('  $pm install');
-    final installResult = await Process.run(
+    final installResult = await _run(
       pm,
       ['install'],
       workingDirectory: cwd,
@@ -562,7 +613,7 @@ class PreflightRunner {
     for (final dir in monoDirs) {
       final label = _monoLabel(dir);
       final mp = logger.progress('  $pm install ($label)');
-      final mr = await Process.run(pm, ['install'], workingDirectory: dir);
+      final mr = await _run(pm, ['install'], workingDirectory: dir);
       if (mr.exitCode == 0) {
         mp.complete('  $pm install ($label)');
         alignPhase.ok('$pm install ($label)');
@@ -578,7 +629,7 @@ class PreflightRunner {
     // Phase 3: Version Validator
     final validPhase = _PhaseResult('Version Validation');
 
-    final currentNode = await Process.run('node', ['--version']);
+    final currentNode = await _run('node', ['--version']);
     final currentNodeVer = (currentNode.stdout as String).trim();
     validPhase.info('Current Node.js version: $currentNodeVer');
 
@@ -623,7 +674,7 @@ class PreflightRunner {
 
     if (hasTestCov) {
       final tcProgress = logger.progress('  $pm run test:cov');
-      final tcResult = await Process.run(
+      final tcResult = await _run(
         pm,
         ['run', 'test:cov'],
         workingDirectory: cwd,
@@ -763,7 +814,7 @@ class PreflightRunner {
     // Phase 2: Gemini Tool Detection
     var geminiAvailable = false;
 
-    final geminiWhich = await Process.run('which', ['gemini']);
+    final geminiWhich = await _run('which', ['gemini']);
     if (geminiWhich.exitCode == 0) {
       toolPhase.ok('Gemini CLI installed');
       logger.info('  ${lightGreen.wrap('OK')} Gemini CLI installed');
@@ -794,7 +845,7 @@ class PreflightRunner {
 
       // Check/install security extension if Gemini is available
       if (geminiAvailable) {
-        final extList = await Process.run('gemini', ['extensions', 'list']);
+        final extList = await _run('gemini', ['extensions', 'list']);
         final extOutput = (extList.stdout as String).trim();
         if (extOutput.contains('security')) {
           toolPhase.ok('Gemini Security Extension installed');
@@ -803,7 +854,7 @@ class PreflightRunner {
           );
         } else {
           logger.info('  Installing Gemini Security Extension...');
-          final install = await Process.run('gemini', [
+          final install = await _run('gemini', [
             'extensions',
             'install',
             'https://github.com/gemini-cli-extensions/security',
@@ -836,6 +887,49 @@ class PreflightRunner {
   // Shared helpers
   // ---------------------------------------------------------------------------
 
+  /// Runs [exe] without ever throwing.
+  ///
+  /// [Process.run] throws a [ProcessException] when the executable is not on
+  /// PATH — it does not return 127 like a shell would. Pre-flight must degrade
+  /// into a recorded phase failure instead of aborting the whole audit, so a
+  /// missing binary is surfaced here as exit code 127.
+  Future<ProcessResult> _run(
+    String exe,
+    List<String> args, {
+    String? workingDirectory,
+  }) async {
+    try {
+      return await Process.run(exe, args, workingDirectory: workingDirectory);
+    } on ProcessException catch (e) {
+      return ProcessResult(0, 127, '', e.message);
+    }
+  }
+
+  /// Resolves an invocable `fvm` executable, or `null` if there is none.
+  ///
+  /// `dart pub global activate fvm` commonly succeeds while `~/.pub-cache/bin`
+  /// is not on PATH, so resolvability is probed by actually invoking the
+  /// binary (which also works where `which` does not exist), falling back to
+  /// the concrete pub-cache path that activation installs to.
+  Future<FvmExecutable?> _resolveFvm() async {
+    final direct = await _run('fvm', ['--version']);
+    if (direct.exitCode == 0) {
+      return (exe: 'fvm', version: (direct.stdout as String).trim());
+    }
+
+    final home = Platform.environment['HOME'] ??
+        Platform.environment['USERPROFILE'] ??
+        '';
+    if (home.isEmpty) return null;
+
+    final candidate = p.join(home, '.pub-cache', 'bin', 'fvm');
+    if (!File(candidate).existsSync()) return null;
+
+    final probe = await _run(candidate, ['--version']);
+    if (probe.exitCode != 0) return null;
+    return (exe: candidate, version: (probe.stdout as String).trim());
+  }
+
   String? _readFlutterVersion(String cwd) {
     final fvmrc = File(p.join(cwd, '.fvmrc'));
     if (fvmrc.existsSync()) {
@@ -861,12 +955,35 @@ class PreflightRunner {
     return null;
   }
 
+  /// Version specifiers `.nvmrc` / `.node-version` legitimately carry:
+  /// `18`, `v18.17.0`, `lts/*`, `lts/iron`, `node`, `stable`.
+  ///
+  /// These files come from the AUDITED repo (untrusted) and the value is
+  /// interpolated into the `bash -c` script in `_runNestjsPreflight`, so
+  /// anything outside this allowlist is rejected rather than escaped.
+  static final _nodeVersionPattern = RegExp(
+    r'^(v?\d+(\.\d+){0,2}|node|stable|unstable|lts/(\*|[A-Za-z]+))$',
+  );
+
+  /// Whether [version] is a legitimate Node version specifier.
+  ///
+  /// Public for testing.
+  bool isValidNodeVersion(String version) =>
+      _nodeVersionPattern.hasMatch(version);
+
   String? _readNodeVersion(String cwd) {
     for (final name in ['.nvmrc', '.node-version']) {
       final file = File(p.join(cwd, name));
       if (file.existsSync()) {
         final version = file.readAsStringSync().trim();
-        if (version.isNotEmpty) return version;
+        if (version.isEmpty) continue;
+        if (!isValidNodeVersion(version)) {
+          logger.warn(
+            '  Ignoring $name: not a valid Node version specifier',
+          );
+          continue;
+        }
+        return version;
       }
     }
     return null;
@@ -929,25 +1046,33 @@ class PreflightRunner {
   }
 
   /// Parses compact reporter output to extract test counts.
-  _TestCounts _parseCompactTestOutput(String stdout, String stderr) {
+  ///
+  /// Public for testing.
+  TestCounts parseCompactTestOutput(String stdout, String stderr) {
     var total = 0;
     var passed = 0;
     var failed = 0;
+    var skipped = 0;
     final failedNames = <String>[];
 
-    // Compact reporter shows: +N ~N -N: message
-    // Last line contains final counts
+    // Compact reporter shows: +N ~N -N: message, where the counters are
+    // cumulative passed / skipped / failed — not a total. The last line
+    // carries the final counts.
     final lines = stdout.split('\n');
     for (final line in lines.reversed) {
-      // Match the summary pattern: +123 -2: Some tests passed
+      // Match the summary pattern: +123 ~1 -2: Some tests failed
       final match = RegExp(r'\+(\d+)').firstMatch(line);
       if (match != null) {
-        total = int.tryParse(match.group(1) ?? '0') ?? 0;
+        passed = int.tryParse(match.group(1) ?? '0') ?? 0;
         final failMatch = RegExp(r'-(\d+)').firstMatch(line);
-        if (failMatch != null) {
-          failed = int.tryParse(failMatch.group(1) ?? '0') ?? 0;
-        }
-        passed = total - failed;
+        failed = failMatch != null
+            ? (int.tryParse(failMatch.group(1) ?? '0') ?? 0)
+            : 0;
+        final skipMatch = RegExp(r'~(\d+)').firstMatch(line);
+        skipped = skipMatch != null
+            ? (int.tryParse(skipMatch.group(1) ?? '0') ?? 0)
+            : 0;
+        total = passed + failed + skipped;
         break;
       }
     }
@@ -960,10 +1085,11 @@ class PreflightRunner {
       if (failedNames.length >= 20) break;
     }
 
-    return _TestCounts(
+    return TestCounts(
       total: total,
       passed: passed,
       failed: failed,
+      skipped: skipped,
       failedNames: failedNames,
     );
   }
@@ -1025,17 +1151,20 @@ class PreflightRunner {
 }
 
 /// Parsed test counts from compact reporter output.
-class _TestCounts {
-  const _TestCounts({
+class TestCounts {
+  const TestCounts({
     required this.total,
     required this.passed,
     required this.failed,
+    required this.skipped,
     required this.failedNames,
   });
 
+  /// Passed + failed + skipped. The compact reporter never prints a total.
   final int total;
   final int passed;
   final int failed;
+  final int skipped;
   final List<String> failedNames;
 }
 

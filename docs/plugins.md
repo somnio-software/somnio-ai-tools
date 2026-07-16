@@ -6,14 +6,11 @@ Somnio is available as a plugin for the Claude Desktop App (Cowork). The plugin 
 
 ## Marketplace Structure
 
-The root manifest at `.claude-plugin/marketplace.json` registers four plugins under the `somnio-software` organization:
+The root manifest at `.claude-plugin/marketplace.json` registers one plugin under the `somnio-software` organization:
 
 | Plugin | Directory | Description |
 |--------|-----------|-------------|
 | `somnio-development` | `plugins/development/` | Project health audits, security scans, best practices validation |
-| `somnio-marketing` | `plugins/marketing/` | Content strategy, ASO audits, campaign analysis |
-| `somnio-operations` | `plugins/operations/` | Story definition, backlog management, workflow automation |
-| `somnio-engineering-management` | `plugins/engineering-management/` | Performance reviews, career path evaluation |
 
 ### Installing
 
@@ -71,33 +68,6 @@ plugins/development/
 ```
 
 This means the development plugin always reflects the current state of the root `skills/` and `commands/` directories. Changes to skills are immediately available through the plugin.
-
----
-
-## Operations Plugin
-
-The operations plugin has its own local skills and includes MCP server connectors for external tools:
-
-```
-plugins/operations/
-├── .claude-plugin/plugin.json
-├── .mcp.json                         # Pre-configured MCP servers
-├── CONNECTORS.md                     # Connector documentation
-├── commands/                         # Local command definitions
-└── skills/                           # Local skills (e.g., story-definition)
-```
-
-### Connectors
-
-Plugin files use `~~category` placeholders for tool-agnostic integration. The `.mcp.json` pre-configures specific MCP servers, but any server in that category works.
-
-| Category | Placeholder | Included Servers | Other Options |
-|----------|-------------|-----------------|---------------|
-| Project tracker | `~~project tracker` | Atlassian (Jira/Confluence), Linear | Asana, Monday, ClickUp |
-| Chat | `~~chat` | Slack | Microsoft Teams |
-| Knowledge base | `~~knowledge base` | Notion | Confluence, Guru |
-| Calendar | `~~calendar` | Google Calendar | Microsoft 365 |
-| Email | `~~email` | Gmail | Microsoft 365 |
 
 ---
 

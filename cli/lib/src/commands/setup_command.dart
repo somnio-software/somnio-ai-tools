@@ -218,11 +218,18 @@ class SetupCommand extends Command<int> {
 
     if (!verbose) installProgress.complete('Skills installed');
 
-    // skills.sh only covers Claude/Cursor. Install to workflow-format
-    // agents (e.g., Antigravity) via the built-in installer.
-    await _installWorkflowAgents();
+    // skills.sh only covers Claude/Cursor. Install to the remaining agents
+    // via the built-in installer.
+    final failed = await _installNonSkillsShAgents();
 
     _logger.info('');
+    if (failed > 0) {
+      _logger.err('Setup finished with $failed failed install(s).');
+      _logger.info('');
+      CommandHelpers.printNextSteps(_logger);
+      return ExitCode.software.code;
+    }
+
     _logger.success('Skills installed via skills.sh!');
     _logger.info('');
 
@@ -231,26 +238,32 @@ class SetupCommand extends Command<int> {
     return ExitCode.success.code;
   }
 
-  /// Installs skills to workflow-format agents (e.g., Antigravity) that
-  /// skills.sh does not support.
-  Future<void> _installWorkflowAgents() async {
+  /// Installs skills to agents that skills.sh does not cover.
+  ///
+  /// skills.sh only covers Claude and Cursor. Any agent with its own
+  /// [AgentConfig.executionRulesPath] (or [InstallFormat.workflow], e.g.
+  /// Antigravity) needs the built-in installer to get its execution rules
+  /// written. Returns the total number of failed installs.
+  Future<int> _installNonSkillsShAgents() async {
     final detector = AgentDetector();
     final agents = await detector.detect();
 
-    final workflowAgents = agents.entries
+    final agentsToInstall = agents.entries
         .where(
           (e) =>
               e.value.installed &&
-              e.key.installFormat == InstallFormat.workflow,
+              (e.key.installFormat == InstallFormat.workflow ||
+                  e.key.executionRulesPath != null),
         )
         .map((e) => e.key)
         .toList();
 
-    if (workflowAgents.isEmpty) return;
+    if (agentsToInstall.isEmpty) return 0;
 
     final content = await CommandHelpers.resolveContent();
+    var totalFailed = 0;
 
-    for (final agentConfig in workflowAgents) {
+    for (final agentConfig in agentsToInstall) {
       final progress = _logger.progress(agentConfig.displayName);
 
       final installer = AgentInstaller(
@@ -259,15 +272,18 @@ class SetupCommand extends Command<int> {
         agentConfig: agentConfig,
       );
       final result = await installer.install(bundles: content.bundles);
-      final wfCount = installer.installWorkflowSkills(
+      final wf = installer.installWorkflowSkillsDetailed(
         SkillRegistry.workflowSkills,
       );
+      totalFailed += result.failedCount + wf.failed;
 
       progress.complete(
         '${agentConfig.displayName}  '
-        '${CommandHelpers.installSummary(result, agentConfig, extraCount: wfCount)}',
+        '${CommandHelpers.installSummary(result, agentConfig, extraCount: wf.installed)}',
       );
     }
+
+    return totalFailed;
   }
 
   /// Checks if npx is available in PATH.

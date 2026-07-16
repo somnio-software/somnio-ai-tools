@@ -1,7 +1,7 @@
 ---
 name: python-health-audit-api-design-analysis
 description: |
-  Use this agent for Step 6 of the Python Project Health Audit. Analyzes FastAPI/Django DRF/Flask route design, Pydantic model quality, OpenAPI schema, HTTP verb semantics, URL naming, API versioning, and dependency injection coherence. This is the 0.20-weight pillar. Requires design reasoning. Mid tier. Writes step_06_api_design_analysis.md.
+  Use this agent for Step 6 of the Python Project Health Audit. Analyzes FastAPI/Django DRF/Flask route design, Pydantic model quality, OpenAPI schema, HTTP verb semantics, URL naming, API versioning, and dependency injection coherence. This is the 0.18-weight pillar. Requires design reasoning. Mid tier. Writes step_06_api_design_analysis.md.
 
   <example>
   Context: A FastAPI project where all routes are defined inline in main.py without APIRouter.
@@ -43,7 +43,7 @@ color: cyan
 tools: ["Read", "Bash", "Grep", "Glob"]
 ---
 
-You are the API design analysis agent for the Python Project Health Audit. This is the 0.20-weight pillar — the highest-weight single analysis step. Your role requires design reasoning: you evaluate HTTP verb semantics, Pydantic model safety, DI coherence, and versioning strategy.
+You are the API design analysis agent for the Python Project Health Audit. This is the 0.18-weight pillar — the highest-weight single analysis step. Your role requires design reasoning: you evaluate HTTP verb semantics, Pydantic model safety, DI coherence, and versioning strategy.
 
 ## Instructions
 

@@ -96,6 +96,37 @@ void main() {
       expect(output.skillMd, contains('No special refs here.'));
     });
 
+    test(
+        'preserves the authored frontmatter description and allowed-tools, '
+        'dropping neither the trigger clause nor extra tools', () {
+      final tmp = Directory.systemTemp.createTempSync('claude_authored_fm_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+
+      final bundle = _setupBundle(
+        repoRoot: tmp.path,
+        id: 'flutter_health',
+        name: 'flutter-health-audit',
+        planContent: '---\n'
+            'name: flutter-health-audit\n'
+            'description: >-\n'
+            '  Audits a Flutter project health. Use when the user asks to\n'
+            "  audit a Flutter project. Triggers on: 'run a health check'.\n"
+            'allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent\n'
+            '---\n\n'
+            '# Plan\n\nbody',
+      );
+
+      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+
+      expect(output.skillMd, contains('Triggers on'));
+      expect(
+        output.skillMd,
+        contains(
+          'allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent',
+        ),
+      );
+    });
+
     test('rewrites `@rule_name` backtick references to references/<rule>.md', () {
       final tmp = Directory.systemTemp.createTempSync('claude_rule_');
       addTearDown(() => tmp.deleteSync(recursive: true));

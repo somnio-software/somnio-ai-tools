@@ -139,5 +139,120 @@ void main() {
       ]);
       expect(waves[0].length, 3);
     });
+
+    test('forward reference: dep declared after its dependent', () {
+      // Step 0 needs step 3 (0-based 2), step 2 needs step 5 (0-based 4).
+      // Wave assignment must not depend on declaration order.
+      final waves = planner.plan([
+        _entry(file: '01.md', needs: [2]),
+        _entry(file: '02.md'),
+        _entry(file: '03.md', needs: [4]),
+        _entry(file: '04.md'),
+        _entry(file: '05.md'),
+      ]);
+      expect(waves, hasLength(3));
+      expect(waves[0].stepIndices, [1, 3, 4]);
+      expect(waves[1].stepIndices, [2]);
+      expect(waves[2].stepIndices, [0]);
+
+      // Each dependency must land strictly before its dependent.
+      int waveOf(int step) =>
+          waves.indexWhere((w) => w.stepIndices.contains(step));
+      expect(waveOf(2), lessThan(waveOf(0)));
+      expect(waveOf(4), lessThan(waveOf(2)));
+    });
+
+    test('duplicate deps are tolerated', () {
+      final waves = planner.plan([
+        _entry(file: '01.md'),
+        _entry(file: '02.md', needs: [0, 0, 0]),
+      ]);
+      expect(waves, hasLength(2));
+      expect(waves[0].stepIndices, [0]);
+      expect(waves[1].stepIndices, [1]);
+    });
+
+    test('two-step cycle throws', () {
+      expect(
+        () => planner.plan([
+          _entry(file: '01.md', needs: [1]),
+          _entry(file: '02.md', needs: [0]),
+        ]),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            allOf(contains('cycle'), contains('01.md'), contains('02.md')),
+          ),
+        ),
+      );
+    });
+
+    test('longer cycle throws and reports only the stuck steps', () {
+      expect(
+        () => planner.plan([
+          _entry(file: '01.md'),
+          _entry(file: '02.md', needs: [3]),
+          _entry(file: '03.md', needs: [1]),
+          _entry(file: '04.md', needs: [2]),
+        ]),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            allOf(
+              contains('cycle'),
+              contains('02.md'),
+              contains('03.md'),
+              contains('04.md'),
+              isNot(contains('01.md')),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('out-of-range dependency throws', () {
+      expect(
+        () => planner.plan([
+          _entry(file: '01.md'),
+          _entry(file: '02.md', needs: [7]),
+        ]),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            allOf(
+              contains('Step 2 (02.md)'),
+              contains('needs: 8'), // reported 1-based
+              contains('only has 2 steps'),
+            ),
+          ),
+        ),
+      );
+    });
+
+    test('negative dependency throws', () {
+      expect(
+        () => planner.plan([_entry(file: '01.md', needs: [-1])]),
+        throwsA(isA<FormatException>()),
+      );
+    });
+
+    test('self dependency throws', () {
+      expect(
+        () => planner.plan([
+          _entry(file: '01.md'),
+          _entry(file: '02.md', needs: [1]),
+        ]),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('Step 2 (02.md) depends on itself'),
+          ),
+        ),
+      );
+    });
   });
 }

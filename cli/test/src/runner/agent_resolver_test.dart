@@ -16,7 +16,8 @@ void main() {
   final claude = AgentRegistry.findById('claude')!;
   final cursor = AgentRegistry.findById('cursor')!;
   final gemini = AgentRegistry.findById('gemini')!; // default + executionRulesPath
-  final codex = AgentRegistry.findById('codex')!; // default, no executionRulesPath
+  final codex = AgentRegistry.findById('codex')!; // default + executionRulesPath
+  final copilot = AgentRegistry.findById('copilot')!; // no executionRulesPath
   final antigravity = AgentRegistry.findById('antigravity')!; // binary == null
 
   // ---------------------------------------------------------------------------
@@ -47,9 +48,17 @@ void main() {
       );
     });
 
-    test('default without executionRulesPath returns resolved base path', () {
+    test('codex → ~/.codex/somnio_rules/{planSubDir}/references', () {
       final path = resolver.ruleBasePath(codex, 'flutter-health', 'flutter');
-      final base = codex.resolvedExecutionRulesPath(
+      expect(
+        path,
+        p.join(home, '.codex', 'somnio_rules', 'flutter', 'references'),
+      );
+    });
+
+    test('default without executionRulesPath returns resolved base path', () {
+      final path = resolver.ruleBasePath(copilot, 'flutter-health', 'flutter');
+      final base = copilot.resolvedExecutionRulesPath(
         home: home,
         name: 'flutter-health',
       );
@@ -88,10 +97,19 @@ void main() {
       );
     });
 
-    test('default without executionRulesPath uses base/assets/{file}', () {
+    test('codex → ~/.codex/somnio_rules/{planSubDir}/assets/{file}', () {
       final path =
           resolver.templatePath(codex, 'flutter-health', 'flutter', 't.md');
-      final base = codex.resolvedExecutionRulesPath(
+      expect(
+        path,
+        p.join(home, '.codex', 'somnio_rules', 'flutter', 'assets', 't.md'),
+      );
+    });
+
+    test('default without executionRulesPath uses base/assets/{file}', () {
+      final path =
+          resolver.templatePath(copilot, 'flutter-health', 'flutter', 't.md');
+      final base = copilot.resolvedExecutionRulesPath(
         home: home,
         name: 'flutter-health',
       );

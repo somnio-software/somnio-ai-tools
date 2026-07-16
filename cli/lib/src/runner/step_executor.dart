@@ -1,4 +1,5 @@
 // coverage:ignore-file
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -7,6 +8,98 @@ import 'package:path/path.dart' as p;
 
 import '../version.dart';
 import 'run_config.dart';
+
+/// Signature for spawning an AI CLI process. Matches [Process.start].
+typedef ProcessStarter = Future<Process> Function(
+  String executable,
+  List<String> arguments, {
+  String? workingDirectory,
+  Map<String, String>? environment,
+});
+
+/// Default wall-clock deadline for a single AI CLI invocation.
+///
+/// AI audit steps legitimately take minutes, so the deadline is generous —
+/// it only exists to break out of an agent that hangs forever.
+const defaultStepTimeout = Duration(minutes: 30);
+
+/// Grace period granted between SIGTERM and SIGKILL when killing a step.
+const _killGracePeriod = Duration(seconds: 5);
+
+/// Thrown when a spawned AI CLI process outlives its deadline and is killed.
+class StepTimeoutException implements Exception {
+  const StepTimeoutException({
+    required this.executable,
+    required this.timeout,
+  });
+
+  /// Binary that was spawned (e.g., 'claude').
+  final String executable;
+
+  /// Deadline that expired.
+  final Duration timeout;
+
+  String get message => 'Step timed out after ${timeout.inSeconds}s; '
+      '$executable process killed';
+
+  @override
+  String toString() => message;
+}
+
+/// Runs [executable] to completion and returns its buffered output, killing
+/// the process if it outlives [timeout].
+///
+/// Unlike [Process.run] the wait is bounded: a hung AI CLI would otherwise
+/// block the whole audit forever. stdout/stderr are drained while the child
+/// runs (a chatty child that fills the pipe buffer would deadlock otherwise),
+/// and stdin is closed so the child cannot block on an interactive prompt.
+///
+/// Throws [StepTimeoutException] when the deadline expires.
+Future<ProcessResult> runBoundedProcess(
+  String executable,
+  List<String> arguments, {
+  String? workingDirectory,
+  Map<String, String>? environment,
+  Duration timeout = defaultStepTimeout,
+  Duration killGracePeriod = _killGracePeriod,
+  ProcessStarter processStarter = Process.start,
+}) async {
+  final process = await processStarter(
+    executable,
+    arguments,
+    workingDirectory: workingDirectory,
+    environment: environment,
+  );
+
+  unawaited(process.stdin.close().catchError((Object _) {}));
+
+  final stdoutFuture = _drain(process.stdout);
+  final stderrFuture = _drain(process.stderr);
+
+  try {
+    final exitCode = await process.exitCode.timeout(timeout);
+    return ProcessResult(
+      process.pid,
+      exitCode,
+      await stdoutFuture,
+      await stderrFuture,
+    );
+  } on TimeoutException {
+    process.kill();
+    try {
+      await process.exitCode.timeout(killGracePeriod);
+    } on TimeoutException {
+      process.kill(ProcessSignal.sigkill);
+    }
+    throw StepTimeoutException(executable: executable, timeout: timeout);
+  }
+}
+
+/// Collects a process output stream into a string as it is produced.
+Future<String> _drain(Stream<List<int>> stream) =>
+    stream.transform(systemEncoding.decoder).join().catchError(
+          (Object _) => '',
+        );
 
 /// Token usage statistics from an AI CLI invocation.
 class TokenUsage {
@@ -57,10 +150,19 @@ class StepExecutor {
   StepExecutor({
     required this.config,
     required this.logger,
-  });
+    ProcessStarter? processStarter,
+    this.stepTimeout = defaultStepTimeout,
+  }) : _processStarter = processStarter ?? Process.start;
 
   final RunConfig config;
   final Logger logger;
+  final ProcessStarter _processStarter;
+
+  /// Wall-clock deadline for a single AI CLI invocation.
+  ///
+  /// A step that exceeds it is killed and reported as a failed [StepResult]
+  /// instead of hanging the whole run.
+  final Duration stepTimeout;
 
   /// Fallback model to use when the primary model hits quota limits.
   ///
@@ -71,11 +173,12 @@ class StepExecutor {
   ///
   /// When the step carries a tier (`step.model`), it is resolved via the
   /// agent's [AgentConfig.resolveTier]; otherwise the run-level [RunConfig.model]
-  /// is used. The returned value becomes the model passed to the CLI for that
-  /// step (before any quota fallback retry).
+  /// is used. When the tier is not resolvable for this agent, the run-level
+  /// model is used instead. The returned value becomes the model passed to the
+  /// CLI for that step (before any quota fallback retry).
   String? _stepBaseModel(ExecutionStep step) {
     if (step.model != null) {
-      return config.agentConfig.resolveTier(step.model!);
+      return config.agentConfig.resolveTier(step.model!) ?? config.model;
     }
     return config.model;
   }
@@ -102,9 +205,14 @@ class StepExecutor {
 
     final prompt = _buildStepPrompt(step, ruleFile, artifactPath);
     final baseModel = _stepBaseModel(step);
+    var effectiveModel = baseModel;
 
     try {
-      var result = await _runProcess(prompt, modelOverride: baseModel);
+      var result = await _runProcess(
+        prompt,
+        modelOverride: baseModel,
+        artifactPath: artifactPath,
+      );
 
       // Fallback: retry with cheapest model on quota/capacity errors
       if (result.exitCode != 0 &&
@@ -115,7 +223,12 @@ class StepExecutor {
           '  Quota exceeded for "$baseModel", '
           'retrying with "$fallbackModel"...',
         );
-        result = await _runProcess(prompt, modelOverride: fallbackModel);
+        effectiveModel = fallbackModel;
+        result = await _runProcess(
+          prompt,
+          modelOverride: fallbackModel,
+          artifactPath: artifactPath,
+        );
       }
 
       stopwatch.stop();
@@ -130,10 +243,19 @@ class StepExecutor {
         durationSeconds: stopwatch.elapsed.inSeconds,
         tokenUsage: usage,
         errorMessage: result.exitCode != 0
-            ? _describeProcessError(result)
+            ? _describeProcessError(result, effectiveModel)
             : (!artifactExists
                 ? 'Artifact not created: $artifactPath'
                 : null),
+      );
+    } on StepTimeoutException catch (e) {
+      stopwatch.stop();
+      return StepResult(
+        step: step,
+        success: false,
+        artifactPath: artifactPath,
+        durationSeconds: stopwatch.elapsed.inSeconds,
+        errorMessage: e.message,
       );
     } catch (e) {
       stopwatch.stop();
@@ -198,6 +320,7 @@ class StepExecutor {
 
     final prompt = _buildReportPrompt(step, ruleFile, reportPath);
     final baseModel = _stepBaseModel(step);
+    var effectiveModel = baseModel;
 
     try {
       var result = await _runProcess(prompt, modelOverride: baseModel);
@@ -211,6 +334,7 @@ class StepExecutor {
           '  Quota exceeded for "$baseModel", '
           'retrying with "$fallbackModel"...',
         );
+        effectiveModel = fallbackModel;
         result = await _runProcess(prompt, modelOverride: fallbackModel);
       }
 
@@ -226,10 +350,19 @@ class StepExecutor {
         durationSeconds: stopwatch.elapsed.inSeconds,
         tokenUsage: usage,
         errorMessage: result.exitCode != 0
-            ? _describeProcessError(result)
+            ? _describeProcessError(result, effectiveModel)
             : (!reportExists
                 ? 'Report not created: $reportPath'
                 : null),
+      );
+    } on StepTimeoutException catch (e) {
+      stopwatch.stop();
+      return StepResult(
+        step: step,
+        success: false,
+        artifactPath: reportPath,
+        durationSeconds: stopwatch.elapsed.inSeconds,
+        errorMessage: e.message,
       );
     } catch (e) {
       stopwatch.stop();
@@ -282,6 +415,7 @@ class StepExecutor {
 
     final prompt = _buildFormatEnforcerPrompt(ruleFile, reportPath);
     final baseModel = _stepBaseModel(step);
+    var effectiveModel = baseModel;
 
     try {
       var result = await _runProcess(prompt, modelOverride: baseModel);
@@ -295,6 +429,7 @@ class StepExecutor {
           '  Quota exceeded for "$baseModel", '
           'retrying with "$fallbackModel"...',
         );
+        effectiveModel = fallbackModel;
         result = await _runProcess(prompt, modelOverride: fallbackModel);
       }
 
@@ -310,8 +445,17 @@ class StepExecutor {
         durationSeconds: stopwatch.elapsed.inSeconds,
         tokenUsage: usage,
         errorMessage: result.exitCode != 0
-            ? _describeProcessError(result)
+            ? _describeProcessError(result, effectiveModel)
             : null,
+      );
+    } on StepTimeoutException catch (e) {
+      stopwatch.stop();
+      return StepResult(
+        step: step,
+        success: false,
+        artifactPath: reportPath,
+        durationSeconds: stopwatch.elapsed.inSeconds,
+        errorMessage: e.message,
       );
     } catch (e) {
       stopwatch.stop();
@@ -328,15 +472,21 @@ class StepExecutor {
   // --- Private helpers ---
 
   /// Produces a human-readable error message from a failed AI CLI process.
-  String _describeProcessError(ProcessResult result) {
+  ///
+  /// [model] is the model the failed attempt actually ran with — a per-step
+  /// tier or the quota fallback, not necessarily [RunConfig.model].
+  String _describeProcessError(ProcessResult result, String? model) {
     final stderr = (result.stderr as String? ?? '').toLowerCase();
     final stdout = (result.stdout as String? ?? '').toLowerCase();
     final combined = '$stderr $stdout';
+    final label = model != null
+        ? '"$model"'
+        : 'the ${config.agentConfig.displayName} default model';
 
     if (combined.contains('not_found') ||
         combined.contains('model not found') ||
         combined.contains('requested entity was not found')) {
-      return 'Model "${config.model}" not found. '
+      return 'Model $label not found. '
           'Verify the model name is correct or try a different model.';
     }
 
@@ -344,7 +494,7 @@ class StepExecutor {
         combined.contains('resource_exhausted') ||
         combined.contains('rate_limit') ||
         combined.contains('429')) {
-      return 'No capacity available for model "${config.model}". '
+      return 'No capacity available for model $label. '
           'You may not have an active subscription or sufficient quota '
           'for this model. Try a different model.';
     }
@@ -449,8 +599,8 @@ class StepExecutor {
         'https://github.com/somnio-software/somnio-ai-tools\n'
         '---\n\n'
         'Save the final report to: $reportPath\n'
-        'The report MUST be plain text (no markdown, no bold markers, '
-        'no code fences, no tables). Ready for Google Docs.\n\n'
+        'Follow the formatting rules from the rule file and the template '
+        'structure exactly.\n\n'
         'Create the directory if it does not exist:\n'
         'mkdir -p $reportDir\n\n'
         'IMPORTANT: You MUST write the complete report to the file above.';
@@ -476,9 +626,9 @@ class StepExecutor {
         '(85-100=Strong, 70-84=Fair, 50-69=Weak, 0-49=Critical)\n'
         '- Verify scores are consistent across sections\n\n'
         'STEP 4: Fix formatting issues\n'
-        '- Remove any markdown syntax (**, ```, #, tables)\n'
-        '- Ensure section headers use "X. Section Name" format\n'
-        '- Ensure plain text formatting for Google Docs\n\n'
+        '- Apply the FORMATTING RULES defined in the rule file you read '
+        'in STEP 1\n'
+        '- Ensure section headers and structure match the template exactly\n\n'
         'STEP 5: Write the validated report\n'
         'If ALL structural checks pass, write the corrected report to: '
         '$reportPath\n'
@@ -487,14 +637,32 @@ class StepExecutor {
         'IMPORTANT: You MUST write the result to the file above.';
   }
 
-  Future<ProcessResult> _runProcess(String prompt, {String? modelOverride}) {
+  /// Spawns the AI CLI process for a step.
+  ///
+  /// When [artifactPath] is provided, it is exported as the
+  /// `SOMNIO_ARTIFACT_FILE` environment variable so that shell scripts
+  /// embedded in rule files can resolve the artifact path without relying
+  /// on the model substituting it into the script. The parent environment
+  /// is preserved (merged), not replaced.
+  ///
+  /// Throws [StepTimeoutException] if the process outlives [stepTimeout].
+  Future<ProcessResult> _runProcess(
+    String prompt, {
+    String? modelOverride,
+    String? artifactPath,
+  }) {
     final model = modelOverride ?? config.model;
     final agent = config.agentConfig;
     final args = agent.buildArgs(prompt, model: model);
-    return Process.run(
+    return runBoundedProcess(
       agent.binary!,
       args,
       workingDirectory: Directory.current.path,
+      environment: artifactPath == null
+          ? null
+          : {'SOMNIO_ARTIFACT_FILE': artifactPath},
+      timeout: stepTimeout,
+      processStarter: _processStarter,
     );
   }
 

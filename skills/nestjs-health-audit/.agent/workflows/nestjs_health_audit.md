@@ -59,6 +59,9 @@ STEP 4 COMPLETED: [log result]
 Read `nestjs-health-audit/references/code-quality.md` and follow ALL instructions in the prompt field
 STEP 5 COMPLETED: [log result]
 
+Read `nestjs-health-audit/references/harness-analysis.md` and follow ALL instructions in the prompt field
+STEP 9 COMPLETED: [log result]
+
 ## Wave 3: Domain Analysis (Parallelizable) # model: mid
 
 These steps are independent and can be executed in parallel if supported:
@@ -77,7 +80,7 @@ STEP 8 COMPLETED: [log result]
 ## Wave 5: Report (Sequential - Requires ALL previous results) # model: frontier
 
 Read `nestjs-health-audit/agents/report-writer-agent.md` and follow ALL instructions.
-STEP 9 COMPLETED: [log result]
+STEP 10 COMPLETED: [log result]
 
 Save the final Markdown report to `./reports/nestjs_audit.md`
-STEP 10 COMPLETED: Report exported
+STEP 11 COMPLETED: Report exported

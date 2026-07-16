@@ -741,8 +741,6 @@ export class EmailExistsError extends ConflictException {
 
 Regardless of approach, errors should be thrown with structured data.
 
-#### Good - Consistent, No Magic Strings
-
 ```typescript
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { UserError, UserErrorMessage } from './errors/user.errors';
@@ -789,39 +787,6 @@ export class UserService {
 
     await this.userRepository.softDelete(id);
   }
-}
-```
-
-#### Bad - Magic Strings
-
-```typescript
-// Magic strings scattered throughout the code
-async findOne(id: string): Promise<User> {
-  const user = await this.userRepository.findOne(id);
-
-  if (!user) {
-    throw new NotFoundException('User not found');  // Magic string!
-  }
-
-  return user;
-}
-
-async create(dto: CreateUserRequestDto): Promise<User> {
-  const existing = await this.userRepository.findByEmail(dto.email);
-
-  if (existing) {
-    throw new ConflictException('Email already exists');  // Magic string!
-  }
-  // ...
-}
-
-// Inconsistent messages for same error
-async delete(id: string): Promise<void> {
-  const user = await this.userRepository.findOne(id);
-  if (!user) {
-    throw new NotFoundException('Cannot find user');  // Different message!
-  }
-  // ...
 }
 ```
 

@@ -240,6 +240,28 @@ void main() {
           isNull,
         );
       });
+
+      group('loadFrom returns null instead of throwing for malformed', () {
+        final cases = {
+          'not json': 'not json at all',
+          'truncated json': '{"workflow": "test"',
+          'top level is a list': '[1, 2, 3]',
+          'top level is a scalar': '"test"',
+          'steps is not a list': '{"steps": {"file": "01.md"}}',
+          'step entry is not a map': '{"steps": ["01-step.md"]}',
+          'step entry missing file key': '{"steps": [{"status": "completed"}]}',
+          'duration is not an int':
+              '{"steps": [{"file": "01.md", "duration_s": "42"}]}',
+        };
+
+        cases.forEach((label, content) {
+          test(label, () {
+            final path = '${tempDir.path}/progress.bad.json';
+            File(path).writeAsStringSync(content);
+            expect(WorkflowProgress.loadFrom(path), isNull);
+          });
+        });
+      });
     });
   });
 

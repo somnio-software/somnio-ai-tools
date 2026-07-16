@@ -83,6 +83,17 @@ void main() {
       }
     });
 
+    test('executable non-skillDir agents declare an executionRulesPath', () {
+      // Without it AgentInstaller writes no per-rule reference files and
+      // `somnio run` fails on its first step — only skillDir agents get their
+      // references/ directory from the install format itself.
+      for (final agent in AgentRegistry.executableAgents) {
+        if (agent.installFormat == InstallFormat.skillDir) continue;
+        expect(agent.executionRulesPath, isNotNull,
+            reason: '${agent.id} needs an executionRulesPath to be runnable');
+      }
+    });
+
     test('claude has correct configuration', () {
       final claude = AgentRegistry.findById('claude')!;
       expect(claude.promptStyle, PromptStyle.flag);
@@ -247,10 +258,22 @@ void main() {
       }
     });
 
-    test('untiered executable agents fall back via resolveTier', () {
+    test('executable agents with no models resolve every tier to null', () {
+      // No modelTiers, defaultModel, or fallbackModel to resolve against, so
+      // the tier must not leak to the CLI as `--model cheap`.
+      for (final id in ['amp', 'aider', 'cline', 'opencode', 'codebuddy']) {
+        final agent = AgentRegistry.findById(id)!;
+        for (final tier in ['cheap', 'mid', 'frontier']) {
+          expect(agent.resolveTier(tier), isNull, reason: '$id $tier');
+        }
+      }
+    });
+
+    test('an unresolved tier emits no model flag', () {
       final amp = AgentRegistry.findById('amp')!;
-      // amp has no defaultModel/fallbackModel -> passthrough.
-      expect(amp.resolveTier('cheap'), 'cheap');
+      final args = amp.buildArgs('prompt', model: amp.resolveTier('cheap'));
+      expect(args, isNot(contains(amp.modelFlag)));
+      expect(args, isNot(contains('cheap')));
     });
   });
 }

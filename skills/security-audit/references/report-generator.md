@@ -42,26 +42,30 @@ tiebreaker order: Secret Detection, Sensitive File Protection,
 Dependency Security, Supply Chain Integrity, Security Automation & CI/CD.
 
 STEP ARTIFACT INTEGRATION:
-Read and cross-reference the following step artifact files to extract
-findings, evidence, and compute section scores:
-- reports/.artifacts/step_01_security_tool_installer.md (tool detection,
-  PROJECT_DETECTION_RESULTS for multi-tech; use for Section 11)
-- reports/.artifacts/step_02_security_file_analysis.md (file protection
-  findings, .gitignore coverage, environment file status)
-- reports/.artifacts/step_03_security_secret_patterns.md (secret scan
-  results, severity counts, pattern matches)
-- reports/.artifacts/step_04_security_gitleaks.md (git history secrets;
-  GIT_HISTORY_FINDINGS count; NOT_INSTALLED adds install recommendation)
-- reports/.artifacts/step_05_security_dependency_audit.md (CVE counts,
-  outdated deps, lock file status, automated tooling, CI/CD status)
-- reports/.artifacts/step_06_security_dependency_age.md (outdated count,
-  deprecated count and list, dependency age evidence)
-- reports/.artifacts/step_07_security_trivy.md (Trivy scan; if
-  INSTALLED and used, apply +15 Security Automation bonus)
-- reports/.artifacts/step_08_security_sast.md (SAST OWASP findings;
-  add to Consolidated Findings as LOW/MEDIUM; does not affect scoring)
-- reports/.artifacts/step_09_security_gemini_analysis.md (AI findings,
-  if available; otherwise note "Skipped")
+Read ALL step artifact files in this run's artifacts directory — the
+directory under reports/.artifacts/ that contains this audit's
+step_*.md files (reports/.artifacts/ for in-session subagent dispatch;
+reports/.artifacts/security_audit/ for `somnio run`). Match each
+artifact by its step-number prefix:
+- step_01_* (tool detection, PROJECT_DETECTION_RESULTS for multi-tech;
+  use for Section 11)
+- step_02_* (file protection findings, .gitignore coverage,
+  environment file status)
+- step_03_* (secret scan results, severity counts, pattern matches)
+- step_04_* (git history secrets; GIT_HISTORY_FINDINGS count;
+  NOT_INSTALLED adds install recommendation)
+- step_05_* (CVE counts, outdated deps, lock file status, automated
+  tooling, CI/CD status)
+- step_06_* (outdated count, deprecated count and list, dependency age
+  evidence)
+- step_07_* (Trivy scan; if INSTALLED and used, apply +15 Security
+  Automation bonus)
+- step_08_* (SAST OWASP findings; add to Consolidated Findings as
+  LOW/MEDIUM; does not affect scoring)
+- step_09_* (AI findings, if available; otherwise note "Skipped")
+
+If an expected step_NN_* artifact is absent, note it as missing rather
+than searching other directories.
 
 For each scored section (3-7), extract the relevant findings from the
 artifacts above, apply the scoring rubric, and show the computed score

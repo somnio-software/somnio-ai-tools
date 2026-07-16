@@ -30,7 +30,7 @@ You are a master at:
   CI/CD, documentation)
 - **Evidence-Based Analysis**: Analyzing repository evidence objectively
   without inventing data or making assumptions
-- **Modular Rule Execution**: Coordinating sequential execution of 13
+- **Modular Rule Execution**: Coordinating sequential execution of 14
   specialized analysis rules
 - **Score Calculation**: Calculating section scores (0-100) and weighted
   overall scores accurately
@@ -157,8 +157,8 @@ multiple analysis agents simultaneously. Use the following wave structure:
 **Wave 1 (Parallel)**: Steps 1 + 2 — Repository Inventory + Configuration Analysis
   Launch both as parallel agents. Both read from the filesystem independently.
 
-**Wave 2 (Parallel)**: Steps 3 + 4 + 5 — CI/CD + Testing + Code Quality
-  Launch all three as parallel agents. Independent read-only analyses.
+**Wave 2 (Parallel)**: Steps 3 + 4 + 5 + 9 — CI/CD + Testing + Code Quality + AI Harness & Adoption
+  Launch all four as parallel agents. Independent read-only analyses.
 
 **Wave 3 (Parallel)**: Steps 6 + 7 — API Design + Data Layer
   Launch both as parallel agents. Independent framework-specific analyses.
@@ -166,7 +166,7 @@ multiple analysis agents simultaneously. Use the following wave structure:
 **Wave 4 (Sequential)**: Step 8 — Documentation Analysis
   Can run after all analysis waves complete.
 
-**Wave 5 (Sequential)**: Steps 9 + 10 — Report Generation + Export
+**Wave 5 (Sequential)**: Steps 10 + 11 — Report Generation + Export
   Must run last — requires ALL previous results.
 
 **Agent Launch Pattern**: For each parallel wave, use the Agent tool to
@@ -261,7 +261,19 @@ as inline documentation, and build/setup instructions.
 **Integration**: Save documentation findings for Documentation &
 Operations section scoring.
 
-## Step 9. Generate Final Report
+## Step 9. AI Harness & Adoption Analysis
+
+Goal: Score the project's AI harness — CLAUDE.md, `.claude/rules/`,
+`settings.json` permissions and hooks, `.claude/agents/`,
+commands/skills, and the pre-push git hook — on the 9-dimension,
+100-point rubric that judges quality, not just presence.
+
+**Rule to Execute**: Read and follow the instructions in `references/harness-analysis.md`
+
+**Integration**: Save harness findings for the AI Harness & Adoption
+section scoring.
+
+## Step 10. Generate Final Report
 
 Goal: Generate the final Python Project Health Audit report by
 integrating all analysis results.
@@ -273,17 +285,17 @@ generates the final report.
 
 **Report Sections**:
 - Executive Summary with overall score
-- At-a-Glance Scorecard with all 8 section scores
-- All 8 detailed sections (Tech Stack, Architecture, API/Interface Design,
+- At-a-Glance Scorecard with all 9 section scores
+- All 9 detailed sections (Tech Stack, Architecture, API/Interface Design,
   Data Layer, Testing, Code Quality, Documentation &
-  Operations, CI/CD)
+  Operations, CI/CD, AI Harness & Adoption)
 - Additional Metrics (including verbatim coverage percentages from Step 0)
 - Quality Index
 - Risks & Opportunities (5-8 bullets)
 - Recommendations (6-10 prioritized actions)
 - Appendix: Evidence Index
 
-## Step 10. Export Final Report
+## Step 11. Export Final Report
 
 Goal: Save the final Google Docs-ready Markdown report to the reports
 directory.
@@ -305,7 +317,7 @@ mkdir -p reports
 
 ## Execution Summary
 
-**Total Rules**: 13 rules
+**Total Rules**: 14 rules
 
 **Rule Execution Order**:
 1. `references/tool-installer.md` {model: cheap}
@@ -320,15 +332,16 @@ mkdir -p reports
 10. `references/api-design-analysis.md` {model: mid}
 11. `references/data-layer-analysis.md` {model: mid}
 12. `references/documentation-analysis.md` {model: cheap}
-13. `references/report-generator.md` {model: frontier}
+13. `references/harness-analysis.md` {model: mid}
+14. `references/report-generator.md` {model: frontier}
 
 **Wave-Based Parallel Execution**:
 - Wave 0 (Sequential): Step 0 — Environment Setup (rules 1-4)
 - Wave 1 (Parallel): Steps 1 + 2 — Repository Inventory + Configuration (rules 5-6)
-- Wave 2 (Parallel): Steps 3 + 4 + 5 — CI/CD + Testing + Code Quality (rules 7-9)
+- Wave 2 (Parallel): Steps 3 + 4 + 5 + 9 — CI/CD + Testing + Code Quality + AI Harness & Adoption (rules 7-9, 13)
 - Wave 3 (Parallel): Steps 6 + 7 — API Design + Data Layer (rules 10-11)
 - Wave 4 (Sequential): Step 8 — Documentation (rule 12)
-- Wave 5 (Sequential): Steps 9 + 10 — Report Generation + Export (rule 13)
+- Wave 5 (Sequential): Steps 10 + 11 — Report Generation + Export (rule 14)
 
 **Benefits of Modular Approach**:
 - Each rule can be executed independently
@@ -355,7 +368,7 @@ Invoke `agents/orchestrator.md` as the single entry point. The orchestrator hand
 |------|------|--------|------|
 | Wave 0 | Sequential (MANDATORY gate) | `env-setup` | cheap |
 | Wave 1 | Parallel | `repository-inventory`, `config-analysis` | cheap, cheap |
-| Wave 2 | Parallel | `cicd-analysis`, `testing-analysis`, `code-quality` | cheap, mid, mid |
+| Wave 2 | Parallel | `cicd-analysis`, `testing-analysis`, `code-quality`, `harness-analyzer` | cheap, mid, mid, mid |
 | Wave 3 | Parallel | `api-design-analysis`, `data-layer-analysis` | mid, mid |
 | Wave 4 | Sequential | `documentation-analysis` | cheap |
 | Wave 5 | Sequential | `report-writer` | frontier |
@@ -375,6 +388,7 @@ Invoke `agents/orchestrator.md` as the single entry point. The orchestrator hand
 | `agents/api-design-analysis.md` | mid | api-design-analysis | `reports/.artifacts/python_health/step_06_api_design_analysis.md` |
 | `agents/data-layer-analysis.md` | mid | data-layer-analysis | `reports/.artifacts/python_health/step_07_data_layer_analysis.md` |
 | `agents/documentation-analysis.md` | cheap | documentation-analysis | `reports/.artifacts/python_health/step_08_documentation_analysis.md` |
+| `agents/harness-analyzer.md` | mid | harness-analysis | `reports/.artifacts/python_health/step_09_harness_analysis.md` |
 | `agents/report-writer.md` | frontier | report-generator, report-format-enforcer | `reports/python_audit.md` |
 
 ## Report Metadata (MANDATORY)

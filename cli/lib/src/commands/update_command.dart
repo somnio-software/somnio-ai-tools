@@ -6,6 +6,8 @@ import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
+import '../agents/agent_registry.dart';
+import '../agents/installed_skill_names.dart';
 import '../content/skill_registry.dart';
 import '../installers/agent_installer.dart';
 import '../installers/interactive_install.dart';
@@ -35,6 +37,12 @@ class UpdateCommand extends Command<int> {
         abbr: 'v',
         help: 'Show detailed output for each step.',
         negatable: false,
+      )
+      ..addFlag(
+        'post-update',
+        help: 'Internal: run the clean + reinstall steps only.',
+        negatable: false,
+        hide: true,
       );
   }
 
@@ -44,57 +52,17 @@ class UpdateCommand extends Command<int> {
       'https://github.com/somnio-software/somnio-ai-tools';
   static const _skillsRepo = 'somnio-software/somnio-ai-tools';
 
-  /// All skill directory names to clean up (old + new naming conventions).
-  static const _skillNames = [
-    // v1.x names (old)
-    'somnio-fh',
-    'somnio-fp',
-    'somnio-nh',
-    'somnio-np',
-    'somnio-rh',
-    'somnio-rp',
-    'somnio-sa',
-    'workflow-plan',
-    'workflow-run',
-    // v2.x names (new)
-    'clockify-tracker',
-    'flutter-health-audit',
-    'flutter-best-practices',
-    'git-branch-format',
-    'git-commit-format',
-    'nestjs-health-audit',
-    'nestjs-best-practices',
-    'react-health-audit',
-    'react-best-practices',
-    'security-audit',
-    'ship',
-    'workflow-builder',
-  ];
+  /// All skill directory names to clean up — every registered skill plus the
+  /// v1.x names, derived from the registry so new skills are never missed.
+  List<String> get _skillNames => InstalledSkillNames.all;
 
   /// Cursor command file names to clean up (old + new).
-  static const _cursorFiles = [
-    'somnio-fh.md',
-    'somnio-fp.md',
-    'somnio-nh.md',
-    'somnio-np.md',
-    'somnio-rh.md',
-    'somnio-rp.md',
-    'somnio-sa.md',
-    'workflow-plan.md',
-    'workflow-run.md',
-    'clockify-tracker.md',
-    'flutter-health-audit.md',
-    'flutter-best-practices.md',
-    'git-branch-format.md',
-    'git-commit-format.md',
-    'nestjs-health-audit.md',
-    'nestjs-best-practices.md',
-    'react-health-audit.md',
-    'react-best-practices.md',
-    'security-audit.md',
-    'ship.md',
-    'workflow-builder.md',
-  ];
+  Set<String> get _cursorFiles =>
+      InstalledSkillNames.basenamesFor(AgentRegistry.findById('cursor')!);
+
+  /// Gemini CLI skill file names to clean up (old + new).
+  Set<String> get _geminiFiles =>
+      InstalledSkillNames.basenamesFor(AgentRegistry.findById('gemini')!);
 
   @override
   String get name => 'update';
@@ -108,37 +76,47 @@ class UpdateCommand extends Command<int> {
     final useLegacy = argResults!['legacy'] as bool;
     final allSkills = argResults!['all-skills'] as bool;
     final verbose = argResults!['verbose'] as bool;
+    final isPostUpdate = argResults!['post-update'] as bool;
 
     // ── Step 1: Update CLI from git ───────────────────────────────
-    final updateProgress = _logger.progress('Updating somnio CLI');
-    try {
-      final result = await Process.run('dart', [
-        'pub',
-        'global',
-        'activate',
-        '--source',
-        'git',
-        _repoUrl,
-        '--git-path',
-        'cli',
-      ]);
-      if (result.exitCode != 0) {
-        updateProgress.fail('Failed to update CLI');
-        _logger.err(result.stderr as String);
-        _logger.info('');
-        _logger.info(
-          'You can update manually:\n'
-          '  dart pub global activate --source git $_repoUrl --git-path cli',
-        );
+    if (!isPostUpdate) {
+      final updateProgress = _logger.progress('Updating somnio CLI');
+      try {
+        final result = await Process.run('dart', [
+          'pub',
+          'global',
+          'activate',
+          '--source',
+          'git',
+          _repoUrl,
+          '--git-path',
+          'cli',
+        ]);
+        if (result.exitCode != 0) {
+          updateProgress.fail('Failed to update CLI');
+          _logger.err(result.stderr as String);
+          _logger.info('');
+          _logger.info(
+            'You can update manually:\n'
+            '  dart pub global activate --source git $_repoUrl --git-path cli',
+          );
+          return ExitCode.software.code;
+        }
+        updateProgress.complete('CLI updated');
+      } catch (e) {
+        updateProgress.fail('Failed to update CLI: $e');
         return ExitCode.software.code;
       }
-      updateProgress.complete('CLI updated');
-    } catch (e) {
-      updateProgress.fail('Failed to update CLI: $e');
-      return ExitCode.software.code;
-    }
 
-    _logger.info('');
+      _logger.info('');
+
+      // Steps 2-3 must run the version we just activated, not this process.
+      return _runPostUpdate(
+        useLegacy: useLegacy,
+        allSkills: allSkills,
+        verbose: verbose,
+      );
+    }
 
     // ── Step 2: Clean up ALL old installations ────────────────────
     final cleanProgress = _logger.progress('Cleaning old skill installations');
@@ -170,6 +148,44 @@ class UpdateCommand extends Command<int> {
     return _installViaSkillsSh(verbose: verbose);
   }
 
+  /// Re-runs the clean + reinstall steps from the just-activated CLI.
+  ///
+  /// `dart pub global activate` cannot hot-reload the running process, so the
+  /// skill registry and cleanup lists compiled into it are the pre-update ones.
+  /// Running the remainder in a child process is what makes a single
+  /// `somnio update` pick up skills added by the fetched version. stdio is
+  /// inherited so the interactive wizard still works, and `--post-update`
+  /// stops the child from updating the CLI again.
+  Future<int> _runPostUpdate({
+    required bool useLegacy,
+    required bool allSkills,
+    required bool verbose,
+  }) async {
+    try {
+      final process = await Process.start(
+        'dart',
+        [
+          'pub',
+          'global',
+          'run',
+          'somnio:somnio',
+          'update',
+          '--post-update',
+          if (useLegacy) '--legacy',
+          if (allSkills) '--all-skills',
+          if (verbose) '--verbose',
+        ],
+        mode: ProcessStartMode.inheritStdio,
+      );
+      return process.exitCode;
+    } catch (e) {
+      _logger.err('Failed to run the updated CLI: $e');
+      _logger.info('');
+      _logger.info('Run "somnio install" to reinstall your skills.');
+      return ExitCode.software.code;
+    }
+  }
+
   /// Reinstalls skills through the interactive wizard (agents + skills).
   Future<int> _reinstallInteractive() async {
     final flow = InteractiveInstall(_logger);
@@ -190,7 +206,9 @@ class UpdateCommand extends Command<int> {
     final code = await flow.installToAgents(agents, content.loader, selection);
 
     _logger.info('');
-    _logger.success('Update complete!');
+    if (code == ExitCode.success.code) {
+      _logger.success('Update complete!');
+    }
     _logger.info('');
     CommandHelpers.printNextSteps(_logger);
 
@@ -206,6 +224,7 @@ class UpdateCommand extends Command<int> {
     var count = 0;
     count += _cleanClaude(verbose: verbose);
     count += _cleanCursor(verbose: verbose);
+    count += _cleanGemini(verbose: verbose);
     count += _cleanAntigravity(verbose: verbose);
     count += _cleanAgentsRegistry(verbose: verbose);
     return count;
@@ -264,6 +283,39 @@ class UpdateCommand extends Command<int> {
     return count;
   }
 
+  /// Removes Somnio skill markdown files from `~/.gemini/skills/` and the
+  /// execution rules from `~/.gemini/somnio_rules/` (Gemini CLI agent).
+  ///
+  /// Deletes by known name rather than by `somnio_` prefix: the markdown
+  /// transformer writes un-prefixed underscored bundle names
+  /// (`flutter_health_audit.md`), so a prefix scan would only catch v1.x files.
+  int _cleanGemini({bool verbose = false}) {
+    final home = PlatformUtils.homeDirectory;
+    var count = 0;
+
+    final skillsDir = Directory(p.join(home, '.gemini', 'skills'));
+    if (skillsDir.existsSync()) {
+      for (final name in _geminiFiles) {
+        final file = File(p.join(skillsDir.path, name));
+        if (file.existsSync()) {
+          file.deleteSync();
+          if (verbose) _logger.info('  Removed Gemini: $name');
+          count++;
+        }
+      }
+    }
+
+    // Execution rules written by AgentInstaller._installExecutionRules.
+    final rulesDir = Directory(p.join(home, '.gemini', 'somnio_rules'));
+    if (rulesDir.existsSync()) {
+      rulesDir.deleteSync(recursive: true);
+      if (verbose) _logger.info('  Removed Gemini: somnio_rules/');
+      count++;
+    }
+
+    return count;
+  }
+
   /// Removes Somnio workflows and rules from Antigravity/Gemini.
   int _cleanAntigravity({bool verbose = false}) {
     final baseDir = PlatformUtils.antigravityGlobalDir;
@@ -314,29 +366,32 @@ class UpdateCommand extends Command<int> {
     return count;
   }
 
-  /// Installs skills to workflow-format agents (e.g., Antigravity) that
-  /// skills.sh does not support.
+  /// Installs skills to agents that skills.sh does not cover.
   ///
-  /// skills.sh only covers Claude and Cursor. Agents with
-  /// [InstallFormat.workflow] need the built-in installer.
-  Future<void> _installWorkflowAgents() async {
+  /// skills.sh only covers Claude and Cursor. Any agent with its own
+  /// [AgentConfig.executionRulesPath] (or [InstallFormat.workflow], e.g.
+  /// Antigravity) needs the built-in installer to get its execution rules
+  /// written. Returns the total number of failed installs.
+  Future<int> _installNonSkillsShAgents() async {
     final detector = AgentDetector();
     final agents = await detector.detect();
 
-    final workflowAgents = agents.entries
+    final agentsToInstall = agents.entries
         .where(
           (e) =>
               e.value.installed &&
-              e.key.installFormat == InstallFormat.workflow,
+              (e.key.installFormat == InstallFormat.workflow ||
+                  e.key.executionRulesPath != null),
         )
         .map((e) => e.key)
         .toList();
 
-    if (workflowAgents.isEmpty) return;
+    if (agentsToInstall.isEmpty) return 0;
 
     final content = await CommandHelpers.resolveContent();
+    var totalFailed = 0;
 
-    for (final agentConfig in workflowAgents) {
+    for (final agentConfig in agentsToInstall) {
       final progress = _logger.progress(agentConfig.displayName);
 
       final installer = AgentInstaller(
@@ -345,15 +400,18 @@ class UpdateCommand extends Command<int> {
         agentConfig: agentConfig,
       );
       final result = await installer.install(bundles: content.bundles);
-      final wfCount = installer.installWorkflowSkills(
+      final wf = installer.installWorkflowSkillsDetailed(
         SkillRegistry.workflowSkills,
       );
+      totalFailed += result.failedCount + wf.failed;
 
       progress.complete(
         '${agentConfig.displayName}  '
-        '${CommandHelpers.installSummary(result, agentConfig, extraCount: wfCount)}',
+        '${CommandHelpers.installSummary(result, agentConfig, extraCount: wf.installed)}',
       );
     }
+
+    return totalFailed;
   }
 
   /// Installs skills via `npx skills add` (skills.sh).
@@ -408,15 +466,19 @@ class UpdateCommand extends Command<int> {
 
     if (!verbose) installProgress.complete('Skills reinstalled');
 
-    // skills.sh only covers Claude/Cursor. Install to workflow-format
-    // agents (e.g., Antigravity) via the built-in installer.
-    await _installWorkflowAgents();
+    // skills.sh only covers Claude/Cursor. Install to the remaining agents
+    // via the built-in installer.
+    final failed = await _installNonSkillsShAgents();
 
     _logger.info('');
-    _logger.success('Update complete! Skills reinstalled via skills.sh.');
+    if (failed > 0) {
+      _logger.err('Update finished with $failed failed install(s).');
+    } else {
+      _logger.success('Update complete! Skills reinstalled via skills.sh.');
+    }
     _logger.info('');
     CommandHelpers.printNextSteps(_logger);
 
-    return ExitCode.success.code;
+    return failed > 0 ? ExitCode.software.code : ExitCode.success.code;
   }
 }

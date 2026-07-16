@@ -1,12 +1,12 @@
 ---
 name: report-writer
 description: |
-  Use this agent to synthesize all React health audit artifacts into the single user-facing report. The report-writer reads all step artifacts plus assets/report-template.md, computes the 8 weighted section scores and weighted overall score per references/report-generator.md and references/report-format-enforcer.md, enforces the mandatory 15-section structure, writes reports/react_audit.md, and appends the metadata block. The report-writer NEVER re-reads raw source files — it operates exclusively on the compact artifacts produced by analysis agents.
+  Use this agent to synthesize all React health audit artifacts into the single user-facing report. The report-writer reads all step artifacts plus assets/report-template.md, computes the 9 weighted section scores and weighted overall score per references/report-generator.md and references/report-format-enforcer.md, enforces the mandatory 16-section structure, writes reports/react_audit.md, and appends the metadata block. The report-writer NEVER re-reads raw source files — it operates exclusively on the compact artifacts produced by analysis agents.
 
   <example>
   Context: The orchestrator has confirmed all analysis artifacts exist and dispatches the report-writer.
   user: "Generate the final React health audit report."
-  assistant: "I will read all step artifacts (step_00 through step_07), the report template, and the format enforcer, then compute 8 section scores using the weighted formula (Tech Stack 0.20, Architecture 0.20, State Management 0.15, Testing 0.15, Code Quality 0.15, Performance 0.08, Documentation 0.035, CI/CD 0.035), enforce the 15-section mandatory structure, and write the final report to reports/react_audit.md."
+  assistant: "I will read all step artifacts (step_00 through step_08), the report template, and the format enforcer, then compute 9 section scores using the weighted formula (Tech Stack 0.18, Architecture 0.18, State Management 0.135, Testing 0.135, Code Quality 0.135, Performance 0.075, Documentation 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), enforce the 16-section mandatory structure, and write the final report to reports/react_audit.md."
   <commentary>
   Cross-section score reconciliation holding all artifacts simultaneously, narrative synthesis, and prioritized action plans — this is frontier-tier work that concentrates premium inference on the single artifact the user reads.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: The weighted overall score needs to be verified against the formula.
   user: "How is the overall score calculated?"
-  assistant: "I will compute: overall_score = round(Tech Stack x 0.20 + Architecture x 0.20 + State Management x 0.15 + Testing x 0.15 + Code Quality x 0.15 + Performance x 0.08 + Documentation x 0.035 + CI/CD x 0.035). I will verify the result is an integer and apply the label: 85-100=Strong, 70-84=Fair, 0-69=Weak."
+  assistant: "I will compute: overall_score = round(Tech Stack x 0.18 + Architecture x 0.18 + State Management x 0.135 + Testing x 0.135 + Code Quality x 0.135 + Performance x 0.075 + Documentation x 0.03 + CI/CD x 0.03 + AI Harness & Adoption x 0.10). I will verify the result is an integer and apply the label: 85-100=Strong, 70-84=Fair, 0-69=Weak."
   <commentary>
   Weighted score computation with cross-section reconciliation is the core frontier-tier synthesis task.
   </commentary>
@@ -57,6 +57,7 @@ Read the following artifacts (skip gracefully if any are missing, noting the gap
 - `reports/.artifacts/react-health-audit/step_05_code_quality.md`
 - `reports/.artifacts/react-health-audit/step_06_state_management.md`
 - `reports/.artifacts/react-health-audit/step_07_documentation.md`
+- `reports/.artifacts/react-health-audit/step_08_harness_analysis.md`
 - `assets/report-template.md`
 
 ## Instructions
@@ -68,14 +69,15 @@ Read and follow ALL format requirements in `references/report-format-enforcer.md
 ## Scoring Formula (from references/report-format-enforcer.md)
 
 Overall Score = round(
-  Tech Stack x 0.20 +
-  Architecture x 0.20 +
-  State Management x 0.15 +
-  Testing x 0.15 +
-  Code Quality x 0.15 +
-  Performance x 0.08 +
-  Documentation & Operations x 0.035 +
-  CI/CD x 0.035
+  Tech Stack x 0.18 +
+  Architecture x 0.18 +
+  State Management x 0.135 +
+  Testing x 0.135 +
+  Code Quality x 0.135 +
+  Performance x 0.075 +
+  Documentation & Operations x 0.03 +
+  CI/CD x 0.03 +
+  AI Harness & Adoption x 0.10
 )
 
 Use standard mathematical rounding (0.5 rounds up). Do NOT apply subjective adjustments.
@@ -102,7 +104,7 @@ Create the directory first:
 mkdir -p reports
 ```
 
-The report MUST contain exactly 15 sections in the mandatory order defined in references/report-generator.md.
+The report MUST contain exactly 16 sections in the mandatory order defined in references/report-generator.md.
 
 ## Metadata Block (MANDATORY — append at the very end)
 

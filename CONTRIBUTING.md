@@ -36,12 +36,13 @@ Agent rules live in `agent-rules/rules/` and are compiled into agent-specific ad
 
 ### Edit an existing rule
 
-1. Edit the file in `agent-rules/rules/nestjs/` or `agent-rules/rules/flutter/`.
+1. Edit the file in `agent-rules/rules/<stack>/` (one of: django, fastapi, flask, flutter, functions, nestjs, python, react, typescript).
 2. Regenerate all adapters:
    ```bash
    cd agent-rules
-   npm run generate
+   python3 scripts/generate.py
    ```
+   To regenerate a single adapter: `python3 scripts/generate.py --only <target>` (valid targets: claude, cursor, antigravity, windsurf, copilot, codex).
 3. Open a PR with a description of the change and why.
 
 **Rule file format** (`agent-rules/rules/**/*.md`):
@@ -57,54 +58,51 @@ alwaysApply: false
 
 Brief explanation of what this rule enforces and why.
 
-## Good example
+#### Good
 \```typescript
 // correct code
 \```
 
-## Bad example
+#### Bad
 \```typescript
 // incorrect code
 \```
 ```
 
-Include at least one Good and one Bad example with code.
+Include at least one Good and one Bad example with code. Headings must be exactly `#### Good` / `#### Bad` (h4, no suffix) — `generate.py`'s condenser matches these exactly to flatten/strip them.
 
 ### Add a new rule
 
-1. Create a `.md` file in `agent-rules/rules/nestjs/` or `agent-rules/rules/flutter/` using the format above.
-2. Run `npm run generate` to verify all adapters are generated correctly.
+1. Create a `.md` file in `agent-rules/rules/<stack>/` using the format above.
+2. Run `python3 scripts/generate.py` to verify all adapters are generated correctly.
 3. Document the new rule in the table in `docs/agent-rules.md`.
 4. Open a PR.
 
 ### Add support for a new agent adapter
 
-1. **Add a renderer** in `agent-rules/scripts/generate.js`, following the existing renderer pattern. The function receives `groups`:
+1. **Add a `generate_<agent>(groups)` function** in `agent-rules/scripts/generate.py`, following the existing renderer pattern. The function receives `groups`:
 
-   ```js
+   ```python
    {
-     nestjs: [{ filePath, meta, body, filename }, ...],
-     flutter: [{ filePath, meta, body, filename }, ...]
+     "nestjs": [{"file_path", "meta", "body", "filename"}, ...],
+     "react": [{"file_path", "meta", "body", "filename"}, ...],
+     # ... one entry per subfolder of rules/: django, fastapi, flask,
+     # flutter, functions, nestjs, python, react, typescript
    }
    ```
 
    Where `meta` = YAML frontmatter fields, `body` = markdown content, `filename` = file name without extension.
 
-2. **Register the renderer** in `targets` inside `generate.js`.
+2. **Register the function** in the `TARGETS` dict in `generate.py` (`generate.py:471`).
 
-3. **Add a script** in `agent-rules/package.json`:
-   ```json
-   "generate:my-agent": "node scripts/generate.js --only my-agent"
-   ```
-
-4. **Create `agent-rules/adapters/my-agent/README.md`** documenting:
+3. **Create `agent-rules/adapters/my-agent/README.md`** documenting:
    - What the agent does
    - How to set up the adapter (what to copy, where)
-   - How to update (`npm run generate:my-agent`)
+   - How to update (`python3 scripts/generate.py --only my-agent`)
 
-5. **Register in the CLI** — add an `AgentRule` entry to `cli/lib/src/content/agent_rule_registry.dart` so the adapter is installable via `somnio rules install`.
+4. **Register in the CLI** — add an `AgentRule` entry to `cli/lib/src/content/agent_rule_registry.dart` so the adapter is installable via `somnio rules install`.
 
-6. **Link in `docs/agent-rules.md`** — add a row to the supported-agents table.
+5. **Link in `docs/agent-rules.md`** — add a row to the supported-agents table.
 
 ---
 

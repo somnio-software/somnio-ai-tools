@@ -39,11 +39,6 @@ class InstallCommand extends Command<int> {
       ..addOption(
         'skills',
         help: 'Comma-separated skill ids/names to install (skips the wizard).',
-      )
-      ..addFlag(
-        'force',
-        abbr: 'f',
-        help: 'Force reinstall of all skills.',
       );
   }
 
@@ -58,8 +53,6 @@ class InstallCommand extends Command<int> {
 
   @override
   Future<int> run() async {
-    final force = argResults!['force'] as bool;
-
     // Resolve repo root / content.
     final ResolvedContent content;
     try {
@@ -88,12 +81,7 @@ class InstallCommand extends Command<int> {
     }
 
     // 3. Install the selected skills to each selected agent.
-    return flow.installToAgents(
-      agents,
-      content.loader,
-      selection,
-      force: force,
-    );
+    return flow.installToAgents(agents, content.loader, selection);
   }
 
   // ──────────────────────────────────────────────────────────────────

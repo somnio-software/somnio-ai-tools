@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
 import '../agents/agent_registry.dart';
+import '../agents/installed_skill_names.dart';
 import '../content/skill_registry.dart';
 import '../utils/platform_utils.dart';
 
@@ -244,14 +245,13 @@ class StatusCommand extends Command<int> {
     if (!dir.existsSync()) return null;
 
     final techMap = <String, List<int>>{};
-    final prefix = agent.filePrefix;
 
     switch (agent.installFormat) {
       case InstallFormat.skillDir:
         // Claude-style: each skill is a directory, rules in rules/ subdir
         for (final entity in dir.listSync()) {
           if (entity is Directory &&
-              p.basename(entity.path).startsWith(prefix)) {
+              InstalledSkillNames.matches(agent, p.basename(entity.path))) {
             final skillName = p.basename(entity.path);
             final tech = _resolveTech(skillName);
             techMap.putIfAbsent(tech, () => [0, 0]);
@@ -271,7 +271,7 @@ class StatusCommand extends Command<int> {
         // Cursor-style: single .md command files + separate rules dir
         for (final f in dir.listSync().whereType<File>()) {
           if (f.path.endsWith('.md') &&
-              p.basename(f.path).startsWith(prefix)) {
+              InstalledSkillNames.matches(agent, p.basename(f.path))) {
             final tech = _resolveTech(p.basenameWithoutExtension(f.path));
             techMap.putIfAbsent(tech, () => [0, 0]);
             techMap[tech]![0]++;
@@ -300,7 +300,7 @@ class StatusCommand extends Command<int> {
       case InstallFormat.workflow:
         // Antigravity-style: workflow files + sibling somnio_rules/ dir
         for (final f in dir.listSync().whereType<File>()) {
-          if (p.basename(f.path).startsWith(prefix)) {
+          if (InstalledSkillNames.matches(agent, p.basename(f.path))) {
             final tech = _resolveTech(p.basename(f.path));
             techMap.putIfAbsent(tech, () => [0, 0]);
             techMap[tech]![0]++;
@@ -328,12 +328,12 @@ class StatusCommand extends Command<int> {
         // Generic: single .md files per skill, no separate rules
         for (final entity in dir.listSync()) {
           if (entity is File &&
-              p.basename(entity.path).startsWith(prefix)) {
+              InstalledSkillNames.matches(agent, p.basename(entity.path))) {
             final tech = _resolveTech(p.basenameWithoutExtension(entity.path));
             techMap.putIfAbsent(tech, () => [0, 0]);
             techMap[tech]![0]++;
           } else if (entity is Directory &&
-              p.basename(entity.path).startsWith(prefix)) {
+              InstalledSkillNames.matches(agent, p.basename(entity.path))) {
             final tech = _resolveTech(p.basename(entity.path));
             techMap.putIfAbsent(tech, () => [0, 0]);
             techMap[tech]![0]++;

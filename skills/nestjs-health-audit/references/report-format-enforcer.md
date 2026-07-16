@@ -32,9 +32,9 @@ The report MUST contain exactly these 16 sections in this order:
 6. Data Layer
 7. Testing
 8. Code Quality (Linter & Warnings)
-9. Security
-10. Documentation & Operations
-11. CI/CD (Configs Found in Repo)
+9. Documentation & Operations
+10. CI/CD (Configs Found in Repo)
+11. AI Harness & Adoption
 12. Additional Metrics
 13. Quality Index
 14. Risks & Opportunities
@@ -109,9 +109,9 @@ Priority Recommendations:
 - Data Layer: [Score]/100 ([Label])
 - Testing: [Score]/100 ([Label])
 - Code Quality (Linter & Warnings): [Score]/100 ([Label])
-- Security: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
 
 12. Additional Metrics:
@@ -139,9 +139,9 @@ Section Summary with Scores:
 - Data Layer: [Score]/100 ([Label])
 - Testing: [Score]/100 ([Label])
 - Code Quality: [Score]/100 ([Label])
-- Security: [Score]/100 ([Label])
 - Documentation & Operations: [Score]/100 ([Label])
 - CI/CD: [Score]/100 ([Label])
+- AI Harness & Adoption: [Score]/100 ([Label])
 Overall Score: [Score]/100 ([Label])
 [One-sentence interpretation]
 

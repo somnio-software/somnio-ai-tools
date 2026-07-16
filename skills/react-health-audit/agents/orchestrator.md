@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A user triggers a React health audit from within a Claude session.
   user: "Run a React health audit on this project."
-  assistant: "I will orchestrate the React health audit across 5 waves. First I will dispatch env-setup-agent (Wave 0, sequential). If the GATE passes, I will dispatch repo-analyzer and config-analyzer in parallel (Wave 1), then cicd-analyzer, testing-analyzer, and code-quality-analyzer in parallel (Wave 2), then state-management-analyzer and docs-analyzer in parallel (Wave 3), and finally hand all artifacts to report-writer (Wave 4)."
+  assistant: "I will orchestrate the React health audit across 5 waves. First I will dispatch env-setup-agent (Wave 0, sequential). If the GATE passes, I will dispatch repo-analyzer and config-analyzer in parallel (Wave 1), then cicd-analyzer, testing-analyzer, code-quality-analyzer, and harness-analyzer in parallel (Wave 2), then state-management-analyzer and docs-analyzer in parallel (Wave 3), and finally hand all artifacts to report-writer (Wave 4)."
   <commentary>
   The orchestrator's role is routing and wave dispatch — it must never read source files or write the report itself. Mid tier is needed to reason about gate conditions and skip decisions.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: All analysis waves have completed successfully and the orchestrator hands off to the report-writer.
   user: "How does the orchestrator hand off to the report-writer?"
-  assistant: "After confirming all expected artifacts exist, I will dispatch the report-writer agent with the full artifact manifest: paths to step_00 through step_07 artifacts. The report-writer will read all artifacts and produce the final report without re-reading any source files."
+  assistant: "After confirming all expected artifacts exist, I will dispatch the report-writer agent with the full artifact manifest: paths to step_00 through step_08 artifacts. The report-writer will read all artifacts and produce the final report without re-reading any source files."
   <commentary>
   Artifact manifest assembly and report-writer dispatch is routing work — orchestrator's sole responsibility, mid tier.
   </commentary>
@@ -83,8 +83,9 @@ Dispatch simultaneously:
 - **`agents/cicd-analyzer.md`** → expects `reports/.artifacts/react-health-audit/step_03_cicd_analysis.md`
 - **`agents/testing-analyzer.md`** → expects `reports/.artifacts/react-health-audit/step_04_testing_analysis.md`
 - **`agents/code-quality-analyzer.md`** → expects `reports/.artifacts/react-health-audit/step_05_code_quality.md`
+- **`agents/harness-analyzer.md`** → expects `reports/.artifacts/react-health-audit/step_08_harness_analysis.md`
 
-After all complete, verify all three artifacts exist. Apply the retry-once-then-skip-with-log policy for any missing artifact.
+After all complete, verify all four artifacts exist. Apply the retry-once-then-skip-with-log policy for any missing artifact.
 
 ---
 
@@ -113,6 +114,7 @@ Pass the following artifact manifest to the report-writer:
 - `reports/.artifacts/react-health-audit/step_05_code_quality.md`
 - `reports/.artifacts/react-health-audit/step_06_state_management.md`
 - `reports/.artifacts/react-health-audit/step_07_documentation.md`
+- `reports/.artifacts/react-health-audit/step_08_harness_analysis.md`
 
 Note any skipped artifacts in your dispatch message so the report-writer can mark those sections as incomplete.
 

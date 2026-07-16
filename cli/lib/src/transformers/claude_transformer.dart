@@ -3,6 +3,7 @@ import '../agents/agent_registry.dart';
 import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
+import '../utils/yaml_frontmatter.dart';
 import 'transformer.dart';
 
 /// Result of transforming content for Claude Code.
@@ -56,8 +57,11 @@ class ClaudeTransformer implements Transformer {
     final template = loader.loadTemplate(bundle);
     final targetAgent = agent ?? AgentRegistry.findById('claude')!;
 
-    // Generate SKILL.md
-    final skillMd = _generateSkillMd(bundle, plan);
+    // Generate SKILL.md, preferring the authored frontmatter's `description`
+    // / `allowed-tools` (which carry the auto-activation trigger phrases)
+    // over the shorter registry display strings.
+    final planFrontmatter = loader.loadPlanFrontmatter(bundle.planRelativePath);
+    final skillMd = _generateSkillMd(bundle, plan, planFrontmatter);
 
     // Generate rule markdown files
     final ruleFiles = <String, String>{};
@@ -94,24 +98,38 @@ class ClaudeTransformer implements Transformer {
   /// file to the concrete model ID resolved via [agent]'s `modelTiers`.
   ///
   /// Only the three known portable tiers are rewritten; any other `model:`
-  /// value (already a concrete ID, `inherit`, etc.) is left unchanged. The
-  /// rest of the file is preserved byte-for-byte.
+  /// value (already a concrete ID, `inherit`, etc.) is left unchanged, as is a
+  /// tier the agent cannot resolve. The rest of the file is preserved
+  /// byte-for-byte.
   static String _resolveAgentModelTiers(String content, AgentConfig agent) {
     const knownTiers = {'cheap', 'mid', 'frontier'};
     final modelLine = RegExp(r'^(\s*model:\s*)(\S+)(\s*)$', multiLine: true);
     return content.replaceAllMapped(modelLine, (m) {
       final tier = m.group(2)!;
       if (!knownTiers.contains(tier)) return m.group(0)!;
-      return '${m.group(1)}${agent.resolveTier(tier)}${m.group(3)}';
+      final resolved = agent.resolveTier(tier);
+      if (resolved == null) return m.group(0)!;
+      return '${m.group(1)}$resolved${m.group(3)}';
     });
   }
 
-  String _generateSkillMd(SkillBundle bundle, String planContent) {
+  String _generateSkillMd(
+    SkillBundle bundle,
+    String planContent,
+    Map<String, String> planFrontmatter,
+  ) {
+    // Prefer the authored description: it carries the "Use when …" /
+    // "Triggers on: …" clauses that drive Claude's skill auto-activation.
+    // The registry string is a short display label and drops them.
+    final description = planFrontmatter['description'] ?? bundle.description;
+    final allowedTools = planFrontmatter['allowed-tools'] ??
+        'Read, Edit, Write, Grep, Glob, Bash, WebFetch';
+
     final frontmatter = '---\n'
         'name: ${bundle.name}\n'
         'description: >-\n'
-        '  ${bundle.description}\n'
-        'allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch\n'
+        '${foldYamlBlock(description)}'
+        'allowed-tools: ${yamlInlineScalar(allowedTools)}\n'
         'user-invocable: true\n'
         '---\n\n';
 

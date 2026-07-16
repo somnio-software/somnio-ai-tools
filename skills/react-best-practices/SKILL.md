@@ -154,8 +154,7 @@ the template.
 4.  `references/state-management.md` {model: mid}
 5.  `references/performance.md` {model: mid}
 6.  `references/typescript-standards.md` {model: cheap}
-7.  `references/best-practices-format-enforcer.md` {model: frontier}
-8.  `references/best-practices-generator.md` {model: frontier}
+7.  `references/best-practices-generator.md` {model: frontier}
 
 ## Subagent Dispatch (in-session)
 

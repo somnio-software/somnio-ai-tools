@@ -1,12 +1,12 @@
 ---
 name: report-writer-agent
 description: |
-  Use this agent as the final synthesis step of the NestJS Project Health Audit. It reads all analysis artifacts produced by the analysis subagents, computes the 8 weighted section scores and the overall score, enforces the mandatory 16-section structure per references/report-format-enforcer.md, and writes the single user-facing report to reports/nestjs_audit.md. Never re-reads raw source code.
+  Use this agent as the final synthesis step of the NestJS Project Health Audit. It reads all analysis artifacts produced by the analysis subagents, computes the 9 weighted section scores and the overall score, enforces the mandatory 16-section structure per references/report-format-enforcer.md, and writes the single user-facing report to reports/nestjs_audit.md. Never re-reads raw source code.
 
   <example>
   Context: All analysis waves are complete and the orchestrator hands off the artifact manifest to the report writer.
   user: "Generate the final NestJS health audit report."
-  assistant: "I will read all ten analysis artifacts, compute the 8 section scores using the weighted formula (Tech Stack 0.20, Architecture 0.20, API Design 0.20, Data Layer 0.11, Testing 0.11, Code Quality 0.11, Docs & Ops 0.035, CI/CD 0.035), enforce the 16-section format per report-format-enforcer.md, and write the report to reports/nestjs_audit.md."
+  assistant: "I will read all eleven analysis artifacts, compute the 9 section scores using the weighted formula (Tech Stack 0.18, Architecture 0.18, API Design 0.18, Data Layer 0.10, Testing 0.10, Code Quality 0.10, Docs & Ops 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), enforce the 16-section format per report-format-enforcer.md, and write the report to reports/nestjs_audit.md."
   <commentary>
   The report writer is the only agent that reads all artifacts simultaneously. It never re-reads source code — it operates exclusively on the compact artifact outputs.
   </commentary>
@@ -68,6 +68,7 @@ Artifacts to read (in order):
 8. `reports/.artifacts/nestjs_health/step_06_api_design_analysis.md`
 9. `reports/.artifacts/nestjs_health/step_07_data_layer_analysis.md`
 10. `reports/.artifacts/nestjs_health/step_08_documentation_analysis.md`
+11. `reports/.artifacts/nestjs_health/step_09_harness_analysis.md`
 
 ### Step 3 — Read the scoring formula
 
@@ -77,18 +78,19 @@ This is the single source of truth for section weights, scoring thresholds, the 
 
 ### Step 4 — Compute scores
 
-Compute 8 section scores (0–100 integers) from the artifact findings:
+Compute 9 section scores (0–100 integers) from the artifact findings:
 
 | Section | Weight |
 |---|---|
-| Tech Stack | 0.20 |
-| Architecture | 0.20 |
-| API Design | 0.20 |
-| Data Layer | 0.11 |
-| Testing | 0.11 |
-| Code Quality | 0.11 |
-| Documentation & Operations | 0.035 |
-| CI/CD | 0.035 |
+| Tech Stack | 0.18 |
+| Architecture | 0.18 |
+| API Design | 0.18 |
+| Data Layer | 0.10 |
+| Testing | 0.10 |
+| Code Quality | 0.10 |
+| Documentation & Operations | 0.03 |
+| CI/CD | 0.03 |
+| AI Harness & Adoption | 0.10 |
 
 Overall score formula:
 overall_score = round( sum_of(section_score x weight) )
@@ -120,9 +122,9 @@ Follow the MANDATORY REPORT STRUCTURE from report-format-enforcer.md exactly:
 6. Data Layer
 7. Testing (MUST include "Code Coverage:" line immediately after Score, extracted verbatim from step_00_test_coverage.md)
 8. Code Quality (Linter & Warnings)
-9. Security
-10. Documentation & Operations
-11. CI/CD (Configs Found in Repo)
+9. Documentation & Operations
+10. CI/CD (Configs Found in Repo)
+11. AI Harness & Adoption
 12. Additional Metrics
 13. Quality Index
 14. Risks & Opportunities

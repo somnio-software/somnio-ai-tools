@@ -33,7 +33,7 @@ description: |
   <example>
   Context: All waves have completed and artifacts are confirmed.
   user: "Finalize the audit."
-  assistant: "All expected artifacts are present. Handing the complete artifact manifest to report-writer: step_00_test_coverage.md, step_01_repository_inventory.md, step_02_config_analysis.md, step_03_cicd_analysis.md, step_04_testing_analysis.md, step_05_code_quality.md, step_06_api_design_analysis.md, step_07_data_layer_analysis.md, step_08_documentation_analysis.md."
+  assistant: "All expected artifacts are present. Handing the complete artifact manifest to report-writer: step_00_test_coverage.md, step_01_repository_inventory.md, step_02_config_analysis.md, step_03_cicd_analysis.md, step_04_testing_analysis.md, step_05_code_quality.md, step_06_api_design_analysis.md, step_07_data_layer_analysis.md, step_08_documentation_analysis.md, step_09_harness_analysis.md."
   <commentary>
   The orchestrator assembles and passes the manifest — the report-writer is the only agent that synthesizes findings and writes the user-facing report.
   </commentary>
@@ -59,6 +59,7 @@ All artifacts live under: `reports/.artifacts/python_health/`
 | 2 | cicd-analysis | `step_03_cicd_analysis.md` |
 | 2 | testing-analysis | `step_04_testing_analysis.md` |
 | 2 | code-quality | `step_05_code_quality.md` |
+| 2 | harness-analyzer | `step_09_harness_analysis.md` |
 | 3 | api-design-analysis | `step_06_api_design_analysis.md` |
 | 3 | data-layer-analysis | `step_07_data_layer_analysis.md` |
 | 4 | documentation-analysis | `step_08_documentation_analysis.md` |
@@ -88,15 +89,17 @@ For each missing artifact: retry the responsible agent once. If still missing af
 
 ### Wave 2 — Infrastructure Analysis (Parallel)
 
-Dispatch all three agents simultaneously:
+Dispatch all four agents simultaneously:
 - `agents/cicd-analysis.md`
 - `agents/testing-analysis.md`
 - `agents/code-quality.md`
+- `agents/harness-analyzer.md`
 
 Validate after completion:
 - `reports/.artifacts/python_health/step_03_cicd_analysis.md`
 - `reports/.artifacts/python_health/step_04_testing_analysis.md`
 - `reports/.artifacts/python_health/step_05_code_quality.md`
+- `reports/.artifacts/python_health/step_09_harness_analysis.md`
 
 Apply the same retry-once-then-log policy for any missing artifact.
 

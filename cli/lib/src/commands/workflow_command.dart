@@ -7,7 +7,10 @@ import 'package:path/path.dart' as p;
 
 import '../agents/agent_config.dart';
 import '../runner/agent_resolver.dart';
+import '../runner/step_executor.dart' show TokenUsage;
 import '../utils/prompts.dart';
+import '../utils/step_timeout_parser.dart';
+import '../utils/usage_summary.dart';
 import '../workflow/workflow_config.dart';
 import '../workflow/workflow_context.dart';
 import '../workflow/workflow_locator.dart';
@@ -151,6 +154,14 @@ class _WorkflowPlanCommand extends Command<int> {
       return ExitCode.software.code;
     }
 
+    if (context.steps.isEmpty) {
+      _logger.err(
+        'Planner produced a context.md with no steps '
+        '(missing or empty `steps:` frontmatter).',
+      );
+      return ExitCode.software.code;
+    }
+
     // Verify step files exist
     var missingSteps = 0;
     for (final step in context.steps) {
@@ -189,6 +200,10 @@ class _WorkflowRunCommand extends Command<int> {
         'restart',
         negatable: false,
         help: 'Restart from the beginning (ignore progress).',
+      )
+      ..addOption(
+        'step-timeout',
+        help: 'Per-step timeout in minutes (default: 30).',
       );
   }
 
@@ -214,6 +229,15 @@ class _WorkflowRunCommand extends Command<int> {
     final workflowName = args.first;
     final restart = argResults!['restart'] as bool;
 
+    final stepTimeoutFlag = argResults!['step-timeout'] as String?;
+    final Duration stepTimeout;
+    try {
+      stepTimeout = parseStepTimeoutMinutes(stepTimeoutFlag);
+    } on StepTimeoutParseException catch (e) {
+      _logger.err(e.message);
+      return ExitCode.usage.code;
+    }
+
     // Locate workflow
     final locator = WorkflowLocator();
     final location = locator.find(workflowName);
@@ -229,6 +253,14 @@ class _WorkflowRunCommand extends Command<int> {
     final context = WorkflowContext.loadFrom(location.contextPath);
     if (context == null) {
       _logger.err('Invalid context.md in ${location.path}');
+      return ExitCode.software.code;
+    }
+
+    if (context.steps.isEmpty) {
+      _logger.err('Workflow "$workflowName" has no steps.');
+      _logger.info(
+        'Check the `steps:` frontmatter list in ${location.contextPath}',
+      );
       return ExitCode.software.code;
     }
 
@@ -257,6 +289,21 @@ class _WorkflowRunCommand extends Command<int> {
     final configPath = location.configPath(agent.id);
     var config = WorkflowConfig.loadFrom(configPath);
     if (config == null) {
+      if (File(configPath).existsSync()) {
+        // File is present but unparseable — never silently fall back, the
+        // user's model assignments would be discarded without warning.
+        _logger.err('Invalid config file: $configPath');
+        _logger.err(
+          'The file exists but could not be parsed. Check that it is valid '
+          'JSON and that every "by_step" key is an integer index '
+          '(e.g. "3", not "step3").',
+        );
+        _logger.info(
+          'Fix the file, or re-generate it with '
+          '"somnio workflow config $workflowName".',
+        );
+        return ExitCode.software.code;
+      }
       _logger.warn('No config file for ${agent.displayName}.');
       _logger.info('Using default model mapping...');
       config = WorkflowConfig(
@@ -266,19 +313,25 @@ class _WorkflowRunCommand extends Command<int> {
     }
 
     // Check for existing progress
-    var startFromIndex = 0;
+    var resume = false;
+    var resumableCount = 0;
     if (!restart) {
       final existing = WorkflowProgress.loadFrom(location.progressPath);
-      if (existing != null && !existing.isComplete) {
-        final nextIndex = existing.nextPendingIndex;
-        if (nextIndex > 0) {
-          final choice = Prompts.selectOneOf(
-            'Previous run found (${existing.completedCount}/${existing.steps.length} steps). Resume?',
-            choices: ['resume', 'restart', 'cancel'],
-            defaultValue: 'resume',
-          );
-          if (choice == 'cancel') return ExitCode.success.code;
-          if (choice == 'resume') startFromIndex = nextIndex;
+      // Gate on "is there completed work worth keeping", not on the index of
+      // the first pending step: under wave parallelism a failed step 1 can
+      // coexist with completed steps 2..N.
+      if (existing != null &&
+          !existing.isComplete &&
+          existing.completedCount > 0) {
+        final choice = Prompts.selectOneOf(
+          'Previous run found (${existing.completedCount}/${existing.steps.length} steps). Resume?',
+          choices: ['resume', 'restart', 'cancel'],
+          defaultValue: 'resume',
+        );
+        if (choice == 'cancel') return ExitCode.success.code;
+        if (choice == 'resume') {
+          resume = true;
+          resumableCount = existing.completedCount;
         }
       }
     }
@@ -289,8 +342,9 @@ class _WorkflowRunCommand extends Command<int> {
     _logger.info('Agent:    ${agent.displayName}');
     _logger.info('Steps:    ${context.steps.length}');
     _logger.info('Scope:    ${location.scope.name}');
-    if (startFromIndex > 0) {
-      _logger.info('Resuming from step ${startFromIndex + 1}');
+    if (resume) {
+      _logger.info('Resuming: skipping $resumableCount completed step'
+          '${resumableCount == 1 ? "" : "s"}');
     }
     _logger.info('');
 
@@ -301,9 +355,10 @@ class _WorkflowRunCommand extends Command<int> {
       config: config,
       agentConfig: agent,
       logger: _logger,
+      stepTimeout: stepTimeout,
     );
 
-    final result = await runner.run(startFromIndex: startFromIndex);
+    final result = await runner.run(resume: resume);
 
     // Summary
     _logger.info('');
@@ -318,14 +373,26 @@ class _WorkflowRunCommand extends Command<int> {
         '${result.completedCount} steps in $timeLabel',
       );
     } else {
-      _logger.err(
-        'Workflow failed at step: ${result.failedStep}',
-      );
+      if (result.failedStep != null) {
+        _logger.err('Workflow failed at step: ${result.failedStep}');
+      }
       if (result.errorMessage != null) {
         _logger.err(result.errorMessage!);
       }
-      _logger.info('Run "somnio workflow run $workflowName" to resume.');
+      if (result.failedStep != null) {
+        _logger.info('Run "somnio workflow run $workflowName" to resume.');
+      }
     }
+
+    final tokenUsages = result.results
+        .map((r) => r.tokenUsage)
+        .whereType<TokenUsage>()
+        .toList();
+    UsageSummary.printUsageSummary(
+      _logger,
+      tokenUsages,
+      totalTime: result.totalDurationSeconds,
+    );
 
     _logger.info('Outputs: ${location.outputsDir}');
 
