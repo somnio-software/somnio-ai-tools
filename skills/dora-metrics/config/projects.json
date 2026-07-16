@@ -2,19 +2,19 @@
   "_comment": "Single source of truth for the project -> repos mapping. Maintained by hand: to add a new project, ask the skill directly (see README.md / SKILL.md Step 1) instead of editing this by hand, unless you prefer to do it yourself.",
   "tag_pattern": "^v\\d+\\.\\d+\\.\\d+$",
   "window_days": 14,
-  "proyectos": [
+  "projects": [
     {
-      "nombre": "Example Project",
-      "notas": "Multi-repo, different orgs (example-org vs example-partner-org) — don't assume a single org when adding credentials. Deployment Frequency: independent count per repo (frontend and backend deploy decoupled, no simultaneous tag in both required).",
+      "name": "Example Project",
+      "notes": "Multi-repo, different orgs (example-org vs example-partner-org) — don't assume a single org when adding credentials. Deployment Frequency: independent count per repo (frontend and backend deploy decoupled, no simultaneous tag in both required).",
       "repos": [
         {
           "repo": "example-org/example-frontend",
-          "tipo": ["web", "mobile"],
+          "type": ["web", "mobile"],
           "prod_branch": "main"
         },
         {
           "repo": "example-partner-org/example-backend",
-          "tipo": ["backend"],
+          "type": ["backend"],
           "prod_branch": "main"
         }
       ]

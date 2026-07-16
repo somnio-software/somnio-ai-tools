@@ -18,7 +18,7 @@ included in that deploy, aggregated **per project and per repo**, within a
 
 ## Source
 GitHub — commits, PRs, and tags / Releases of the project's repos
-(see `../config/proyectos.json`).
+(see `../config/projects.json`).
 
 ## Aggregation level
 **Per project and per repo** (not combined). Consistent with the Deployment

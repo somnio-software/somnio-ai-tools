@@ -137,16 +137,16 @@ def run_dora(repo, prod_branch="main", deploy_source="release", tag_pattern=None
     cfg = {
         "tag_pattern": tag_pattern or r"^v\d+\.\d+\.\d+$",
         "window_days": window_days,
-        "proyectos": [{
-            "nombre": "E2E",
-            "repos": [{"repo": repo, "tipo": ["web"], "prod_branch": prod_branch, "deploy_source": deploy_source}],
+        "projects": [{
+            "name": "E2E",
+            "repos": [{"repo": repo, "type": ["web"], "prod_branch": prod_branch, "deploy_source": deploy_source}],
         }],
     }
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as f:
         json.dump(cfg, f)
         cfg_path = f.name
     try:
-        cmd = ["python3", DORA_SCRIPT, "--config", cfg_path, "--proyecto", "E2E"]
+        cmd = ["python3", DORA_SCRIPT, "--config", cfg_path, "--project", "E2E"]
         if extra_args:
             cmd += extra_args
         result = run(cmd)
@@ -157,7 +157,7 @@ def run_dora(repo, prod_branch="main", deploy_source="release", tag_pattern=None
 
 
 def repo_metrics(dora_output, repo):
-    for p in dora_output["proyectos"]:
+    for p in dora_output["projects"]:
         for r in p["repos"]:
             if r.get("repo") == repo:
                 return r

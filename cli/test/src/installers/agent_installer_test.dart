@@ -707,7 +707,7 @@ void main() {
       final skill = seedWorkflow(name: 'dora-metrics');
       _writeFile(repoRoot, 'skills/dora-metrics/scripts/dora_metrics.py',
           'print("hi")\n');
-      _writeFile(repoRoot, 'skills/dora-metrics/config/proyectos.json', '{}');
+      _writeFile(repoRoot, 'skills/dora-metrics/config/projects.json', '{}');
       final withAssets = WorkflowSkill(
         id: skill.id,
         name: skill.name,
@@ -742,7 +742,7 @@ void main() {
         'install',
         'dora-metrics',
         'config',
-        'proyectos.json',
+        'projects.json',
       ));
       expect(config.existsSync(), isTrue);
       expect(config.readAsStringSync(), '{}');

@@ -40,7 +40,7 @@ Structure notes for the report-writer (not part of the rendered reply):
 - One table row per repo. Always show BOTH metrics for every repo:
   Deployment Frequency (the count of deploys in the window) and the median
   Lead Time with its n (lead_time_median_hours + lead_time_n from the JSON).
-- Header the row with the repo's `tipo` and `deploy_source` from the JSON.
+- Header the row with the repo's `type` and `deploy_source` from the JSON.
 - State the measurement window once (default 14 days).
 - Add a "Warnings" sub-list under a repo ONLY when its `warnings` array is
   non-empty; copy each warning string verbatim. Omit the sub-list when empty.

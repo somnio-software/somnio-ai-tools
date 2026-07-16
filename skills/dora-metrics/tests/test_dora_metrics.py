@@ -54,36 +54,36 @@ class TestPositiveInt(unittest.TestCase):
 
 
 class TestValidateScopedOverrides(unittest.TestCase):
-    def test_branch_without_proyecto_raises(self):
-        args = SimpleNamespace(branch="main", proyecto=None, deploy_source=None)
+    def test_branch_without_project_raises(self):
+        args = SimpleNamespace(branch="main", project=None, deploy_source=None)
         with self.assertRaises(ValueError):
             dora_metrics.validate_scoped_overrides(args)
 
-    def test_deploy_source_without_proyecto_raises(self):
-        args = SimpleNamespace(branch=None, proyecto=None, deploy_source="tag")
+    def test_deploy_source_without_project_raises(self):
+        args = SimpleNamespace(branch=None, project=None, deploy_source="tag")
         with self.assertRaises(ValueError):
             dora_metrics.validate_scoped_overrides(args)
 
-    def test_with_proyecto_ok(self):
-        args = SimpleNamespace(branch="main", proyecto="Example Project", deploy_source="tag")
+    def test_with_project_ok(self):
+        args = SimpleNamespace(branch="main", project="Example Project", deploy_source="tag")
         dora_metrics.validate_scoped_overrides(args)  # should not raise
 
     def test_no_overrides_ok(self):
-        args = SimpleNamespace(branch=None, proyecto=None, deploy_source=None)
+        args = SimpleNamespace(branch=None, project=None, deploy_source=None)
         dora_metrics.validate_scoped_overrides(args)  # should not raise
 
 
 class TestValidateDeploySources(unittest.TestCase):
     def test_valid_sources_ok(self):
-        proyectos = [{"repos": [{"repo": "a/b", "deploy_source": "release"},
-                                 {"repo": "a/c", "deploy_source": "tag"},
-                                 {"repo": "a/d"}]}]  # no field -> default release
-        dora_metrics.validate_deploy_sources(proyectos)  # should not raise
+        projects = [{"repos": [{"repo": "a/b", "deploy_source": "release"},
+                                {"repo": "a/c", "deploy_source": "tag"},
+                                {"repo": "a/d"}]}]  # no field -> default release
+        dora_metrics.validate_deploy_sources(projects)  # should not raise
 
     def test_invalid_source_raises(self):
-        proyectos = [{"repos": [{"repo": "a/b", "deploy_source": "ci_pipeline"}]}]
+        projects = [{"repos": [{"repo": "a/b", "deploy_source": "ci_pipeline"}]}]
         with self.assertRaises(ValueError):
-            dora_metrics.validate_deploy_sources(proyectos)
+            dora_metrics.validate_deploy_sources(projects)
 
 
 class TestComputeRepoMetrics(unittest.TestCase):

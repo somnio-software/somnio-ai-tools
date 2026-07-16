@@ -106,6 +106,17 @@ Some skills require environment variables to be configured before use:
 |-------|----------|----------|---------|
 | Clockify Tracker | `CLOCKIFY_API_KEY` | Yes | API key from Clockify (Profile → API) |
 | Clockify Tracker | `CLOCKIFY_TZ_OFFSET` | No | Local UTC offset in whole hours (e.g. `-3` for Argentina) |
+| DORA Metrics | `GITHUB_TOKEN` | No — falls back to `gh auth token` | GitHub token with read access to the project's repos/orgs. Skip this if you already have `gh auth login` done locally. |
+
+---
+
+## Skill-Specific Runtime Requirements
+
+Beyond an installed agent, a few skills need their own local runtime to actually execute:
+
+| Skill | Requires | Notes |
+|-------|----------|-------|
+| DORA Metrics | Python 3, the `requests` package (`pip install requests`), and the [GitHub CLI](https://cli.github.com/) (`gh`) | `gh` is only needed for the `GITHUB_TOKEN` fallback above — a token in the environment works without it. |
 
 ---
 

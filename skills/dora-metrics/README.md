@@ -35,7 +35,7 @@ pip install requests --break-system-packages   # if needed
 
 export GITHUB_TOKEN=ghp_xxxx    # or just have `gh auth login` done
 
-python3 scripts/dora_metrics.py --proyecto "Example Project" --out-dir outputs
+python3 scripts/dora_metrics.py --project "Example Project" --out-dir outputs
 ```
 
 Auth: the script looks for `GITHUB_TOKEN` in the environment, and if it's not
@@ -48,11 +48,11 @@ of the project's repos — a multi-repo project, for example, can have repos in
 
 | Flag | Default | What it does |
 |---|---|---|
-| `--config` | `config/proyectos.json` | Path to the config to use. |
-| `--proyecto` | all in the config | Exact name of the project to run. |
+| `--config` | `config/projects.json` | Path to the config to use. |
+| `--project` | all in the config | Exact name of the project to run. |
 | `--out-dir` | doesn't save | If passed, in addition to stdout it saves `YYYY-MM-DD_dora.json` there. |
-| `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--proyecto`). Doesn't touch the config. |
-| `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--proyecto`). Doesn't touch the config. |
+| `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--project`). Doesn't touch the config. |
+| `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--project`). Doesn't touch the config. |
 | `--window-days N` | — | One-off override of the window in days. Doesn't touch the config. |
 
 The overrides (`--branch`, `--deploy-source`, `--window-days`) are for one-off
@@ -63,7 +63,7 @@ flags.
 
 **The recommended way is to ask the skill directly** ("add project X, it has
 these repos...") — it will ask for any missing details and edit
-`config/proyectos.json` for you, showing the result before saving.
+`config/projects.json` for you, showing the result before saving.
 
 If you prefer to edit it by hand, for each project you need to resolve:
 
@@ -80,21 +80,21 @@ If you prefer to edit it by hand, for each project you need to resolve:
 
 ## Configuration
 
-Everything lives in `config/proyectos.json`. Two levels: global (applies to all
+Everything lives in `config/projects.json`. Two levels: global (applies to all
 projects unless a repo overrides it) and per repo.
 
 ```json
 {
   "tag_pattern": "^v\\d+\\.\\d+\\.\\d+$",
   "window_days": 14,
-  "proyectos": [
+  "projects": [
     {
-      "nombre": "Example Project",
-      "notas": "Optional free text: the non-obvious details of this specific project.",
+      "name": "Example Project",
+      "notes": "Optional free text: the non-obvious details of this specific project.",
       "repos": [
         {
           "repo": "example-org/example-frontend",
-          "tipo": ["web", "mobile"],
+          "type": ["web", "mobile"],
           "prod_branch": "main",
           "deploy_source": "release",
           "tag_pattern": "^v\\d+\\.\\d+\\.\\d+$"
@@ -109,10 +109,10 @@ projects unless a repo overrides it) and per repo.
 |---|---|---|---|
 | `tag_pattern` | global | — (required) | Regex the tag must match to count as a deploy. |
 | `window_days` | global | — (required) | Measurement window in days. |
-| `proyectos[].nombre` | project | — (required) | Name the project is looked up by (case-insensitive). |
-| `proyectos[].notas` | project | none | Free text: rationale or clarifications specific to that project (not general methodology — that lives here, in the README). |
+| `projects[].name` | project | — (required) | Name the project is looked up by (case-insensitive). |
+| `projects[].notes` | project | none | Free text: rationale or clarifications specific to that project (not general methodology — that lives here, in the README). |
 | `repos[].repo` | repo | — (required) | GitHub `org/repo`. |
-| `repos[].tipo` | repo | `[]` | Informational list (web/mobile/backend), only used for display in the output. |
+| `repos[].type` | repo | `[]` | Informational list (web/mobile/backend), only used for display in the output. |
 | `repos[].prod_branch` | repo | — (required) | Production branch of that repo. |
 | `repos[].deploy_source` | repo | `"release"` | `"release"` = GitHub Release with a semver tag. `"tag"` = plain tag with no Release (annotated or lightweight git tag), for projects that tag but don't publish Releases. |
 | `repos[].tag_pattern` | repo | the global `tag_pattern` | Override if that specific repo uses a different tag format (e.g. with a build number). |
@@ -128,7 +128,7 @@ Human-readable summary (stdout):
     Median Lead Time: 4.3h  (n=3)
 ```
 
-Portable JSON (if `--out-dir` is used), one repo inside `proyectos[].repos[]`:
+Portable JSON (if `--out-dir` is used), one repo inside `projects[].repos[]`:
 
 ```json
 {
@@ -194,7 +194,7 @@ See the corresponding section in `SKILL.md` and the docstring of
 dora-metrics/
 ├── README.md              # this file
 ├── SKILL.md                # instructions for Claude (source of truth for the workflow)
-├── config/proyectos.json   # project -> repos mapping, single source of truth
+├── config/projects.json    # project -> repos mapping, single source of truth
 ├── references/              # formal contract of each metric
 ├── scripts/dora_metrics.py # the fetching script
 ├── tests/                   # unit tests + e2e

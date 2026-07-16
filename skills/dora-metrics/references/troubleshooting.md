@@ -38,7 +38,7 @@ and expected.
 its own once a second deploy exists to bound against. If instead you *expected*
 an earlier deploy to exist and be recognized, that points at a different entry:
 an earlier tag/release that does not match `tag_pattern` (check
-`config/proyectos.json` → `tag_pattern`, global or the repo's override) would not
+`config/projects.json` → `tag_pattern`, global or the repo's override) would not
 be seen, which can make a later deploy look like "the first".
 
 ---
@@ -52,7 +52,7 @@ mismatch rather than a real absence of changes.
 
 **How to check.**
 
-- In `config/proyectos.json`, read the repo's `prod_branch` and compare it to
+- In `config/projects.json`, read the repo's `prod_branch` and compare it to
   the branch PRs actually merge into on GitHub. If PRs merge into `master`,
   `production`, `release`, etc. but `prod_branch` says `main` (or vice versa),
   the query looks at the wrong base and finds nothing.
@@ -64,7 +64,7 @@ mismatch rather than a real absence of changes.
 
 **Where to fix.**
 
-- Wrong branch: correct `repos[].prod_branch` in `config/proyectos.json` (or use
+- Wrong branch: correct `repos[].prod_branch` in `config/projects.json` (or use
   `--branch <branch>` for a one-off check without editing the config). Confirm
   the change before saving — the config is shared by the team.
 - Changes landing without PRs: this is a process/instrumentation detail of the
@@ -151,7 +151,7 @@ happened.
   align the repo's release process so every prod deploy creates the configured
   marker.
 - Marker present but not matching: check `repos[].deploy_source` and
-  `tag_pattern` (repo override or global) in `config/proyectos.json` — a tag
+  `tag_pattern` (repo override or global) in `config/projects.json` — a tag
   format the pattern doesn't match (e.g. a build-number suffix) won't be counted
   until the pattern or the tag naming lines up.
 

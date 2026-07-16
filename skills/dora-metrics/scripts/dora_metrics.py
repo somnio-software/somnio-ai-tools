@@ -11,7 +11,7 @@ is a later step, outside the scope of this skill.
 
 Usage:
     export GITHUB_TOKEN=ghp_xxx   # or a token with 'repo' (read) scope for the org's repos
-    python3 dora_metrics.py [--config config/proyectos.json] [--proyecto "Example Project"] [--out-dir outputs]
+    python3 dora_metrics.py [--config config/projects.json] [--project "Example Project"] [--out-dir outputs]
         [--branch branch] [--deploy-source release|tag] [--window-days N]
 
 Deploy marker configurable per repo (the "deploy_source" field in the config,
@@ -303,19 +303,19 @@ def _positive_int(value: str) -> int:
 
 def validate_scoped_overrides(args) -> None:
     """--branch and --deploy-source are one-off overrides of a SINGLE project;
-    it makes no sense to apply them to all if --proyecto isn't specified.
+    it makes no sense to apply them to all if --project isn't specified.
     Separated from main() so the validation can be tested without invoking the CLI."""
-    if args.branch and not args.proyecto:
-        raise ValueError("--branch requires --proyecto (the override is one-off, it isn't applied to all projects).")
-    if args.deploy_source and not args.proyecto:
-        raise ValueError("--deploy-source requires --proyecto (the override is one-off, it isn't applied to all projects).")
+    if args.branch and not args.project:
+        raise ValueError("--branch requires --project (the override is one-off, it isn't applied to all projects).")
+    if args.deploy_source and not args.project:
+        raise ValueError("--deploy-source requires --project (the override is one-off, it isn't applied to all projects).")
 
 
-def validate_deploy_sources(proyectos) -> None:
+def validate_deploy_sources(projects) -> None:
     """Validates that each repo's deploy_source is one of the supported values.
     Separated from main() so the validation can be tested without touching the real config."""
-    for proyecto in proyectos:
-        for repo_cfg in proyecto["repos"]:
+    for project in projects:
+        for repo_cfg in project["repos"]:
             ds = repo_cfg.get("deploy_source", "release")
             if ds not in VALID_DEPLOY_SOURCES:
                 raise ValueError(
@@ -326,12 +326,12 @@ def validate_deploy_sources(proyectos) -> None:
 
 def main():
     ap = argparse.ArgumentParser(description="DORA fetching (Deployment Frequency + Lead Time) from the GitHub API.")
-    ap.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "..", "config", "proyectos.json"))
-    ap.add_argument("--proyecto", default=None, help="Project name to run (default: all projects in the config).")
+    ap.add_argument("--config", default=os.path.join(os.path.dirname(__file__), "..", "config", "projects.json"))
+    ap.add_argument("--project", default=None, help="Project name to run (default: all projects in the config).")
     ap.add_argument("--out-dir", default=None, help="Folder where the output JSON is saved (default: doesn't save, stdout only).")
-    ap.add_argument("--branch", default=None, help="One-off override of prod_branch for this run (requires --proyecto). Doesn't modify the config.")
+    ap.add_argument("--branch", default=None, help="One-off override of prod_branch for this run (requires --project). Doesn't modify the config.")
     ap.add_argument("--deploy-source", default=None, choices=list(VALID_DEPLOY_SOURCES),
-                     help="One-off override of deploy_source for this run (requires --proyecto). Doesn't modify the config.")
+                     help="One-off override of deploy_source for this run (requires --project). Doesn't modify the config.")
     ap.add_argument("--window-days", type=_positive_int, default=None,
                      help="One-off override of window_days for this run. Doesn't modify the config.")
     args = ap.parse_args()
@@ -358,21 +358,21 @@ def main():
 
     tag_pattern = config["tag_pattern"]
     window_days = args.window_days if args.window_days is not None else config["window_days"]
-    proyectos = config["proyectos"]
-    if args.proyecto:
-        proyectos = [p for p in proyectos if p["nombre"].lower() == args.proyecto.lower()]
-        if not proyectos:
-            print(f"ERROR: project '{args.proyecto}' is not in {args.config}.", file=sys.stderr)
+    projects = config["projects"]
+    if args.project:
+        projects = [p for p in projects if p["name"].lower() == args.project.lower()]
+        if not projects:
+            print(f"ERROR: project '{args.project}' is not in {args.config}.", file=sys.stderr)
             sys.exit(1)
         if args.branch:
-            for repo_cfg in proyectos[0]["repos"]:
+            for repo_cfg in projects[0]["repos"]:
                 repo_cfg["prod_branch"] = args.branch
         if args.deploy_source:
-            for repo_cfg in proyectos[0]["repos"]:
+            for repo_cfg in projects[0]["repos"]:
                 repo_cfg["deploy_source"] = args.deploy_source
 
     try:
-        validate_deploy_sources(proyectos)
+        validate_deploy_sources(projects)
     except ValueError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         sys.exit(1)
@@ -384,12 +384,12 @@ def main():
         "generated_at": fmt_ts(now),
         "window_days": window_days,
         "tag_pattern": tag_pattern,
-        "proyectos": [],
+        "projects": [],
     }
 
-    for proyecto in proyectos:
+    for project in projects:
         repos_result = []
-        for repo_cfg in proyecto["repos"]:
+        for repo_cfg in project["repos"]:
             try:
                 repo_tag_pattern = repo_cfg.get("tag_pattern", tag_pattern)
                 deploy_source = repo_cfg.get("deploy_source", "release")
@@ -397,11 +397,11 @@ def main():
                     session, repo_cfg["repo"], repo_cfg["prod_branch"], repo_tag_pattern, window_days, now,
                     deploy_source=deploy_source,
                 )
-                r["tipo"] = repo_cfg.get("tipo", [])
+                r["type"] = repo_cfg.get("type", [])
             except (GitHubError, requests.exceptions.RequestException) as e:
                 r = {"repo": repo_cfg["repo"], "error": str(e)}
             repos_result.append(r)
-        result["proyectos"].append({"nombre": proyecto["nombre"], "repos": repos_result})
+        result["projects"].append({"name": project["name"], "repos": repos_result})
 
     output_json = json.dumps(result, indent=2, ensure_ascii=False)
 
@@ -413,13 +413,13 @@ def main():
         print(f"Output saved to {fname}\n")
 
     # Human-readable summary — it ONLY fetches and reports, does not interpret.
-    for p in result["proyectos"]:
-        print(f"=== {p['nombre']} ===")
+    for p in result["projects"]:
+        print(f"=== {p['name']} ===")
         for r in p["repos"]:
             if "error" in r:
                 print(f"  [{r['repo']}] ERROR: {r['error']}")
                 continue
-            print(f"  [{r['repo']}] ({', '.join(r.get('tipo', []))}) [deploy_source: {r.get('deploy_source', 'release')}]")
+            print(f"  [{r['repo']}] ({', '.join(r.get('type', []))}) [deploy_source: {r.get('deploy_source', 'release')}]")
             print(f"    Deployment Frequency (window {window_days}d): {r['deployment_frequency']}")
             if r["lead_time_median_hours"] is not None:
                 print(f"    Median Lead Time: {r['lead_time_median_hours']}h  (n={r['lead_time_n']})")

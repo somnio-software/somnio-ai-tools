@@ -16,22 +16,24 @@ Number of **prod tags** (`vX.Y.Z` on `main`) per project, within a 14-day
 window.
 
 ## Source
-GitHub — tags / Releases of the project's repos (see `../config/proyectos.json`).
+GitHub — tags / Releases of the project's repos (see `../config/projects.json`).
 
 ## Aggregation level
-Per project. **In multi-repo, independent count per repo** (a simultaneous tag
-in all of the project's repos is not required): each repo deploys in a decoupled
-way, and the project's metric is the sum/series of prod tags from *any* of its
-repos. A decision validated with a real multi-repo case (e.g. Example Project:
-frontend and backend deploy at different times) — it applies as the general
-convention unless a specific project justifies otherwise.
+Per project, **reported independently per repo** (a simultaneous tag in all of
+the project's repos is not required): each repo deploys in a decoupled way, and
+each repo gets its own Deployment Frequency number — the skill never sums or
+combines repos into a single project-level count. A decision validated with a
+real multi-repo case (e.g. Example Project: frontend and backend deploy at
+different times) — it applies as the general convention unless a specific
+project justifies otherwise.
 
 ## Window
 14 days (biweekly cadence).
 
 ## Calculation
-`deployment_frequency = count(prod_tags in the window)` per project (summing
-tags from all of the project's repos).
+`deployment_frequency = count(prod_tags in the window)`, computed and reported
+separately for each repo in the project — never summed into one project-level
+total.
 
 ## Reporting
 **Absolute count per 14-day window** (not normalized). Since the window is

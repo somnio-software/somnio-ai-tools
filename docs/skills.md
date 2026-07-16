@@ -445,7 +445,7 @@ Fetches two DORA metrics per project and per repo — **Deployment Frequency** a
 
 > **Read-only and non-judgmental.** This skill only fetches and reports the numbers — it never ranks, scores, or compares projects or people. Interpreting the data is a separate, deliberate step left to whoever runs it: mixing measurement with evaluation is how metrics stop being useful (Goodhart's Law).
 
-Projects map to their GitHub repos in `config/proyectos.json` (mono-repo or multi-repo). If a project isn't in the config yet, the skill asks for its repos instead of guessing, and offers to add it.
+Projects map to their GitHub repos in `config/projects.json` (mono-repo or multi-repo). If a project isn't in the config yet, the skill asks for its repos instead of guessing, and offers to add it.
 
 **Example prompts:**
 ```

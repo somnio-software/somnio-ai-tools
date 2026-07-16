@@ -47,7 +47,7 @@ The JSON emitted by `scripts/dora_metrics.py` (from stdout, or read from the fil
 Relevant fields per repo, mirroring the shape documented in `README.md`'s "Output example":
 
 - `repo` — GitHub `org/repo`.
-- `prod_branch`, `deploy_source`, and the repo's `tipo` (web/mobile/backend), for the row header.
+- `prod_branch`, `deploy_source`, and the repo's `type` (web/mobile/backend), for the row header.
 - `deployment_frequency` — count of deploys in the window.
 - `lead_time_median_hours` and `lead_time_n` — median lead time and how many PRs it was computed from.
 - `warnings` — list of process-gap signals (a release with no prior release, a PR with no recoverable commits, 0 PRs in the range). May be empty.

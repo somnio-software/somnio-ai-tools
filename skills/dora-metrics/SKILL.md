@@ -11,7 +11,7 @@ description: >
   Example Project", "deployment frequency for [project]", "lead time for
   [project]", "biweekly metrics report", "how many deploys did we do this
   sprint".
-allowed-tools: Read, Write, Edit, Bash
+allowed-tools: Read, Write, Edit, Bash, Agent
 ---
 
 # DORA Metrics — Deployment Frequency & Lead Time for Changes
@@ -49,7 +49,7 @@ Formal definitions of each metric (attribute, population, exact calculation):
 ## Input
 
 - **Project name** (e.g. "Example Project"). If the user does not specify one,
-  run all projects in `config/proyectos.json`.
+  run all projects in `config/projects.json`.
 - Measurement window: fixed at 14 days by default (config `window_days`) — do
   not ask for it unless the user explicitly wants something else.
 
@@ -66,13 +66,13 @@ Formal definitions of each metric (attribute, population, exact calculation):
 
 ### Step 1 — Identify the project(s)
 
-Read `config/proyectos.json`. Look up the requested project by name
+Read `config/projects.json`. Look up the requested project by name
 (case-insensitive).
 
 **If the project is not in the config**: do not invent repos or assume a
 mapping. Instead of stopping and sending the user off to edit a separate file,
 ask them directly for the missing details and add them to
-`config/proyectos.json` yourself:
+`config/projects.json` yourself:
 
 - Project name.
 - The GitHub repo(s) that make it up (`org/repo`), one or several (multi-repo).
@@ -85,7 +85,7 @@ ask them directly for the missing details and add them to
   nothing is specified.
 - Optional: a short note if there is anything non-obvious about the project
   (e.g. multi-repo across different orgs, deploys decoupled between repos) —
-  goes in a `"notas"` field on the project. Not needed if there is nothing
+  goes in a `"notes"` field on the project. Not needed if there is nothing
   particular to call out.
 
 Show the resulting JSON before saving it and ask for confirmation (it is a file
@@ -128,24 +128,37 @@ Claude Code, suggest `gh auth login` if they haven't done it.
 ```bash
 pip install requests --break-system-packages   # if needed
 
-python3 scripts/dora_metrics.py --proyecto "Example Project" --out-dir outputs
+python3 scripts/dora_metrics.py --project "Example Project" --out-dir outputs
 ```
 
 Available flags:
-- `--config`: path to the config (default: `config/proyectos.json`).
-- `--proyecto`: exact project name (default: runs all projects in the config).
+- `--config`: path to the config (default: `config/projects.json`).
+- `--project`: exact project name (default: runs all projects in the config).
 - `--out-dir`: if passed, in addition to printing to stdout it saves
   `YYYY-MM-DD_dora.json` there.
 - `--branch <branch>`: one-off override of `prod_branch` for this run
-  (requires `--proyecto`). Does not modify the config — use only for one-off
+  (requires `--project`). Does not modify the config — use only for one-off
   tests against a branch different from the configured one.
 - `--deploy-source {release,tag}`: one-off override of `deploy_source`
-  (requires `--proyecto`). Does not modify the config.
+  (requires `--project`). Does not modify the config.
 - `--window-days N`: one-off override of the window in days. Does not modify
   the config.
 
-See `README.md` (the "Configuration" section) for the details of what each
-config field does and when to use each override.
+`config/projects.json` field reference (also documented in `README.md` for a
+human opening the folder, but summarized here so this skill is self-contained
+even if only `SKILL.md` itself made it into an install):
+
+| Field | Level | Default if omitted | What it is |
+|---|---|---|---|
+| `tag_pattern` | global | — (required) | Regex the tag must match to count as a deploy. |
+| `window_days` | global | — (required) | Measurement window in days. |
+| `projects[].name` | project | — (required) | Name the project is looked up by (case-insensitive). |
+| `projects[].notes` | project | none | Free text: rationale or clarifications specific to that project. |
+| `repos[].repo` | repo | — (required) | GitHub `org/repo`. |
+| `repos[].type` | repo | `[]` | Informational list (web/mobile/backend), only used for display in the output. |
+| `repos[].prod_branch` | repo | — (required) | Production branch of that repo. |
+| `repos[].deploy_source` | repo | `"release"` | `"release"` = GitHub Release with a semver tag. `"tag"` = plain tag with no Release, for projects that tag but don't publish Releases. |
+| `repos[].tag_pattern` | repo | the global `tag_pattern` | Override if that specific repo uses a different tag format (e.g. with a build number). |
 
 ### Step 5 — Report
 
@@ -189,7 +202,7 @@ step guarantees) are:
 
 ## Maintaining the config
 
-`config/proyectos.json` is the **single source of truth** for the project →
+`config/projects.json` is the **single source of truth** for the project →
 repos mapping — there is no separate doc to keep in sync. New projects are
 added via Step 1 of this workflow (a conversation with the user), or by editing
 the JSON directly. The skill does not infer the mapping on its own: if it's
@@ -217,5 +230,5 @@ missing, it asks.
 - Multi-repo: each repo is measured and reported independently, never combined.
 - Single source: the GitHub API. Never read from the cloned repo's local
   `.git`.
-- If the requested project isn't in `config/proyectos.json`, don't invent it —
+- If the requested project isn't in `config/projects.json`, don't invent it —
   ask for the details and add it (Step 1), never assume repos or branches.
