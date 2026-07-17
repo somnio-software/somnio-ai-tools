@@ -50,7 +50,7 @@ of the project's repos — a multi-repo project, for example, can have repos in
 |---|---|---|
 | `--config` | `config/projects.json` | Path to the config to use. |
 | `--project` | all in the config | Exact name of the project to run. |
-| `--out-dir` | doesn't save | If passed, in addition to stdout it saves `YYYY-MM-DD_dora.json` there. |
+| `--out-dir` | doesn't save | If passed, in addition to stdout it saves `YYYY-MM-DD_dora.json` (portable data) and `YYYY-MM-DD_dora.md` (the same summary as a readable file) there. |
 | `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--project`). Doesn't touch the config. |
 | `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--project`). Doesn't touch the config. |
 | `--window-days N` | — | One-off override of the window in days. Doesn't touch the config. |
@@ -119,13 +119,17 @@ projects unless a repo overrides it) and per repo.
 
 ## Output example
 
-Human-readable summary (stdout):
+Human-readable summary (printed to stdout, and — if `--out-dir` is used —
+also saved verbatim to `YYYY-MM-DD_dora.md`, so it's easy to open and read
+without re-parsing the JSON):
 
-```
-=== Example Project ===
-  [example-org/example-frontend] (web, mobile) [deploy_source: release]
-    Deployment Frequency (window 14d): 2
-    Median Lead Time: 4.3h  (n=3)
+```markdown
+# DORA Metrics — Example Project
+
+## `example-org/example-frontend` (web, mobile) — deploy_source: release
+
+- **Deployment Frequency** (window 14d): 2
+- **Median Lead Time**: 4.3h (n=3)
 ```
 
 Portable JSON (if `--out-dir` is used), one repo inside `projects[].repos[]`:

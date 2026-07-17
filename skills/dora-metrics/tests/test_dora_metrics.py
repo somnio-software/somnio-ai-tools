@@ -215,5 +215,56 @@ class TestComputeRepoMetrics(unittest.TestCase):
         self.assertTrue(any(w.startswith("Tag ") for w in r["warnings"]))
 
 
+class TestFormatHumanSummary(unittest.TestCase):
+    def test_includes_metrics_and_warnings(self):
+        result = {
+            "projects": [{
+                "name": "Example Project",
+                "repos": [{
+                    "repo": "example-org/example-frontend",
+                    "type": ["web", "mobile"],
+                    "deploy_source": "release",
+                    "deployment_frequency": 2,
+                    "lead_time_median_hours": 4.3,
+                    "lead_time_n": 3,
+                    "warnings": ["some warning"],
+                }],
+            }],
+        }
+        text = dora_metrics.format_human_summary(result, window_days=14)
+        self.assertIn("# DORA Metrics — Example Project", text)
+        self.assertIn("## `example-org/example-frontend` (web, mobile) — deploy_source: release", text)
+        self.assertIn("**Deployment Frequency** (window 14d): 2", text)
+        self.assertIn("**Median Lead Time**: 4.3h (n=3)", text)
+        self.assertIn("**Warnings:**", text)
+        self.assertIn("- some warning", text)
+
+    def test_no_lead_time_data(self):
+        result = {
+            "projects": [{
+                "name": "P",
+                "repos": [{
+                    "repo": "a/b", "type": [], "deploy_source": "release",
+                    "deployment_frequency": 0, "lead_time_median_hours": None,
+                    "lead_time_n": 0, "warnings": [],
+                }],
+            }],
+        }
+        text = dora_metrics.format_human_summary(result, window_days=14)
+        self.assertIn("no data in the window", text)
+        self.assertNotIn("**Warnings:**", text)
+
+    def test_repo_error_is_rendered(self):
+        result = {
+            "projects": [{
+                "name": "P",
+                "repos": [{"repo": "a/b", "error": "404 Not Found"}],
+            }],
+        }
+        text = dora_metrics.format_human_summary(result, window_days=14)
+        self.assertIn("## `a/b` — ERROR", text)
+        self.assertIn("404 Not Found", text)
+
+
 if __name__ == "__main__":
     unittest.main()

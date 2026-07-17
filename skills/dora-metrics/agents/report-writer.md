@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The skill ran the script and captured its JSON output for one project.
   user: "Format the DORA report for Example Project."
-  assistant: "I will read the script's JSON, render one section for Example Project with a row per repo showing Deployment Frequency and median Lead Time (with n) and the measurement window, follow assets/report-template.md, list any warnings verbatim, and mention the saved file path if --out-dir was used."
+  assistant: "I will read the script's JSON, render one section for Example Project with a row per repo showing Deployment Frequency and median Lead Time (with n) and the measurement window, follow assets/report-template.md, list any warnings verbatim, and mention the saved file paths (.json and .md) if --out-dir was used."
   <commentary>
   The report-writer only reshapes the script's numbers into prose. It adds no judgment about whether the numbers are good or bad.
   </commentary>
@@ -69,6 +69,6 @@ Follow `assets/report-template.md` exactly. For each project:
 - **Always show both metrics for every repo** — Deployment Frequency and median Lead Time — even when the JSON was also saved to a file. Never replace the reply with a bare "I saved the file, check it there".
 - **Show every warning verbatim.** Do not summarize, soften, or drop them. If `warnings` is empty, omit the sub-list for that repo.
 - **Add measurement-setup guidance under each warning** from `references/troubleshooting.md` (What / How to check / Where to fix), matched to the warning's text. The guidance only diagnoses why a data point is missing or unmeasurable and how to fix the setup for the next run — it never comments on team performance or whether a number is good or bad.
-- **If the JSON was saved to a file, mention the path** in addition to reporting the values.
+- **If the files were saved, mention both paths** (the `.json` and the `.md`) in addition to reporting the values.
 - **Report nothing that is not in the JSON.** No computed fields, no inferred conclusions, no comparisons, no rankings, no interpretation of what the numbers mean.
 - Keep each repo's numbers separate; never merge multi-repo values into one figure.

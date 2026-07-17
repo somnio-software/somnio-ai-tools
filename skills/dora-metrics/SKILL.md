@@ -57,8 +57,10 @@ Formal definitions of each metric (attribute, population, exact calculation):
 
 - Human-readable console summary, per project and per repo: deployment
   frequency, median lead time, and edge-case warnings.
-- Optionally, a portable JSON file in the folder given by `--out-dir` (e.g.
-  `outputs/YYYY-MM-DD_dora.json`), if saving the result is requested.
+- Optionally, if saving the result is requested, two files in the folder
+  given by `--out-dir`: a portable JSON (`YYYY-MM-DD_dora.json`) and a
+  Markdown report with the same summary (`YYYY-MM-DD_dora.md`) — easy to
+  open and read on its own, without re-parsing the JSON.
 
 ---
 
@@ -135,7 +137,8 @@ Available flags:
 - `--config`: path to the config (default: `config/projects.json`).
 - `--project`: exact project name (default: runs all projects in the config).
 - `--out-dir`: if passed, in addition to printing to stdout it saves
-  `YYYY-MM-DD_dora.json` there.
+  `YYYY-MM-DD_dora.json` (portable data) and `YYYY-MM-DD_dora.md` (the same
+  summary as a readable file) there.
 - `--branch <branch>`: one-off override of `prod_branch` for this run
   (requires `--project`). Does not modify the config — use only for one-off
   tests against a branch different from the configured one.
@@ -164,7 +167,7 @@ even if only `SKILL.md` itself made it into an install):
 
 Do not improvise the human-readable summary yourself. Dispatch the
 `report-writer` subagent (via the Agent tool), passing it the JSON the script
-printed to stdout (and the saved file path, if `--out-dir` was used), and have
+printed to stdout (and the saved file paths, if `--out-dir` was used), and have
 it render the reply following `assets/report-template.md`.
 
 **Model to dispatch with (parametrizable):** by default dispatch the
@@ -195,8 +198,8 @@ step guarantees) are:
   measurement-setup side (wrong branch, missing token scope, tagging setup); it
   never comments on whether a number is good or bad. The `report-writer` (the
   subagent rendering the final reply) is responsible for this lookup.
-- If the JSON was saved, say where it ended up, in addition to reporting the
-  values.
+- If the files were saved, say where they ended up (both the `.json` and the
+  `.md`), in addition to reporting the values.
 
 ---
 

@@ -291,6 +291,39 @@ def compute_repo_metrics(session: requests.Session, repo: str, branch: str,
     }
 
 
+def format_human_summary(result: dict, window_days: int) -> str:
+    """Renders the fetched data as a readable Markdown report — the same
+    numbers printed to stdout, formatted so a saved file is easy to open and
+    read on its own. Pure formatting: no interpretation, no ranking, no
+    number that isn't already in the JSON."""
+    lines = []
+    for p in result["projects"]:
+        lines.append(f"# DORA Metrics — {p['name']}")
+        lines.append("")
+        for r in p["repos"]:
+            if "error" in r:
+                lines.append(f"## `{r['repo']}` — ERROR")
+                lines.append("")
+                lines.append(r["error"])
+                lines.append("")
+                continue
+            type_label = ", ".join(r.get("type", [])) or "unspecified"
+            lines.append(f"## `{r['repo']}` ({type_label}) — deploy_source: {r.get('deploy_source', 'release')}")
+            lines.append("")
+            lines.append(f"- **Deployment Frequency** (window {window_days}d): {r['deployment_frequency']}")
+            if r["lead_time_median_hours"] is not None:
+                lines.append(f"- **Median Lead Time**: {r['lead_time_median_hours']}h (n={r['lead_time_n']})")
+            else:
+                lines.append("- **Median Lead Time**: no data in the window")
+            lines.append("")
+            if r["warnings"]:
+                lines.append("**Warnings:**")
+                for w in r["warnings"]:
+                    lines.append(f"- {w}")
+                lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
 def _positive_int(value: str) -> int:
     try:
         ivalue = int(value)
@@ -404,31 +437,19 @@ def main():
         result["projects"].append({"name": project["name"], "repos": repos_result})
 
     output_json = json.dumps(result, indent=2, ensure_ascii=False)
+    summary = format_human_summary(result, window_days)
 
     if args.out_dir:
         os.makedirs(args.out_dir, exist_ok=True)
-        fname = os.path.join(args.out_dir, f"{now.strftime('%Y-%m-%d')}_dora.json")
-        with open(fname, "w") as f:
+        base = os.path.join(args.out_dir, f"{now.strftime('%Y-%m-%d')}_dora")
+        with open(f"{base}.json", "w") as f:
             f.write(output_json)
-        print(f"Output saved to {fname}\n")
+        with open(f"{base}.md", "w") as f:
+            f.write(summary)
+        print(f"Output saved to {base}.json and {base}.md\n")
 
     # Human-readable summary — it ONLY fetches and reports, does not interpret.
-    for p in result["projects"]:
-        print(f"=== {p['name']} ===")
-        for r in p["repos"]:
-            if "error" in r:
-                print(f"  [{r['repo']}] ERROR: {r['error']}")
-                continue
-            print(f"  [{r['repo']}] ({', '.join(r.get('type', []))}) [deploy_source: {r.get('deploy_source', 'release')}]")
-            print(f"    Deployment Frequency (window {window_days}d): {r['deployment_frequency']}")
-            if r["lead_time_median_hours"] is not None:
-                print(f"    Median Lead Time: {r['lead_time_median_hours']}h  (n={r['lead_time_n']})")
-            else:
-                print("    Median Lead Time: no data in the window")
-            for w in r["warnings"]:
-                print(f"    ! {w}")
-        print()
-
+    print(summary)
     print(output_json)
 
 
