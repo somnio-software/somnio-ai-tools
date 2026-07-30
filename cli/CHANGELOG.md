@@ -5,6 +5,12 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-07-30
+
+### Added
+
+- **Security Audit — Angular coverage**: extended `references/sast.md` with modern Angular DOM-XSS grep patterns (`bypassSecurityTrust*`, `[innerHTML]` binding, `ElementRef.nativeElement` DOM).
+
 ## [2.8.2] - 2026-07-22
 
 ### Added

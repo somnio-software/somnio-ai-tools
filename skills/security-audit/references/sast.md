@@ -63,6 +63,11 @@ grep -rn "innerHTML\s*=\|document\.write\s*(\|dangerouslySetInnerHTML" \
 grep -rn "innerHtml\s*=\|HtmlEscape\.bypass\|allowInterop.*innerHTML" \
   --include="*.dart" lib/ packages/ 2>/dev/null | head -20 \
   || echo "No XSS patterns (Dart) found"
+
+# Angular (2+): bypassSecurityTrust*, [innerHTML] binding, direct DOM via ElementRef.nativeElement
+grep -rEn "bypassSecurityTrust(Html|Script|Style|Url|ResourceUrl)|\[innerHTML\]|nativeElement\.(innerHTML|outerHTML|insertAdjacent)" \
+  --include="*.ts" --include="*.html" src/ 2>/dev/null | grep -v node_modules | head -20 \
+  || echo "No XSS/bypassSecurityTrust patterns (Angular) found"
 ```
 
 Path Traversal (Path.Combine with user input, unchecked paths):
