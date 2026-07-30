@@ -63,6 +63,11 @@ grep -rn "innerHTML\s*=\|document\.write\s*(\|dangerouslySetInnerHTML" \
 grep -rn "innerHtml\s*=\|HtmlEscape\.bypass\|allowInterop.*innerHTML" \
   --include="*.dart" lib/ packages/ 2>/dev/null | head -20 \
   || echo "No XSS patterns (Dart) found"
+
+# AngularJS (1.x): SCE bypass, ng-bind-html, $compile on user input, disabled SCE
+grep -rn "trustAsHtml\|trustAsResourceUrl\|\$sceProvider\.enabled\s*(\s*false\|\$sceDelegateProvider\|ng-bind-html\|\$compile\s*(" \
+  --include="*.js" --include="*.html" src/ app/ public/ scripts/ views/ 2>/dev/null | grep -v node_modules | head -20 \
+  || echo "No XSS/SCE-bypass patterns (AngularJS) found"
 ```
 
 Path Traversal (Path.Combine with user input, unchecked paths):
