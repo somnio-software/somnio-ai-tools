@@ -5,6 +5,12 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-07-30
+
+### Added
+
+- **Security Audit — AngularJS & Angular coverage**: extended the SAST scan (`references/sast.md`) with AngularJS 1.x (`$sce.trustAsHtml`, `ng-bind-html`, `$compile` on user input, disabled SCE) and modern Angular (`bypassSecurityTrust*`, `[innerHTML]` binding, `ElementRef.nativeElement` DOM) XSS/injection grep patterns, so `security-audit` flags framework-specific template-injection risks on Angular codebases.
+
 ## [2.8.2] - 2026-07-22
 
 ### Added
