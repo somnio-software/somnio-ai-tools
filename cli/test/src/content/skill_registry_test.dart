@@ -126,7 +126,8 @@ void main() {
   group('SkillRegistry.technologies', () {
     test('returns unique, sorted technology display names', () {
       final techs = SkillRegistry.technologies;
-      expect(techs, ['Flutter', 'NestJS', 'Python', 'React', 'Security']);
+      expect(techs,
+          ['AngularJS', 'Flutter', 'NestJS', 'Python', 'React', 'Security']);
       // Sorted and de-duplicated.
       final sorted = [...techs]..sort();
       expect(techs, sorted);

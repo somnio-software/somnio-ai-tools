@@ -115,6 +115,30 @@ class SkillRegistry {
       agentsDirectory: 'skills/react-health-audit/agents',
     ),
     SkillBundle(
+      id: 'angularjs_health',
+      name: 'angularjs-health-audit',
+      aliases: ['somnio-ajh', 'ajh'],
+      displayName: 'AngularJS Project Health Audit',
+      description:
+          'Execute a comprehensive AngularJS (Angular 1.x) Project '
+          'Health Audit. Analyzes tech stack & runtime, module/component '
+          'architecture, state & data flow, templating & DOM patterns, '
+          'build & asset pipeline, testing, code quality, CI/CD, AI '
+          'harness, and documentation — calibrated for legacy Angular '
+          '1.x (controllers, directives, services, \$scope, Bower). '
+          'Produces a report with section scores and a weighted overall '
+          'score.',
+      planRelativePath:
+          'skills/angularjs-health-audit/SKILL.md',
+      rulesDirectory:
+          'skills/angularjs-health-audit/references',
+      workflowPath:
+          'skills/angularjs-health-audit/.agent/workflows/angularjs_health_audit.md',
+      templatePath:
+          'skills/angularjs-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/angularjs-health-audit/agents',
+    ),
+    SkillBundle(
       id: 'react_plan',
       name: 'react-best-practices',
       aliases: ['somnio-rp', 'rp'],
