@@ -4,7 +4,7 @@
 
 **AI-powered audit skills for Claude Code, Cursor, and 40+ other agents.**
 
-Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, React, Python (FastAPI, Django, Flask), and more — directly from your AI coding assistant.
+Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, React, Angular (2+ and legacy AngularJS 1.x), Python (FastAPI, Django, Flask), and more — directly from your AI coding assistant.
 
 [![Install Somnio Skills](https://img.shields.io/badge/skills.sh-Install%20Somnio%20Skills-blue?style=for-the-badge)](https://skills.sh/somnio-software/somnio-ai-tools)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
@@ -62,6 +62,8 @@ somnio setup
 | [NestJS Best Practices](docs/skills.md#nestjs-best-practices) | `np` | DTO, architecture, and error handling validation |
 | [React Health Audit](docs/skills.md#react-health-audit) | `rh` | 13-step frontend health audit with weighted scoring |
 | [React Best Practices](docs/skills.md#react-best-practices) | `rp` | Component, hooks, state management, and TypeScript validation |
+| [Angular Health Audit](docs/skills.md#angular-health-audit) | `ah` | 13-step modern Angular (2+) health audit with weighted scoring |
+| [AngularJS Health Audit](docs/skills.md#angularjs-health-audit) | `ajh` | 13-step legacy AngularJS (1.x) health audit with weighted scoring |
 | [Python Health Audit](docs/skills.md#python-health-audit) | `ph` | 13-step project health audit with weighted scoring |
 | [Python Best Practices](docs/skills.md#python-best-practices) | `pp` | Code style, typing, function design, and testing validation |
 | [Security Audit](docs/skills.md#security-audit) | `sa` | Framework-agnostic security scan (secrets, deps, SAST) |

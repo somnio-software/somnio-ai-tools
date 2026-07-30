@@ -11,7 +11,7 @@
     {
       "name": "somnio-development",
       "source": "./plugins/development",
-      "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, React, Python (incl. FastAPI/Django/Flask), and more."
+      "description": "AI-powered project health audits, security audits, and best practices validation for Flutter, NestJS, React, Angular (2+ and legacy AngularJS 1.x), Python (incl. FastAPI/Django/Flask), and more."
     }
   ]
 }

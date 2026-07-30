@@ -126,6 +126,46 @@ Check this React project against current best practices and flag any violations.
 
 ---
 
+## Angular Health Audit
+
+**Aliases:** `ah`, `somnio-ah`
+
+Comprehensive **modern Angular (2+)** project health audit with 13 analysis steps covering tech stack, module/component architecture, state & data flow (services, RxJS, signals, NgRx), change detection, testing, code quality, performance (OnPush, trackBy, bundle budgets), CI/CD, AI harness, and documentation. Targets the Angular CLI / TypeScript stack (`@angular/core`, `angular.json`). Produces a weighted score and a report. Not for AngularJS 1.x — use the AngularJS Health Audit for that.
+
+**Use when:**
+- Onboarding to an existing Angular (2+) codebase
+- Preparing a frontend technical debt remediation plan
+- Running a periodic project health check
+
+**Example prompt:**
+```
+Run a full Angular health audit on this project and generate a report.
+```
+
+**Output:** Weighted score report saved to `./reports/`
+
+---
+
+## AngularJS Health Audit
+
+**Aliases:** `ajh`, `somnio-ajh`
+
+Comprehensive **legacy AngularJS (Angular 1.x)** project health audit with 13 analysis steps covering tech stack & runtime, module/component architecture (controllers, directives, `.component()`/controllerAs vs `$scope`), state & data flow (services/factories, `$http` interceptors, `$rootScope`), templating & DOM patterns, digest-cycle hygiene, testing (Karma/Jasmine/angular-mocks), code quality (minification-safe DI, JSHint/ESLint), CI/CD (Grunt/gulp), AI harness, and documentation. Calibrated for the EOL 1.x paradigm (Bower/Grunt) and flags framework/Bower migration risk. Produces a weighted score and a report.
+
+**Use when:**
+- Assessing a legacy AngularJS 1.x app before a migration
+- Preparing a technical debt or modernization plan
+- Running a periodic project health check on a Bower/Grunt codebase
+
+**Example prompt:**
+```
+Run a full AngularJS health audit on this project and generate a report.
+```
+
+**Output:** Weighted score report saved to `./reports/`
+
+---
+
 ## Python Health Audit
 
 **Aliases:** `ph`, `somnio-ph`

@@ -1,0 +1,433 @@
+================================================================================
+                   ANGULARJS PROJECT HEALTH AUDIT REPORT
+================================================================================
+
+Project: [PROJECT_NAME]
+Date: [AUDIT_DATE]
+Auditor: AI-Assisted Analysis
+Framework: AngularJS (Angular 1.x) [VERSION]
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+Description: [Comprehensive analysis description]
+
+Overall Score: [XX]/100 ([Label])
+
+Top Strengths:
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+Top Risks:
+- [Risk 1]
+- [Risk 2]
+- [Risk 3]
+
+Priority Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+2. AT-A-GLANCE SCORECARD
+================================================================================
+
+- Tech Stack: [XX]/100 ([Label])
+- Architecture: [XX]/100 ([Label])
+- State Management: [XX]/100 ([Label])
+- Testing: [XX]/100 ([Label])
+- Code Quality (Linter & Warnings): [XX]/100 ([Label])
+- Performance: [XX]/100 ([Label])
+- Documentation & Operations: [XX]/100 ([Label])
+- CI/CD (Configs Found in Repo): [XX]/100 ([Label])
+- AI Harness & Adoption: [XX]/100 ([Label])
+- Overall: [XX]/100 ([Label])
+
+================================================================================
+3. TECH STACK
+================================================================================
+
+Description: Analysis of AngularJS version, vendor dependencies, and tooling setup.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Node.js version: [Version]
+- AngularJS version: [Version] (>=1.8? Yes/No)
+- Dependency manager: [Bower/npm/CDN-only/Mixed]
+- Companion modules: [ui-router/ngRoute/ngResource/...]
+- Build tool: [Grunt/gulp/webpack/None]
+- Total dependencies: [XX]
+- Outdated/abandoned vendor libs: [XX]
+
+================================================================================
+4. ARCHITECTURE
+================================================================================
+
+Description: Analysis of module organization, controllers/directives/components, and separation of concerns.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Total controllers/directives/components: [XX]
+- angular.module registrations: [XX]
+- Files over 300 lines (god-controllers): [XX]
+- .component()/controllerAs usage: [XX]
+
+================================================================================
+5. STATE MANAGEMENT
+================================================================================
+
+Description: Analysis of services/factories, $http/interceptors, and $rootScope data flow.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Service/factory layering: [Well-layered/Partial/Thin]
+- $http centralization: [Centralized/Scattered]
+- Interceptors configured: [Yes/No]
+- $rootScope usage: [XX] ([Reasonable/Misused])
+
+================================================================================
+6. TESTING
+================================================================================
+
+Description: Analysis of Karma/Jasmine setup, angular-mocks usage, and test coverage.
+
+Score: [XX]/100 ([Label])
+Code Coverage: [XX]% (lines) / [XX]% (branches) / [XX]% (functions)
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Total spec files: [XX]
+- Test runner: [Karma/None]
+- Test framework: [Jasmine/Mocha]
+- angular-mocks installed: [Yes/No]
+- Source-to-spec ratio: [XX]%
+- e2e tests present: [Protractor/Cypress/None]
+
+================================================================================
+7. CODE QUALITY (LINTER & WARNINGS)
+================================================================================
+
+Description: Analysis of JSHint/ESLint, minification-safe DI, and IIFE/'use strict' module hygiene.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Linter configured: [JSHint/ESLint/No]
+- Angular-aware linting: [Yes/No]
+- Minification-safe DI: [Consistent/ngAnnotate/UNSAFE]
+- 'use strict' present: [Yes/Partial/No]
+- console.log in source: [XX]
+
+================================================================================
+8. PERFORMANCE
+================================================================================
+
+Description: Analysis of digest-cycle/$watch hygiene, binding discipline, ng-repeat track by, and template/DOM patterns.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- $watch registrations: [XX] (deep watches: [XX])
+- One-time (::) / one-way (<) bindings: [XX]
+- ng-repeat without track by: [XX] occurrences
+- $sce.trustAsHtml usage: [XX]
+- Template caching ($templateCache): [Configured/Missing]
+
+================================================================================
+9. DOCUMENTATION & OPERATIONS
+================================================================================
+
+Description: Analysis of README quality, module map, directive/component documentation, and setup instructions.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- README present: [Yes/No]
+- Setup instructions: [Present/Partial/Missing]
+- Module/architecture map: [Yes/No]
+- ngdoc/JSDoc coverage: [XX]%
+
+================================================================================
+10. CI/CD (CONFIGS FOUND IN REPO)
+================================================================================
+
+Description: Analysis of the Grunt/gulp/webpack build & asset pipeline and any CI workflow files found in repository.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Build tool: [Grunt/gulp/webpack/None]
+- Minify + ngAnnotate: [Present/Missing]
+- Template caching: [Present/Missing]
+- Workflow files found: [XX]
+- Lint/Test/Build steps present: [Yes/No]
+
+================================================================================
+11. AI HARNESS & ADOPTION
+================================================================================
+
+Description: [One-sentence description of the state of the harness]
+
+Score: [XX]/100 ([Label])
+Maturity: [sin harness | harness basico | harness solido | paved path]
+
+Coverage:
+- CLAUDE.md: [Status] - [XX]/13
+- Rules: [Status] - [XX]/9
+- Permissions: [Status] - [XX]/13
+- Hooks: [Status] - [XX]/14
+- Pre-push git hook: [Status] - [XX]/11
+- Agents: [Status] - [XX]/11
+- Commands / Skills: [Status] - [XX]/9
+- Advanced orchestration: [Status] - [XX]/5
+- Lifecycle: [Status] - [XX]/3
+- Harness versioning: [Status] - [XX]/12
+- Total: [XX]/100
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+
+Evidence:
+- [Real file path or configuration reference, never invented]
+
+Risks:
+- [Risk item 1]
+
+Actions to Raise the Score:
+1. [+N] [Concrete how-to for this repo]. -> dimension D, X/Y -> Y/Y.
+2. [Continue, sorted by points recovered descending]
+
+Counts & Metrics:
+- [Metric name]: [Value]
+
+================================================================================
+12. ADDITIONAL METRICS
+================================================================================
+
+- Node.js version: [Version]
+- AngularJS version: [Version] (>=1.8? Yes/No)
+- Dependency manager: [Bower/npm/CDN-only/Mixed]
+- Build tool: [Grunt/gulp/webpack/None]
+- Router: [ngRoute/ui-router/None]
+- Companion modules: [ui-router/ngRoute/ngResource/ngSanitize/...]
+- Total controllers/directives/components count: [Count]
+- Total services/factories count: [Count]
+- Coverage %: [Percentage or status]
+- Minification-safe DI: [Consistent annotations/ngAnnotate/UNSAFE]
+- Template caching: [Configured/Missing]
+- Test runner: [Karma/None]
+
+================================================================================
+13. QUALITY INDEX
+================================================================================
+
+Section Summary with Scores:
+- Tech Stack: [XX]/100 ([Label])
+- Architecture: [XX]/100 ([Label])
+- State Management: [XX]/100 ([Label])
+- Testing: [XX]/100 ([Label])
+- Code Quality: [XX]/100 ([Label])
+- Performance: [XX]/100 ([Label])
+- Documentation & Operations: [XX]/100 ([Label])
+- CI/CD: [XX]/100 ([Label])
+- AI Harness & Adoption: [XX]/100 ([Label])
+Overall Score: [XX]/100 ([Label])
+[One-sentence interpretation]
+
+================================================================================
+14. RISKS & OPPORTUNITIES
+================================================================================
+
+- [Risk/Opportunity 1]
+- [Risk/Opportunity 2]
+- [Risk/Opportunity 3]
+- [Risk/Opportunity 4]
+- [Risk/Opportunity 5 - include the AngularJS EOL / Bower-abandonment migration risk]
+
+================================================================================
+15. RECOMMENDATIONS
+================================================================================
+
+1. [Priority Level]: [Recommendation 1]
+2. [Priority Level]: [Recommendation 2]
+3. [Priority Level]: [Recommendation 3]
+4. [Priority Level]: [Recommendation 4]
+5. [Priority Level]: [Recommendation 5]
+6. [Priority Level]: [Recommendation 6]
+
+================================================================================
+16. APPENDIX: EVIDENCE INDEX
+================================================================================
+
+File Paths and Configs by Area:
+
+Configuration:
+- [File path or config reference]
+
+Controllers/Directives/Components:
+- [File path or config reference]
+
+Services/Factories:
+- [File path or config reference]
+
+Tests:
+- [File path or config reference]
+
+Templates/Views:
+- [File path or config reference]
+
+Build/CI Pipeline:
+- [File path or config reference]
+
+AI Harness & Adoption:
+- [File path or config reference]
+
+================================================================================
+                              END OF REPORT
+================================================================================
+
+Generated by: [Plugin Name] v[Plugin Version]
+Skill: angularjs-health-audit
+Date: [YYYY-MM-DD]
+Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools

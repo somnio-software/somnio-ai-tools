@@ -5,6 +5,13 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.9.0] - 2026-07-30
+
+### Added
+
+- **Angular Health Audit** (`ah` / `somnio-ah`): New CLI audit bundle for modern Angular (2+/Angular CLI, TypeScript). 13-step health audit covering module/component architecture, RxJS/signals/NgRx state, change detection, Angular CLI build budgets, Karma/Jasmine or Jest testing, TS-strict + angular-eslint, CI/CD, AI harness, and documentation, with weighted scoring. Registered in `skill_registry.dart`.
+- **AngularJS Health Audit** (`ajh` / `somnio-ajh`): New CLI audit bundle for legacy AngularJS 1.x (controllers/directives/services, `$http`/interceptors/`$rootScope`, digest-cycle hygiene, minification-safe DI, Karma/Jasmine/angular-mocks, Grunt/gulp pipeline), including framework/Bower EOL migration-risk analysis. Both bundles mirror the `react-health-audit` structure and include the AI Harness & Adoption analysis step so they score AI-harness maturity like the other CLI audits.
+
 ## [2.8.2] - 2026-07-22
 
 ### Added
