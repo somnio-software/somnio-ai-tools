@@ -166,6 +166,26 @@ Run a full Python health audit on this project and generate a report.
 
 ---
 
+## ISO 27001 Readiness Audit
+
+**Aliases:** `iso`, `somnio-iso`
+
+Framework-agnostic, **whole-project ISO/IEC 27001:2022 readiness audit**. Inspects a repository/application (any stack) for evidence of an ISMS and Annex A controls (organizational, people, physical, technological), organized around an 11-category control taxonomy, and checks ISMS clauses 4–10. Each control records a status (met/partial/gap/organizational) and an ownership lane (platform-auditable / organizational-policy / client), mapped to Annex A refs. Produces a per-theme scorecard, a gap register with remediation and priority, a Statement-of-Applicability starter, and an overall readiness score + band. Read-only; secrets redacted.
+
+**Use when:**
+- Assessing how close a codebase/infrastructure is to ISO 27001 certification
+- Seeding a Statement of Applicability and risk-treatment backlog
+- Producing an Annex A gap analysis before a certification audit
+
+**Example prompt:**
+```
+Run an ISO 27001 readiness audit on this project and generate a gap report.
+```
+
+**Output:** Readiness score + gap register + SoA starter saved to `./reports/`
+
+---
+
 ## Python Best Practices
 
 **Aliases:** `pp`, `somnio-pp`

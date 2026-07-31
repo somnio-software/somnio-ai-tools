@@ -178,6 +178,30 @@ class SkillRegistry {
       agentsDirectory: 'skills/python-health-audit/agents',
     ),
     SkillBundle(
+      id: 'iso27001_audit',
+      name: 'iso27001-audit',
+      aliases: ['somnio-iso', 'iso'],
+      displayName: 'ISO 27001 Readiness Audit',
+      description:
+          'Execute a framework-agnostic, whole-project ISO/IEC '
+          '27001:2022 readiness audit. Inspects the repository/'
+          'application for evidence of an ISMS and Annex A controls '
+          '(organizational, people, physical, technological), scores '
+          'readiness per control theme, maps gaps to Annex A refs, and '
+          'produces a prioritized remediation plan plus a Statement-of-'
+          'Applicability starter, with an overall readiness score and '
+          'band. Read-only; secrets are redacted.',
+      planRelativePath:
+          'skills/iso27001-audit/SKILL.md',
+      rulesDirectory:
+          'skills/iso27001-audit/references',
+      workflowPath:
+          'skills/iso27001-audit/.agent/workflows/iso27001_audit.md',
+      templatePath:
+          'skills/iso27001-audit/assets/report-template.md',
+      agentsDirectory: 'skills/iso27001-audit/agents',
+    ),
+    SkillBundle(
       id: 'python_plan',
       name: 'python-best-practices',
       aliases: ['somnio-pp', 'pp'],

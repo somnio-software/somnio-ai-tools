@@ -66,6 +66,7 @@ somnio setup
 | [Python Health Audit](docs/skills.md#python-health-audit) | `ph` | 13-step project health audit with weighted scoring |
 | [Python Best Practices](docs/skills.md#python-best-practices) | `pp` | Code style, typing, function design, and testing validation |
 | [Security Audit](docs/skills.md#security-audit) | `sa` | Framework-agnostic security scan (secrets, deps, SAST) |
+| [ISO 27001 Readiness Audit](docs/skills.md#iso-27001-readiness-audit) | `iso` | Whole-project ISO/IEC 27001:2022 ISMS & Annex A readiness & gap analysis |
 
 ### Workflows & Utilities
 
