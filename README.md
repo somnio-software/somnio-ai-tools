@@ -57,6 +57,7 @@ somnio setup
 | Skill | Alias | Description |
 |:------|:-----:|:------------|
 | [Flutter Health Audit](docs/skills.md#flutter-health-audit) | `fh` | 13-step project health audit with weighted scoring |
+| [Harness Audit](docs/skills.md#harness-audit) | `ha` | AI-harness completeness score (CLAUDE.md, rules, hooks, agents) |
 | [Flutter Best Practices](docs/skills.md#flutter-best-practices) | `fp` | Code quality validation against live GitHub standards |
 | [NestJS Health Audit](docs/skills.md#nestjs-health-audit) | `nh` | 13-step backend health audit with weighted scoring |
 | [NestJS Best Practices](docs/skills.md#nestjs-best-practices) | `np` | DTO, architecture, and error handling validation |

@@ -188,6 +188,7 @@ See the [Workflow Guide](workflows.md) for details.
 | Name | Aliases | Description |
 |------|---------|-------------|
 | `flutter-health-audit` | `fh`, `somnio-fh` | Flutter project health audit (13 steps) |
+| `harness-audit` | `ha`, `somnio-ha` | AI harness completeness audit |
 | `flutter-best-practices` | `fp`, `somnio-fp` | Flutter code quality check |
 | `nestjs-health-audit` | `nh`, `somnio-nh` | NestJS project health audit (13 steps) |
 | `nestjs-best-practices` | `np`, `somnio-np` | NestJS code quality check |

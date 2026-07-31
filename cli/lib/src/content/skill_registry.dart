@@ -216,6 +216,27 @@ class SkillRegistry {
           'skills/security-audit/assets/report-template.md',
       agentsDirectory: 'skills/security-audit/agents',
     ),
+    SkillBundle(
+      id: 'harness_audit',
+      name: 'harness-audit',
+      aliases: ['somnio-ha', 'ha'],
+      displayName: 'Harness Audit',
+      description:
+          'Audit how complete the AI coding harness of a project is — '
+          'CLAUDE.md, .claude/rules, settings.json permissions and '
+          'hooks, commands/skills, agents, and the autotest-to-PR '
+          'lifecycle — and return a score out of 100 with a band '
+          'reading and a prioritized action plan. Framework-agnostic.',
+      planRelativePath:
+          'skills/harness-audit/SKILL.md',
+      rulesDirectory:
+          'skills/harness-audit/references',
+      workflowPath:
+          'skills/harness-audit/.agent/workflows/harness_audit.md',
+      templatePath:
+          'skills/harness-audit/assets/report-template.md',
+      agentsDirectory: 'skills/harness-audit/agents',
+    ),
   ];
 
   /// Workflow skill bundles (standalone markdown, no YAML rules).

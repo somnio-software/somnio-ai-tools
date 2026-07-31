@@ -186,6 +186,26 @@ Check this Python project against current best practices and flag any violations
 
 ---
 
+## Harness Audit
+
+**Aliases:** `ha`, `somnio-ha`
+
+Framework-agnostic **AI Harness Audit**. Scores how complete a project's AI coding harness is — CLAUDE.md, `.claude/rules`, settings.json permissions and hooks, commands/skills, agents, and the autotest-to-PR lifecycle — against a weighted rubric, and returns a score out of 100, a band reading (no harness / basic / solid / paved path), and the top highest-impact next steps.
+
+**Use when:**
+- Assessing how well a repo is set up for AI coding agents
+- Prioritizing what to add to a project's AI harness next
+- Tracking AI-adoption maturity across repos
+
+**Example prompt:**
+```
+Run a harness audit on this project and score its AI setup.
+```
+
+**Output:** Harness score report saved to `./reports/`
+
+---
+
 ## Security Audit
 
 **Aliases:** `sa`, `somnio-sa`
