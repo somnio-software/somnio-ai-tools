@@ -66,6 +66,26 @@ Run a full NestJS health audit and summarize the findings.
 
 ---
 
+## SOC 2 Readiness Audit
+
+**Aliases:** `s2`, `somnio-s2`
+
+Framework-agnostic, **whole-project SOC 2 readiness audit**. Inspects a repository/application (any stack) for evidence of the AICPA Trust Services Criteria — the Common Criteria (Security) plus Availability, Confidentiality, Processing Integrity, and Privacy — organized around an 11-category control taxonomy (governance, HR, IAM, data protection, secure development & change, infrastructure & network, vulnerability management, incident/BCP-DR, vendor, AI governance, evidence artifacts). Each control records a status (met/partial/gap/organizational) and an ownership lane (platform-auditable / organizational-policy / client CUEC), mapped to a TSC criterion. Produces a per-criterion scorecard, a gap register with remediation and priority, and an overall readiness score + band. Read-only; secrets redacted.
+
+**Use when:**
+- Assessing how close a codebase/infrastructure is to a SOC 2 Type 2 report
+- Producing a gap analysis and remediation backlog before an audit window
+- Answering client security questionnaires with evidence
+
+**Example prompt:**
+```
+Run a SOC 2 readiness audit on this project and generate a gap report.
+```
+
+**Output:** Readiness score + gap register saved to `./reports/`
+
+---
+
 ## NestJS Best Practices
 
 **Aliases:** `np`, `somnio-np`

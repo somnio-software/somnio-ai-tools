@@ -52,6 +52,30 @@ class SkillRegistry {
       agentsDirectory: 'skills/flutter-best-practices/agents',
     ),
     SkillBundle(
+      id: 'soc2_audit',
+      name: 'soc2-audit',
+      aliases: ['somnio-s2', 's2'],
+      displayName: 'SOC 2 Readiness Audit',
+      description:
+          'Execute a framework-agnostic, whole-project SOC 2 '
+          'readiness audit. Inspects the repository/application for '
+          'evidence of the Trust Services Criteria (Common Criteria '
+          'security plus Availability, Confidentiality, Processing '
+          'Integrity, and Privacy), scores readiness per criterion, '
+          'maps gaps to control refs, and produces a prioritized '
+          'remediation plan with an overall readiness score and band. '
+          'Read-only; secrets are redacted.',
+      planRelativePath:
+          'skills/soc2-audit/SKILL.md',
+      rulesDirectory:
+          'skills/soc2-audit/references',
+      workflowPath:
+          'skills/soc2-audit/.agent/workflows/soc2_audit.md',
+      templatePath:
+          'skills/soc2-audit/assets/report-template.md',
+      agentsDirectory: 'skills/soc2-audit/agents',
+    ),
+    SkillBundle(
       id: 'nestjs_health',
       name: 'nestjs-health-audit',
       aliases: ['somnio-nh', 'nh'],

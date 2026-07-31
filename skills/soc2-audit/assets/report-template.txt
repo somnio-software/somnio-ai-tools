@@ -1,0 +1,153 @@
+SOC 2 Readiness Audit Report
+
+1. SOC 2 Readiness Scorecard
+
+A. Governance & Program (CC1.x/CC3.x/CC5.x):            [Score]/100 ([Band]) - Weight: 8%
+B. Human Resources Security (CC1.4):                   [Score]/100 ([Band]) - Weight: 4%
+C. Identity & Access Management (CC6.1-6.3, 6.6):      [Score]/100 ([Band]) - Weight: 18%
+D. Data Protection & Confidentiality (CC6.1/6.7, C1):  [Score]/100 ([Band]) - Weight: 16%
+E. Secure Development & Change Mgmt (CC7.1, CC8.1):     [Score]/100 ([Band]) - Weight: 16%
+F. Infrastructure & Network Security (CC6.6, CC7.2):   [Score]/100 ([Band]) - Weight: 14%
+G. Vulnerability Management & Assurance (CC7.1):        [Score]/100 ([Band]) - Weight: 8%
+H. Incident Management, BCP/DR (CC7.3-7.5, CC9.1):      [Score]/100 ([Band]) - Weight: 8%
+I. Vendor / Third-Party Management (CC9.2):             [Score]/100 ([Band]) - Weight: 4%
+J. AI Governance (CC1.x, CC4.x):                       [Score]/100 ([Band]) - Weight: 4%
+
+Overall Readiness Score: [Score]/100 ([Band])
+
+Formula: Overall = round(A*0.08 + B*0.04 + C*0.18 + D*0.16 + E*0.16 + F*0.14 + G*0.08 + H*0.08 + I*0.04 + J*0.04)
+
+Readiness Band: [Not Ready / Partially Ready / Largely Ready / Audit-Ready]
+Bands: Not Ready (0-40), Partially Ready (41-70), Largely Ready (71-85), Audit-Ready (86-100)
+
+2. Executive Summary
+
+Description: SOC 2 readiness assessment of [Project Name] ([project type]), evidence-based and read-only, organized around eleven control families (A-K) mapped to the AICPA Trust Services Criteria.
+
+Overall Readiness Score: [Score]/100 ([Band])
+[If history exists:] Previous: [N]/100, Change: [+/-M] ([improving/declining/unchanged])
+
+Top Gaps:
+- [P1 gap 1 - family + criterion]
+- [Continue as needed]
+
+Priority Recommendations:
+1. [Recommendation 1]
+2. [Continue as needed]
+
+Scoring lanes note: Score is weighted toward platform-auditable controls. Organizational controls are scored on policy-artifact presence only; complementary user-entity controls (CUECs) are listed separately and do not affect the score.
+
+[Sections 3-12: Scored Detail Sections]
+[Order dynamically by score ascending - lowest score = Section 3, highest = Section 12]
+[Each of the 10 scored families uses the format below:]
+
+[N]. [Letter]. [Family Name]
+
+Criteria: [mapped CC/A/C refs]
+
+Description: [Brief explanation of what this family evaluates]
+
+Score: [Score]/100 ([Band])
+
+Score Breakdown:
+  Base: 0
+  + [Evidence found]: +[value]
+  + [Evidence found]: +[value]
+  [Cap applied, if any]
+  Final: [Score]/100 ([Band])
+
+Controls Assessed:
+- [Control Ref] ([Criterion]) - Status: [met/partial/gap/organizational] - Lane: [PLATFORM-AUDITABLE/ORGANIZATIONAL/CLIENT-CUEC] - Evidence: [path or "not found"]
+- [Continue for each control in this family]
+
+Gaps:
+- [Control Ref] - [What is missing]. Evidence that would satisfy it: [artifact/config].
+- [Continue as needed, or "No material gaps"]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Continue as needed]
+
+[The 10 scored families are: A Governance, B Human Resources, C Access Management,
+ D Data Protection, E Change Management, F Infrastructure, G Vulnerability & Assurance,
+ H Incident & Resilience, I Vendor Management, J AI Governance]
+
+13. Trust Services Criteria Gaps & Coverage
+
+Columns: Control Ref | Family | Criterion | Evidence Found | Status | Owner/Lane | Gap | Remediation | Priority
+- [C7] | C | CC6.1 | not found | gap | PLATFORM-AUDITABLE | No MFA | Enforce MFA for admins | P1
+- [Continue - one row per material control across all families]
+
+14. Complementary User-Entity Controls (CUECs)
+
+Controls that are the responsibility of the user entity (customer), out of scope for the platform readiness score:
+- [CUEC 1 - e.g. background checks for customer staff]
+- [Continue as needed]
+
+15. Evidence Artifacts & Trust Center Deliverables (Family K)
+
+Deliverables the organization must author/publish (not scored):
+1. SOC 2 report (Type I then Type II) - Present? [yes/no]
+2. Security questionnaire (SIG / CAIQ) response - Present? [yes/no]
+3. Penetration-test attestation / summary - Present? [yes/no]
+4. Subprocessor list (public, versioned) - Present? [yes/no]
+5. Public status page + trust center (with the security policy set) - Present? [yes/no]
+
+16. Remediation Roadmap
+
+Phase 1 - Immediate (P1, platform-auditable gaps that block audit):
+- [Item]
+
+Phase 2 - Short-term (P2, ~30-60 days):
+- [Item]
+
+Phase 3 - Program build-out (P3 + organizational policy authoring + deliverables):
+- [Item]
+
+17. Project Detection Results
+
+- Detected project type(s): [Type or "N types: X, Y, Z" when multi-tech monorepo]
+- Project paths: [path per type, e.g. node@., terraform@infra]
+- Framework/runtime: [Framework version]
+- Package manager(s): [Manager]
+- CI/CD system: [GitHub Actions / GitLab CI / none]
+- IaC: [Terraform / CloudFormation / Kubernetes / none]
+- Repository structure: [single app / monorepo / multi-tech monorepo]
+- Evidence surface scanned: [code / IaC / CI-CD / docs]
+
+18. Appendix: Evidence Index
+
+Governance / People / AI (A/B/J):
+- [File path or config reference]
+
+Access Management (C):
+- [File path or config reference]
+
+Data Protection (D):
+- [File path or config reference]
+
+Change Management (E):
+- [File path or config reference]
+
+Infrastructure (F):
+- [File path or config reference]
+
+Vulnerability / Vendor / Deliverables (G/I/K):
+- [File path or config reference]
+
+Incident / Resilience (H):
+- [File path or config reference]
+
+19. Scan Metadata
+
+- Scan date: [Date]
+- Project path: [Path]
+- Project type: [Detected type]
+- Framework: SOC 2 (AICPA TSC 2017, rev. 2022)
+- Families scored: 10 (A-J); K reported as deliverables
+- Overall readiness: [Score]/100 ([Band])
+- Total gaps: [P1/P2/P3 counts]
+- Scan mode: Read-only, evidence-based
+- Generated by: [Plugin Name] v[Plugin Version]
+- Skill: soc2-audit
+- Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools

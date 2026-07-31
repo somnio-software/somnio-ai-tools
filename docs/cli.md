@@ -191,6 +191,7 @@ See the [Workflow Guide](workflows.md) for details.
 | `flutter-best-practices` | `fp`, `somnio-fp` | Flutter code quality check |
 | `nestjs-health-audit` | `nh`, `somnio-nh` | NestJS project health audit (13 steps) |
 | `nestjs-best-practices` | `np`, `somnio-np` | NestJS code quality check |
+| `soc2-audit` | `s2`, `somnio-s2` | SOC 2 readiness audit (any stack, whole project) |
 | `react-health-audit` | `rh`, `somnio-rh` | React project health audit (13 steps) |
 | `react-best-practices` | `rp`, `somnio-rp` | React code quality check |
 | `angularjs-health-audit` | `ajh`, `somnio-ajh` | AngularJS (1.x) legacy project health audit (13 steps) |
