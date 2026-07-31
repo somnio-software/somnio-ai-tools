@@ -32,6 +32,28 @@ class SkillRegistry {
       agentsDirectory: 'skills/flutter-health-audit/agents',
     ),
     SkillBundle(
+      id: 'angular_health',
+      name: 'angular-health-audit',
+      aliases: ['somnio-ah', 'ah'],
+      displayName: 'Angular Project Health Audit',
+      description:
+          'Execute a comprehensive modern Angular (2+/Angular CLI, '
+          'TypeScript) Project Health Audit. Analyzes tech stack, '
+          'module/component architecture, state & data flow (services/'
+          'RxJS), change detection, build & bundle pipeline, testing, '
+          'code quality, CI/CD, AI harness, and documentation. Produces '
+          'a report with section scores and weighted overall score.',
+      planRelativePath:
+          'skills/angular-health-audit/SKILL.md',
+      rulesDirectory:
+          'skills/angular-health-audit/references',
+      workflowPath:
+          'skills/angular-health-audit/.agent/workflows/angular_health_audit.md',
+      templatePath:
+          'skills/angular-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/angular-health-audit/agents',
+    ),
+    SkillBundle(
       id: 'flutter_plan',
       name: 'flutter-best-practices',
       aliases: ['somnio-fp', 'fp'],

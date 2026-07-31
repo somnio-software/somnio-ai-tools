@@ -46,6 +46,26 @@ Check this Flutter project against current best practices and flag any violation
 
 ---
 
+## Angular Health Audit
+
+**Aliases:** `ah`, `somnio-ah`
+
+Comprehensive **modern Angular (2+)** project health audit with 13 analysis steps covering tech stack, module/component architecture, state & data flow (services, RxJS, signals, NgRx), change detection, testing, code quality, performance (OnPush, trackBy, bundle budgets), CI/CD, AI harness, and documentation. Targets the Angular CLI / TypeScript stack (`@angular/core`, `angular.json`). Produces a weighted score and a report. Not for AngularJS 1.x — use the AngularJS Health Audit for that.
+
+**Use when:**
+- Onboarding to an existing Angular (2+) codebase
+- Preparing a frontend technical debt remediation plan
+- Running a periodic project health check
+
+**Example prompt:**
+```
+Run a full Angular health audit on this project and generate a report.
+```
+
+**Output:** Weighted score report saved to `./reports/`
+
+---
+
 ## NestJS Health Audit
 
 **Aliases:** `nh`, `somnio-nh`

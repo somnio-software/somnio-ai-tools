@@ -1,0 +1,439 @@
+================================================================================
+                     ANGULAR PROJECT HEALTH AUDIT REPORT
+================================================================================
+
+Project: [PROJECT_NAME]
+Date: [AUDIT_DATE]
+Auditor: AI-Assisted Analysis
+Framework: Angular [MAJOR] (Angular CLI, TypeScript)
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+Description: [Comprehensive analysis description]
+
+Overall Score: [XX]/100 ([Label])
+
+Top Strengths:
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+Top Risks:
+- [Risk 1]
+- [Risk 2]
+- [Risk 3]
+
+Priority Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+2. AT-A-GLANCE SCORECARD
+================================================================================
+
+- Tech Stack: [XX]/100 ([Label])
+- Architecture: [XX]/100 ([Label])
+- State Management: [XX]/100 ([Label])
+- Testing: [XX]/100 ([Label])
+- Code Quality (Linter & Warnings): [XX]/100 ([Label])
+- Performance: [XX]/100 ([Label])
+- Documentation & Operations: [XX]/100 ([Label])
+- CI/CD (Configs Found in Repo): [XX]/100 ([Label])
+- AI Harness & Adoption: [XX]/100 ([Label])
+- Overall: [XX]/100 ([Label])
+
+================================================================================
+3. TECH STACK
+================================================================================
+
+Description: Analysis of technology versions, dependencies, and tooling setup.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Node.js version: [Version]
+- Angular version: [Version] (support status)
+- TypeScript version: [Version]
+- RxJS version: [Version]
+- Package manager: [npm/yarn/pnpm]
+- Build system: [Angular CLI application/browser builder — esbuild/webpack]
+- Total dependencies: [XX]
+- Outdated dependencies: [XX]
+
+================================================================================
+4. ARCHITECTURE
+================================================================================
+
+Description: Analysis of component organization, folder structure, and separation of concerns.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Total components: [XX]
+- Feature modules: [XX]
+- Files over 300 lines: [XX]
+- Barrel export files: [XX]
+
+================================================================================
+5. STATE MANAGEMENT
+================================================================================
+
+Description: Analysis of state management approach, library usage, and server/client state separation.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- State management approach: [Signals/NgRx/NGXS/ComponentStore/BehaviorSubject services/Mixed]
+- Services count: [XX]
+- HTTP interceptors count: [XX]
+- Store files count: [XX]
+
+================================================================================
+6. TESTING
+================================================================================
+
+Description: Analysis of test coverage, testing libraries, and test quality.
+
+Score: [XX]/100 ([Label])
+Code Coverage: [XX]% (lines) / [XX]% (branches) / [XX]% (functions)
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Total spec files: [XX]
+- Components with tests: [XX]%
+- Services with tests: [XX]%
+- Test runner: [Karma+Jasmine/Jest/Other]
+- HttpClientTestingModule usage: [Yes/No]
+- E2E tests present: [Cypress/Playwright/None]
+
+================================================================================
+7. CODE QUALITY (LINTER & WARNINGS)
+================================================================================
+
+Description: Analysis of ESLint configuration, Prettier setup, TypeScript strict mode, and code quality enforcement.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- angular-eslint configured: [Yes/No]
+- Template plugin enabled: [Yes/No]
+- Legacy TSLint present: [Yes (deprecated)/No]
+- Prettier configured: [Yes/No]
+- TypeScript strict mode: [Yes/No]
+- Angular strictTemplates: [Yes/No]
+- Any type occurrences: [XX]
+
+================================================================================
+8. PERFORMANCE
+================================================================================
+
+Description: Analysis of change-detection strategy (OnPush), trackBy usage, lazy-loaded routes, and bundle-budget optimization.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- ChangeDetectionStrategy.OnPush usage: [XX] components
+- Lazy-loaded routes (loadChildren/loadComponent): [XX]
+- trackBy on *ngFor / track on @for: [XX] occurrences
+- angular.json budgets defined: [Yes/No]
+- Unsafe [innerHTML] bindings: [XX]
+
+================================================================================
+9. DOCUMENTATION & OPERATIONS
+================================================================================
+
+Description: Analysis of README quality, component/API documentation, Compodoc/Storybook presence, and setup instructions.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- README present: [Yes/No]
+- Setup instructions: [Present/Partial/Missing]
+- Compodoc/Storybook present: [Yes/No]
+- JSDoc/TSDoc coverage: [XX]%
+
+================================================================================
+10. CI/CD (CONFIGS FOUND IN REPO)
+================================================================================
+
+Description: Analysis of GitHub Actions workflows, lint/test/build automation, and deployment pipelines found in repository.
+
+Score: [XX]/100 ([Label])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Evidence:
+- [File path or configuration reference]
+- [Specific evidence item]
+
+Risks:
+- [Risk item 1]
+- [Risk item 2]
+
+Recommendations:
+- [Recommendation 1]
+- [Recommendation 2]
+
+Counts & Metrics:
+- Workflow files found: [XX]
+- Lint step present: [Yes/No]
+- Test step present: [Yes/No]
+- Build step present: [Yes/No]
+- Deploy step present: [Yes/No]
+
+================================================================================
+11. AI HARNESS & ADOPTION
+================================================================================
+
+Description: [One-sentence description of the state of the harness]
+
+Score: [XX]/100 ([Label])
+Maturity: [sin harness | harness básico | harness sólido | paved path]
+
+Coverage:
+- CLAUDE.md: [Status] - [XX]/13
+- Rules: [Status] - [XX]/9
+- Permissions: [Status] - [XX]/13
+- Hooks: [Status] - [XX]/14
+- Pre-push git hook: [Status] - [XX]/11
+- Agents: [Status] - [XX]/11
+- Commands / Skills: [Status] - [XX]/9
+- Advanced orchestration: [Status] - [XX]/5
+- Lifecycle: [Status] - [XX]/3
+- Harness versioning: [Status] - [XX]/12
+- Total: [XX]/100
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+
+Evidence:
+- [Real file path or configuration reference, never invented]
+
+Risks:
+- [Risk item 1]
+
+Actions to Raise the Score:
+1. [+N] [Concrete how-to for this repo]. -> dimension D, X/Y -> Y/Y.
+2. [Continue, sorted by points recovered descending]
+
+Counts & Metrics:
+- [Metric name]: [Value]
+
+================================================================================
+12. ADDITIONAL METRICS
+================================================================================
+
+- Node.js version: [Version]
+- Angular version: [Version] (support status)
+- TypeScript version: [Version]
+- RxJS version: [Version]
+- Package manager: [npm/yarn/pnpm]
+- Build system: [Angular CLI application/browser builder — esbuild/webpack]
+- Workspace type: [single-project/multi-project/Nx/none]
+- Module strategy: [NgModules/Standalone/Mixed]
+- Total components count: [Count]
+- Total services count: [Count]
+- Coverage %: [Percentage or status]
+- State management: [Signals/NgRx/NGXS/ComponentStore/BehaviorSubject services/Mixed]
+- Change detection: [OnPush usage count / Default]
+- Rendering strategy: [CSR/SSR (Angular Universal)/SSG (prerender)/Mixed]
+- Styling approach: [CSS/SCSS/Tailwind/Component styles/Other]
+
+================================================================================
+13. QUALITY INDEX
+================================================================================
+
+Section Summary with Scores:
+- Tech Stack: [XX]/100 ([Label])
+- Architecture: [XX]/100 ([Label])
+- State Management: [XX]/100 ([Label])
+- Testing: [XX]/100 ([Label])
+- Code Quality: [XX]/100 ([Label])
+- Performance: [XX]/100 ([Label])
+- Documentation & Operations: [XX]/100 ([Label])
+- CI/CD: [XX]/100 ([Label])
+- AI Harness & Adoption: [XX]/100 ([Label])
+Overall Score: [XX]/100 ([Label])
+[One-sentence interpretation]
+
+================================================================================
+14. RISKS & OPPORTUNITIES
+================================================================================
+
+- [Risk/Opportunity 1]
+- [Risk/Opportunity 2]
+- [Risk/Opportunity 3]
+- [Risk/Opportunity 4]
+- [Risk/Opportunity 5]
+
+================================================================================
+15. RECOMMENDATIONS
+================================================================================
+
+1. [Priority Level]: [Recommendation 1]
+2. [Priority Level]: [Recommendation 2]
+3. [Priority Level]: [Recommendation 3]
+4. [Priority Level]: [Recommendation 4]
+5. [Priority Level]: [Recommendation 5]
+6. [Priority Level]: [Recommendation 6]
+
+================================================================================
+16. APPENDIX: EVIDENCE INDEX
+================================================================================
+
+File Paths and Configs by Area:
+
+Configuration:
+- [File path or config reference]
+
+Components:
+- [File path or config reference]
+
+Services:
+- [File path or config reference]
+
+Tests:
+- [File path or config reference]
+
+Stores/State:
+- [File path or config reference]
+
+CI/CD Workflows:
+- [File path or config reference]
+
+AI Harness & Adoption:
+- [File path or config reference]
+
+================================================================================
+                              END OF REPORT
+================================================================================
+
+Generated by: [Plugin Name] v[Plugin Version]
+Skill: angular-health-audit
+Date: [YYYY-MM-DD]
+Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools

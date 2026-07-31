@@ -189,6 +189,7 @@ See the [Workflow Guide](workflows.md) for details.
 |------|---------|-------------|
 | `flutter-health-audit` | `fh`, `somnio-fh` | Flutter project health audit (13 steps) |
 | `flutter-best-practices` | `fp`, `somnio-fp` | Flutter code quality check |
+| `angular-health-audit` | `ah`, `somnio-ah` | Angular (2+) project health audit (13 steps) |
 | `nestjs-health-audit` | `nh`, `somnio-nh` | NestJS project health audit (13 steps) |
 | `nestjs-best-practices` | `np`, `somnio-np` | NestJS code quality check |
 | `react-health-audit` | `rh`, `somnio-rh` | React project health audit (13 steps) |
