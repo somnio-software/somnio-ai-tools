@@ -1,0 +1,317 @@
+================================================================================
+                   ANGULARJS BEST PRACTICES AUDIT REPORT
+================================================================================
+
+Project: [PROJECT_NAME]
+Date: [AUDIT_DATE]
+Auditor: AI-Assisted Analysis
+
+================================================================================
+1. EXECUTIVE SUMMARY
+================================================================================
+
+Overall Score: [XX]/100 ([Strong/Fair/Weak])
+
+Description:
+[One paragraph summary of the codebase quality and key findings]
+
+Top Strengths:
+- [Strength 1]
+- [Strength 2]
+- [Strength 3]
+
+Critical Issues:
+- [Critical Issue 1]
+- [Critical Issue 2]
+- [Critical Issue 3]
+
+Immediate Action Items:
+1. [Most urgent action]
+2. [Second priority action]
+3. [Third priority action]
+
+================================================================================
+2. SCORE BREAKDOWN
+================================================================================
+
+Testing Quality:            [XX]/100  ([Label])
+Component Architecture:     [XX]/100  ([Label])
+Scope & Binding Patterns:   [XX]/100  ([Label])
+State Management:           [XX]/100  ([Label])
+Performance:                [XX]/100  ([Label])
+JavaScript Standards:       [XX]/100  ([Label])
+
+Weighted Overall:           [XX]/100  ([Label])
+
+Score Labels:
+- Strong: 85-100
+- Fair: 70-84
+- Weak: 0-69
+
+================================================================================
+3. TESTING QUALITY
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of testing quality findings]
+
+angular-mocks Bootstrap:
+- module() / inject() usage: [Good/Needs Improvement]
+- Controllers via $controller, directives via $compile: [Yes/No]
+- $componentController for components: [Used/Not Used/N/A]
+
+Async & HTTP Testing:
+- $httpBackend.when/.expect usage: [Good/Needs Improvement]
+- $httpBackend.flush() before assertions: [Correct/Missing]
+- $scope.$digest() / $timeout.flush(): [Correct/Misused]
+
+Assertion Quality:
+- Specs with assertions: [XX]%
+- verifyNoOutstanding* in afterEach: [Yes/No]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+- [Finding 4]
+
+Violations:
+- "[path/to/file.spec.js:XX]" - [Issue description]
+- "[path/to/file.spec.js:XX]" - [Issue description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+4. COMPONENT ARCHITECTURE
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of component architecture findings]
+
+Module / Folder Structure:
+- Feature-based module organization: [Yes/Partial/No]
+- One unit per file: [Yes/No]
+- Max nesting depth: [XX] levels
+
+Unit Design:
+- Average file size: [XX] lines
+- Files over 300 lines: [XX]
+- .component() + controllerAs adoption: [Used/Partial/$scope-soup]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/unit.component.js:XX]" - [Architecture Issue]: [Description]
+- "[path/to/controller.js:XX]" - [Size Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+5. SCOPE & BINDING PATTERNS
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of scope & binding patterns findings]
+
+controllerAs Discipline:
+- controllerAs + bindToController: [Used/Partial/$scope-soup]
+- $scope injected only when needed: [Yes/No]
+
+Binding Correctness:
+- Isolate bindings (< @ &) vs = two-way: [Good/Needs Improvement]
+- Two-way bindings where one-way fits: [XX] occurrences
+
+Lifecycle & Cleanup:
+- $onInit / $onChanges usage: [Good/Needs Improvement]
+- $onDestroy / $destroy watch cleanup: [XX]% where needed
+- $watch registrations: [XX] (deep watches: [XX])
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/unit.js:XX]" - [Scope Issue]: [Description]
+- "[path/to/unit.js:XX]" - [Lifecycle Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+6. STATE MANAGEMENT
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of state management findings]
+
+State Distribution:
+- Controller-local (this): [Appropriate/Overused]
+- Service/factory layering: [Well-layered/Partial/Fat controllers]
+- Server access: [Centralized in services/Scattered]
+- $rootScope usage: [Reasonable/Misused as a bus]
+
+Pattern Compliance:
+- $http/$resource centralization: [Good/Needs Improvement]
+- Interceptors configured: [Yes/No]
+- State scope decisions: [Good/Needs Improvement]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/service.js:XX]" - [State Issue]: [Description]
+- "[path/to/controller.js:XX]" - [Layering Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+7. PERFORMANCE
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of performance findings]
+
+Digest & Watchers:
+- $watch registrations: [XX] (deep watches: [XX])
+- Function expressions in views: [Few/Many]
+- Manual $apply/$timeout(0) digests: [XX] occurrences
+
+Binding Cost:
+- One-time (::) / one-way (<) bindings: [Used/Missing]
+- Pervasive = two-way bindings: [Yes/No]
+
+List Rendering:
+- ng-repeat track by: [Used/Missing]
+- In-view filter/orderBy in ng-repeat: [XX] occurrences
+- Large lists without pagination/virtualization: [XX]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/template.html:XX]" - [Track By Issue]: [Description]
+- "[path/to/unit.js:XX]" - [Watch Issue]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+8. JAVASCRIPT STANDARDS
+================================================================================
+
+Score: [XX]/100 ([Label])
+
+Description:
+[Summary of JavaScript standards findings]
+
+Linter & DI:
+- Linter configured: [JSHint/ESLint/No]
+- Angular-aware linting: [Yes/No]
+- Minification-safe DI: [Consistent annotations/ng-annotate/UNSAFE]
+
+Module Hygiene:
+- IIFE wrapping: [XX]% compliant
+- 'use strict'; present: [Yes/Partial/No]
+- Globals leaked to window: [None/Found]
+
+Debug Residue & DOM:
+- console.log in source: [XX]
+- eslint-disable / jshint ignore count: [XX]
+- DOM/jQuery in controllers/services: [XX]
+
+Key Findings:
+- [Finding 1]
+- [Finding 2]
+- [Finding 3]
+
+Violations:
+- "[path/to/unit.js:XX]" - [Unsafe DI]: [Description]
+- "[path/to/unit.js:XX]" - [Module Hygiene]: [Description]
+
+Recommendations:
+1. [Recommendation 1]
+2. [Recommendation 2]
+3. [Recommendation 3]
+
+================================================================================
+9. PRIORITIZED RECOMMENDATIONS
+================================================================================
+
+CRITICAL (Must Fix Immediately):
+1. [Critical recommendation with file reference]
+2. [Critical recommendation with file reference]
+
+HIGH PRIORITY:
+1. [High priority recommendation]
+2. [High priority recommendation]
+3. [High priority recommendation]
+
+MEDIUM PRIORITY:
+1. [Medium priority recommendation]
+2. [Medium priority recommendation]
+3. [Medium priority recommendation]
+
+LOW PRIORITY (Nice to Have):
+1. [Low priority recommendation]
+2. [Low priority recommendation]
+
+================================================================================
+10. EVIDENCE INDEX
+================================================================================
+
+Spec Files Analyzed:
+- "[path/to/file.spec.js]"
+- "[path/to/file.spec.js]"
+
+Component / Controller Files Analyzed:
+- "[path/to/unit.component.js]"
+- "[path/to/controller.js]"
+
+Directive Files Analyzed:
+- "[path/to/directive.js]"
+- "[path/to/directive.js]"
+
+Service / Factory Files Analyzed:
+- "[path/to/service.js]"
+- "[path/to/factory.js]"
+
+================================================================================
+                              END OF REPORT
+================================================================================
+
+Generated by: [Plugin Name] v[Plugin Version]
+Skill: angularjs-best-practices
+Date: [YYYY-MM-DD]
+Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools
+Standards Source: https://github.com/somnio-software/somnio-ai-tools

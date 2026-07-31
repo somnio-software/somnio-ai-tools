@@ -193,6 +193,7 @@ See the [Workflow Guide](workflows.md) for details.
 | `nestjs-best-practices` | `np`, `somnio-np` | NestJS code quality check |
 | `react-health-audit` | `rh`, `somnio-rh` | React project health audit (13 steps) |
 | `react-best-practices` | `rp`, `somnio-rp` | React code quality check |
+| `angularjs-best-practices` | `ajp`, `somnio-ajp` | AngularJS (1.x) code quality check |
 | `angularjs-health-audit` | `ajh`, `somnio-ajh` | AngularJS (1.x) legacy project health audit (13 steps) |
 | `python-health-audit` | `ph`, `somnio-ph` | Python project health audit (13 steps) |
 | `python-best-practices` | `pp`, `somnio-pp` | Python code quality check |

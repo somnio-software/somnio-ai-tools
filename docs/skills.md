@@ -86,6 +86,26 @@ Validate this NestJS project against best practices for DTOs, error handling, an
 
 ---
 
+## AngularJS Best Practices
+
+**Aliases:** `ajp`, `somnio-ajp`
+
+Micro-level **AngularJS (Angular 1.x)** code-quality audit. Validates code against concrete standards for module/controller/directive architecture, `$scope` and binding patterns, services and `$http` data flow, digest-cycle performance, minification-safe dependency injection (`$inject`/ng-annotate), and Karma/Jasmine testing. Produces a prioritized violations report.
+
+**Use when:**
+- Reviewing an AngularJS 1.x pull request or module for code quality
+- Hardening minification-safe DI and digest-cycle performance
+- Establishing a team code-quality baseline on a legacy codebase
+
+**Example prompt:**
+```
+Run an AngularJS best-practices check on this project and list violations.
+```
+
+**Output:** Prioritized violations report saved to `./reports/`
+
+---
+
 ## React Health Audit
 
 **Aliases:** `rh`, `somnio-rh`

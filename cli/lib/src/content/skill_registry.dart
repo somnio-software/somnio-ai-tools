@@ -73,6 +73,29 @@ class SkillRegistry {
       agentsDirectory: 'skills/nestjs-health-audit/agents',
     ),
     SkillBundle(
+      id: 'angularjs_plan',
+      name: 'angularjs-best-practices',
+      aliases: ['somnio-ajp', 'ajp'],
+      displayName: 'AngularJS Best Practices Check',
+      description:
+          'Execute a micro-level AngularJS (Angular 1.x) code quality '
+          'audit. Validates code against standards for module, '
+          'controller, and directive architecture, \$scope and binding '
+          'patterns, services and \$http data flow, digest-cycle '
+          'performance, minification-safe DI, and Karma/Jasmine testing. '
+          'Produces a detailed violations report with a prioritized '
+          'action plan.',
+      planRelativePath:
+          'skills/angularjs-best-practices/SKILL.md',
+      rulesDirectory:
+          'skills/angularjs-best-practices/references',
+      workflowPath:
+          'skills/angularjs-best-practices/.agent/workflows/angularjs_best_practices.md',
+      templatePath:
+          'skills/angularjs-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/angularjs-best-practices/agents',
+    ),
+    SkillBundle(
       id: 'nestjs_plan',
       name: 'nestjs-best-practices',
       aliases: ['somnio-np', 'np'],
