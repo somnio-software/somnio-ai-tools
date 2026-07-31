@@ -196,6 +196,7 @@ See the [Workflow Guide](workflows.md) for details.
 | `angularjs-health-audit` | `ajh`, `somnio-ajh` | AngularJS (1.x) legacy project health audit (13 steps) |
 | `python-health-audit` | `ph`, `somnio-ph` | Python project health audit (13 steps) |
 | `python-best-practices` | `pp`, `somnio-pp` | Python code quality check |
+| `angular-best-practices` | `ap`, `somnio-ap` | Angular (2+) code quality check |
 | `security-audit` | `sa`, `somnio-sa` | Security audit (any stack, 11 steps) |
 
 See the [Skills Catalog](skills.md) for full descriptions.

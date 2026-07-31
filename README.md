@@ -65,6 +65,7 @@ somnio setup
 | [AngularJS Health Audit](docs/skills.md#angularjs-health-audit) | `ajh` | 13-step legacy AngularJS 1.x health audit with weighted scoring |
 | [Python Health Audit](docs/skills.md#python-health-audit) | `ph` | 13-step project health audit with weighted scoring |
 | [Python Best Practices](docs/skills.md#python-best-practices) | `pp` | Code style, typing, function design, and testing validation |
+| [Angular Best Practices](docs/skills.md#angular-best-practices) | `ap` | Angular 2+ code-quality validation (RxJS, change detection, TS) |
 | [Security Audit](docs/skills.md#security-audit) | `sa` | Framework-agnostic security scan (secrets, deps, SAST) |
 
 ### Workflows & Utilities

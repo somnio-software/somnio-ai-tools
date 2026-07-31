@@ -146,6 +146,26 @@ Run a full AngularJS health audit on this project and generate a report.
 
 ---
 
+## Angular Best Practices
+
+**Aliases:** `ap`, `somnio-ap`
+
+Micro-level **modern Angular (2+)** code-quality audit. Validates code against concrete standards for component/module architecture, RxJS and state management, change-detection performance (OnPush/trackBy), TypeScript strictness and template type-checking, and testing. Produces a prioritized violations report. Not for AngularJS 1.x.
+
+**Use when:**
+- Reviewing an Angular pull request or feature for code quality
+- Enforcing OnPush/RxJS subscription hygiene and strict templates
+- Establishing a team code-quality baseline
+
+**Example prompt:**
+```
+Run an Angular best-practices check on this project and list violations.
+```
+
+**Output:** Prioritized violations report saved to `./reports/`
+
+---
+
 ## Python Health Audit
 
 **Aliases:** `ph`, `somnio-ph`

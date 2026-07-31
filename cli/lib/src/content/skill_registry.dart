@@ -94,6 +94,28 @@ class SkillRegistry {
       agentsDirectory: 'skills/nestjs-best-practices/agents',
     ),
     SkillBundle(
+      id: 'angular_plan',
+      name: 'angular-best-practices',
+      aliases: ['somnio-ap', 'ap'],
+      displayName: 'Angular Best Practices Check',
+      description:
+          'Execute a micro-level modern Angular (2+) code quality '
+          'audit. Validates code against standards for component and '
+          'module architecture, RxJS and state management, change-'
+          'detection performance, TypeScript strictness and template '
+          'type-checking, and testing. Produces a detailed violations '
+          'report with a prioritized action plan.',
+      planRelativePath:
+          'skills/angular-best-practices/SKILL.md',
+      rulesDirectory:
+          'skills/angular-best-practices/references',
+      workflowPath:
+          'skills/angular-best-practices/.agent/workflows/angular_best_practices.md',
+      templatePath:
+          'skills/angular-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/angular-best-practices/agents',
+    ),
+    SkillBundle(
       id: 'react_health',
       name: 'react-health-audit',
       aliases: ['somnio-rh', 'rh'],
