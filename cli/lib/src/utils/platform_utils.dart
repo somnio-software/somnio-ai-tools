@@ -40,4 +40,41 @@ class PlatformUtils {
     } catch (_) {}
     return null;
   }
+
+  /// Resolves the real, native executable behind a Windows npm shim.
+  ///
+  /// npm installs global CLIs on Windows as `.cmd`/`.ps1` wrapper scripts
+  /// that internally `cmd.exe`-parse and re-forward arguments. That
+  /// re-tokenization is line-oriented, so a single argument containing
+  /// literal newlines (e.g. a multi-paragraph prompt) gets silently
+  /// truncated or corrupted — even when the wrapper is invoked directly
+  /// via [Process.run] without a shell. The bundled native executable at
+  /// `node_modules/<npmPackage>/bin/<binary>.exe` has no such wrapper and
+  /// receives argv atomically, so resolving straight to it sidesteps the
+  /// problem entirely.
+  ///
+  /// Returns `null` on non-Windows platforms, when [npmPackage] is
+  /// unknown, when the shim can't be located on PATH, or when no matching
+  /// bundled `.exe` exists next to it (falling back to the shim is then
+  /// the caller's responsibility).
+  static Future<String?> resolveWindowsNpmExecutable(
+    String binary,
+    String? npmPackage,
+  ) async {
+    if (!Platform.isWindows || npmPackage == null) return null;
+    final shimPath = await whichBinary(binary);
+    if (shimPath == null) return null;
+
+    final shimDir = p.dirname(shimPath);
+    final packageParts = npmPackage.split('/');
+    final candidate = p.joinAll([
+      shimDir,
+      'node_modules',
+      ...packageParts,
+      'bin',
+      '$binary.exe',
+    ]);
+    if (File(candidate).existsSync()) return candidate;
+    return null;
+  }
 }

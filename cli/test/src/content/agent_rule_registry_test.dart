@@ -37,6 +37,7 @@ void main() {
         AgentRuleRegistry.stacks,
         [
           'django',
+          'dotnet',
           'fastapi',
           'flask',
           'flutter',

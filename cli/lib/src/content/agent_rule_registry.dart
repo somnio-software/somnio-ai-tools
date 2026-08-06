@@ -14,6 +14,7 @@ class AgentRuleRegistry {
   /// under `agent-rules/adapters/<agent>/`.
   static const List<String> stacks = [
     'django',
+    'dotnet',
     'fastapi',
     'flask',
     'flutter',
