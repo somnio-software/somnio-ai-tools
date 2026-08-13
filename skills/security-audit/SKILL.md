@@ -165,7 +165,10 @@ Trivy is not installed, add installation recommendation to report.
 
 Goal: Run basic SAST-style grep for OWASP vulnerability patterns
 (SQL injection, XSS, path traversal, eval/code injection) per detected
-project type. Findings feed Consolidated Findings as LOW/MEDIUM severity.
+project type, plus a Firebase Auth abuse check (App Check enforcement,
+including a live `gcloud`-based verification when available) when
+Firebase Auth is detected. Findings feed Consolidated Findings as
+LOW/MEDIUM severity.
 
 Read and follow the instructions in `references/sast.md`
 

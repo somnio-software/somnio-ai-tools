@@ -17,7 +17,8 @@ specific to Firebase Functions.
 
 - **Runtime:** Node 22 on Firebase Cloud Functions v2 (`firebase-functions` ≥ 7).
 - **HTTP framework:** Express 5 mounted behind `onRequest`.
-- **Auth:** Firebase Auth (anonymous + linked) verified with Admin SDK.
+- **Auth:** Firebase Auth (anonymous + linked) verified with Admin SDK,
+  hardened with Firebase App Check (see Auth abuse protection below).
 - **Data:** Firestore (user profiles, usage, sermons, system prompts, calendar events), Gemini via `@google/genai` (chat replies + sermon generation), FCM via `firebase-admin/messaging` (push notifications).
 - **Region:** `southamerica-east1` — declared once in `config.ts` as `FIREBASE_REGION` and re-used at every handler registration.
 
@@ -171,6 +172,49 @@ Rules:
 
 ---
 
+## Auth abuse protection (App Check)
+
+A valid Firebase ID token only proves the caller has *some* Firebase Auth
+session — it does not prove the request came from the real app. Without an
+extra control, phone sign-in and anonymous auth are abusable at scale (bulk
+SMS requests billed per attempt, scripted account creation). Firebase App
+Check closes that gap by attesting the calling app/device, not just the
+user.
+
+1. Register the app with **Firebase App Check** and enforce it for every
+   product actually exposed to unauthenticated attestation traffic —
+   Authentication first, then Firestore/Storage if they're reachable
+   client-side.
+2. On the client, initialize App Check with the platform's real
+   attestation provider — Play Integrity (Android), App Attest/DeviceCheck
+   (iOS), reCAPTCHA v3/Enterprise (web) — so a token is attached to every
+   request automatically.
+3. On the backend, verify the `X-Firebase-AppCheck` header with
+   `getAppCheck().verifyToken(token)` (or the `enforceAppCheck` option on
+   `onRequest`/`onCall`) before `requireAuth` runs. Reject the same way as
+   a failed auth check — bare `401`, no body.
+4. **Implementing the SDK is not enough.** App Check enforcement per
+   product (Authentication, Firestore, Storage) is a separate toggle in
+   Firebase Console (Build > App Check) or the App Check Management API —
+   it does not turn on just because the package is installed. After
+   wiring it up, confirm enforcement is actually `ENFORCED` (not just
+   registered) before treating the abuse vector as closed.
+5. reCAPTCHA is **optional and additive**, not a substitute for App Check.
+   Add it only for a specific flow where App Check alone still allows
+   abuse (e.g. a public web form with no app to attest).
+
+Rules:
+- ❌ Do not enable phone-number sign-in without App Check enforced —
+  unmetered SMS requests are the primary abuse vector and are billed per
+  attempt regardless of whether the sign-in succeeds.
+- ❌ Do not consider App Check "done" once the SDK is integrated. Verify
+  enforcement is toggled on for the product in question; an integrated
+  but unenforced App Check protects nothing.
+- ❌ Do not use reCAPTCHA as a replacement for App Check — App Check
+  verifies the calling app/device, reCAPTCHA only signals bot-likeliness.
+
+---
+
 ## Secrets & env config
 
 ### Secrets (Google Secret Manager)
@@ -311,6 +355,10 @@ Never log:
   Call the getters (`getFirestore()`, `getAuth()`) inside functions.
 - ❌ Do not respond to failed auth with a body. `res.status(401).end()` —
   nothing else.
+- ❌ Do not enable phone-number sign-in, or expose Firestore/Storage to
+  client SDKs, without App Check enforcement verified as `ENFORCED` for
+  that product — an installed-but-unenforced SDK gives a false sense of
+  protection.
 
 ---
 
@@ -327,3 +375,6 @@ Never log:
 9. Never copy patterns from `telegram-deprecated/`.
 10. Deploy region is `FIREBASE_REGION` from `config.ts` — re-use, don't
     hardcode.
+11. Enforce Firebase App Check on Auth (and Firestore/Storage if exposed
+    client-side); verify enforcement is actually `ENFORCED`, not just
+    integrated. Treat reCAPTCHA as optional/additive, never a substitute.

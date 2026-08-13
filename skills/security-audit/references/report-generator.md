@@ -60,8 +60,10 @@ artifact by its step-number prefix:
   evidence)
 - step_07_* (Trivy scan; if INSTALLED and used, apply +15 Security
   Automation bonus)
-- step_08_* (SAST OWASP findings; add to Consolidated Findings as
-  LOW/MEDIUM; does not affect scoring)
+- step_08_* (SAST OWASP findings, plus Firebase App Check status if
+  Firebase Auth is detected — flag as MEDIUM if enforcement is UNENFORCED
+  or UNVERIFIED; add to Consolidated Findings as LOW/MEDIUM; does not
+  affect scoring)
 - step_09_* (AI findings, if available; otherwise note "Skipped")
 
 If an expected step_NN_* artifact is absent, note it as missing rather
@@ -181,7 +183,9 @@ Step A - Extract scoring data from each artifact:
   - From step_07: Trivy INSTALLED and used (apply +15 Security
     Automation bonus); Trivy findings if any
   - From step_08: SAST OWASP findings (SQL injection, XSS, path
-    traversal) - add to Consolidated Findings (Section 8) as LOW/MEDIUM;
+    traversal) and, if Firebase Auth is in use, App Check status
+    (code-level presence and live enforcement: ENFORCED/UNENFORCED/
+    UNVERIFIED) - add to Consolidated Findings (Section 8) as LOW/MEDIUM;
     include in Remediation Priority Matrix if applicable
 
 Step B - Compute each section score using the rubrics above:

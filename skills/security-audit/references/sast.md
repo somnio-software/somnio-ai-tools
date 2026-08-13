@@ -94,6 +94,76 @@ grep -rn "eval\s*(\|new Function\s*(\|exec\s*(\s*.*+\|Runtime\.getRuntime\|Proce
   | grep -v node_modules | head -15 || echo "No eval/exec patterns found"
 ```
 
+Firebase Auth Abuse Protection (App Check) — only run if the project uses
+Firebase Auth (`firebase_auth` in `pubspec.yaml` for Flutter, or
+`firebase-admin`/`firebase-functions` for Node/TypeScript):
+
+```bash
+# Flutter/Dart client: phone sign-in without the App Check package
+grep -q "firebase_auth" pubspec.yaml 2>/dev/null && {
+  grep -rn "signInWithPhoneNumber\|verifyPhoneNumber" --include="*.dart" lib/ 2>/dev/null | head -10 \
+    || echo "No phone sign-in usage found"
+  grep -rn "firebase_app_check\|FirebaseAppCheck" pubspec.yaml lib/ --include="*.dart" 2>/dev/null \
+    || echo "No firebase_app_check dependency or FirebaseAppCheck.instance.activate() found"
+}
+
+# Node.js/TypeScript backend (e.g. Firebase Functions): Auth verification without App Check enforcement
+grep -rl "firebase-admin/auth\|verifyIdToken" --include="*.ts" --include="*.js" . 2>/dev/null \
+  | grep -v node_modules | head -5
+grep -rn "getAppCheck\|appCheck()\|X-Firebase-AppCheck\|enforceAppCheck" \
+  --include="*.ts" --include="*.js" . 2>/dev/null | grep -v node_modules \
+  || echo "No App Check verification (getAppCheck/verifyToken, enforceAppCheck) found"
+```
+
+If Firebase Auth is in use (especially phone sign-in) and no App Check
+evidence is found on either the client or the backend, report a MEDIUM
+finding: "Firebase Auth in use without App Check enforcement — vulnerable
+to SMS pumping / automated abuse of phone sign-in. Recommend enabling
+Firebase App Check (Play Integrity / App Attest / reCAPTCHA v3 as the
+attestation provider) and verifying the `X-Firebase-AppCheck` token
+server-side." Treat reCAPTCHA as an optional, additive control on top of
+App Check — never as a substitute for it.
+
+IMPORTANT CAVEAT: the code-level check above only proves the App Check SDK
+is *wired up* (package present, `activate()`/token verification called).
+It does NOT prove enforcement is actually turned on — Firebase App Check
+enforcement for Authentication, Firestore, and Storage is a per-project
+toggle (Console: Build > App Check > APIs, or the Management API), separate
+from any code in this repo. A project can have the SDK fully integrated and
+still be unprotected if enforcement was never flipped to "Enforced". Always
+attempt the live check below before concluding App Check is effective.
+
+LIVE ENFORCEMENT CHECK (optional — only if `gcloud` is installed and
+authenticated with access to the Firebase project; skip gracefully
+otherwise):
+
+```bash
+if command -v gcloud &> /dev/null && gcloud auth print-access-token &> /dev/null 2>&1; then
+  PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
+  if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "(unset)" ]; then
+    TOKEN=$(gcloud auth print-access-token 2>/dev/null)
+    curl -s -H "Authorization: Bearer $TOKEN" \
+      "https://firebaseappcheck.googleapis.com/v1/projects/${PROJECT_ID}/services" \
+      | grep -E '"name"|"enforcementMode"' \
+      || echo "App Check services query failed (missing Firebase App Check Admin permission on this account, or the API is not enabled for the project)"
+  else
+    echo "No active gcloud project configured — run 'gcloud config set project <id>' to enable the live check, or skip"
+  fi
+else
+  echo "gcloud CLI not installed/authenticated — reporting code-level App Check detection only, flag enforcement status as UNVERIFIED"
+fi
+```
+
+Interpret the response: `"enforcementMode": "ENFORCED"` for
+`identitytoolkit.googleapis.com` (Authentication), `firestore.googleapis.com`,
+or `firebasestorage.googleapis.com` means that product is actually rejecting
+unverified requests. `"UNENFORCED"` means App Check is registered but NOT
+protecting that product — report this as a MEDIUM finding regardless of
+what the code-level scan found. If the live check could not run (`gcloud`
+unavailable/unauthenticated), report enforcement status as "UNVERIFIED —
+could not confirm via gcloud; verify manually in Firebase Console > App
+Check" rather than assuming it is safe.
+
 OUTPUT FORMAT (mandatory):
 
 For each project type detected, report:
@@ -102,6 +172,7 @@ For each project type detected, report:
 3. XSS: count and sample file:line
 4. Path traversal: count and sample file:line
 5. Eval/Code injection: count and sample file:line
+6. Firebase Auth abuse protection (App Check): code-level status (present/missing) plus live enforcement status (ENFORCED/UNENFORCED/UNVERIFIED) with evidence — only if Firebase Auth is detected
 
 Classify each finding as LOW or MEDIUM. Do not affect main scoring.
 
