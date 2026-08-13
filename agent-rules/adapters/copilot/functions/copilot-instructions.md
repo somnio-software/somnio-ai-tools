@@ -207,6 +207,13 @@ user.
 5. reCAPTCHA is **optional and additive**, not a substitute for App Check.
    Add it only for a specific flow where App Check alone still allows
    abuse (e.g. a public web form with no app to attest).
+6. If phone sign-in is enabled and the app's real user base is
+   geographically bounded, also set the Firebase Auth **SMS region
+   policy** (Authentication > Settings > SMS region policy) to an
+   allow-list of the expected country codes. It's optional and
+   complementary to App Check — a request can still pass App Check and be
+   pointed at an unexpected country — but it costs nothing and closes
+   that gap.
 
 Rules:
 - ❌ Do not enable phone-number sign-in without App Check enforced —
@@ -382,7 +389,8 @@ Never log:
     hardcode.
 11. Enforce Firebase App Check on Auth (and Firestore/Storage if exposed
     client-side); verify enforcement is actually `ENFORCED`, not just
-    integrated. Treat reCAPTCHA as optional/additive, never a substitute.
+    integrated. Treat reCAPTCHA and the SMS region policy as
+    optional/additive layers, never a substitute for App Check.
 
 ---
 

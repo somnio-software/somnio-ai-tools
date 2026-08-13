@@ -62,8 +62,9 @@ artifact by its step-number prefix:
   Automation bonus)
 - step_08_* (SAST OWASP findings, plus Firebase App Check status if
   Firebase Auth is detected — flag as MEDIUM if enforcement is UNENFORCED
-  or UNVERIFIED; add to Consolidated Findings as LOW/MEDIUM; does not
-  affect scoring)
+  or UNVERIFIED — and SMS region policy status if phone sign-in is
+  detected — LOW/informational; add to Consolidated Findings as
+  LOW/MEDIUM; does not affect scoring)
 - step_09_* (AI findings, if available; otherwise note "Skipped")
 
 If an expected step_NN_* artifact is absent, note it as missing rather
@@ -185,8 +186,10 @@ Step A - Extract scoring data from each artifact:
   - From step_08: SAST OWASP findings (SQL injection, XSS, path
     traversal) and, if Firebase Auth is in use, App Check status
     (code-level presence and live enforcement: ENFORCED/UNENFORCED/
-    UNVERIFIED) - add to Consolidated Findings (Section 8) as LOW/MEDIUM;
-    include in Remediation Priority Matrix if applicable
+    UNVERIFIED) plus, if phone sign-in is in use, SMS region policy
+    status (configured/unrestricted) - add to Consolidated Findings
+    (Section 8) as LOW/MEDIUM; include in Remediation Priority Matrix
+    if applicable
 
 Step B - Compute each section score using the rubrics above:
   1. Sensitive File Protection: Base 100, apply deductions/bonuses,

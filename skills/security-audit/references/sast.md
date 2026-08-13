@@ -164,6 +164,42 @@ unavailable/unauthenticated), report enforcement status as "UNVERIFIED —
 could not confirm via gcloud; verify manually in Firebase Console > App
 Check" rather than assuming it is safe.
 
+SMS REGION POLICY CHECK (optional, complementary — only if phone sign-in
+was found above; only if `gcloud` is installed and authenticated):
+
+Firebase Auth also supports an **SMS region policy** — an allow/deny list
+of country codes eligible to receive Auth SMS. It is a defense-in-depth
+control alongside App Check (not a substitute): even a request that passes
+App Check can still be pointed at an unexpected country, and region
+restriction blocks that at zero cost when the app's real user base is
+geographically bounded.
+
+```bash
+if command -v gcloud &> /dev/null && gcloud auth print-access-token &> /dev/null 2>&1; then
+  PROJECT_ID=$(gcloud config get-value project 2>/dev/null)
+  if [ -n "$PROJECT_ID" ] && [ "$PROJECT_ID" != "(unset)" ]; then
+    TOKEN=$(gcloud auth print-access-token 2>/dev/null)
+    curl -s -H "Authorization: Bearer $TOKEN" \
+      "https://identitytoolkit.googleapis.com/v2/projects/${PROJECT_ID}/config" \
+      | grep -A5 '"smsRegionConfig"' \
+      || echo "No smsRegionConfig found — SMS region policy is not configured (allowed from any country)"
+  fi
+else
+  echo "gcloud CLI not installed/authenticated — skipping SMS region policy check"
+fi
+```
+
+Interpret the response: a present `smsRegionConfig.allowlistOnly` with a
+non-empty `allowedRegions` list means SMS delivery is already restricted to
+those countries. If `smsRegionConfig` is absent, or set to
+`allowByDefault`/`disallowedRegions` with an empty deny list, SMS can be
+sent to any country. Report this as a LOW/informational finding — not a
+required control like App Check, but a recommended one when the app's
+expected user base is geographically bounded: "Consider restricting the
+Firebase Auth SMS region policy (Authentication > Settings > SMS region
+policy) to the countries the app actually serves, as a complementary layer
+to App Check against SMS pumping."
+
 OUTPUT FORMAT (mandatory):
 
 For each project type detected, report:
@@ -173,6 +209,7 @@ For each project type detected, report:
 4. Path traversal: count and sample file:line
 5. Eval/Code injection: count and sample file:line
 6. Firebase Auth abuse protection (App Check): code-level status (present/missing) plus live enforcement status (ENFORCED/UNENFORCED/UNVERIFIED) with evidence — only if Firebase Auth is detected
+7. SMS region policy: configured (with allowed regions) or unrestricted — only if phone sign-in is detected
 
 Classify each finding as LOW or MEDIUM. Do not affect main scoring.
 

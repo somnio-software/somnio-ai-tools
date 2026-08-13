@@ -1,7 +1,7 @@
 ---
 name: sast-analyzer
 description: |
-  Use this agent when performing static application security testing (SAST) to detect OWASP vulnerability patterns such as SQL injection, XSS, path traversal, and eval/code injection during a framework-agnostic security audit. Also detects Firebase Auth usage without App Check enforcement (SMS pumping / abuse risk) on Flutter and Firebase Functions projects, and — when `gcloud` is available and authenticated — verifies live App Check enforcement status via the Firebase App Check Management API rather than trusting code presence alone.
+  Use this agent when performing static application security testing (SAST) to detect OWASP vulnerability patterns such as SQL injection, XSS, path traversal, and eval/code injection during a framework-agnostic security audit. Also detects Firebase Auth usage without App Check enforcement (SMS pumping / abuse risk) on Flutter and Firebase Functions projects, and — when `gcloud` is available and authenticated — verifies live App Check enforcement status via the Firebase App Check Management API and the Firebase Auth SMS region policy rather than trusting code presence alone.
 
   <example>
   Context: A user kicks off a security audit and the SAST step scans for OWASP vulnerability patterns.
@@ -73,8 +73,9 @@ You are an expert static application security testing (SAST) analyst specializin
    - **Python**: open() with request/input data
 5. **Run Eval/Code Injection Scans**: Search across all applicable languages for eval(), new Function(), exec() with concatenation, Runtime.getRuntime, and Process.start.
 6. **Run Firebase App Check Scan** (only if Firebase Auth is detected): check for the App Check package/activation on the client and token verification on the backend. Then, only if `gcloud` is installed and `gcloud auth print-access-token` succeeds, query `https://firebaseappcheck.googleapis.com/v1/projects/{project}/services` for the live `enforcementMode` of `identitytoolkit.googleapis.com` (and Firestore/Storage if in use). If `gcloud` is unavailable or unauthenticated, report enforcement as "UNVERIFIED" rather than assuming it is safe — never infer enforcement from code presence alone.
-7. **Classify Findings**: All SAST findings are LOW or MEDIUM severity. They indicate potential vulnerabilities that require manual verification.
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/step_08_security_sast.md`.
+7. **Run SMS Region Policy Scan** (only if phone sign-in was found in step 6, and `gcloud` is available/authenticated): query `https://identitytoolkit.googleapis.com/v2/projects/{project}/config` for `smsRegionConfig`. Report as an informational LOW finding — recommended, not required — since it is a complementary control alongside App Check, not a substitute.
+8. **Classify Findings**: All SAST findings are LOW or MEDIUM severity. They indicate potential vulnerabilities that require manual verification.
+9. **Save Output**: Write the analysis artifact to `reports/.artifacts/step_08_security_sast.md`.
 
 ## Detailed Instructions
 
@@ -114,6 +115,7 @@ Structure your output as:
 - **Path Traversal Analysis**: Count of findings, sample file:line references (or "No patterns found")
 - **Eval/Code Injection Analysis**: Count of findings, sample file:line references (or "No patterns found")
 - **Firebase App Check Analysis** (only if Firebase Auth detected): code-level status (SDK present/missing) AND live enforcement status per product (ENFORCED, UNENFORCED, or UNVERIFIED if `gcloud` was unavailable), with evidence for each
+- **SMS Region Policy Analysis** (only if phone sign-in detected): configured (with allowed regions) or unrestricted, with evidence — informational LOW, complementary to App Check
 - **Finding Summary Table**: Category, count, severity (LOW or MEDIUM)
 - **Note**: "SAST findings are pattern-based indicators requiring manual verification. They do not affect main audit scores."
 
