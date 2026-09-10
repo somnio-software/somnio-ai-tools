@@ -36,7 +36,7 @@ First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for
 ## Output
 
 Save the artifact to `reports/.artifacts/soc2-audit/step_02_soc2_governance_program.md`.
-Create the directory first: `mkdir -p reports/.artifacts`.
+Create the directory first: `mkdir -p reports/.artifacts/soc2-audit`.
 
 Include: family A/B/J control tables (ref, criterion, Status, lane, evidence), a policy-artifact-present summary (yes/no per artifact), a list of CUEC controls surfaced (for the report's CUEC section), and gaps with the exact artifact that would satisfy each.
 

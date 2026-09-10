@@ -88,7 +88,7 @@ STANDARD REFERENCE NOTE:
 
 ARTIFACT SAVE (mandatory):
 Save the full detection output to: reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format (in artifact):
 - PROJECT_DETECTION_RESULTS: pipe-separated list of type@path (downstream

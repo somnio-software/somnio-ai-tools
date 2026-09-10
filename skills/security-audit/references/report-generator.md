@@ -1,6 +1,6 @@
 # Security Report Generator
 
-> Synthesize all security findings into a comprehensive security audit report with quantitative scoring, severity classifications, and actionable recommendations. MUST follow the exact 13-section structure from assets/report-template.md. Every section in the template is MANDATORY. Do not merge, skip, or rename sections. Scored detail sections (3-7) MUST be dynamically ordered by score ascending.
+> Synthesize all security findings into a comprehensive security audit report with quantitative scoring, severity classifications, and actionable recommendations. MUST follow the exact 12-section structure from assets/report-template.md. Every section in the template is MANDATORY. Do not merge, skip, or rename sections. Scored detail sections (3-7) MUST be dynamically ordered by score ascending.
 
 ---
 
@@ -17,7 +17,7 @@ IMPORTANT EXCLUSIONS (generator instructions only - do NOT include in output):
 OUTPUT DIRECTIVE: Do NOT include the EXCLUSIONS block above in the
 report output. These are instructions for the generator only.
 
-MANDATORY REPORT STRUCTURE (13 sections):
+MANDATORY REPORT STRUCTURE (12 sections):
 1. Security Scoring Breakdown (5 scored lines + Overall + Posture)
 2. Executive Summary (Overall Score + top findings + priority recommendations)
 3-7. Scored Detail Sections (DYNAMIC ORDER — sorted by score ascending, lowest first):
@@ -28,10 +28,9 @@ MANDATORY REPORT STRUCTURE (13 sections):
    - Security Automation & CI/CD (scored)
 8. Consolidated Findings by Severity
 9. Remediation Priority Matrix
-10. Gemini AI Analysis (if available)
-11. Project Detection Results
-12. Appendix: Evidence Index
-13. Scan Metadata
+10. Project Detection Results
+11. Appendix: Evidence Index
+12. Scan Metadata
 
 DYNAMIC ORDERING INSTRUCTION:
 After computing all 5 section scores in Step B, sort the scored detail
@@ -48,7 +47,7 @@ step_*.md files (reports/.artifacts/ for in-session subagent dispatch;
 reports/.artifacts/security-audit/ for `somnio run`). Match each
 artifact by its step-number prefix:
 - step_01_* (tool detection, PROJECT_DETECTION_RESULTS for multi-tech;
-  use for Section 11)
+  use for Section 10)
 - step_02_* (file protection findings, .gitignore coverage,
   environment file status)
 - step_03_* (secret scan results, severity counts, pattern matches)
@@ -286,7 +285,7 @@ FORMATTING RULES:
 
 VALIDATION CHECKLIST:
 Before finalizing the report, verify:
-- All 13 sections are present
+- All 12 sections are present
 - Section 1 (Security Scoring Breakdown) has 5 scored lines + Overall + Posture
 - All 5 scored sections (3-7) have Score line with [Score]/100 ([Label])
 - All scored sections have Description/Score/Score Breakdown/Key Findings/Evidence/Risks/Recommendations

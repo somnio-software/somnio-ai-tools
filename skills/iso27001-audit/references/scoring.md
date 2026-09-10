@@ -111,7 +111,7 @@ Summary: "Previous: [N]/100, Change: [+/-M] ([improving|declining|unchanged])".
 ARTIFACT SAVE (mandatory):
 Save the scoring output to:
 reports/.artifacts/iso27001-audit/step_13_iso27001_scoring.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format (in artifact):
 - Per-category score table: Category (A-K) | name | weight (and renormalized

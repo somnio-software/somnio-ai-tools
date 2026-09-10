@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The orchestrator has completed all analysis waves and hands the artifact manifest to the report-writer.
   user: "Generate the security audit report."
-  assistant: "I will read all artifact files from reports/.artifacts/, load the scoring rubrics from references/report-generator.md, compute the 5 weighted section scores and the overall score, enforce the 13-section structure per references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/<YYYY-MM-DD>-<project>-security-audit.md and the JSON export to reports/<YYYY-MM-DD>-<project>-security-audit.json."
+  assistant: "I will read all artifact files from reports/.artifacts/, load the scoring rubrics from references/report-generator.md, compute the 5 weighted section scores and the overall score, enforce the 12-section structure per references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/<YYYY-MM-DD>-<project>-security-audit.md and the JSON export to reports/<YYYY-MM-DD>-<project>-security-audit.json."
   <commentary>
   The report-writer is the only agent that holds all artifacts simultaneously. It performs cross-section score reconciliation and produces the single user-facing output.
   </commentary>
@@ -51,7 +51,7 @@ Read and follow ALL instructions in `references/report-generator.md` for scoring
 
 Read and follow ALL instructions in `references/report-format-enforcer.md` for structural validation, formatting rules, exclusion leak detection, and score history export.
 
-Read `assets/report-template.md` for the mandatory 13-section report structure template.
+Read `assets/report-template.md` for the mandatory 12-section report structure template.
 
 These three references are the single source of truth for scoring weights, formulas, section structure, and validation checklists. Do not deviate from them.
 
@@ -59,7 +59,7 @@ These three references are the single source of truth for scoring weights, formu
 
 Read each artifact that exists under `reports/.artifacts/`:
 
-- `step_01_security_tool_installer.md` — tool-installer output; provides PROJECT_DETECTION_RESULTS for Section 11
+- `step_01_security_tool_installer.md` — tool-installer output; provides PROJECT_DETECTION_RESULTS for Section 10
 - `step_02_security_file_analysis.md` — file-analyzer output; drives Sensitive File Protection scoring
 - `step_03_security_secret_patterns.md` — secret-scanner output; drives Secret Detection scoring
 - `step_04_security_gitleaks.md` — secret-scanner output; GIT_HISTORY_FINDINGS count for Secret Detection
@@ -67,7 +67,6 @@ Read each artifact that exists under `reports/.artifacts/`:
 - `step_06_security_dependency_age.md` — dependency-analyzer output; authoritative for outdated/deprecated counts in Dependency Security
 - `step_07_security_trivy.md` — dependency-analyzer output; +15 Security Automation bonus if Trivy INSTALLED
 - `step_08_security_sast.md` — sast-analyzer output; SAST findings go to Section 8 (Consolidated Findings) as LOW/MEDIUM only, no main score impact
-- `step_09_security_gemini_analysis.md` — gemini-analyzer output (if present); goes to Section 10 (Gemini AI Analysis)
 
 For any missing artifact: apply the rejection criteria from `references/report-generator.md` (assign score 0/100 (Critical) with a note naming the missing artifact). Never omit a scored section.
 

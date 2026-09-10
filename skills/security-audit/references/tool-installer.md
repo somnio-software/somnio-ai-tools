@@ -1,11 +1,11 @@
 # Security Tool Installer
 
-> Detect project type and verify Gemini CLI availability for the framework-agnostic Security Audit. Checks for API key OR subscription-based access.
+> Detect project type for the framework-agnostic Security Audit. Supports multi-tech monorepos.
 
 ---
 
-Goal: Detect the project type and verify Gemini CLI availability for
-the security audit.
+Goal: Detect the project type(s) present in the repository for the
+security audit.
 
 PROJECT DETECTION (execute first - multi-tech monorepo support):
 
@@ -106,68 +106,9 @@ fi
 echo "PROJECT_DETECTION_RESULTS=$RESULTS"
 ```
 
-GEMINI CLI DETECTION:
-
-```bash
-echo ""
-echo "=== GEMINI CLI DETECTION ==="
-
-GEMINI_AVAILABLE="false"
-
-# Step 1: Check if gemini CLI is installed
-if command -v gemini &> /dev/null; then
-  echo "Gemini CLI: INSTALLED"
-  gemini --version 2>/dev/null || echo "(version check skipped)"
-
-  # Step 2: Check for API key
-  if [ -n "$GEMINI_API_KEY" ] || [ -n "$GOOGLE_API_KEY" ]; then
-    echo "Gemini authentication: API key found"
-    GEMINI_AVAILABLE="true"
-  else
-    # Step 3: No API key, check for subscription (Google One AI Premium)
-    echo "No API key found. Checking subscription status..."
-    AUTH_STATUS=$(gemini auth status 2>&1)
-    if echo "$AUTH_STATUS" | grep -qi "authenticated\|logged in\|active"; then
-      echo "Gemini authentication: Subscription detected"
-      GEMINI_AVAILABLE="true"
-    else
-      echo "Gemini authentication: No API key or subscription found"
-      echo "Gemini AI analysis will be SKIPPED"
-      echo "To enable: set GEMINI_API_KEY env var or sign in with 'gemini auth login'"
-    fi
-  fi
-
-  # Step 4: If Gemini available, check/install security extension
-  if [ "$GEMINI_AVAILABLE" = "true" ]; then
-    echo ""
-    echo "Checking Gemini Security Extension..."
-    if gemini extensions list 2>/dev/null | grep -q "security"; then
-      echo "Security extension: INSTALLED"
-    else
-      echo "Security extension: NOT FOUND. Installing..."
-      gemini extensions install \
-        https://github.com/gemini-cli-extensions/security > /dev/null 2>&1
-      if [ $? -eq 0 ]; then
-        echo "Security extension: INSTALLED successfully"
-      else
-        echo "Security extension: INSTALL FAILED"
-        echo "Gemini AI analysis will proceed without security extension"
-      fi
-    fi
-  fi
-else
-  echo "Gemini CLI: NOT INSTALLED"
-  echo "Gemini AI analysis will be SKIPPED"
-  echo "To install: npm install -g @google/gemini-cli"
-fi
-
-echo ""
-echo "GEMINI_AVAILABLE=$GEMINI_AVAILABLE"
-```
-
 ARTIFACT SAVE (mandatory):
 Save the full analysis output to: reports/.artifacts/security-audit/step_01_security_tool_installer.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/security-audit
 
 Output format (in artifact):
 - PROJECT_DETECTION_RESULTS: pipe-separated list of type@path (e.g.
@@ -176,7 +117,3 @@ Output format (in artifact):
 - Detected project type(s) and technology
 - Source file extensions to scan
 - Package manager detected
-- Gemini CLI status (installed/not installed)
-- Gemini authentication method (API key/subscription/none)
-- Gemini Security Extension status
-- Whether Gemini AI analysis will be available

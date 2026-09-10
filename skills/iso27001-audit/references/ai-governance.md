@@ -58,7 +58,7 @@ READ-ONLY + SECRET SAFETY: read only; redact API keys / secret VALUES as
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_11_iso27001_ai_governance.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - AI_FOOTPRINT: detected / none (and the evidence)

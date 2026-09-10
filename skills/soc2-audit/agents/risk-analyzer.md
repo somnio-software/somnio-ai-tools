@@ -35,7 +35,7 @@ First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for
 
 ## Output
 
-Save two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
+Save two artifacts (create the directory first: `mkdir -p reports/.artifacts/soc2-audit`):
 - `reports/.artifacts/soc2-audit/step_07_soc2_vulnerability_assurance.md` — family G and I control tables, the family K deliverables target list, a third-party/vendor inventory, and gaps.
 - `reports/.artifacts/soc2-audit/step_08_soc2_incident_resilience.md` — family H control table, IR/BCP/DR artifact-presence summary, redundancy & RPO/RTO evidence, and gaps.
 

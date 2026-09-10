@@ -96,7 +96,7 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 Save your complete analysis to `reports/.artifacts/security-audit/step_02_security_file_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts`
+Create the directory first: `mkdir -p reports/.artifacts/security-audit`
 
 Structure your output as:
 - **Detected Project Type**: Technology and path

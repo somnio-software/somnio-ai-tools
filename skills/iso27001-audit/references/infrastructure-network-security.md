@@ -65,7 +65,7 @@ VALUES, note the location and redact as `[REDACTED]` - never copy the value.
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_07_iso27001_infrastructure_network_security.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category F control table: Annex A ref | control name | Status | Owner/lane |

@@ -49,7 +49,7 @@ tokens) as `[REDACTED]`; never copy the value.
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_10_iso27001_vendor_supplier_management.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category I control table: Annex A ref | control name | Status | Owner/lane |

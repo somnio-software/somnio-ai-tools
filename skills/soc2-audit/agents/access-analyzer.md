@@ -35,7 +35,7 @@ First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for
 
 ## Output
 
-Save two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
+Save two artifacts (create the directory first: `mkdir -p reports/.artifacts/soc2-audit`):
 - `reports/.artifacts/soc2-audit/step_03_soc2_access_management.md` — family C control table, any hardcoded-credential locations (VALUES REDACTED), and gaps.
 - `reports/.artifacts/soc2-audit/step_04_soc2_data_protection.md` — family D control table, encryption coverage summary (transit/at rest/backups), and gaps.
 

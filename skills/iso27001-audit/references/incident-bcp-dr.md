@@ -49,7 +49,7 @@ READ-ONLY + SECRET SAFETY: read only; redact secret VALUES as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_09_iso27001_incident_bcp_dr.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category H control table: Annex A ref | control name | Status | Owner/lane |

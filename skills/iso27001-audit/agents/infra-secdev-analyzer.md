@@ -26,7 +26,7 @@ First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection
 - Read and follow ALL instructions in `references/infrastructure-network-security.md` -> write `reports/.artifacts/iso27001-audit/step_07_iso27001_infrastructure_network_security.md`
 - Read and follow ALL instructions in `references/vulnerability-management-assurance.md` -> write `reports/.artifacts/iso27001-audit/step_08_iso27001_vulnerability_management_assurance.md`
 
-Run `mkdir -p reports/.artifacts` before writing.
+Run `mkdir -p reports/.artifacts/iso27001-audit` before writing.
 
 ## Quality Standards
 

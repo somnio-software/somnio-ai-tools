@@ -62,9 +62,7 @@ reports/
 reports/.history/
 *.txt.bak
 reports_history/
-gemini_security_report.txt
-gemini_security_findings.txt
-security_analysis_prompt.txt
+
 # Dart / CLI build artifacts
 cli/.dart_tool/
 cli/pubspec.lock

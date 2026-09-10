@@ -12,7 +12,7 @@ GITLEAKS DETECTION (execute first):
 
 ```bash
 echo "=== Gitleaks Secret Scan ==="
-mkdir -p reports/.artifacts
+mkdir -p reports/.artifacts/security-audit
 
 if ! command -v gitleaks &> /dev/null; then
   echo "Gitleaks: NOT_INSTALLED"

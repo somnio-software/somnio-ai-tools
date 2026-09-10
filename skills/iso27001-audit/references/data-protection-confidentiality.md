@@ -68,7 +68,7 @@ READ-ONLY + SECRET SAFETY (CRITICAL for this category):
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_05_iso27001_data_protection_confidentiality.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category D control table: Annex A ref | control name | Status | Owner/lane |

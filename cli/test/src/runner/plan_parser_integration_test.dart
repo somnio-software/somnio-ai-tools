@@ -63,7 +63,7 @@ void main() {
       mandatoryRules: [],
     ),
     'security-audit': _SkillExpectation(
-      stepCount: 10,
+      stepCount: 9,
       firstRule: 'tool-installer',
       lastRule: 'report-generator',
       mandatoryRules: ['tool-installer'],

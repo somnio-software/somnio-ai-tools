@@ -35,7 +35,7 @@ First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for
 
 ## Output
 
-Save two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
+Save two artifacts (create the directory first: `mkdir -p reports/.artifacts/soc2-audit`):
 - `reports/.artifacts/soc2-audit/step_05_soc2_change_management.md` — family E control table, CI gate inventory (lint/test/build/scan per workflow), and gaps.
 - `reports/.artifacts/soc2-audit/step_06_soc2_infrastructure_network.md` — family F control table, IaC coverage summary, any plaintext-secret locations (VALUES REDACTED), and gaps.
 

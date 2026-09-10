@@ -111,7 +111,7 @@ MONOREPO DETECTION:
 
 ARTIFACT SAVE (mandatory):
 Save the full analysis output to: reports/.artifacts/security-audit/step_02_security_file_analysis.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/security-audit
 
 Output format:
 - Detected project type

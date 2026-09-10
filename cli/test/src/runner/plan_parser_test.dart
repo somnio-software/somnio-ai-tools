@@ -140,7 +140,7 @@ void main() {
       expect(steps[6].ruleName, 'best-practices-generator');
     });
 
-    test('security-audit (sa): verbose format with annotations, 10 steps', () {
+    test('security-audit (sa): verbose format with annotations, 9 steps', () {
       const plan = '''
 **Rule Execution Order**:
 1. Read and follow the instructions in `references/tool-installer.md` (MANDATORY - tool detection)
@@ -151,15 +151,14 @@ void main() {
 6. Read and follow the instructions in `references/dependency-age.md`
 7. Read and follow the instructions in `references/trivy.md` (optional - skips if Trivy not installed)
 8. Read and follow the instructions in `references/sast.md` (SAST OWASP patterns, LOW/MEDIUM findings)
-9. Read and follow the instructions in `references/gemini-analysis.md` (optional - skips if Gemini unavailable)
-10. Read and follow the instructions in `references/report-generator.md` (generates 13-section report with quantitative scoring)
+9. Read and follow the instructions in `references/report-generator.md` (generates 12-section report with quantitative scoring)
 
 **Post-Generation**: Read and follow...
 ''';
 
       final steps = parser.parse(plan);
 
-      expect(steps, hasLength(10));
+      expect(steps, hasLength(9));
       expect(steps[0].ruleName, 'tool-installer');
       expect(steps[0].isMandatory, true);
       expect(steps[0].annotation, 'MANDATORY - tool detection');
@@ -171,9 +170,8 @@ void main() {
       expect(steps[5].ruleName, 'dependency-age');
       expect(steps[6].ruleName, 'trivy');
       expect(steps[7].ruleName, 'sast');
-      expect(steps[8].ruleName, 'gemini-analysis');
-      expect(steps[9].ruleName, 'report-generator');
-      expect(steps[9].index, 10);
+      expect(steps[8].ruleName, 'report-generator');
+      expect(steps[8].index, 9);
     });
 
     // ---------------------------------------------------------------

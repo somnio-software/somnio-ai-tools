@@ -116,7 +116,7 @@ Save three separate artifacts:
 - If installed: vulnerability count by severity, critical findings summary, affected packages
 - If not installed: installation instruction (brew install trivy for macOS)
 
-Create the directory first: `mkdir -p reports/.artifacts`
+Create the directory first: `mkdir -p reports/.artifacts/security-audit`
 
 ## Edge Cases
 

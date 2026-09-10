@@ -14,7 +14,7 @@ If any of these checks FAIL, STOP and output an error message instead
 of the formatted report. Do NOT attempt to format an incomplete report.
 
 Required structure checks:
-1. Report must contain exactly 13 numbered sections
+1. Report must contain exactly 12 numbered sections
 2. Section 1 must be "Security Scoring Breakdown" with 5 scored lines
    + Overall Score + Security Posture
 3. Section 2 must be "Executive Summary" with Overall Score
@@ -66,14 +66,14 @@ EXCLUSION LEAK DETECTION:
 - These are generator instructions that must not appear in the output
 
 VALIDATION CHECKLIST:
-- All 13 report sections present
+- All 12 report sections present
 - Section order: 1. Security Scoring Breakdown,
   2. Executive Summary,
   3-7. Scored Detail Sections (dynamic order by score ascending),
   8. Consolidated Findings by Severity,
-  9. Remediation Priority Matrix, 10. Gemini AI Analysis,
-  11. Project Detection Results, 12. Appendix: Evidence Index,
-  13. Scan Metadata
+  9. Remediation Priority Matrix,
+  10. Project Detection Results, 11. Appendix: Evidence Index,
+  12. Scan Metadata
 - Markdown formatting applied correctly throughout
 - Severity classifications use correct format
 - Section 1 has 5 scored lines + Overall + Posture
@@ -83,7 +83,7 @@ VALIDATION CHECKLIST:
 - Evidence references include file paths
 - Recommendations are numbered and prioritized
 - Report starts with "Security Audit Report" title
-- Report ends with "13. Scan Metadata" section
+- Report ends with "12. Scan Metadata" section
 - No EXCLUSIONS block or generator instructions in output
 - No duplicate score displays
 
@@ -114,7 +114,7 @@ JSON file to reports/<YYYY-MM-DD>-<project>-security-audit.json with this schema
     "low": [integer]
   },
   "timestamp": "[ISO8601 datetime, e.g. 2025-02-26T12:00:00Z]",
-  "projectType": "[string from Section 11 Project Detection Results]"
+  "projectType": "[string from Section 10 Project Detection Results]"
 }
 
 If the report generator already produced reports/<YYYY-MM-DD>-<project>-security-audit.json, validate

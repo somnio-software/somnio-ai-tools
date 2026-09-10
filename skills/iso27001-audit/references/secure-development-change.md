@@ -65,7 +65,7 @@ READ-ONLY + SECRET SAFETY: read only; redact secret VALUES as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_06_iso27001_secure_development_change.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category E control table: Annex A ref | control name | Status | Owner/lane |

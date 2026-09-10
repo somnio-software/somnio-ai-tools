@@ -12,7 +12,7 @@ TRIVY DETECTION (execute first):
 
 ```bash
 echo "=== Trivy Filesystem Scan ==="
-mkdir -p reports/.artifacts
+mkdir -p reports/.artifacts/security-audit
 
 if ! command -v trivy &> /dev/null; then
   echo "Trivy: NOT_INSTALLED"

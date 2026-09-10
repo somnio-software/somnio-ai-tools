@@ -62,7 +62,7 @@ You are an expert AI-harness analyst specializing in locating and scoring the ha
 
 ## Output Format
 
-Write two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
+Write two artifacts (create the directory first: `mkdir -p reports/.artifacts/harness-audit`):
 
 `reports/.artifacts/harness-audit/step_01_harness_inventory.md` - one block per piece:
 - Piece name - Status (Found/Not found/Partial) - Evidence (paths, line counts, frontmatter, excerpts) - Notes for the scorer.

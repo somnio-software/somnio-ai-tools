@@ -97,7 +97,7 @@ If the reference files are unavailable, perform the analysis using the process a
 
 Save your secret pattern analysis to `reports/.artifacts/security-audit/step_03_security_secret_patterns.md` and Gitleaks findings to `reports/.artifacts/security-audit/step_04_security_gitleaks.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts`
+Create the directory first: `mkdir -p reports/.artifacts/security-audit`
 
 ### Secret Patterns Artifact Structure:
 - **Detected Project Type and Scan Targets**: Technology, file extensions, directories scanned

@@ -87,7 +87,7 @@ STATUS RULES:
 
 ARTIFACT SAVE (mandatory):
 Save the full analysis output to: reports/.artifacts/soc2-audit/step_05_soc2_change_management.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/soc2-audit
 
 Output format:
 - Family E control table (control ref, criterion, Status, Owner/lane, Evidence path)

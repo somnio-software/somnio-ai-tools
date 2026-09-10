@@ -2,9 +2,8 @@
 description: >-
   Execute a comprehensive, framework-agnostic Security Audit. Detects project
   type at runtime and adapts security checks accordingly. Analyzes sensitive
-  files, source code secrets, dependency vulnerabilities, and optionally uses
-  Gemini AI for advanced analysis. Produces a severity-classified report with
-  quantitative scoring.
+  files, source code secrets, and dependency vulnerabilities. Produces a
+  severity-classified report with quantitative scoring.
 ---
 
 # Security Audit
@@ -44,15 +43,11 @@ Read `security-audit/references/trivy.md` and follow ALL instructions in the pro
 
 Read `security-audit/references/sast.md` and follow ALL instructions in the prompt field
 
-## Step 9: Gemini AI Security Analysis (Optional)
-
-Read `security-audit/references/gemini-analysis.md` and follow ALL instructions in the prompt field
-
-## Step 10: Generate Security Report
+## Step 9: Generate Security Report
 
 Read `security-audit/references/report-generator.md` and follow ALL instructions in the prompt field
 
-## Step 11: Validate and Export Report
+## Step 10: Validate and Export Report
 
 Read `security-audit/references/report-format-enforcer.md` and follow ALL instructions in the prompt field
 

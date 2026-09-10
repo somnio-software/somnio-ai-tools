@@ -3,8 +3,8 @@ name: security-audit
 description: >-
   Execute a comprehensive, framework-agnostic Security Audit. Detects project
   type at runtime and adapts security checks accordingly. Analyzes sensitive
-  files, source code secrets, dependency vulnerabilities, and optionally uses
-  Gemini AI for advanced analysis. Produces a severity-classified report.
+  files, source code secrets, and dependency vulnerabilities. Produces a
+  severity-classified report.
   Use when the user asks to audit security, scan for vulnerabilities, check
   for secrets, or assess dependency risks.
   Triggers on: 'security audit', 'vulnerability scan', 'secret scan',
@@ -35,8 +35,6 @@ You are a master at:
   vulnerability scans (npm audit, pub outdated, pip audit, etc.)
 - **Dependency Age Analysis**: Identifying outdated and deprecated
   dependencies across ecosystems
-- **AI-Powered Security Analysis**: Leveraging Gemini CLI for advanced
-  vulnerability detection when available
 - **Quantitative Security Scoring**: Computing per-section scores using
   weighted rubrics (5 sections, weighted formula) and mapping to security
   posture labels (Strong/Fair/Weak/Critical)
@@ -49,7 +47,6 @@ You are a master at:
 - Report findings objectively based on evidence found in the repository
 - Stop execution immediately if MANDATORY steps fail
 - Never invent or assume information - report "Not found" if evidence is missing
-- Gracefully skip Gemini analysis if Gemini CLI is unavailable
 
 **Expected Behavior**:
 - **Professional and Evidence-Based**: All findings must be supported by
@@ -96,7 +93,7 @@ enabled).
 
 ## Step 1. Tool Detection and Setup
 
-Goal: Detect Gemini CLI availability and configure the security toolchain.
+Goal: Detect the project type and configure the security toolchain.
 
 Read and follow the instructions in `references/tool-installer.md`
 
@@ -175,17 +172,7 @@ Read and follow the instructions in `references/sast.md`
 **Integration**: Save SAST findings for Consolidated Findings in the
 security report. Findings do not affect main section scores.
 
-## Step 9. Gemini AI Security Analysis (Optional)
-
-Goal: Execute advanced AI-powered security analysis using the Gemini CLI
-Security extension if available.
-
-Read and follow the instructions in `references/gemini-analysis.md`
-
-**Integration**: Save Gemini analysis findings for the security report.
-Skip gracefully if Gemini CLI is unavailable.
-
-## Step 10. Generate Security Report
+## Step 9. Generate Security Report
 
 Goal: Synthesize all findings into a comprehensive security audit report
 with quantitative scoring, severity classifications, and actionable
@@ -198,7 +185,7 @@ generates the final security report. You MUST compute all 5 section scores
 using the scoring rubrics BEFORE writing any report content. A report
 without computed scores is INVALID.
 
-**Report Sections** (13 sections with quantitative scoring):
+**Report Sections** (12 sections with quantitative scoring):
 - Security Scoring Breakdown (5 scored lines + Overall + Posture)
 - Executive Summary with Overall Score
 - Scored Detail Sections (5 sections, dynamically ordered by score ascending — lowest first):
@@ -209,7 +196,6 @@ without computed scores is INVALID.
   - Security Automation & CI/CD (scored, weight 15%)
 - Consolidated Findings by Severity (HIGH, MEDIUM, LOW)
 - Remediation Priority Matrix
-- Gemini AI Analysis results (if available)
 - Project Detection Results
 - Appendix: Evidence Index
 - Scan Metadata
@@ -218,7 +204,7 @@ without computed scores is INVALID.
 with [Score]/100 ([Label]) format, Score Breakdown (Base, deductions/additions,
 Final), Key Findings, Evidence, Risks, and Recommendations.
 
-## Step 11. Validate and Export Security Report
+## Step 10. Validate and Export Security Report
 
 Goal: Validate the generated report against structural and Markdown formatting
 rules, then save the final Markdown report.
@@ -226,7 +212,7 @@ rules, then save the final Markdown report.
 Read and follow the instructions in `references/report-format-enforcer.md`
 
 **Validation**: Read the generated report and validate ALL structural checks
-from the format enforcer rule: exactly 13 sections, Section 1 has 5 scored
+from the format enforcer rule: exactly 12 sections, Section 1 has 5 scored
 lines with weights + Overall + Formula + Posture, Sections 3-7 have Score
 lines, sections are ordered by score ascending, score labels match ranges,
 proper Markdown syntax. Fix any issues in-place. If scores are missing entirely,
@@ -256,11 +242,10 @@ mkdir -p reports
 6. Read and follow the instructions in `references/dependency-age.md` {model: mid}
 7. Read and follow the instructions in `references/trivy.md` (optional - skips if Trivy not installed) {model: mid}
 8. Read and follow the instructions in `references/sast.md` (SAST OWASP patterns, LOW/MEDIUM findings) {model: cheap}
-9. Read and follow the instructions in `references/gemini-analysis.md` (optional - skips if Gemini unavailable) {model: mid}
-10. Read and follow the instructions in `references/report-generator.md` (generates 13-section report with quantitative scoring) {model: frontier}
+9. Read and follow the instructions in `references/report-generator.md` (generates 12-section report with quantitative scoring) {model: frontier}
 
 **Post-Generation**: Read and follow the instructions in `references/report-format-enforcer.md` to validate and fix
-the report (runs automatically after step 10) {model: frontier}
+the report (runs automatically after step 9) {model: frontier}
 
 **Scoring System**:
 - 5 scored sections with weighted rubrics (0-100 each)
@@ -274,7 +259,6 @@ the report (runs automatically after step 10) {model: frontier}
 - Each rule can be executed independently
 - Framework-agnostic with runtime project detection
 - Outputs can be saved and reused
-- Gemini analysis is optional and gracefully degraded
 - Clear separation of concerns
 - Quantitative scoring enables objective comparison across audits
 - Works as standalone or after health audit
@@ -294,8 +278,7 @@ The orchestrator reads this SKILL.md for scope context, then fans out to analysi
 | Wave 0 | Sequential (stop-on-failure) | `tool-installer` | cheap |
 | Wave 1 | Parallel | `file-analyzer`, `secret-scanner`, `sast-analyzer` | cheap |
 | Wave 2 | Sequential | `dependency-analyzer` | mid |
-| Wave 3 | Conditional (skip if GEMINI_AVAILABLE=false) | `gemini-analyzer` | mid |
-| Wave 4 | Sequential | `report-writer` | frontier |
+| Wave 3 | Sequential | `report-writer` | frontier |
 
 ### Dispatch Table
 
@@ -306,8 +289,7 @@ The orchestrator reads this SKILL.md for scope context, then fans out to analysi
 | `agents/secret-scanner.md` | cheap | `references/secret-patterns.md` (step 3) + `references/gitleaks.md` (step 4) | `reports/.artifacts/security-audit/step_03_security_secret_patterns.md`, `reports/.artifacts/security-audit/step_04_security_gitleaks.md` |
 | `agents/sast-analyzer.md` | cheap | `references/sast.md` (step 8) | `reports/.artifacts/security-audit/step_08_security_sast.md` |
 | `agents/dependency-analyzer.md` | mid | `references/dependency-audit.md` (step 5) + `references/dependency-age.md` (step 6) + `references/trivy.md` (step 7) | `reports/.artifacts/security-audit/step_05_security_dependency_audit.md`, `reports/.artifacts/security-audit/step_06_security_dependency_age.md`, `reports/.artifacts/security-audit/step_07_security_trivy.md` |
-| `agents/gemini-analyzer.md` | mid | `references/gemini-analysis.md` (step 9) | `reports/.artifacts/security-audit/step_09_security_gemini_analysis.md` |
-| `agents/report-writer.md` | frontier | `references/report-generator.md` (step 10) + `references/report-format-enforcer.md` (step 11) + `assets/report-template.md` | `reports/<YYYY-MM-DD>-<project>-security-audit.md`, `reports/<YYYY-MM-DD>-<project>-security-audit.json`, `reports/.history/last_scores.json` |
+| `agents/report-writer.md` | frontier | `references/report-generator.md` (step 9) + `references/report-format-enforcer.md` (step 10) + `assets/report-template.md` | `reports/<YYYY-MM-DD>-<project>-security-audit.md`, `reports/<YYYY-MM-DD>-<project>-security-audit.json`, `reports/.history/last_scores.json` |
 
 **Model tiers** are provider-neutral symbolic names. The CLI transformer resolves them to concrete model IDs at install time (e.g. for Claude: cheap→haiku, mid→sonnet, frontier→opus).
 

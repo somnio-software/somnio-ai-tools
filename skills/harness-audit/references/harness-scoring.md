@@ -141,7 +141,7 @@ REJECTION CRITERIA:
 ## ARTIFACT SAVE (mandatory)
 
 Save the scoring result to: `reports/.artifacts/harness-audit/step_02_harness_scoring.md`
-Run before finishing: `mkdir -p reports/.artifacts`
+Run before finishing: `mkdir -p reports/.artifacts/harness-audit`
 
 Output format:
 - **Per-piece table**: piece name · criterion · status (Present/Weak/Missing) ·

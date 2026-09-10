@@ -60,7 +60,7 @@ STATUS RULES:
 
 ARTIFACT SAVE (mandatory):
 Save the full analysis output to: reports/.artifacts/soc2-audit/step_08_soc2_incident_resilience.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/soc2-audit
 
 Output format:
 - Family H control table (control ref, criterion, Status, Owner/lane, Evidence path)

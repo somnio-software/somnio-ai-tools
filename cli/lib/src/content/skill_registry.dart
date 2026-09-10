@@ -319,8 +319,8 @@ class SkillRegistry {
           'Execute a comprehensive, framework-agnostic Security Audit. '
           'Detects project type at runtime and adapts security checks '
           'accordingly. Analyzes sensitive files, source code secrets, '
-          'dependency vulnerabilities, and optionally uses Gemini AI '
-          'for advanced analysis. Produces a severity-classified report.',
+          'and dependency vulnerabilities. Produces a severity-classified '
+          'report.',
       planRelativePath:
           'skills/security-audit/SKILL.md',
       rulesDirectory:

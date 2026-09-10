@@ -25,7 +25,7 @@ First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection
 - Read and follow ALL instructions in `references/identity-access-management.md` -> write `reports/.artifacts/iso27001-audit/step_04_iso27001_identity_access_management.md`
 - Read and follow ALL instructions in `references/data-protection-confidentiality.md` -> write `reports/.artifacts/iso27001-audit/step_05_iso27001_data_protection_confidentiality.md`
 
-Run `mkdir -p reports/.artifacts` before writing.
+Run `mkdir -p reports/.artifacts/iso27001-audit` before writing.
 
 ## Quality Standards
 

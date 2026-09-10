@@ -71,7 +71,7 @@ READ-ONLY + SECRET SAFETY: read only; redact secret VALUES as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_12_iso27001_evidence_isms_artifacts.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category K artifact table: artifact/clause | related Annex A / clause ref |

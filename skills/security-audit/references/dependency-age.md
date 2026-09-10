@@ -156,4 +156,4 @@ ARTIFACT SAVE:
 Save the full analysis to: reports/.artifacts/security-audit/step_06_security_dependency_age.md
 
 Run this after completing the analysis:
-mkdir -p reports/.artifacts
+mkdir -p reports/.artifacts/security-audit

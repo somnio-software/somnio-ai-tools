@@ -5,6 +5,20 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.13.0] - 2026-09-10
+
+### Removed
+
+- **The Gemini AI Security Analysis step is gone from `security-audit`.** Step 9 invoked `gemini prompt "/security:analyze"` through the Gemini CLI `gemini-cli-security` extension, and left three files behind in the audited project's root (`security_analysis_prompt.txt`, `gemini_security_findings.txt`, `gemini_security_report.txt`) that the skill then tried to `rm -f`. In practice the step produced no findings: of four leftover reports recovered from real audits, three ended in `[API Error: You have exhausted your daily quota on this model.]` and the fourth had stalled on an unanswered interactive prompt. Because the step redirected `2>&1` into its artifact, that quota error was fed straight into the report section it was supposed to fill. `security-audit` therefore now runs **9 steps instead of 10** and produces a **12-section report instead of 13** (the unscored "Gemini AI Analysis" section is dropped; sections 11-13 shift to 10-12). Scoring is unaffected — the five scored sections were always 3-7. The subagent path drops from five waves to four, step 1 no longer probes for the Gemini CLI or installs its security extension, and `reports/.artifacts/security-audit/step_09_security_gemini_analysis.md` is no longer written. Removes `references/gemini-analysis.md` and `agents/gemini-analyzer.md`.
+
+  This does **not** affect Gemini as an *agent*: `somnio run <audit> --agent gemini` still works exactly as before. That is a separate feature — an AI CLI you run audits *with*, rather than a step *inside* an audit.
+- **Deleted the orphaned `skills/security-audit/assets/report-template.txt`.** Nothing referenced it (the registered template is `report-template.md`) and it still described the old 13-section structure.
+- **Dropped the three dead `.gitignore` entries** for the Gemini side-effect files, now that nothing generates them.
+
+### Fixed
+
+- **`mkdir -p` no longer creates the wrong artifacts directory in four skills.** 2.12.0 moved artifacts to `reports/.artifacts/<skill-name>/` but left 47 bare `mkdir -p reports/.artifacts` commands in `harness-audit`, `iso27001-audit`, `security-audit` and `soc2-audit` — the four skills that previously wrote to the `.artifacts/` root. Writing an artifact into the uncreated sub-directory would fail on the in-session subagent path (`somnio run` was unaffected, since the runner creates the directory itself).
+
 ## [2.12.0] - 2026-09-10
 
 ### Changed

@@ -215,4 +215,4 @@ Classify each finding as LOW or MEDIUM. Do not affect main scoring.
 
 ARTIFACT SAVE (mandatory):
 Save the full analysis output to: reports/.artifacts/security-audit/step_08_security_sast.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/security-audit

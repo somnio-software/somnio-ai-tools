@@ -26,7 +26,7 @@ First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection
 - Read and follow ALL instructions in `references/vendor-supplier-management.md` -> write `reports/.artifacts/iso27001-audit/step_10_iso27001_vendor_supplier_management.md`
 - Read and follow ALL instructions in `references/ai-governance.md` -> write `reports/.artifacts/iso27001-audit/step_11_iso27001_ai_governance.md`
 
-Run `mkdir -p reports/.artifacts` before writing.
+Run `mkdir -p reports/.artifacts/iso27001-audit` before writing.
 
 ## Quality Standards
 

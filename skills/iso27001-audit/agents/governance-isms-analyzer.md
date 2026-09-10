@@ -35,7 +35,7 @@ First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection
 - Read and follow ALL instructions in `references/human-resources-security.md` -> write `reports/.artifacts/iso27001-audit/step_03_iso27001_human_resources_security.md`
 - Read and follow ALL instructions in `references/evidence-isms-artifacts.md` -> write `reports/.artifacts/iso27001-audit/step_12_iso27001_evidence_isms_artifacts.md`
 
-Run `mkdir -p reports/.artifacts` before writing.
+Run `mkdir -p reports/.artifacts/iso27001-audit` before writing.
 
 ## Quality Standards
 

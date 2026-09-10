@@ -96,7 +96,7 @@ TOOLING NOTE (optional external CLIs):
 
 ARTIFACT SAVE (mandatory):
 Save the full detection output to: reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/soc2-audit
 
 Output format (in artifact):
 - PROJECT_DETECTION_RESULTS: pipe-separated list of type@path (downstream steps

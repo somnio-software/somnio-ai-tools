@@ -65,7 +65,7 @@ READ-ONLY + SECRET SAFETY:
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_02_iso27001_governance_program.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category A control table, one row per control:

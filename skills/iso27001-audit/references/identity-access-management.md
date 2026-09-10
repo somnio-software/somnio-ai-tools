@@ -69,7 +69,7 @@ reproduce the secret. (Deep secret scanning is Category D / F.)
 
 ARTIFACT SAVE (mandatory):
 Save output to: reports/.artifacts/iso27001-audit/step_04_iso27001_identity_access_management.md
-Run before finishing: mkdir -p reports/.artifacts
+Run before finishing: mkdir -p reports/.artifacts/iso27001-audit
 
 Output format:
 - Category C control table: Annex A ref | control name | Status | Owner/lane |

@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A user triggers a security audit from a Claude Code session.
   user: "Run a security audit on this project."
-  assistant: "I will coordinate the full security audit by dispatching subagents in five waves: Wave 0 (tool-installer for project detection), Wave 1 parallel (file-analyzer, secret-scanner, sast-analyzer), Wave 2 (dependency-analyzer), Wave 3 conditional (gemini-analyzer if Gemini is available), and finally the report-writer to synthesize all artifacts into the final report."
+  assistant: "I will coordinate the full security audit by dispatching subagents in four waves: Wave 0 (tool-installer for project detection), Wave 1 parallel (file-analyzer, secret-scanner, sast-analyzer), Wave 2 (dependency-analyzer), and finally the report-writer to synthesize all artifacts into the final report."
   <commentary>
   The orchestrator is the only agent the user interacts with directly. It routes and coordinates; it never reads source code or writes the report itself.
   </commentary>
@@ -22,11 +22,11 @@ description: |
   </example>
 
   <example>
-  Context: The orchestrator reads GEMINI_AVAILABLE=false from the preflight artifact.
-  user: "Will Gemini analysis run?"
-  assistant: "The preflight artifact shows GEMINI_AVAILABLE=false. I will skip Wave 3 (gemini-analyzer) and proceed directly to the report-writer after Wave 2 completes, noting the skip in the artifact manifest."
+  Context: A Wave 1 agent finished but its artifact is missing.
+  user: "Continue the security audit."
+  assistant: "step_03_security_secret_patterns.md is missing. I will retry secret-scanner once; if it is still missing I will log the gap in the artifact manifest and continue, so the report-writer accounts for it per its rejection criteria."
   <commentary>
-  Conditional wave skipping based on the preflight artifact is a core orchestrator responsibility.
+  Retry-once-then-log-and-continue is a core orchestrator responsibility: a single failed analysis must not abort the whole audit.
   </commentary>
   </example>
 
@@ -53,11 +53,10 @@ Dispatch `agents/tool-installer.md` and wait for completion.
 
 Validate: `reports/.artifacts/security-audit/step_01_security_tool_installer.md` exists.
 - If missing: retry once.
-- If still missing after retry: write a fallback artifact with `PROJECT_DETECTION_RESULTS=generic@.` and `GEMINI_AVAILABLE=false`, then continue.
+- If still missing after retry: write a fallback artifact with `PROJECT_DETECTION_RESULTS=generic@.`, then continue.
 
 Read the artifact and extract:
 - `PROJECT_DETECTION_RESULTS` (pass to all Wave 1 agents as context)
-- `GEMINI_AVAILABLE` flag (governs Wave 3)
 
 ### Wave 1 — Parallel Analysis (all three run simultaneously)
 
@@ -83,18 +82,7 @@ Dispatch `agents/dependency-analyzer.md` → writes:
 
 Validate all three artifacts. Retry once on missing artifacts. Log gaps and continue if still missing.
 
-### Wave 3 — Gemini Analysis (conditional, skip if GEMINI_AVAILABLE=false)
-
-Read `GEMINI_AVAILABLE` from `reports/.artifacts/security-audit/step_01_security_tool_installer.md`.
-
-If `GEMINI_AVAILABLE=true`:
-- Dispatch `agents/gemini-analyzer.md` → writes `reports/.artifacts/security-audit/step_09_security_gemini_analysis.md`
-- Validate the artifact. Retry once on failure.
-
-If `GEMINI_AVAILABLE=false`:
-- Skip Wave 3. Log: "Gemini analysis skipped — GEMINI_AVAILABLE=false in preflight artifact."
-
-### Wave 4 — Report (sequential, after all analysis waves complete)
+### Wave 3 — Report (sequential, after all analysis waves complete)
 
 Assemble the artifact manifest — a list of all artifact paths that exist under `reports/.artifacts/`:
 - `step_01_security_tool_installer.md`
@@ -105,7 +93,6 @@ Assemble the artifact manifest — a list of all artifact paths that exist under
 - `step_06_security_dependency_age.md`
 - `step_07_security_trivy.md`
 - `step_08_security_sast.md`
-- `step_09_security_gemini_analysis.md` (if Wave 3 ran)
 
 Note any missing artifacts in the manifest (the report-writer must account for them).
 
