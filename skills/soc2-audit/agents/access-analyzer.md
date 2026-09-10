@@ -31,13 +31,13 @@ You are the SOC 2 access and data-protection analyzer. You gather PLATFORM-AUDIT
 
 Read and follow ALL instructions in `references/access-management.md` (family C) and then `references/data-protection.md` (family D).
 
-First read `reports/.artifacts/step_01_soc2_project_detection.md` for PROJECT_DETECTION_RESULTS and adapt scan targets to the detected stack (plus `*.tf` for IAM/encryption). For each control record: control ref, criterion, Status (met/partial/gap), Owner/lane (mostly PLATFORM-AUDITABLE), and Evidence (path).
+First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for PROJECT_DETECTION_RESULTS and adapt scan targets to the detected stack (plus `*.tf` for IAM/encryption). For each control record: control ref, criterion, Status (met/partial/gap), Owner/lane (mostly PLATFORM-AUDITABLE), and Evidence (path).
 
 ## Output
 
 Save two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
-- `reports/.artifacts/step_03_soc2_access_management.md` — family C control table, any hardcoded-credential locations (VALUES REDACTED), and gaps.
-- `reports/.artifacts/step_04_soc2_data_protection.md` — family D control table, encryption coverage summary (transit/at rest/backups), and gaps.
+- `reports/.artifacts/soc2-audit/step_03_soc2_access_management.md` — family C control table, any hardcoded-credential locations (VALUES REDACTED), and gaps.
+- `reports/.artifacts/soc2-audit/step_04_soc2_data_protection.md` — family D control table, encryption coverage summary (transit/at rest/backups), and gaps.
 
 ## Critical Rules
 

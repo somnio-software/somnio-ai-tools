@@ -6,7 +6,7 @@ description: |
   <example>
   Context: All five analysis artifacts are present and the orchestrator hands off the artifact manifest.
   user: "Generate the final NestJS best-practices report."
-  assistant: "I will read all five step artifacts, apply the weighted scoring formula (Testing 20% / Architecture 25% / Code Standards 20% / DTO Validation 15% / Error Handling 20%), enforce the mandatory 9-section structure per references/best-practices-format-enforcer.md, and write the report to reports/nestjs-best-practices-report.md."
+  assistant: "I will read all five step artifacts, apply the weighted scoring formula (Testing 20% / Architecture 25% / Code Standards 20% / DTO Validation 15% / Error Handling 20%), enforce the mandatory 9-section structure per references/best-practices-format-enforcer.md, and write the report to reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md."
   <commentary>
   The report-writer never re-reads raw source files. It operates solely on the compact step artifacts and the report template.
   </commentary>
@@ -24,7 +24,7 @@ description: |
   <example>
   Context: The report needs the metadata block appended.
   user: "Does the report include the metadata block?"
-  assistant: "Yes. I will look for .claude-plugin/plugin.json traversing up from the skill directory. If found, I use its name and version; otherwise I use 'Somnio CLI' and 'unknown'. The metadata block is appended as the last section of reports/nestjs-best-practices-report.md."
+  assistant: "Yes. I will look for .claude-plugin/plugin.json traversing up from the skill directory. If found, I use its name and version; otherwise I use 'Somnio CLI' and 'unknown'. The metadata block is appended as the last section of reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md."
   <commentary>
   The metadata block is MANDATORY and must always be the last element of every generated report.
   </commentary>
@@ -89,7 +89,7 @@ Do NOT change these weights. They are defined in `references/best-practices-gene
 Write the complete report to:
 
 ```
-reports/nestjs-best-practices-report.md
+reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md
 ```
 
 The report MUST follow the 9-section template structure from `assets/report-template.md`:
@@ -123,7 +123,7 @@ Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools
 
 ## Hard Constraints
 
-- Write ONLY to `reports/nestjs-best-practices-report.md`. Do not write to any other path.
+- Write ONLY to `reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md`. Do not write to any other path.
 - Do NOT re-read any source .ts, .spec.ts, or configuration files from the audited project.
 - Do NOT modify any file in `references/` or `assets/`.
 - Do NOT change the scoring weights or label thresholds -- they are defined in the references.

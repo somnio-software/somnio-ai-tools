@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The security audit orchestrator dispatches the tool-installer as the first step before any analysis begins.
   user: "Run a security audit on this project."
-  assistant: "I will run project-type detection across all manifests (pubspec.yaml, package.json, go.mod, Cargo.toml, pyproject.toml, build.gradle, pom.xml, Package.swift, Podfile, .sln/.csproj), check Gemini CLI availability and authentication, and write the preflight artifact to reports/.artifacts/step_01_security_tool_installer.md."
+  assistant: "I will run project-type detection across all manifests (pubspec.yaml, package.json, go.mod, Cargo.toml, pyproject.toml, build.gradle, pom.xml, Package.swift, Podfile, .sln/.csproj), check Gemini CLI availability and authentication, and write the preflight artifact to reports/.artifacts/security-audit/step_01_security_tool_installer.md."
   <commentary>
   The tool-installer is a mandatory first step. All downstream analysis agents depend on PROJECT_DETECTION_RESULTS from its artifact. Without this artifact, no other agent can determine which language-specific scans to run.
   </commentary>
@@ -49,7 +49,7 @@ You are the security audit preflight agent. Your sole responsibility is project-
 
 1. Detect ALL project types present in the repository using the priority-ordered manifest search from `references/tool-installer.md`.
 2. Check Gemini CLI installation, authentication (API key or subscription), and security extension availability.
-3. Write the preflight artifact to `reports/.artifacts/step_01_security_tool_installer.md`.
+3. Write the preflight artifact to `reports/.artifacts/security-audit/step_01_security_tool_installer.md`.
 
 ## Instructions
 
@@ -57,7 +57,7 @@ Read and follow ALL instructions in `references/tool-installer.md`. That referen
 
 ## Artifact
 
-Write the full detection output to `reports/.artifacts/step_01_security_tool_installer.md`.
+Write the full detection output to `reports/.artifacts/security-audit/step_01_security_tool_installer.md`.
 
 Run first: `mkdir -p reports/.artifacts`
 

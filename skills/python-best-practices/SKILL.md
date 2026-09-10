@@ -201,9 +201,9 @@ When running inside a Claude session with the Agent tool available, the orchestr
 | `agents/data-validation-analyzer.md` | mid | `references/data-validation.md` (step 4) | `reports/.artifacts/python-best-practices/step_04_data_validation.md` |
 | `agents/error-handling-analyzer.md` | mid | `references/error-handling.md` (step 5) | `reports/.artifacts/python-best-practices/step_05_error_handling.md` |
 | `agents/testing-quality-analyzer.md` | mid | `references/testing-quality.md` (step 7) | `reports/.artifacts/python-best-practices/step_07_testing_quality.md` |
-| `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` (step 8) | `reports/python_best_practices_report.md` |
+| `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` (step 8) | `reports/<YYYY-MM-DD>-<project>-python-best-practices.md` |
 
-> **Note**: The Rule Execution Order above is the CLI runner path (`somnio run`). The Subagent Dispatch section documents the in-session path. Both paths produce the same report at `reports/python_best_practices_report.md`.
+> **Note**: The Rule Execution Order above is the CLI runner path (`somnio run`). The Subagent Dispatch section documents the in-session path. Both paths produce the same report at `reports/<YYYY-MM-DD>-<project>-python-best-practices.md`.
 
 ## Standards References
 
@@ -220,6 +220,36 @@ All standards are sourced from:
 | `module-structure.md` | `src/` layout, `__all__`, layer boundaries, circular imports |
 | `testing-unit.md` | Unit test patterns, fixtures, parametrize, mocking |
 | `testing-integration.md` | Integration tests, teardown, isolation, markers |
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-python-best-practices.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-python-best-practices.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-python-best-practices.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

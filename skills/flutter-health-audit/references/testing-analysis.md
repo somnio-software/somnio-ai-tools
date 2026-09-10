@@ -107,7 +107,7 @@ Output format:
 MANDATORY FIRST LINES: The output artifact MUST begin with the
 "Code Coverage:" and "Coverage Breakdown:" lines copied VERBATIM from
 the preflight coverage artifact at:
-  reports/.artifacts/flutter_health/step_00_test_coverage.md
+  reports/.artifacts/flutter-health-audit/step_00_test_coverage.md
 
 Copy the "Code Coverage:" line and ALL "Coverage Breakdown:" lines
 exactly as they appear. Do NOT summarize, reformat, or omit any line.

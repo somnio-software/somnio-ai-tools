@@ -10,7 +10,7 @@ PLATFORM-AUDITABLE evidence (multi-AZ, backups, restore automation, RPO/RTO in
 IaC). Record Status + Owner/lane + evidence for each control.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_soc2_project_detection.md for IaC presence
+- Read reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md for IaC presence
   and cloud provider hints (drives DR evidence).
 
 CONTROL RECORDING FORMAT: control ref (e.g. `H1`), criterion, Status, Owner/lane,
@@ -59,7 +59,7 @@ STATUS RULES:
 - No evidence -> gap; state the exact artifact or config that would satisfy it.
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_08_soc2_incident_resilience.md
+Save the full analysis output to: reports/.artifacts/soc2-audit/step_08_soc2_incident_resilience.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

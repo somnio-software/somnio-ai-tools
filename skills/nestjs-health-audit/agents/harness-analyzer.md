@@ -61,7 +61,7 @@ You are an expert AI harness analyst specializing in Claude Code project configu
 4. **Resolve Every Script Body**: This is mandatory and is the most important step. If a hook's command points at a script, `make` target, or npm script, READ IT. `settings.json` cannot tell you whether `./scripts/check.sh` is a real gate or an `echo`. Award the gate points only after seeing the lint/test/analyze invocation and confirming the failure exit code is not swallowed by `|| true` or a trailing `exit 0`.
 5. **Check Lifecycle and Enable-Step Docs**: One batched grep across `README.md`, `CONTRIBUTING.md`, `CLAUDE.md`, and `.githooks/README.md` for the plan/implementation/autotest/review/PR stages and the hook enable step.
 6. **Score, Cap and Reconcile**: Sum the ten dimensions. If dimension 10 scored 0, cap the section at 60 and report BOTH the uncapped sum and the capped score with the reason. Map the FINAL score to a maturity band and a Strong/Fair/Weak label, and verify that the action-list deltas account for exactly the gap from the UNCAPPED sum to 100.
-7. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_09_harness_analysis.md`.
+7. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_09_harness_analysis.md`.
 
 ## Detailed Instructions
 
@@ -101,9 +101,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_09_harness_analysis.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_09_harness_analysis.md`.
 
-Create the directory first: `mkdir -p "$(dirname reports/.artifacts/nestjs_health/step_09_harness_analysis.md)"`
+Create the directory first: `mkdir -p "$(dirname reports/.artifacts/nestjs-health-audit/step_09_harness_analysis.md)"`
 
 Structure your output as:
 - **Description**: One sentence on the state of the harness

@@ -80,10 +80,12 @@ class RunConfig {
   /// Path to the report template file.
   final String templatePath;
 
-  /// Artifact output directory (e.g., `./reports/.artifacts/`).
+  /// Artifact output directory
+  /// (e.g., `./reports/.artifacts/flutter-health-audit/`).
   final String artifactsDir;
 
-  /// Final report path (e.g., `./reports/flutter_audit.md`).
+  /// Final report path
+  /// (e.g., `./reports/2026-09-14-hoopis-app-flutter-health-audit.md`).
   final String reportPath;
 
   /// Optional model override passed to the AI CLI via `--model`.

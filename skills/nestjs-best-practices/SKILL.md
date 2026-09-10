@@ -172,7 +172,7 @@ The orchestrator dispatches subagents in dependency-ordered waves. Within each w
 | `agents/code-standards-analyzer.md` | mid | `references/code-standards.md` | `reports/.artifacts/nestjs-best-practices/step_03_code_standards.md` |
 | `agents/dto-validation-scanner.md` | cheap | `references/dto-validation.md` | `reports/.artifacts/nestjs-best-practices/step_04_dto_validation.md` |
 | `agents/error-handling-scanner.md` | cheap | `references/error-handling.md` | `reports/.artifacts/nestjs-best-practices/step_05_error_handling.md` |
-| `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` | `reports/nestjs-best-practices-report.md` |
+| `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` | `reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md` |
 
 The orchestrator validates each expected artifact before advancing to the next wave. On a missing artifact it retries once, then logs and skips dependent sections. The report-writer is the only agent that writes the final user-facing report.
 
@@ -192,6 +192,36 @@ All standards are sourced from:
 | `error-handling.md` | Exception filters, error enums |
 | `module-structure.md` | Module organization, imports/exports |
 | `typescript.md` | TypeScript standards, naming conventions |
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-nestjs-best-practices.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-nestjs-best-practices.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

@@ -33,7 +33,7 @@ description: |
   <example>
   Context: All waves complete; the orchestrator hands off to report-writer-agent.
   user: "Run the NestJS health audit."
-  assistant: "All analysis waves complete. I am handing the following artifact manifest to report-writer-agent: step_00_env_setup.md, step_00_test_coverage.md, step_01_repository_inventory.md, step_02_config_analysis.md, step_03_cicd_analysis.md, step_04_testing_analysis.md, step_05_code_quality.md, step_06_api_design_analysis.md, step_07_data_layer_analysis.md, step_08_documentation_analysis.md, step_09_harness_analysis.md. Report writer will produce reports/nestjs_audit.md."
+  assistant: "All analysis waves complete. I am handing the following artifact manifest to report-writer-agent: step_00_env_setup.md, step_00_test_coverage.md, step_01_repository_inventory.md, step_02_config_analysis.md, step_03_cicd_analysis.md, step_04_testing_analysis.md, step_05_code_quality.md, step_06_api_design_analysis.md, step_07_data_layer_analysis.md, step_08_documentation_analysis.md, step_09_harness_analysis.md. Report writer will produce reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md."
   <commentary>
   The orchestrator assembles the artifact list and passes it explicitly — it does not read artifact content itself.
   </commentary>
@@ -53,15 +53,15 @@ Dispatch `env-setup-agent`:
 
 > "Read agents/env-setup-agent.md and follow ALL instructions. Return the gate artifact path when complete."
 
-After dispatch completes, read `reports/.artifacts/nestjs_health/step_00_env_setup.md`.
+After dispatch completes, read `reports/.artifacts/nestjs-health-audit/step_00_env_setup.md`.
 
 Check the gate result line:
 - If `Result: FAILED` → STOP. Do not dispatch Wave 1. Surface the resolution steps from the gate artifact to the user.
 - If `Result: PASSED` → advance to Wave 1.
 
 Expected artifacts after Wave 0:
-- `reports/.artifacts/nestjs_health/step_00_env_setup.md`
-- `reports/.artifacts/nestjs_health/step_00_test_coverage.md`
+- `reports/.artifacts/nestjs-health-audit/step_00_env_setup.md`
+- `reports/.artifacts/nestjs-health-audit/step_00_test_coverage.md`
 
 ### Wave 1 — Structure Analysis (Parallel)
 
@@ -74,8 +74,8 @@ Wait for both to complete, then validate:
 
 | Expected artifact | If missing |
 |---|---|
-| `reports/.artifacts/nestjs_health/step_01_repository_inventory.md` | Retry repo-analyzer once; if still absent, log skip |
-| `reports/.artifacts/nestjs_health/step_02_config_analysis.md` | Retry config-analyzer once; if still absent, log skip |
+| `reports/.artifacts/nestjs-health-audit/step_01_repository_inventory.md` | Retry repo-analyzer once; if still absent, log skip |
+| `reports/.artifacts/nestjs-health-audit/step_02_config_analysis.md` | Retry config-analyzer once; if still absent, log skip |
 
 ### Wave 2 — Infrastructure Analysis (Parallel)
 
@@ -90,10 +90,10 @@ Validate:
 
 | Expected artifact | If missing |
 |---|---|
-| `reports/.artifacts/nestjs_health/step_03_cicd_analysis.md` | Retry cicd-analyzer once; log skip if still absent |
-| `reports/.artifacts/nestjs_health/step_04_testing_analysis.md` | Retry testing-analyzer once; log skip if still absent |
-| `reports/.artifacts/nestjs_health/step_05_code_quality.md` | Retry code-quality-analyzer once; log skip if still absent |
-| `reports/.artifacts/nestjs_health/step_09_harness_analysis.md` | Retry harness-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs-health-audit/step_03_cicd_analysis.md` | Retry cicd-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs-health-audit/step_04_testing_analysis.md` | Retry testing-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs-health-audit/step_05_code_quality.md` | Retry code-quality-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs-health-audit/step_09_harness_analysis.md` | Retry harness-analyzer once; log skip if still absent |
 
 ### Wave 3 — Domain Analysis (Parallel)
 
@@ -106,8 +106,8 @@ Validate:
 
 | Expected artifact | If missing |
 |---|---|
-| `reports/.artifacts/nestjs_health/step_06_api_design_analysis.md` | Retry api-design-analyzer once; log skip if still absent |
-| `reports/.artifacts/nestjs_health/step_07_data_layer_analysis.md` | Retry data-layer-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs-health-audit/step_06_api_design_analysis.md` | Retry api-design-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs-health-audit/step_07_data_layer_analysis.md` | Retry data-layer-analyzer once; log skip if still absent |
 
 ### Wave 4 — Documentation (Sequential)
 
@@ -119,7 +119,7 @@ Validate:
 
 | Expected artifact | If missing |
 |---|---|
-| `reports/.artifacts/nestjs_health/step_08_documentation_analysis.md` | Retry docs-analyzer once; log skip if still absent |
+| `reports/.artifacts/nestjs-health-audit/step_08_documentation_analysis.md` | Retry docs-analyzer once; log skip if still absent |
 
 ### Wave 5 — Report Synthesis (Sequential)
 
@@ -127,22 +127,22 @@ Assemble the artifact manifest — list every artifact path that exists after Wa
 
 ```
 ARTIFACT MANIFEST — NestJS Health Audit
-step_00_env_setup.md: reports/.artifacts/nestjs_health/step_00_env_setup.md [PRESENT|UNAVAILABLE]
-step_00_test_coverage.md: reports/.artifacts/nestjs_health/step_00_test_coverage.md [PRESENT|UNAVAILABLE]
-step_01_repository_inventory.md: reports/.artifacts/nestjs_health/step_01_repository_inventory.md [PRESENT|UNAVAILABLE]
-step_02_config_analysis.md: reports/.artifacts/nestjs_health/step_02_config_analysis.md [PRESENT|UNAVAILABLE]
-step_03_cicd_analysis.md: reports/.artifacts/nestjs_health/step_03_cicd_analysis.md [PRESENT|UNAVAILABLE]
-step_04_testing_analysis.md: reports/.artifacts/nestjs_health/step_04_testing_analysis.md [PRESENT|UNAVAILABLE]
-step_05_code_quality.md: reports/.artifacts/nestjs_health/step_05_code_quality.md [PRESENT|UNAVAILABLE]
-step_06_api_design_analysis.md: reports/.artifacts/nestjs_health/step_06_api_design_analysis.md [PRESENT|UNAVAILABLE]
-step_07_data_layer_analysis.md: reports/.artifacts/nestjs_health/step_07_data_layer_analysis.md [PRESENT|UNAVAILABLE]
-step_08_documentation_analysis.md: reports/.artifacts/nestjs_health/step_08_documentation_analysis.md [PRESENT|UNAVAILABLE]
-step_09_harness_analysis.md: reports/.artifacts/nestjs_health/step_09_harness_analysis.md [PRESENT|UNAVAILABLE]
+step_00_env_setup.md: reports/.artifacts/nestjs-health-audit/step_00_env_setup.md [PRESENT|UNAVAILABLE]
+step_00_test_coverage.md: reports/.artifacts/nestjs-health-audit/step_00_test_coverage.md [PRESENT|UNAVAILABLE]
+step_01_repository_inventory.md: reports/.artifacts/nestjs-health-audit/step_01_repository_inventory.md [PRESENT|UNAVAILABLE]
+step_02_config_analysis.md: reports/.artifacts/nestjs-health-audit/step_02_config_analysis.md [PRESENT|UNAVAILABLE]
+step_03_cicd_analysis.md: reports/.artifacts/nestjs-health-audit/step_03_cicd_analysis.md [PRESENT|UNAVAILABLE]
+step_04_testing_analysis.md: reports/.artifacts/nestjs-health-audit/step_04_testing_analysis.md [PRESENT|UNAVAILABLE]
+step_05_code_quality.md: reports/.artifacts/nestjs-health-audit/step_05_code_quality.md [PRESENT|UNAVAILABLE]
+step_06_api_design_analysis.md: reports/.artifacts/nestjs-health-audit/step_06_api_design_analysis.md [PRESENT|UNAVAILABLE]
+step_07_data_layer_analysis.md: reports/.artifacts/nestjs-health-audit/step_07_data_layer_analysis.md [PRESENT|UNAVAILABLE]
+step_08_documentation_analysis.md: reports/.artifacts/nestjs-health-audit/step_08_documentation_analysis.md [PRESENT|UNAVAILABLE]
+step_09_harness_analysis.md: reports/.artifacts/nestjs-health-audit/step_09_harness_analysis.md [PRESENT|UNAVAILABLE]
 ```
 
 Dispatch report-writer-agent with the manifest:
 
-> "Read agents/report-writer-agent.md and follow ALL instructions. The artifact manifest is: [paste manifest above]. Produce the final report at reports/nestjs_audit.md."
+> "Read agents/report-writer-agent.md and follow ALL instructions. The artifact manifest is: [paste manifest above]. Produce the final report at reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md."
 
 ## Hard Constraints
 

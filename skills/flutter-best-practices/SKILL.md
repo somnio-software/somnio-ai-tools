@@ -100,6 +100,36 @@ You are a master at:
 3. Read and follow the instructions in `references/code-standards.md` {model: mid}
 4. Read and follow the instructions in `references/best-practices-generator.md` {model: frontier}
 
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-flutter-best-practices.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-flutter-best-practices.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
+
 ## Report Metadata (MANDATORY)
 
 Every generated report MUST include a metadata block at the very end. This is non-negotiable — never omit it.
@@ -144,7 +174,7 @@ After the orchestrator confirms all three Wave 1 artifacts exist:
 
 | Agent file | Tier | Inputs | Output |
 |------------|------|--------|--------|
-| `agents/report-writer.md` | frontier | All 3 step artifacts + `assets/report-template.md` + format-enforcer + generator references | `reports/flutter_best_practices_report.md` |
+| `agents/report-writer.md` | frontier | All 3 step artifacts + `assets/report-template.md` + format-enforcer + generator references | `reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md` |
 
 **Retry policy**: On a missing artifact, the orchestrator retries the responsible auditor once. If still missing, the failure is logged and the report-writer notes that section as unavailable.
 

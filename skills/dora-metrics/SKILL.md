@@ -57,10 +57,18 @@ Formal definitions of each metric (attribute, population, exact calculation):
 
 - Human-readable console summary, per project and per repo: deployment
   frequency, median lead time, and edge-case warnings.
-- Optionally, if saving the result is requested, two files in the folder
-  given by `--out-dir`: a portable JSON (`YYYY-MM-DD_dora.json`) and a
-  Markdown report with the same summary (`YYYY-MM-DD_dora.md`) — easy to
-  open and read on its own, without re-parsing the JSON.
+- Optionally, if saving the result is requested, files in the folder given by
+  `--out-dir`: **one pair per repo**, a portable JSON
+  (`YYYY-MM-DD-<repo>-dora-metrics.json`) and a Markdown report with the same
+  summary (`YYYY-MM-DD-<repo>-dora-metrics.md`) — easy to open and read on its
+  own, without re-parsing the JSON.
+
+  A repo is the unit that gets measured (never combined with its siblings), so
+  it is also the unit that gets saved: a multi-repo project produces one pair of
+  files per repo, each holding only that repo's numbers. `<repo>` is the repo
+  name slugified to kebab-case — `example-org/example-frontend` becomes
+  `example-frontend` — and only falls back to the org-qualified
+  `example-org-example-frontend` when two repos in the same run share a name.
 
 ---
 
@@ -132,15 +140,17 @@ done it.
 ```bash
 pip install requests --break-system-packages   # if needed
 
-python3 scripts/dora_metrics.py --project "Example Project" --out-dir outputs
+python3 scripts/dora_metrics.py --project "Example Project" --out-dir reports
 ```
 
 Available flags:
 - `--config`: path to the config (default: `config/projects.json`).
 - `--project`: exact project name (default: runs all projects in the config).
-- `--out-dir`: if passed, in addition to printing to stdout it saves
-  `YYYY-MM-DD_dora.json` (portable data) and `YYYY-MM-DD_dora.md` (the same
-  summary as a readable file) there.
+- `--out-dir`: if passed, in addition to printing to stdout it saves one pair
+  of files per repo there — `YYYY-MM-DD-<repo>-dora-metrics.json` (portable
+  data) and `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable
+  file). Note this selects **where** to save, while `--project` selects **what**
+  to measure; the file name comes from the repo, not from the project.
 - `--branch <branch>`: one-off override of `prod_branch` for this run
   (requires `--project`). Does not modify the config — use only for one-off
   tests against a branch different from the configured one.
@@ -214,7 +224,7 @@ step guarantees) are:
   and no metric fields. Report it as such, with its problems — never omit the
   repo or substitute a zero.
 - If the files were saved, say where they ended up (both the `.json` and the
-  `.md`), in addition to reporting the values.
+  `.md` for every repo), in addition to reporting the values.
 
 ---
 

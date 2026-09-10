@@ -10,7 +10,7 @@ infrastructure is provisioned by the deploying customer, mark controls
 CLIENT-lane and LIST them without penalizing the score.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md` for IaC/CI
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for IaC/CI
   surfaces.
 
 CONTROL EVIDENCE:
@@ -64,7 +64,7 @@ READ-ONLY + SECRET SAFETY: read only; if IaC/state files contain secret
 VALUES, note the location and redact as `[REDACTED]` - never copy the value.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_07_iso27001_infrastructure_network_security.md
+Save output to: reports/.artifacts/iso27001-audit/step_07_iso27001_infrastructure_network_security.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

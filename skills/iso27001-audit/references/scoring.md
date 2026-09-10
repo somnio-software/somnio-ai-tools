@@ -110,7 +110,7 @@ Summary: "Previous: [N]/100, Change: [+/-M] ([improving|declining|unchanged])".
 
 ARTIFACT SAVE (mandatory):
 Save the scoring output to:
-reports/.artifacts/step_13_iso27001_scoring.md
+reports/.artifacts/iso27001-audit/step_13_iso27001_scoring.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format (in artifact):

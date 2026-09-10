@@ -48,4 +48,4 @@ Runs after the orchestrator confirms all three Wave 1 artifacts exist.
 Read `flutter-best-practices/references/best-practices-format-enforcer.md` and follow ALL instructions in the prompt field
 Read `flutter-best-practices/references/best-practices-generator.md` and follow ALL instructions in the prompt field
 
-Output: `reports/flutter_best_practices_report.md`
+Output: `reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md`

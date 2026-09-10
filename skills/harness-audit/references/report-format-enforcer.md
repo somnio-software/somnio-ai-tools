@@ -87,18 +87,18 @@ VALIDATION CHECKLIST:
 If formatting issues are found, fix them in-place and note what was corrected.
 
 Output: The formatted Markdown report content ready for export to
-./reports/harness_audit.md
+./reports/<YYYY-MM-DD>-<project>-harness-audit.md
 
 JSON EXPORT (mandatory):
-After validating and exporting the text report to reports/harness_audit.md,
-ensure reports/harness_audit.json exists and is well-formed with the schema
+After validating and exporting the text report to reports/<YYYY-MM-DD>-<project>-harness-audit.md,
+ensure reports/<YYYY-MM-DD>-<project>-harness-audit.json exists and is well-formed with the schema
 defined in references/report-generator.md. If the generator did not produce it,
 extract the per-piece scores, band and top-3 next steps from the validated
 report and write it. Ensure the reports/ directory exists.
 
 SCORE HISTORY (mandatory after export):
-After validating and exporting both reports/harness_audit.md and
-reports/harness_audit.json, write reports/.history/last_scores.json with the
+After validating and exporting both reports/<YYYY-MM-DD>-<project>-harness-audit.md and
+reports/<YYYY-MM-DD>-<project>-harness-audit.json, write reports/.history/last_scores.json with the
 same total, band and per-piece data for future comparison (schema in
 report-generator.md).
 Run: mkdir -p reports/.history

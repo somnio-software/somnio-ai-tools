@@ -45,8 +45,8 @@ You are an expert AI-harness analyst specializing in locating and scoring the ha
 
 ## Analysis Process
 
-1. **Inventory pass**: Read and follow `references/harness-inventory.md` in full. Locate CLAUDE.md (root/`.claude/`, size, commands, conventions), `.claude/rules/*.md` path scopes, `.claude/settings.json` permission denies and hooks, `.claude/commands/*.md` and `.claude/skills/*/SKILL.md`, `.claude/agents/*.md`, and the CI / ship / test-to-PR lifecycle. Save `reports/.artifacts/step_01_harness_inventory.md`.
-2. **Scoring pass**: Read and follow `references/harness-scoring.md` in full. Apply the rubric to the inventory evidence, compute per-piece points and the total, map to a band, and identify the top-3 next steps. Save `reports/.artifacts/step_02_harness_scoring.md`.
+1. **Inventory pass**: Read and follow `references/harness-inventory.md` in full. Locate CLAUDE.md (root/`.claude/`, size, commands, conventions), `.claude/rules/*.md` path scopes, `.claude/settings.json` permission denies and hooks, `.claude/commands/*.md` and `.claude/skills/*/SKILL.md`, `.claude/agents/*.md`, and the CI / ship / test-to-PR lifecycle. Save `reports/.artifacts/harness-audit/step_01_harness_inventory.md`.
+2. **Scoring pass**: Read and follow `references/harness-scoring.md` in full. Apply the rubric to the inventory evidence, compute per-piece points and the total, map to a band, and identify the top-3 next steps. Save `reports/.artifacts/harness-audit/step_02_harness_scoring.md`.
 
 ## Critical Rules (read-only discipline)
 
@@ -64,11 +64,11 @@ You are an expert AI-harness analyst specializing in locating and scoring the ha
 
 Write two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
 
-`reports/.artifacts/step_01_harness_inventory.md` - one block per piece:
+`reports/.artifacts/harness-audit/step_01_harness_inventory.md` - one block per piece:
 - Piece name - Status (Found/Not found/Partial) - Evidence (paths, line counts, frontmatter, excerpts) - Notes for the scorer.
 - End with a Harness Surface Summary (which of the 7 pieces were located + primary CLAUDE.md path and line count).
 
-`reports/.artifacts/step_02_harness_scoring.md`:
+`reports/.artifacts/harness-audit/step_02_harness_scoring.md`:
 - Per-piece table: piece - criterion - status (Present/Weak/Missing) - points awarded/max - one-line evidence justification.
 - Total Score: [total]/100.
 - Maturity Band: name + one-sentence reading.

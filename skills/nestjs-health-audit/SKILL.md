@@ -313,7 +313,7 @@ directory.
 
 **Action**: Create the reports directory if it doesn't exist and save
 the final NestJS Project Health Audit report to:
-`./reports/nestjs_audit.md`
+`./reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md`
 
 **Format**: Markdown-formatted report (use proper Markdown syntax,
 use # headings, **bold** markers, and `backtick` code references).
@@ -321,7 +321,7 @@ use # headings, **bold** markers, and `backtick` code references).
 **Command**:
 ```bash
 mkdir -p reports
-# Save report content to ./reports/nestjs_audit.md
+# Save report content to ./reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md
 ```
 
 **Note**: For security analysis, run the standalone Security Audit (`/somnio:security-audit`).
@@ -380,7 +380,7 @@ This section describes the in-session multi-agent path. The Rule Execution Order
 | 2 | Parallel | `cicd-analyzer`, `testing-analyzer`, `code-quality-analyzer`, `harness-analyzer` | mid, mid, mid, mid | cicd-analysis, testing-analysis, code-quality, harness-analysis | `step_03_cicd_analysis.md`, `step_04_testing_analysis.md`, `step_05_code_quality.md`, `step_09_harness_analysis.md` |
 | 3 | Parallel | `api-design-analyzer`, `data-layer-analyzer` | mid, mid | api-design-analysis, data-layer-analysis | `step_06_api_design_analysis.md`, `step_07_data_layer_analysis.md` |
 | 4 | Sequential | `docs-analyzer` | cheap | documentation-analysis | `step_08_documentation_analysis.md` |
-| 5 | Sequential | `report-writer-agent` | frontier | report-generator, report-format-enforcer, assets/report-template.md | `reports/nestjs_audit.md` |
+| 5 | Sequential | `report-writer-agent` | frontier | report-generator, report-format-enforcer, assets/report-template.md | `reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md` |
 
 **Orchestrator behavior:**
 - Wave 0 is the only hard-stop gate: if `env-setup-agent` emits `Result: FAILED`, the orchestrator halts and surfaces resolution steps.
@@ -392,8 +392,38 @@ This section describes the in-session multi-agent path. The Rule Execution Order
 - Computes 9 weighted section scores and overall score per `references/report-generator.md` (weights: Tech Stack 0.18, Architecture 0.18, API Design 0.18, Data Layer 0.10, Testing 0.10, Code Quality 0.10, Docs & Ops 0.03, CI/CD 0.03, AI Harness & Adoption 0.10).
 - Enforces the mandatory 16-section structure per `references/report-format-enforcer.md`.
 - Performs cross-section score reconciliation (e.g., low Testing score modulates Code Quality narrative).
-- Writes `reports/nestjs_audit.md` and appends the metadata block.
+- Writes `reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md` and appends the metadata block.
 - NEVER re-reads raw source files.
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-nestjs-health-audit.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-nestjs-health-audit.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

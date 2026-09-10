@@ -5,6 +5,7 @@ import 'package:somnio/src/content/content_loader.dart';
 import 'package:somnio/src/content/skill_registry.dart';
 import 'package:somnio/src/runner/plan_parser.dart';
 import 'package:somnio/src/runner/rule_names.dart';
+import 'package:somnio/src/utils/report_naming.dart';
 import 'package:test/test.dart';
 
 /// `run_command.dart` carries `// coverage:ignore-file`, so the dispatch
@@ -94,6 +95,56 @@ void main() {
         );
         expect(formatEnforcerRuleFor(last), isNotNull, reason: b.id);
       }
+    });
+  });
+
+  group('report file name covers every runnable bundle', () {
+    // `_reportFileFromBundle` uses `SkillBundle.name` verbatim as the
+    // report-type segment. That only holds while every runnable bundle's
+    // `name` is kebab-case: a snake_case or capitalised `name` slipping into
+    // the registry would silently produce a report file that breaks the
+    // `YYYY-MM-DD-<project>-<type>.md` convention.
+    final runnable = SkillRegistry.skills.where(
+      (b) =>
+          b.id.endsWith('_health') ||
+          b.id.endsWith('_plan') ||
+          b.id.endsWith('_audit'),
+    );
+
+    test('every runnable bundle name is a clean kebab-case report type', () {
+      for (final b in runnable) {
+        expect(
+          b.name,
+          matches(RegExp(r'^[a-z0-9]+(-[a-z0-9]+)*$')),
+          reason: '${b.id}: name "${b.name}" is not kebab-case, so the '
+              'report file name would not match the convention',
+        );
+        // The name must survive slugification untouched, otherwise the
+        // report-type segment and the skill name would drift apart.
+        expect(projectSlug(b.name), b.name, reason: b.id);
+      }
+    });
+
+    test('every runnable bundle yields a conventional report file name', () {
+      final date = DateTime(2026, 9, 14);
+      for (final b in runnable) {
+        final name = reportFileName(
+          date: date,
+          project: 'Hoopis_Backend',
+          reportType: b.name,
+        );
+        expect(name, '2026-09-14-hoopis-backend-${b.name}.md', reason: b.id);
+        expect(name, isNot(contains('_')), reason: b.id);
+      }
+    });
+
+    test('health and plan bundles no longer collide on one name', () {
+      // The old naming derived from `techPrefix`, so `flutter_health` and
+      // `flutter_plan` both reduced to `flutter` and were told apart only by
+      // an `_audit`/`_best_practices` suffix. Using `name` keeps them
+      // distinct by construction.
+      final names = runnable.map((b) => b.name).toList();
+      expect(names.toSet().length, names.length);
     });
   });
 }

@@ -55,9 +55,10 @@ Structure notes for the report-writer (not part of the rendered reply):
 - Root-level `issues` (no credential, etc.) render before any project section.
 - A repo with `measured: false` has no metric fields: render its problems only.
 - If the JSON was saved via --out-dir, mention the path below the report,
-  e.g.: "Saved to `outputs/2026-07-06_dora.json`."
+  e.g.: "Saved to `reports/2026-07-06-example-frontend-dora-metrics.json`."
+  There is one pair of files per repo, so list each one.
 - Do NOT add columns, labels, or prose that interpret, rank, score, or compare
   the numbers. Nothing here should say whether a value is good or bad.
 -->
 
-Saved to `outputs/2026-07-06_dora.json`.
+Saved to `reports/2026-07-06-example-frontend-dora-metrics.json`.

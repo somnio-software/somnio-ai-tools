@@ -8,7 +8,7 @@ Goal: Run package-manager-native vulnerability scans and identify
 outdated or vulnerable dependencies.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_security_tool_installer.md for
+- Read reports/.artifacts/security-audit/step_01_security_tool_installer.md for
   PROJECT_DETECTION_RESULTS (format: type@path|type@path...)
 - If multiple projects: for each type@path, cd to path and run
   dependency audit for that project; concatenate all results
@@ -302,7 +302,7 @@ fi
 ```
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_05_security_dependency_audit.md
+Save the full analysis output to: reports/.artifacts/security-audit/step_05_security_dependency_audit.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

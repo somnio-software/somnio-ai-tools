@@ -29,11 +29,11 @@ You are the governance & ISMS-artifacts analyzer for a framework-agnostic ISO/IE
 
 ## Instructions
 
-First read `reports/.artifacts/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS and the enumerated governance docs, then:
+First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS and the enumerated governance docs, then:
 
-- Read and follow ALL instructions in `references/governance-program.md` -> write `reports/.artifacts/step_02_iso27001_governance_program.md`
-- Read and follow ALL instructions in `references/human-resources-security.md` -> write `reports/.artifacts/step_03_iso27001_human_resources_security.md`
-- Read and follow ALL instructions in `references/evidence-isms-artifacts.md` -> write `reports/.artifacts/step_12_iso27001_evidence_isms_artifacts.md`
+- Read and follow ALL instructions in `references/governance-program.md` -> write `reports/.artifacts/iso27001-audit/step_02_iso27001_governance_program.md`
+- Read and follow ALL instructions in `references/human-resources-security.md` -> write `reports/.artifacts/iso27001-audit/step_03_iso27001_human_resources_security.md`
+- Read and follow ALL instructions in `references/evidence-isms-artifacts.md` -> write `reports/.artifacts/iso27001-audit/step_12_iso27001_evidence_isms_artifacts.md`
 
 Run `mkdir -p reports/.artifacts` before writing.
 

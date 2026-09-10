@@ -11,7 +11,7 @@ Goal: Turn the inventory artifact into a defensible /100 harness score with a
 per-piece breakdown and a maturity band.
 
 INPUT:
-- Read `reports/.artifacts/step_01_harness_inventory.md`. Every point awarded or
+- Read `reports/.artifacts/harness-audit/step_01_harness_inventory.md`. Every point awarded or
   withheld must trace back to evidence in that artifact. If the inventory is
   missing a piece's evidence, treat that piece as **Not found** and award 0 for
   it (never guess).
@@ -140,7 +140,7 @@ REJECTION CRITERIA:
 
 ## ARTIFACT SAVE (mandatory)
 
-Save the scoring result to: `reports/.artifacts/step_02_harness_scoring.md`
+Save the scoring result to: `reports/.artifacts/harness-audit/step_02_harness_scoring.md`
 Run before finishing: `mkdir -p reports/.artifacts`
 
 Output format:

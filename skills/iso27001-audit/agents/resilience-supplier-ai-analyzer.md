@@ -20,11 +20,11 @@ You are the resilience, supplier & AI-governance analyzer for a framework-agnost
 
 ## Instructions
 
-First read `reports/.artifacts/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS and IaC/package surfaces, then:
+First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS and IaC/package surfaces, then:
 
-- Read and follow ALL instructions in `references/incident-bcp-dr.md` -> write `reports/.artifacts/step_09_iso27001_incident_bcp_dr.md`
-- Read and follow ALL instructions in `references/vendor-supplier-management.md` -> write `reports/.artifacts/step_10_iso27001_vendor_supplier_management.md`
-- Read and follow ALL instructions in `references/ai-governance.md` -> write `reports/.artifacts/step_11_iso27001_ai_governance.md`
+- Read and follow ALL instructions in `references/incident-bcp-dr.md` -> write `reports/.artifacts/iso27001-audit/step_09_iso27001_incident_bcp_dr.md`
+- Read and follow ALL instructions in `references/vendor-supplier-management.md` -> write `reports/.artifacts/iso27001-audit/step_10_iso27001_vendor_supplier_management.md`
+- Read and follow ALL instructions in `references/ai-governance.md` -> write `reports/.artifacts/iso27001-audit/step_11_iso27001_ai_governance.md`
 
 Run `mkdir -p reports/.artifacts` before writing.
 

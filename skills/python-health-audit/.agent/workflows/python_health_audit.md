@@ -83,7 +83,7 @@ STEP 9 COMPLETED: [log result]
 Read `python-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field
 STEP 10 COMPLETED: [log result]
 
-Save the final Markdown report to `./reports/python_audit.md`
+Save the final Markdown report to `./reports/<YYYY-MM-DD>-<project>-python-health-audit.md`
 STEP 11 COMPLETED: Report exported
 
 ---

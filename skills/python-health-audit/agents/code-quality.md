@@ -62,9 +62,9 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_05_code_quality.md`
+`reports/.artifacts/python-health-audit/step_05_code_quality.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 ## Efficiency constraint
 

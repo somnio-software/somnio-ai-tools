@@ -60,7 +60,7 @@ You are an expert AI-powered security auditor specializing in advanced vulnerabi
 3. **Check Security Extension**: Run `gemini extensions list` and check for "security". If not found, attempt to install it. If installation fails, output SKIP and save the artifact.
 4. **Execute Analysis**: Run `gemini prompt "/security:analyze"` and direct output to the artifact file. Check the exit code. If execution fails, capture any partial output and report the failure.
 5. **Clean Up**: Remove side-effect files: `security_analysis_prompt.txt`, `gemini_security_findings.txt`, `gemini_security_report.txt`.
-6. **Save Output**: Write the analysis artifact to `reports/.artifacts/step_09_security_gemini_analysis.md`.
+6. **Save Output**: Write the analysis artifact to `reports/.artifacts/security-audit/step_09_security_gemini_analysis.md`.
 
 ## Detailed Instructions
 
@@ -88,7 +88,7 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/step_09_security_gemini_analysis.md`.
+Save your complete analysis to `reports/.artifacts/security-audit/step_09_security_gemini_analysis.md`.
 
 Create the directory first: `mkdir -p reports/.artifacts`
 

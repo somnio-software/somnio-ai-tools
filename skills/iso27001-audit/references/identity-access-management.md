@@ -8,7 +8,7 @@ Goal: Determine whether the application/repository implements identity and
 access controls. Record a Status and Owner/lane for every control.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md` for
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for
   PROJECT_DETECTION_RESULTS. Scan the source of each detected project.
 
 STATUS + OWNER/LANE:
@@ -68,7 +68,7 @@ matched, record the file/line and redact the value as `[REDACTED]`. Do NOT
 reproduce the secret. (Deep secret scanning is Category D / F.)
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_04_iso27001_identity_access_management.md
+Save output to: reports/.artifacts/iso27001-audit/step_04_iso27001_identity_access_management.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

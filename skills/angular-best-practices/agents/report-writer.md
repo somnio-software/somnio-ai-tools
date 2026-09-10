@@ -1,12 +1,12 @@
 ---
 name: report-writer
 description: |
-  Use this agent when synthesizing all angular-best-practices audit artifacts into the final weighted report. Reads all step artifacts + assets/report-template.md + format-enforcer and generator references, computes weighted section scores, and writes reports/angular-best-practices-report.md.
+  Use this agent when synthesizing all angular-best-practices audit artifacts into the final weighted report. Reads all step artifacts + assets/report-template.md + format-enforcer and generator references, computes weighted section scores, and writes reports/<YYYY-MM-DD>-<project>-angular-best-practices.md.
 
   <example>
   Context: All Wave 1 and Wave 2 artifacts have been confirmed present by the orchestrator; Wave 3 begins.
   user: "Generate the final angular-best-practices report."
-  assistant: "I will read all six section artifacts plus the TypeScript scanner inventory, apply the weighted scoring formula (Testing 20%, Architecture 25%, Lifecycle & DI 15%, State 15%, Performance 15%, TypeScript 10%), enforce the format from best-practices-format-enforcer.md and best-practices-generator.md, and write the final report to reports/angular-best-practices-report.md."
+  assistant: "I will read all six section artifacts plus the TypeScript scanner inventory, apply the weighted scoring formula (Testing 20%, Architecture 25%, Lifecycle & DI 15%, State 15%, Performance 15%, TypeScript 10%), enforce the format from best-practices-format-enforcer.md and best-practices-generator.md, and write the final report to reports/<YYYY-MM-DD>-<project>-angular-best-practices.md."
   <commentary>
   Cross-section score reconciliation, weighted average computation, and narrative synthesis require frontier-tier model quality.
   </commentary>
@@ -78,7 +78,7 @@ Weighted Overall = (testing x 0.20) + (architecture x 0.25) + (lifecycle_di x 0.
 
 ## Output
 
-Write the complete final report to `reports/angular-best-practices-report.md`.
+Write the complete final report to `reports/<YYYY-MM-DD>-<project>-angular-best-practices.md`.
 
 The report must follow `assets/report-template.md` exactly — all 10 sections in order, with the Report Metadata block at the very end.
 

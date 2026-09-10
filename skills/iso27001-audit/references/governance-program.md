@@ -9,7 +9,7 @@ security governance program. Record a Status and an Owner/lane for every
 control below.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md` for
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for
   PROJECT_DETECTION_RESULTS and the enumerated governance/policy docs.
 
 STATUS + OWNER/LANE (record for every control):
@@ -64,7 +64,7 @@ READ-ONLY + SECRET SAFETY:
   it; note the location and redact as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_02_iso27001_governance_program.md
+Save output to: reports/.artifacts/iso27001-audit/step_02_iso27001_governance_program.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

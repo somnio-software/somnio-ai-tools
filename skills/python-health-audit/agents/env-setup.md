@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A Python project with a .python-version file set to 3.12 and no uv installed.
   user: "Set up the Python environment for this project."
-  assistant: "I will install uv, detect the required Python version from .python-version (3.12), align the interpreter, run uv sync, install Ruff and pytest, run pytest with branch coverage, and write the results to reports/.artifacts/python_health/step_00_test_coverage.md."
+  assistant: "I will install uv, detect the required Python version from .python-version (3.12), align the interpreter, run uv sync, install Ruff and pytest, run pytest with branch coverage, and write the results to reports/.artifacts/python-health-audit/step_00_test_coverage.md."
   <commentary>
   env-setup is a fully mechanical step — install tools, align interpreter, run tests, emit artifact.
   </commentary>
@@ -58,9 +58,9 @@ Read and follow ALL instructions in `references/test-coverage.md`.
 ## Artifact
 
 Write all findings (tool versions, alignment status, coverage results) to:
-`reports/.artifacts/python_health/step_00_test_coverage.md`
+`reports/.artifacts/python-health-audit/step_00_test_coverage.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 The artifact MUST include the verbatim lines required by the report generator:
 - `Code Coverage: X%`

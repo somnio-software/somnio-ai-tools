@@ -11,6 +11,7 @@ Usage:
 import argparse
 import importlib.util
 import os
+import tempfile
 import unittest
 from datetime import datetime, timezone
 from types import SimpleNamespace
@@ -670,6 +671,139 @@ class TestNoCredentialResult(unittest.TestCase):
         self.assertEqual([i["code"] for i in result["issues"]], ["no_credential"])
         self.assertEqual(result["projects"], [])
         self.assertTrue(dora_metrics.has_blocked(result))
+
+
+class TestSlugify(unittest.TestCase):
+    def test_lowercases_and_replaces_separators(self):
+        self.assertEqual(dora_metrics.slugify("Example Project"), "example-project")
+        self.assertEqual(dora_metrics.slugify("Hoopis_Backend"), "hoopis-backend")
+        self.assertEqual(dora_metrics.slugify("hoopis.backend"), "hoopis-backend")
+        self.assertEqual(dora_metrics.slugify("example-org/api"), "example-org-api")
+
+    def test_drops_other_characters_and_collapses_hyphens(self):
+        self.assertEqual(dora_metrics.slugify("my repo (v2)!"), "my-repo-v2")
+        self.assertEqual(dora_metrics.slugify("a___b"), "a-b")
+        self.assertEqual(dora_metrics.slugify("--a--"), "a")
+
+    def test_falls_back_when_nothing_survives(self):
+        self.assertEqual(dora_metrics.slugify(""), "project")
+        self.assertEqual(dora_metrics.slugify("!!!"), "project")
+
+
+class TestRepoFileSlugs(unittest.TestCase):
+    def _result(self, *repo_names):
+        return {"issues": [], "projects": [
+            {"name": "P", "repos": [{"repo": r} for r in repo_names]}]}
+
+    def test_uses_the_repo_name_alone(self):
+        slugs = dora_metrics.repo_file_slugs(
+            self._result("example-org/example-frontend"))
+        self.assertEqual(slugs["example-org/example-frontend"], "example-frontend")
+
+    def test_qualifies_with_the_org_only_on_collision(self):
+        slugs = dora_metrics.repo_file_slugs(
+            self._result("example-org/api", "partner-org/api", "example-org/web"))
+        self.assertEqual(slugs["example-org/api"], "example-org-api")
+        self.assertEqual(slugs["partner-org/api"], "partner-org-api")
+        # The non-colliding repo keeps the short form.
+        self.assertEqual(slugs["example-org/web"], "web")
+
+    def test_spans_projects(self):
+        result = {"issues": [], "projects": [
+            {"name": "A", "repos": [{"repo": "org-a/api"}]},
+            {"name": "B", "repos": [{"repo": "org-b/api"}]}]}
+        slugs = dora_metrics.repo_file_slugs(result)
+        self.assertEqual(slugs["org-a/api"], "org-a-api")
+        self.assertEqual(slugs["org-b/api"], "org-b-api")
+
+
+class TestSingleRepoResult(unittest.TestCase):
+    def _result(self):
+        return {
+            "generated_at": "2026-07-03T00:00:00Z", "window_days": 14,
+            "tag_pattern": r"^v", "issues": [{"code": "root"}],
+            "projects": [{"name": "P", "notes": "n", "repos": [
+                {"repo": "o/one"}, {"repo": "o/two"}]}],
+        }
+
+    def test_keeps_only_the_given_repo(self):
+        full = self._result()
+        narrowed = dora_metrics.single_repo_result(
+            full, full["projects"][0], full["projects"][0]["repos"][1])
+        self.assertEqual(narrowed["projects"][0]["repos"], [{"repo": "o/two"}])
+
+    def test_carries_over_run_level_and_project_fields(self):
+        full = self._result()
+        narrowed = dora_metrics.single_repo_result(
+            full, full["projects"][0], full["projects"][0]["repos"][0])
+        self.assertEqual(narrowed["window_days"], 14)
+        self.assertEqual(narrowed["tag_pattern"], r"^v")
+        self.assertEqual(narrowed["issues"], [{"code": "root"}])
+        self.assertEqual(narrowed["projects"][0]["name"], "P")
+        self.assertEqual(narrowed["projects"][0]["notes"], "n")
+
+    def test_does_not_mutate_the_original(self):
+        full = self._result()
+        dora_metrics.single_repo_result(
+            full, full["projects"][0], full["projects"][0]["repos"][0])
+        self.assertEqual(len(full["projects"][0]["repos"]), 2)
+
+
+class TestWriteOutput(unittest.TestCase):
+    """The saved file names are the contract this skill shares with the other
+    audits: <YYYY-MM-DD>-<repo>-dora-metrics.{json,md}, one pair per repo."""
+
+    def _repo(self, name):
+        return {"repo": name, "type": ["backend"], "deploy_source": "release",
+                "measured": True, "deployment_frequency": 2,
+                "lead_time_median_hours": 4.3, "lead_time_n": 3,
+                "issues": [], "warnings": []}
+
+    def _write(self, result, tmp):
+        dora_metrics.write_output(result, window_days=14, out_dir=tmp,
+                                  now=dt("2026-09-14T10:00:00Z"))
+        return sorted(os.listdir(tmp))
+
+    def test_one_pair_of_files_per_repo(self):
+        result = {"issues": [], "projects": [{"name": "Example Project", "repos": [
+            self._repo("example-org/example-frontend"),
+            self._repo("partner-org/example-backend")]}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self._write(result, tmp), [
+                "2026-09-14-example-backend-dora-metrics.json",
+                "2026-09-14-example-backend-dora-metrics.md",
+                "2026-09-14-example-frontend-dora-metrics.json",
+                "2026-09-14-example-frontend-dora-metrics.md",
+            ])
+
+    def test_each_file_holds_only_its_own_repo(self):
+        result = {"issues": [], "projects": [{"name": "Example Project", "repos": [
+            self._repo("example-org/example-frontend"),
+            self._repo("partner-org/example-backend")]}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(result, tmp)
+            path = os.path.join(tmp, "2026-09-14-example-frontend-dora-metrics.md")
+            with open(path) as f:
+                text = f.read()
+            self.assertIn("example-org/example-frontend", text)
+            self.assertNotIn("example-backend", text)
+
+    def test_still_writes_one_file_when_nothing_was_measured(self):
+        result = dora_metrics.no_credential_result(
+            now=dt("2026-09-14T10:00:00Z"), window_days=14, tag_pattern=r"^v")
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertEqual(self._write(result, tmp), [
+                "2026-09-14-no-repositories-dora-metrics.json",
+                "2026-09-14-no-repositories-dora-metrics.md",
+            ])
+
+    def test_writes_nothing_without_an_out_dir(self):
+        result = {"issues": [], "projects": [{"name": "P", "repos": [
+            self._repo("o/one")]}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            dora_metrics.write_output(result, window_days=14, out_dir=None,
+                                      now=dt("2026-09-14T10:00:00Z"))
+            self.assertEqual(os.listdir(tmp), [])
 
 
 if __name__ == "__main__":

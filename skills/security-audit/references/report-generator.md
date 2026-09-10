@@ -45,7 +45,7 @@ STEP ARTIFACT INTEGRATION:
 Read ALL step artifact files in this run's artifacts directory — the
 directory under reports/.artifacts/ that contains this audit's
 step_*.md files (reports/.artifacts/ for in-session subagent dispatch;
-reports/.artifacts/security_audit/ for `somnio run`). Match each
+reports/.artifacts/security-audit/ for `somnio run`). Match each
 artifact by its step-number prefix:
 - step_01_* (tool detection, PROJECT_DETECTION_RESULTS for multi-tech;
   use for Section 11)
@@ -308,7 +308,7 @@ syntax, no # headings, no bold markers, no fenced code blocks).
 
 JSON EXPORT (mandatory):
 In addition to the text report, produce a machine-readable JSON file.
-After writing the report, write a second file to reports/security_audit.json
+After writing the report, write a second file to reports/<YYYY-MM-DD>-<project>-security-audit.json
 with the following schema (extract values from the generated report):
 
 {
@@ -333,7 +333,7 @@ with the following schema (extract values from the generated report):
 Run before saving: mkdir -p reports
 
 SCORE HISTORY (mandatory after writing report and JSON):
-After writing reports/security_audit.md and reports/security_audit.json,
+After writing reports/<YYYY-MM-DD>-<project>-security-audit.md and reports/<YYYY-MM-DD>-<project>-security-audit.json,
 write reports/.history/last_scores.json with:
 { "overall": [current overall score], "timestamp": "[ISO8601]",
   "scores": { "sensitiveFile": N, "secretDetection": N, "dependencySecurity": N,

@@ -20,10 +20,10 @@ You are the identity-access & data-protection analyzer for a framework-agnostic 
 
 ## Instructions
 
-First read `reports/.artifacts/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS, then adapt greps to each detected stack (*.ts, *.js, *.py, *.go, *.cs, *.rs, *.kt, *.dart, *.tf, *.yaml):
+First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS, then adapt greps to each detected stack (*.ts, *.js, *.py, *.go, *.cs, *.rs, *.kt, *.dart, *.tf, *.yaml):
 
-- Read and follow ALL instructions in `references/identity-access-management.md` -> write `reports/.artifacts/step_04_iso27001_identity_access_management.md`
-- Read and follow ALL instructions in `references/data-protection-confidentiality.md` -> write `reports/.artifacts/step_05_iso27001_data_protection_confidentiality.md`
+- Read and follow ALL instructions in `references/identity-access-management.md` -> write `reports/.artifacts/iso27001-audit/step_04_iso27001_identity_access_management.md`
+- Read and follow ALL instructions in `references/data-protection-confidentiality.md` -> write `reports/.artifacts/iso27001-audit/step_05_iso27001_data_protection_confidentiality.md`
 
 Run `mkdir -p reports/.artifacts` before writing.
 

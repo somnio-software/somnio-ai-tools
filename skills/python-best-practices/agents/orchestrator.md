@@ -24,7 +24,7 @@ description: |
   <example>
   Context: All analysis artifacts are present.
   user: "Generate the report."
-  assistant: "All 7 artifacts confirmed. Handing the artifact manifest to report-writer to compute weighted scores and produce reports/python_best_practices_report.md."
+  assistant: "All 7 artifacts confirmed. Handing the artifact manifest to report-writer to compute weighted scores and produce reports/<YYYY-MM-DD>-<project>-python-best-practices.md."
   <commentary>
   The orchestrator never writes prose or reads source code itself — it delegates synthesis entirely to the frontier-tier report-writer.
   </commentary>
@@ -68,7 +68,7 @@ After confirming both Wave 1 artifacts exist, dispatch these five agents simulta
 
 After confirming all 7 analysis artifacts exist, dispatch:
 
-- `agents/report-writer.md` — reads all artifacts + `assets/report-template.md`; writes `reports/python_best_practices_report.md`
+- `agents/report-writer.md` — reads all artifacts + `assets/report-template.md`; writes `reports/<YYYY-MM-DD>-<project>-python-best-practices.md`
 
 ## Artifact Validation Protocol
 
@@ -87,4 +87,4 @@ Before advancing from each wave:
 4. Dispatch Wave 2 agents in parallel.
 5. Validate Wave 2 artifacts.
 6. Dispatch report-writer with the artifact manifest.
-7. Confirm the final report exists at `reports/python_best_practices_report.md`.
+7. Confirm the final report exists at `reports/<YYYY-MM-DD>-<project>-python-best-practices.md`.

@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The orchestrator has completed the analysis wave and hands the artifact manifest to the report-writer.
   user: "Generate the harness audit report."
-  assistant: "I will read reports/.artifacts/step_01_harness_inventory.md and step_02_harness_scoring.md, load the report structure from references/report-generator.md and assets/report-template.md, render the per-piece score table, the total /100, the maturity band reading, and the top-3 highest-impact next steps, then write reports/harness_audit.md and the JSON export."
+  assistant: "I will read reports/.artifacts/harness-audit/step_01_harness_inventory.md and step_02_harness_scoring.md, load the report structure from references/report-generator.md and assets/report-template.md, render the per-piece score table, the total /100, the maturity band reading, and the top-3 highest-impact next steps, then write reports/<YYYY-MM-DD>-<project>-harness-audit.md and the JSON export."
   <commentary>
   The report-writer holds both artifacts and produces the single user-facing output; it does not re-scan the repository.
   </commentary>
@@ -74,8 +74,8 @@ Verify the Total and all 8 rubric-entry scores are present in the scoring artifa
 
 ## Output
 
-Write the final report to `reports/harness_audit.md`.
-Write the JSON export to `reports/harness_audit.json` (exact schema in `references/report-generator.md`).
+Write the final report to `reports/<YYYY-MM-DD>-<project>-harness-audit.md`.
+Write the JSON export to `reports/<YYYY-MM-DD>-<project>-harness-audit.json` (exact schema in `references/report-generator.md`).
 Write the score history to `reports/.history/last_scores.json`.
 
 Run before writing: `mkdir -p reports reports/.history`
@@ -86,4 +86,4 @@ Run before writing: `mkdir -p reports reports/.history`
 - **Order Section 3 by points recoverable descending** (biggest gaps first) so the report leads with the highest-leverage fixes.
 - **The Total in Section 1 must match Section 2 and the JSON export**, and the band must match the Total range.
 - **Self-validate before writing**: apply the validation checklist from `references/report-generator.md` and all structural checks from `references/report-format-enforcer.md` to the draft, and fix issues in-place before saving.
-- **Append the metadata block** at the very end of `reports/harness_audit.md` exactly as specified in `SKILL.md` (resolve plugin name and version from `.claude-plugin/plugin.json` if present, otherwise use `Somnio CLI` / `unknown`).
+- **Append the metadata block** at the very end of `reports/<YYYY-MM-DD>-<project>-harness-audit.md` exactly as specified in `SKILL.md` (resolve plugin name and version from `.claude-plugin/plugin.json` if present, otherwise use `Somnio CLI` / `unknown`).

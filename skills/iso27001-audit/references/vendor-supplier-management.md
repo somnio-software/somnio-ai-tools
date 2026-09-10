@@ -8,7 +8,7 @@ Goal: Determine whether supplier and cloud-service risks are managed. Record
 Status + Owner/lane per control.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md` for
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for
   package managers and IaC surfaces.
 
 CONTROL EVIDENCE:
@@ -48,7 +48,7 @@ READ-ONLY + SECRET SAFETY: read only; redact any secret VALUE (cloud keys,
 tokens) as `[REDACTED]`; never copy the value.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_10_iso27001_vendor_supplier_management.md
+Save output to: reports/.artifacts/iso27001-audit/step_10_iso27001_vendor_supplier_management.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

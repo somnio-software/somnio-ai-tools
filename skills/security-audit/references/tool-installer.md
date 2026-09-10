@@ -166,7 +166,7 @@ echo "GEMINI_AVAILABLE=$GEMINI_AVAILABLE"
 ```
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_01_security_tool_installer.md
+Save the full analysis output to: reports/.artifacts/security-audit/step_01_security_tool_installer.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format (in artifact):

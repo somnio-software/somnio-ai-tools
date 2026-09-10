@@ -22,7 +22,7 @@ Comprehensive Flutter project health audit with 13 analysis steps covering tech 
 Run a full Flutter health audit on this project and generate a report.
 ```
 
-**Output:** Weighted score report saved to `./reports/`
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-flutter-health-audit.md`
 
 ---
 
@@ -42,7 +42,7 @@ Micro-level Flutter code quality validation against live GitHub standards. Check
 Check this Flutter project against current best practices and flag any violations.
 ```
 
-**Output:** Violations report with prioritized action plan
+**Output:** Violations report with prioritized action plan, saved to `./reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md`
 
 ---
 
@@ -62,7 +62,7 @@ Comprehensive **modern Angular (2+)** project health audit with 13 analysis step
 Run a full Angular health audit on this project and generate a report.
 ```
 
-**Output:** Weighted score report saved to `./reports/`
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-angular-health-audit.md`
 
 ---
 
@@ -82,7 +82,7 @@ Comprehensive NestJS project health audit with 13 analysis steps. Evaluates arch
 Run a full NestJS health audit and summarize the findings.
 ```
 
-**Output:** Weighted score report saved to `./reports/`
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md`
 
 ---
 
@@ -102,7 +102,7 @@ Framework-agnostic, **whole-project SOC 2 readiness audit**. Inspects a reposito
 Run a SOC 2 readiness audit on this project and generate a gap report.
 ```
 
-**Output:** Readiness score + gap register saved to `./reports/`
+**Output:** Readiness score + gap register, saved to `./reports/<YYYY-MM-DD>-<project>-soc2-audit.md` (+ a `.json` export)
 
 ---
 
@@ -122,7 +122,7 @@ Micro-level NestJS code quality validation covering DTOs, error handling, module
 Validate this NestJS project against best practices for DTOs, error handling, and architecture.
 ```
 
-**Output:** Violations report with prioritized action plan
+**Output:** Violations report with prioritized action plan, saved to `./reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md`
 
 ---
 
@@ -142,7 +142,7 @@ Micro-level **AngularJS (Angular 1.x)** code-quality audit. Validates code again
 Run an AngularJS best-practices check on this project and list violations.
 ```
 
-**Output:** Prioritized violations report saved to `./reports/`
+**Output:** Prioritized violations report, saved to `./reports/<YYYY-MM-DD>-<project>-angularjs-best-practices.md`
 
 ---
 
@@ -162,7 +162,7 @@ Comprehensive React project health audit with 13 analysis steps covering tech st
 Run a full React health audit on this project and generate a report.
 ```
 
-**Output:** Weighted score report saved to `./reports/`
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-react-health-audit.md`
 
 ---
 
@@ -182,7 +182,7 @@ Micro-level React code quality validation against local GitHub standards. Checks
 Check this React project against current best practices and flag any violations.
 ```
 
-**Output:** Violations report with prioritized action plan
+**Output:** Violations report with prioritized action plan, saved to `./reports/<YYYY-MM-DD>-<project>-react-best-practices.md`
 
 ---
 
@@ -202,7 +202,7 @@ Comprehensive **legacy AngularJS (Angular 1.x)** project health audit with 13 an
 Run a full AngularJS health audit on this project and generate a report.
 ```
 
-**Output:** Weighted score report saved to `./reports/`
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-angularjs-health-audit.md`
 
 ---
 
@@ -222,7 +222,7 @@ Micro-level **modern Angular (2+)** code-quality audit. Validates code against c
 Run an Angular best-practices check on this project and list violations.
 ```
 
-**Output:** Prioritized violations report saved to `./reports/`
+**Output:** Prioritized violations report, saved to `./reports/<YYYY-MM-DD>-<project>-angular-best-practices.md`
 
 ---
 
@@ -242,7 +242,7 @@ Comprehensive 13-step health audit for Python projects. Analyses code quality, d
 Run a full Python health audit on this project and generate a report.
 ```
 
-**Output:** Weighted score report saved to `./reports/`
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-python-health-audit.md`
 
 ---
 
@@ -262,7 +262,7 @@ Framework-agnostic, **whole-project ISO/IEC 27001:2022 readiness audit**. Inspec
 Run an ISO 27001 readiness audit on this project and generate a gap report.
 ```
 
-**Output:** Readiness score + gap register + SoA starter saved to `./reports/`
+**Output:** Readiness score + gap register + SoA starter, saved to `./reports/<YYYY-MM-DD>-<project>-iso27001-audit.md` (+ a `.json` export)
 
 ---
 
@@ -282,7 +282,7 @@ Micro-level Python code quality validation against team standards. Checks PEP 8 
 Check this Python project against current best practices and flag any violations.
 ```
 
-**Output:** Violations report with prioritized action plan
+**Output:** Violations report with prioritized action plan, saved to `./reports/<YYYY-MM-DD>-<project>-python-best-practices.md`
 
 ---
 
@@ -302,7 +302,7 @@ Framework-agnostic **AI Harness Audit**. Scores how complete a project's AI codi
 Run a harness audit on this project and score its AI setup.
 ```
 
-**Output:** Harness score report saved to `./reports/`
+**Output:** Harness score report, saved to `./reports/<YYYY-MM-DD>-<project>-harness-audit.md` (+ a `.json` export)
 
 ---
 
@@ -322,7 +322,7 @@ Framework-agnostic security audit with 11 analysis steps. Scans for hardcoded se
 Run a security audit on this project. Check for secrets, vulnerable dependencies, and misconfigurations.
 ```
 
-**Output:** Severity-classified report saved to `./reports/`
+**Output:** Severity-classified report, saved to `./reports/<YYYY-MM-DD>-<project>-security-audit.md` (+ a `.json` export)
 
 ---
 
@@ -600,7 +600,7 @@ Add project Omega to DORA metrics, single repo acme/omega-api, prod branch devel
 
 **Requires:** a GitHub credential with read access to the relevant orgs — the `GITHUB_TOKEN` env var, or `gh auth token` if the GitHub CLI is already logged in locally.
 
-**Output:** Deployment Frequency and median Lead Time per repo for the requested window (14 days by default), plus process-gap warnings (e.g. merged PRs with no release yet, a release with no prior release to measure against). Optionally saved as a portable JSON file.
+**Output:** Deployment Frequency and median Lead Time per repo for the requested window (14 days by default), plus process-gap warnings (e.g. merged PRs with no release yet, a release with no prior release to measure against). Optionally saved to `./reports/`, one pair of files per repo: `<YYYY-MM-DD>-<repo>-dora-metrics.json` (portable data) and `<YYYY-MM-DD>-<repo>-dora-metrics.md`.
 
 ---
 

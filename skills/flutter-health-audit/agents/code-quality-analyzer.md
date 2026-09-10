@@ -61,7 +61,7 @@ You are an expert Flutter code quality analyst specializing in linter configurat
 4. **Search for CI Enforcement**: Use batch grep commands to search all workflow files for format and analyze steps. Verify that both are present and configured with failure-on-warning flags.
 5. **Scan for Lint Suppressions**: Run a batch grep across the codebase for `// ignore:` and `// ignore_for_file:` patterns. Count occurrences and list the most common suppressed rules.
 6. **Cross-App Comparison** (monorepo): Compare `analysis_options.yaml` configurations across all apps and packages. Flag differences in base packages, versions, or rule overrides.
-7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter_health/step_05_code_quality.md`.
+7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter-health-audit/step_05_code_quality.md`.
 
 ## Detailed Instructions
 
@@ -91,9 +91,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/flutter_health/step_05_code_quality.md`.
+Save your complete analysis to `reports/.artifacts/flutter-health-audit/step_05_code_quality.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or multi-app monorepo

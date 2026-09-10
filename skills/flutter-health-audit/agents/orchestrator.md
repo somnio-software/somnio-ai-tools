@@ -24,7 +24,7 @@ description: |
   <example>
   Context: Wave 2 artifact for testing-analyzer is missing after the first dispatch attempt.
   user: "Continue the audit."
-  assistant: "The artifact reports/.artifacts/flutter_health/step_04_testing_analysis.md is missing. Retrying testing-analyzer once. If it fails again, I will log the failure, skip the testing section in the report, and advance to Wave 3."
+  assistant: "The artifact reports/.artifacts/flutter-health-audit/step_04_testing_analysis.md is missing. Retrying testing-analyzer once. If it fails again, I will log the failure, skip the testing section in the report, and advance to Wave 3."
   <commentary>
   Retry-once-then-skip is the orchestrator's resilience contract. Missing artifacts are logged and their dependent report sections are flagged as unavailable.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: All waves have completed; the orchestrator hands the artifact manifest to the report-writer.
   user: "Finish the audit."
-  assistant: "All analysis waves completed. Dispatching report-writer with the following artifact manifest: [list of step_NN_*.md paths]. The report-writer will compute weighted scores and write reports/flutter_audit.md."
+  assistant: "All analysis waves completed. Dispatching report-writer with the following artifact manifest: [list of step_NN_*.md paths]. The report-writer will compute weighted scores and write reports/<YYYY-MM-DD>-<project>-flutter-health-audit.md."
   <commentary>
   The orchestrator's final act is dispatching the report-writer with the full artifact list. It does not compute scores or write the report itself.
   </commentary>
@@ -60,7 +60,7 @@ Agent: agents/env-setup.md
 Prompt: "Read agents/env-setup.md and follow ALL instructions. This is a MANDATORY Wave 0 step. Return your completion status and the path of the coverage artifact written."
 ```
 
-**Gate**: Check that `reports/.artifacts/flutter_health/step_00_test_coverage.md` exists after env-setup completes.
+**Gate**: Check that `reports/.artifacts/flutter-health-audit/step_00_test_coverage.md` exists after env-setup completes.
 - If the file is missing or env-setup reported failure: **STOP the audit**. Output the failure reason and provide the resolution steps returned by env-setup. Do not advance to Wave 1.
 - If the file exists: advance to Wave 1.
 
@@ -77,8 +77,8 @@ Prompt: "Read agents/config-analyzer.md and follow ALL instructions. Return comp
 ```
 
 **Gate**: After both complete, verify:
-- `reports/.artifacts/flutter_health/step_01_repository_inventory.md` exists
-- `reports/.artifacts/flutter_health/step_02_config_analysis.md` exists
+- `reports/.artifacts/flutter-health-audit/step_01_repository_inventory.md` exists
+- `reports/.artifacts/flutter-health-audit/step_02_config_analysis.md` exists
 
 For each missing artifact: retry the responsible agent once. If still missing after retry: log `[agent] artifact missing — section will be flagged in report` and continue.
 
@@ -88,23 +88,23 @@ Dispatch four subagents simultaneously:
 
 ```
 Agent 1: agents/cicd-analyzer.md
-Prompt: "Read agents/cicd-analyzer.md and follow ALL instructions. Reference the repository inventory artifact at reports/.artifacts/flutter_health/step_01_repository_inventory.md. Return complete findings and confirm the artifact path written."
+Prompt: "Read agents/cicd-analyzer.md and follow ALL instructions. Reference the repository inventory artifact at reports/.artifacts/flutter-health-audit/step_01_repository_inventory.md. Return complete findings and confirm the artifact path written."
 
 Agent 2: agents/testing-analyzer.md
-Prompt: "Read agents/testing-analyzer.md and follow ALL instructions. Reference the coverage preflight artifact at reports/.artifacts/flutter_health/step_00_test_coverage.md and the CI/CD artifact once available. Return complete findings and confirm the artifact path written."
+Prompt: "Read agents/testing-analyzer.md and follow ALL instructions. Reference the coverage preflight artifact at reports/.artifacts/flutter-health-audit/step_00_test_coverage.md and the CI/CD artifact once available. Return complete findings and confirm the artifact path written."
 
 Agent 3: agents/code-quality-analyzer.md
-Prompt: "Read agents/code-quality-analyzer.md and follow ALL instructions. Reference the config artifact at reports/.artifacts/flutter_health/step_02_config_analysis.md. Return complete findings and confirm the artifact path written."
+Prompt: "Read agents/code-quality-analyzer.md and follow ALL instructions. Reference the config artifact at reports/.artifacts/flutter-health-audit/step_02_config_analysis.md. Return complete findings and confirm the artifact path written."
 
 Agent 4: agents/harness-analyzer.md
 Prompt: "Read agents/harness-analyzer.md and follow ALL instructions. It depends on no prior artifact. Return complete findings and confirm the artifact path written."
 ```
 
 **Gate**: After all four complete, verify:
-- `reports/.artifacts/flutter_health/step_03_cicd_analysis.md` exists
-- `reports/.artifacts/flutter_health/step_04_testing_analysis.md` exists
-- `reports/.artifacts/flutter_health/step_05_code_quality.md` exists
-- `reports/.artifacts/flutter_health/step_07_harness_analysis.md` exists
+- `reports/.artifacts/flutter-health-audit/step_03_cicd_analysis.md` exists
+- `reports/.artifacts/flutter-health-audit/step_04_testing_analysis.md` exists
+- `reports/.artifacts/flutter-health-audit/step_05_code_quality.md` exists
+- `reports/.artifacts/flutter-health-audit/step_07_harness_analysis.md` exists
 
 Retry-once policy applies to each missing artifact.
 
@@ -114,25 +114,25 @@ Dispatch two subagents simultaneously:
 
 ```
 Agent 1: agents/docs-analyzer.md
-Prompt: "Read agents/docs-analyzer.md and follow ALL instructions. Reference the repository inventory artifact at reports/.artifacts/flutter_health/step_01_repository_inventory.md. Return complete findings and confirm the artifact path written."
+Prompt: "Read agents/docs-analyzer.md and follow ALL instructions. Reference the repository inventory artifact at reports/.artifacts/flutter-health-audit/step_01_repository_inventory.md. Return complete findings and confirm the artifact path written."
 
 Agent 2: agents/state-management-analyzer.md
-Prompt: "Read agents/state-management-analyzer.md and follow ALL instructions. Reference the repository inventory artifact at reports/.artifacts/flutter_health/step_01_repository_inventory.md. It depends on no other prior artifact. Return complete findings and confirm the artifact path written."
+Prompt: "Read agents/state-management-analyzer.md and follow ALL instructions. Reference the repository inventory artifact at reports/.artifacts/flutter-health-audit/step_01_repository_inventory.md. It depends on no other prior artifact. Return complete findings and confirm the artifact path written."
 ```
 
 **Gate**: After both complete, verify:
-- `reports/.artifacts/flutter_health/step_06_documentation_analysis.md` exists
-- `reports/.artifacts/flutter_health/step_08_state_management_analysis.md` exists
+- `reports/.artifacts/flutter-health-audit/step_06_documentation_analysis.md` exists
+- `reports/.artifacts/flutter-health-audit/step_08_state_management_analysis.md` exists
 
 Retry-once policy applies to each missing artifact.
 
 ### Wave 4 — Report Generation (Sequential, requires ALL previous artifacts)
 
-Compile the artifact manifest — the list of all step_NN_*.md files that exist under `reports/.artifacts/flutter_health/` — then dispatch the report-writer:
+Compile the artifact manifest — the list of all step_NN_*.md files that exist under `reports/.artifacts/flutter-health-audit/` — then dispatch the report-writer:
 
 ```
 Agent: agents/report-writer.md
-Prompt: "Read agents/report-writer.md and follow ALL instructions. The complete artifact manifest is: [list each existing artifact path]. Write the final report to reports/flutter_audit.md."
+Prompt: "Read agents/report-writer.md and follow ALL instructions. The complete artifact manifest is: [list each existing artifact path]. Write the final report to reports/<YYYY-MM-DD>-<project>-flutter-health-audit.md."
 ```
 
 ## Orchestrator Rules

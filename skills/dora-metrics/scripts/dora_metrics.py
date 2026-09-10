@@ -11,7 +11,7 @@ is a later step, outside the scope of this skill.
 
 Usage:
     export GITHUB_TOKEN=ghp_xxx   # or a token with 'repo' (read) scope for the org's repos
-    python3 dora_metrics.py [--config config/projects.json] [--project "Example Project"] [--out-dir outputs]
+    python3 dora_metrics.py [--config config/projects.json] [--project "Example Project"] [--out-dir reports]
         [--branch branch] [--deploy-source release|tag] [--window-days N]
 
 Deploy marker configurable per repo (the "deploy_source" field in the config,
@@ -728,17 +728,91 @@ def no_credential_result(now: datetime, window_days: int, tag_pattern: str) -> d
     }
 
 
+REPORT_TYPE = "dora-metrics"
+NO_REPOS_SLUG = "no-repositories"
+
+
+def slugify(raw: str) -> str:
+    """Kebab-case slug safe for a file name: lowercase, separators collapsed to
+    a single hyphen, everything else dropped."""
+    slug = re.sub(r"[\s_./\\]+", "-", raw.lower())
+    slug = re.sub(r"[^a-z0-9-]", "", slug)
+    slug = re.sub(r"-+", "-", slug).strip("-")
+    return slug or "project"
+
+
+def repo_file_slugs(result: dict) -> dict:
+    """Maps each `org/repo` to the slug used in its file name.
+
+    The repo name alone is what identifies the report, so `org/api` becomes
+    `api`. Two repos with the same name in different orgs would collide, so in
+    that case — and only then — both fall back to the org-qualified slug.
+    """
+    full_names = [r["repo"] for p in result["projects"] for r in p["repos"]]
+    grouped = {}
+    for full in full_names:
+        grouped.setdefault(slugify(full.split("/")[-1]), []).append(full)
+    return {
+        full: (short if len(collisions) == 1 else slugify(full))
+        for short, collisions in grouped.items()
+        for full in collisions
+    }
+
+
+def single_repo_result(result: dict, project: dict, repo: dict) -> dict:
+    """Narrows `result` to one repo, keeping the run-level fields.
+
+    Each saved file has to stand on its own — the window, the tag pattern and
+    any run-level issue matter just as much when reading a single repo's
+    numbers — so those are carried over rather than stripped.
+    """
+    narrowed = {k: v for k, v in result.items() if k != "projects"}
+    narrowed["projects"] = [
+        {**{k: v for k, v in project.items() if k != "repos"}, "repos": [repo]}
+    ]
+    return narrowed
+
+
 def write_output(result: dict, window_days: int, out_dir: str, now: datetime) -> None:
     output_json = json.dumps(result, indent=2, ensure_ascii=False)
     summary = format_human_summary(result, window_days)
     if out_dir:
         os.makedirs(out_dir, exist_ok=True)
-        base = os.path.join(out_dir, f"{now.strftime('%Y-%m-%d')}_dora")
-        with open(f"{base}.json", "w") as f:
-            f.write(output_json)
-        with open(f"{base}.md", "w") as f:
-            f.write(summary)
-        print(f"Output saved to {base}.json and {base}.md\n")
+        date = now.strftime("%Y-%m-%d")
+        slugs = repo_file_slugs(result)
+        bases = []
+
+        # One pair of files per repo: a repo is the unit that gets measured
+        # (never combined with its siblings), so it is also the unit that gets
+        # saved and shared.
+        for project in result["projects"]:
+            for repo in project["repos"]:
+                base = os.path.join(
+                    out_dir, f"{date}-{slugs[repo['repo']]}-{REPORT_TYPE}"
+                )
+                per_repo = single_repo_result(result, project, repo)
+                with open(f"{base}.json", "w") as f:
+                    f.write(json.dumps(per_repo, indent=2, ensure_ascii=False))
+                with open(f"{base}.md", "w") as f:
+                    f.write(format_human_summary(per_repo, window_days))
+                bases.append(base)
+
+        if not bases:
+            # Nothing measurable (no credential, empty config): still leave one
+            # file behind stating what happened, instead of a stderr line that
+            # scrolls away.
+            base = os.path.join(out_dir, f"{date}-{NO_REPOS_SLUG}-{REPORT_TYPE}")
+            with open(f"{base}.json", "w") as f:
+                f.write(output_json)
+            with open(f"{base}.md", "w") as f:
+                f.write(summary)
+            bases.append(base)
+
+        print("Output saved to:")
+        for base in bases:
+            print(f"  {base}.json")
+            print(f"  {base}.md")
+        print()
     print(summary)
     print(output_json)
 

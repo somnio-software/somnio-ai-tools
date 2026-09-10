@@ -56,7 +56,7 @@ You are an expert security secret scanning specialist combining two capabilities
 
 ## Analysis Process
 
-1. **Read Preflight Artifact**: Read `reports/.artifacts/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Determine scan file extensions and directories based on project type.
+1. **Read Preflight Artifact**: Read `reports/.artifacts/security-audit/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Determine scan file extensions and directories based on project type.
 2. **Run Source Code Secret Scans**: Execute technology-specific grep commands to detect secret patterns. For each project type:
    - **Flutter/Dart**: Scan `*.dart` files in `lib/` and `packages/` for Bearer secrets, Stripe keys, API secrets, hardcoded passwords, and cloud credentials.
    - **NestJS/Node.js**: Scan `*.ts` files in `src/`, `apps/`, `libs/` for process.env direct usage, hardcoded JWT secrets, database connection strings, API keys/tokens, and cloud credentials.
@@ -66,7 +66,7 @@ You are an expert security secret scanning specialist combining two capabilities
    - **.NET**: Scan `*.cs` files for ConnectionStrings, hardcoded passwords, API keys, and Azure Key Vault patterns.
 3. **Exclude Test/Mock Files**: Always exclude test, mock, fake, example, and sample files from secret pattern results to reduce false positives.
 4. **Run Gitleaks**: Check if Gitleaks is installed (`command -v gitleaks`). If installed, run working directory scan (`gitleaks detect --source . --no-git`) and git history scan (`gitleaks detect --source .`). If not installed, output NOT_INSTALLED with installation instructions.
-5. **Save Outputs**: Write secret pattern analysis to `reports/.artifacts/step_03_security_secret_patterns.md` and Gitleaks results to `reports/.artifacts/step_04_security_gitleaks.md`.
+5. **Save Outputs**: Write secret pattern analysis to `reports/.artifacts/security-audit/step_03_security_secret_patterns.md` and Gitleaks results to `reports/.artifacts/security-audit/step_04_security_gitleaks.md`.
 
 ## Detailed Instructions
 
@@ -95,7 +95,7 @@ If the reference files are unavailable, perform the analysis using the process a
 
 ## Output Format
 
-Save your secret pattern analysis to `reports/.artifacts/step_03_security_secret_patterns.md` and Gitleaks findings to `reports/.artifacts/step_04_security_gitleaks.md`.
+Save your secret pattern analysis to `reports/.artifacts/security-audit/step_03_security_secret_patterns.md` and Gitleaks findings to `reports/.artifacts/security-audit/step_04_security_gitleaks.md`.
 
 Create the directory first: `mkdir -p reports/.artifacts`
 

@@ -31,13 +31,13 @@ You are the SOC 2 risk, assurance, vendor, and resilience analyzer. You gather e
 
 Read and follow ALL instructions in `references/vulnerability-assurance.md` (families G/I/K) and then `references/incident-resilience.md` (family H).
 
-First read `reports/.artifacts/step_01_soc2_project_detection.md` for CI/CD, scanning tooling, and IaC hints. For each control record: control ref, criterion, Status (met/partial/gap/organizational), Owner/lane, and Evidence (path). Family K is NOT scored — inventory the five deliverables as targets (present? yes/no).
+First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for CI/CD, scanning tooling, and IaC hints. For each control record: control ref, criterion, Status (met/partial/gap/organizational), Owner/lane, and Evidence (path). Family K is NOT scored — inventory the five deliverables as targets (present? yes/no).
 
 ## Output
 
 Save two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
-- `reports/.artifacts/step_07_soc2_vulnerability_assurance.md` — family G and I control tables, the family K deliverables target list, a third-party/vendor inventory, and gaps.
-- `reports/.artifacts/step_08_soc2_incident_resilience.md` — family H control table, IR/BCP/DR artifact-presence summary, redundancy & RPO/RTO evidence, and gaps.
+- `reports/.artifacts/soc2-audit/step_07_soc2_vulnerability_assurance.md` — family G and I control tables, the family K deliverables target list, a third-party/vendor inventory, and gaps.
+- `reports/.artifacts/soc2-audit/step_08_soc2_incident_resilience.md` — family H control table, IR/BCP/DR artifact-presence summary, redundancy & RPO/RTO evidence, and gaps.
 
 ## Critical Rules
 

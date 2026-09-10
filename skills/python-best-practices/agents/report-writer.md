@@ -6,7 +6,7 @@ description: |
   <example>
   Context: All 7 analysis artifacts are confirmed present by the orchestrator.
   user: "Generate the Python best-practices audit report."
-  assistant: "I will read all 7 artifacts from reports/.artifacts/python-best-practices/, read assets/report-template.md and references/best-practices-format-enforcer.md, compute the weighted overall score (typing 15%, code-style 10%, function-design 15%, data-validation 15%, error-handling 15%, module-structure 10%, testing-quality 20%), then write the final report to reports/python_best_practices_report.md."
+  assistant: "I will read all 7 artifacts from reports/.artifacts/python-best-practices/, read assets/report-template.md and references/best-practices-format-enforcer.md, compute the weighted overall score (typing 15%, code-style 10%, function-design 15%, data-validation 15%, error-handling 15%, module-structure 10%, testing-quality 20%), then write the final report to reports/<YYYY-MM-DD>-<project>-python-best-practices.md."
   <commentary>
   The report-writer is the only agent that holds all artifacts simultaneously — cross-section reconciliation and narrative synthesis require frontier-tier reasoning.
   </commentary>
@@ -92,7 +92,7 @@ Follow the template at `assets/report-template.md` exactly for the report struct
 Write the complete report to:
 
 ```
-reports/python_best_practices_report.md
+reports/<YYYY-MM-DD>-<project>-python-best-practices.md
 ```
 
 Create the directory if needed before writing.

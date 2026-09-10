@@ -58,4 +58,4 @@ Read `soc2-audit/references/report-generator.md` and follow ALL instructions in 
 
 Read `soc2-audit/references/report-format-enforcer.md` and follow ALL instructions in the prompt field
 
-Save the validated report to `./reports/soc2_audit.md`
+Save the validated report to `./reports/<YYYY-MM-DD>-<project>-soc2-audit.md`

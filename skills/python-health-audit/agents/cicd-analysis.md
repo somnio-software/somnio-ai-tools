@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A project with two GitHub Actions workflow files.
   user: "Analyze CI/CD configuration."
-  assistant: "I will read all .github/workflows/*.yml files in parallel, grep for lint (ruff check), type-check (mypy/pyright), test (pytest), coverage threshold, and security scanning steps, then write findings to reports/.artifacts/python_health/step_03_cicd_analysis.md."
+  assistant: "I will read all .github/workflows/*.yml files in parallel, grep for lint (ruff check), type-check (mypy/pyright), test (pytest), coverage threshold, and security scanning steps, then write findings to reports/.artifacts/python-health-audit/step_03_cicd_analysis.md."
   <commentary>
   cicd-analysis uses grep-level YAML inspection — it detects keyword presence, not semantic correctness of the pipeline logic.
   </commentary>
@@ -62,9 +62,9 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_03_cicd_analysis.md`
+`reports/.artifacts/python-health-audit/step_03_cicd_analysis.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 ## Efficiency constraint
 

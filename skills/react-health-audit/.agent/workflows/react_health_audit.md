@@ -82,5 +82,5 @@ STEP 9 COMPLETED: [log result] # model: frontier
 Read `react-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field
 STEP 10 COMPLETED: [log result] # model: frontier
 
-Save the final Markdown report to `./reports/react_audit.md`
+Save the final Markdown report to `./reports/<YYYY-MM-DD>-<project>-react-health-audit.md`
 STEP 11 COMPLETED: Report exported # model: frontier

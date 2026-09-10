@@ -156,6 +156,6 @@ timestamp. After computing the new overall, record the delta
 "Previous: [N]/100, Change: [+/-M] ([improving|declining|unchanged])".
 
 ARTIFACT SAVE (optional but recommended):
-The computed scores may be written to reports/.artifacts/step_09_soc2_scoring.md
+The computed scores may be written to reports/.artifacts/soc2-audit/step_09_soc2_scoring.md
 for traceability, or held in memory for the report generator. Either way, the
 score breakdown per family MUST appear in the final report's scored sections.

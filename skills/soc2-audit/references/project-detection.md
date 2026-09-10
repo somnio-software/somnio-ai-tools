@@ -95,7 +95,7 @@ TOOLING NOTE (optional external CLIs):
   never requires them and skips gracefully when absent.
 
 ARTIFACT SAVE (mandatory):
-Save the full detection output to: reports/.artifacts/step_01_soc2_project_detection.md
+Save the full detection output to: reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format (in artifact):

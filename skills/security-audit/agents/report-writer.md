@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The orchestrator has completed all analysis waves and hands the artifact manifest to the report-writer.
   user: "Generate the security audit report."
-  assistant: "I will read all artifact files from reports/.artifacts/, load the scoring rubrics from references/report-generator.md, compute the 5 weighted section scores and the overall score, enforce the 13-section structure per references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/security_audit.md and the JSON export to reports/security_audit.json."
+  assistant: "I will read all artifact files from reports/.artifacts/, load the scoring rubrics from references/report-generator.md, compute the 5 weighted section scores and the overall score, enforce the 13-section structure per references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/<YYYY-MM-DD>-<project>-security-audit.md and the JSON export to reports/<YYYY-MM-DD>-<project>-security-audit.json."
   <commentary>
   The report-writer is the only agent that holds all artifacts simultaneously. It performs cross-section score reconciliation and produces the single user-facing output.
   </commentary>
@@ -86,9 +86,9 @@ Execute Steps A through E from `references/report-generator.md` (extract scoring
 
 ## Output
 
-Write the final validated report to `reports/security_audit.md`.
+Write the final validated report to `reports/<YYYY-MM-DD>-<project>-security-audit.md`.
 
-Write the JSON export to `reports/security_audit.json` (exact schema defined in `references/report-generator.md`).
+Write the JSON export to `reports/<YYYY-MM-DD>-<project>-security-audit.json` (exact schema defined in `references/report-generator.md`).
 
 Write the score history to `reports/.history/last_scores.json`.
 
@@ -100,6 +100,6 @@ Run before writing: `mkdir -p reports reports/.history`
 - **Compute all scores before writing any report content.** Score computation must be traceable from artifact evidence.
 - **Apply dynamic section ordering**: sort scored sections 3-7 by score ascending before numbering. Use the tiebreaker order from `references/report-generator.md` when scores are equal.
 - **Self-validate before writing**: apply all structural checks from `references/report-format-enforcer.md` to the draft. Fix any issues in-place before saving.
-- **Append the metadata block** at the very end of `reports/security_audit.md` exactly as specified in `SKILL.md` (resolve plugin name and version from `.claude-plugin/plugin.json` if present, otherwise use `Somnio CLI` / `unknown`).
+- **Append the metadata block** at the very end of `reports/<YYYY-MM-DD>-<project>-security-audit.md` exactly as specified in `SKILL.md` (resolve plugin name and version from `.claude-plugin/plugin.json` if present, otherwise use `Somnio CLI` / `unknown`).
 - **Do not recommend CODEOWNERS or SECURITY.md files** (governance decisions, not technical requirements).
 - **Do not recommend operational documentation** (runbooks, deployment procedures, monitoring).

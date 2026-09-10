@@ -75,4 +75,4 @@ Only starts after all Wave 2 artifacts are confirmed.
 
 Read `react-best-practices/agents/report-writer.md` and follow ALL instructions.
 Reads: all seven step artifacts + `assets/report-template.md`
-Writes: `reports/react-best-practices-report.md`
+Writes: `reports/<YYYY-MM-DD>-<project>-react-best-practices.md`

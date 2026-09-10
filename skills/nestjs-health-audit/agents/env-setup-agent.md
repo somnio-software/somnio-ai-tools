@@ -79,7 +79,7 @@ Verifies that nvm is correctly configured and all dependencies are installed as 
 
 Read and follow ALL instructions in `references/test-coverage.md`.
 
-Runs the project's test suite and captures coverage output. Save results to `reports/.artifacts/nestjs_health/step_00_test_coverage.md`.
+Runs the project's test suite and captures coverage output. Save results to `reports/.artifacts/nestjs-health-audit/step_00_test_coverage.md`.
 
 If tests fail (non-zero exit code), record the failure in the artifact and continue — a failing test suite is an audit finding, not an audit blocker.
 
@@ -88,10 +88,10 @@ If tests fail (non-zero exit code), record the failure in the artifact and conti
 After all four sub-steps complete (or after a hard stop), write the gate artifact:
 
 ```
-mkdir -p reports/.artifacts/nestjs_health
+mkdir -p reports/.artifacts/nestjs-health-audit
 ```
 
-Write to `reports/.artifacts/nestjs_health/step_00_env_setup.md`:
+Write to `reports/.artifacts/nestjs-health-audit/step_00_env_setup.md`:
 
 ```
 # Wave 0: Environment Setup Gate

@@ -10,7 +10,7 @@ and the mandatory documented information exist in the repository. Record Status
 ISMS Clause Coverage section and Statement of Applicability starter.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md` for the
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for the
   governance/policy docs already enumerated.
 
 STATUS + OWNER/LANE:
@@ -70,7 +70,7 @@ For each management-system clause, record present/absent + the artifact path:
 READ-ONLY + SECRET SAFETY: read only; redact secret VALUES as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_12_iso27001_evidence_isms_artifacts.md
+Save output to: reports/.artifacts/iso27001-audit/step_12_iso27001_evidence_isms_artifacts.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

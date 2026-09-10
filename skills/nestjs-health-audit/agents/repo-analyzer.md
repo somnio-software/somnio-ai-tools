@@ -63,7 +63,7 @@ You are an expert NestJS architecture analyst specializing in module organizatio
 5. **Analyze Service File Sizes**: Use `wc -l` on all `*.service.ts` files. Categorize by the line count thresholds. For oversized files, suggest splitting strategies (by operation type, sub-domain, or read/write operations).
 6. **Check DTO Organization**: Find all `*.dto.ts` files, check for `dto/` directory structure, and verify naming conventions.
 7. **Check Shared Modules**: Look for `src/common/` or `src/shared/` directories. Check for guards, interceptors, pipes, filters, decorators, and utilities.
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_01_repository_inventory.md`.
+8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_01_repository_inventory.md`.
 
 ## Detailed Instructions
 
@@ -91,9 +91,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_01_repository_inventory.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_01_repository_inventory.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **Project Type**: Standard NestJS or Monorepo (with type)

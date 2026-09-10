@@ -82,5 +82,5 @@ STEP 8 COMPLETED: [log result]
 Read `nestjs-health-audit/agents/report-writer-agent.md` and follow ALL instructions.
 STEP 10 COMPLETED: [log result]
 
-Save the final Markdown report to `./reports/nestjs_audit.md`
+Save the final Markdown report to `./reports/<YYYY-MM-DD>-<project>-nestjs-health-audit.md`
 STEP 11 COMPLETED: Report exported

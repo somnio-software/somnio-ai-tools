@@ -35,7 +35,7 @@ pip install requests --break-system-packages   # if needed
 
 export GITHUB_TOKEN=ghp_xxxx    # or just have `gh auth login` done
 
-python3 scripts/dora_metrics.py --project "Example Project" --out-dir outputs
+python3 scripts/dora_metrics.py --project "Example Project" --out-dir reports
 ```
 
 Auth: the script looks for `GITHUB_TOKEN` in the environment, and if it's not
@@ -50,7 +50,7 @@ of the project's repos — a multi-repo project, for example, can have repos in
 |---|---|---|
 | `--config` | `config/projects.json` | Path to the config to use. |
 | `--project` | all in the config | Exact name of the project to run. |
-| `--out-dir` | doesn't save | If passed, in addition to stdout it saves `YYYY-MM-DD_dora.json` (portable data) and `YYYY-MM-DD_dora.md` (the same summary as a readable file) there. |
+| `--out-dir` | doesn't save | If passed, in addition to stdout it saves one pair of files **per repo** there: `YYYY-MM-DD-<repo>-dora-metrics.json` (portable data) and `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable file). |
 | `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--project`). Doesn't touch the config. |
 | `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--project`). Doesn't touch the config. |
 | `--window-days N` | — | One-off override of the window in days. Doesn't touch the config. |
@@ -120,8 +120,8 @@ projects unless a repo overrides it) and per repo.
 ## Output example
 
 Human-readable summary (printed to stdout, and — if `--out-dir` is used —
-also saved verbatim to `YYYY-MM-DD_dora.md`, so it's easy to open and read
-without re-parsing the JSON):
+also saved verbatim to `YYYY-MM-DD-<repo>-dora-metrics.md`, one file per repo,
+so it's easy to open and read without re-parsing the JSON):
 
 ```markdown
 # DORA Metrics — Example Project

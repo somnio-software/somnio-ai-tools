@@ -9,7 +9,7 @@ cryptography, access to information (A.8.3), classification, retention/deletion,
 masking, and leakage prevention. Record Status + Owner/lane per control.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md`.
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md`.
 
 CONTROL EVIDENCE (adapt to detected stack):
 
@@ -67,7 +67,7 @@ READ-ONLY + SECRET SAFETY (CRITICAL for this category):
   as `[REDACTED]`. NEVER copy a secret value into the artifact or report.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_05_iso27001_data_protection_confidentiality.md
+Save output to: reports/.artifacts/iso27001-audit/step_05_iso27001_data_protection_confidentiality.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

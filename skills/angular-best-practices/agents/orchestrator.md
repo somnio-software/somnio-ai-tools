@@ -62,7 +62,7 @@ Only start after Wave 1 artifacts are validated. Dispatch all five simultaneousl
 
 ### Wave 3 — Report Writer (frontier)
 Only start after all Wave 2 artifacts are validated:
-- `agents/report-writer.md` — reads all seven artifacts; writes `reports/angular-best-practices-report.md`
+- `agents/report-writer.md` — reads all seven artifacts; writes `reports/<YYYY-MM-DD>-<project>-angular-best-practices.md`
 
 ## Artifact Validation Protocol
 

@@ -8,7 +8,7 @@ Goal: Determine whether the repository demonstrates incident response and
 resilience controls. Record Status + Owner/lane per control.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md`.
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md`.
 
 CONTROL EVIDENCE:
 
@@ -48,7 +48,7 @@ grep -rniE "replica|replicas: ?[2-9]|auto.?scal|min_?size|desired_?capacity|mult
 READ-ONLY + SECRET SAFETY: read only; redact secret VALUES as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_09_iso27001_incident_bcp_dr.md
+Save output to: reports/.artifacts/iso27001-audit/step_09_iso27001_incident_bcp_dr.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

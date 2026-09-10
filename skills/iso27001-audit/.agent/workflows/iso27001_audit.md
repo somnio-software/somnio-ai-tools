@@ -77,4 +77,4 @@ Read `iso27001-audit/references/report-generator.md` and follow ALL instructions
 
 Read `iso27001-audit/references/report-format-enforcer.md` and follow ALL instructions in the prompt field
 
-Save the validated report to `./reports/iso27001_audit.md`
+Save the validated report to `./reports/<YYYY-MM-DD>-<project>-iso27001-audit.md`

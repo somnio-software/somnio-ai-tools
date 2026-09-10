@@ -61,7 +61,7 @@ You are an expert CI/CD pipeline analyst specializing in GitHub Actions workflow
 4. **Read Auxiliary CI Files**: Read `.github/dependabot.yaml`, `.github/cspell.json`, and `.github/PULL_REQUEST_TEMPLATE.md` in a single parallel read.
 5. **Verify Coverage Thresholds**: For every workflow that includes test execution, extract the `min_coverage` value and verify it is 70 or above. Flag any value below 70 as an error.
 6. **Cross-Reference with Structure**: For monorepos, verify naming conventions: each package should have `.github/workflows/<package_name>.yaml`, each app should have `.github/workflows/<app_name>.yaml`.
-7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter_health/step_03_cicd_analysis.md`.
+7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter-health-audit/step_03_cicd_analysis.md`.
 
 ## Detailed Instructions
 
@@ -89,9 +89,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/flutter_health/step_03_cicd_analysis.md`.
+Save your complete analysis to `reports/.artifacts/flutter-health-audit/step_03_cicd_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or multi-app monorepo

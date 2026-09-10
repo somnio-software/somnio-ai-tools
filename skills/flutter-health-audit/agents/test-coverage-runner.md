@@ -1,12 +1,12 @@
 ---
 name: test-coverage-runner
 description: |
-  Use this agent when the coverage run needs to be re-executed independently after the environment is already set up, or when the Wave 0 env-setup agent's coverage step must be isolated. Runs `fvm flutter test --coverage`, captures lcov data, and writes the mandatory preflight artifact to `reports/.artifacts/flutter_health/step_00_test_coverage.md`. Idempotent: re-running produces the same artifact path.
+  Use this agent when the coverage run needs to be re-executed independently after the environment is already set up, or when the Wave 0 env-setup agent's coverage step must be isolated. Runs `fvm flutter test --coverage`, captures lcov data, and writes the mandatory preflight artifact to `reports/.artifacts/flutter-health-audit/step_00_test_coverage.md`. Idempotent: re-running produces the same artifact path.
 
   <example>
   Context: The env-setup agent succeeded but the coverage step was skipped due to a transient test failure; the orchestrator retries coverage independently.
   user: "Re-run Flutter test coverage."
-  assistant: "I will run fvm flutter test --coverage for all apps and packages, calculate per-component coverage percentages, and write the result to reports/.artifacts/flutter_health/step_00_test_coverage.md."
+  assistant: "I will run fvm flutter test --coverage for all apps and packages, calculate per-component coverage percentages, and write the result to reports/.artifacts/flutter-health-audit/step_00_test_coverage.md."
   <commentary>
   The test-coverage-runner is idempotent and always writes to the same artifact path. The report-writer and testing-analyzer both depend on this file.
   </commentary>
@@ -47,9 +47,9 @@ Read and follow ALL instructions in `references/test-coverage.md` — this refer
 
 This agent owns exactly one artifact:
 
-**Artifact path**: `reports/.artifacts/flutter_health/step_00_test_coverage.md`
+**Artifact path**: `reports/.artifacts/flutter-health-audit/step_00_test_coverage.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 The artifact MUST begin with the mandatory `Code Coverage:` and `Coverage Breakdown:` lines as specified in `references/test-coverage.md`. These lines are consumed verbatim by the report-writer when generating Section 7 (Testing).
 
@@ -60,4 +60,4 @@ Coverage Breakdown:
   (no coverage data — tests failed or no test files found)
 ```
 
-On completion, output: `STEP 0d COMPLETED: Coverage artifact written to reports/.artifacts/flutter_health/step_00_test_coverage.md`
+On completion, output: `STEP 0d COMPLETED: Coverage artifact written to reports/.artifacts/flutter-health-audit/step_00_test_coverage.md`

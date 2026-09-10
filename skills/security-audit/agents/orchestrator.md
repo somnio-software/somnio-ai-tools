@@ -15,7 +15,7 @@ description: |
   <example>
   Context: The tool-installer artifact is missing after Wave 0.
   user: "The audit seems stuck after the first step."
-  assistant: "I detected that reports/.artifacts/step_01_security_tool_installer.md is missing after the tool-installer completed. I will retry the tool-installer once. If the artifact is still absent, I will log the failure, use a generic@. fallback for downstream agents, and continue with the remaining waves."
+  assistant: "I detected that reports/.artifacts/security-audit/step_01_security_tool_installer.md is missing after the tool-installer completed. I will retry the tool-installer once. If the artifact is still absent, I will log the failure, use a generic@. fallback for downstream agents, and continue with the remaining waves."
   <commentary>
   The orchestrator validates artifact existence before advancing waves and retries once on missing artifacts before logging and continuing.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: A Wave 1 agent fails to write its artifact.
   user: "The secret-scanner seems to have failed."
-  assistant: "I detected that reports/.artifacts/step_03_security_secret_patterns.md and reports/.artifacts/step_04_security_gitleaks.md are missing after the secret-scanner ran. I will retry the secret-scanner once. If artifacts remain missing after the retry, I will log the gap and allow the report-writer to continue with a note about the missing data — it will assign score 0 for the Secret Detection section per the rejection criteria in references/report-generator.md."
+  assistant: "I detected that reports/.artifacts/security-audit/step_03_security_secret_patterns.md and reports/.artifacts/security-audit/step_04_security_gitleaks.md are missing after the secret-scanner ran. I will retry the secret-scanner once. If artifacts remain missing after the retry, I will log the gap and allow the report-writer to continue with a note about the missing data — it will assign score 0 for the Secret Detection section per the rejection criteria in references/report-generator.md."
   <commentary>
   Missing artifacts from Wave 1 agents do not halt the audit. The orchestrator logs the gap and lets the report-writer handle incomplete data per its rejection criteria.
   </commentary>
@@ -51,7 +51,7 @@ You are the security audit orchestrator. Your sole responsibilities are routing,
 
 Dispatch `agents/tool-installer.md` and wait for completion.
 
-Validate: `reports/.artifacts/step_01_security_tool_installer.md` exists.
+Validate: `reports/.artifacts/security-audit/step_01_security_tool_installer.md` exists.
 - If missing: retry once.
 - If still missing after retry: write a fallback artifact with `PROJECT_DETECTION_RESULTS=generic@.` and `GEMINI_AVAILABLE=false`, then continue.
 
@@ -62,9 +62,9 @@ Read the artifact and extract:
 ### Wave 1 — Parallel Analysis (all three run simultaneously)
 
 Dispatch in parallel:
-- `agents/file-analyzer.md` → writes `reports/.artifacts/step_02_security_file_analysis.md`
-- `agents/secret-scanner.md` → writes `reports/.artifacts/step_03_security_secret_patterns.md` and `reports/.artifacts/step_04_security_gitleaks.md`
-- `agents/sast-analyzer.md` → writes `reports/.artifacts/step_08_security_sast.md`
+- `agents/file-analyzer.md` → writes `reports/.artifacts/security-audit/step_02_security_file_analysis.md`
+- `agents/secret-scanner.md` → writes `reports/.artifacts/security-audit/step_03_security_secret_patterns.md` and `reports/.artifacts/security-audit/step_04_security_gitleaks.md`
+- `agents/sast-analyzer.md` → writes `reports/.artifacts/security-audit/step_08_security_sast.md`
 
 Wait for all three to complete, then validate each expected artifact:
 - `step_02_security_file_analysis.md`
@@ -77,18 +77,18 @@ For each missing artifact: retry the responsible agent once. If still missing af
 ### Wave 2 — Dependency Analysis (sequential, depends on Wave 0 preflight)
 
 Dispatch `agents/dependency-analyzer.md` → writes:
-- `reports/.artifacts/step_05_security_dependency_audit.md`
-- `reports/.artifacts/step_06_security_dependency_age.md`
-- `reports/.artifacts/step_07_security_trivy.md`
+- `reports/.artifacts/security-audit/step_05_security_dependency_audit.md`
+- `reports/.artifacts/security-audit/step_06_security_dependency_age.md`
+- `reports/.artifacts/security-audit/step_07_security_trivy.md`
 
 Validate all three artifacts. Retry once on missing artifacts. Log gaps and continue if still missing.
 
 ### Wave 3 — Gemini Analysis (conditional, skip if GEMINI_AVAILABLE=false)
 
-Read `GEMINI_AVAILABLE` from `reports/.artifacts/step_01_security_tool_installer.md`.
+Read `GEMINI_AVAILABLE` from `reports/.artifacts/security-audit/step_01_security_tool_installer.md`.
 
 If `GEMINI_AVAILABLE=true`:
-- Dispatch `agents/gemini-analyzer.md` → writes `reports/.artifacts/step_09_security_gemini_analysis.md`
+- Dispatch `agents/gemini-analyzer.md` → writes `reports/.artifacts/security-audit/step_09_security_gemini_analysis.md`
 - Validate the artifact. Retry once on failure.
 
 If `GEMINI_AVAILABLE=false`:
@@ -109,7 +109,7 @@ Assemble the artifact manifest — a list of all artifact paths that exist under
 
 Note any missing artifacts in the manifest (the report-writer must account for them).
 
-Dispatch `agents/report-writer.md` with the artifact manifest. Wait for completion and verify that `reports/security_audit.md` exists.
+Dispatch `agents/report-writer.md` with the artifact manifest. Wait for completion and verify that `reports/<YYYY-MM-DD>-<project>-security-audit.md` exists.
 
 ## Orchestrator Rules
 
@@ -118,4 +118,4 @@ Dispatch `agents/report-writer.md` with the artifact manifest. Wait for completi
 - **Retry policy**: retry a failed agent exactly once before logging and continuing. Never retry more than once.
 - **Wave ordering is strict**: Wave 1 may not start until Wave 0 artifact is validated. Wave 2 may not start until Wave 1 is complete. Wave 4 (report) may not start until Waves 1, 2, and 3 (if applicable) are complete.
 - **Parallel dispatch within a wave**: use the Agent tool to dispatch multiple agents simultaneously within the same wave where indicated.
-- **Log all gaps**: write a brief orchestration log to `reports/.artifacts/orchestration_log.md` recording wave completion times, any missing artifacts, and retry outcomes.
+- **Log all gaps**: write a brief orchestration log to `reports/.artifacts/security-audit/orchestration_log.md` recording wave completion times, any missing artifacts, and retry outcomes.

@@ -8,7 +8,7 @@ Goal: Determine whether the repository contains evidence of human-resources
 security controls. Record a Status and Owner/lane for every control.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md` for
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for
   PROJECT_DETECTION_RESULTS and governance/policy docs.
 
 STATUS + OWNER/LANE:
@@ -60,7 +60,7 @@ grep -rniE "clamav|malware|virus.?scan|trivy|image scan|anti-?malware" . --inclu
 READ-ONLY + SECRET SAFETY: read only; redact any secret VALUE as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_03_iso27001_human_resources_security.md
+Save output to: reports/.artifacts/iso27001-audit/step_03_iso27001_human_resources_security.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

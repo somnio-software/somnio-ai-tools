@@ -72,7 +72,7 @@ After all three Wave 1 artifacts are confirmed, dispatch simultaneously:
 
 After all five artifacts are confirmed, dispatch:
 
-1. `agents/report-writer.md` — reads all step artifacts and writes `reports/nestjs-best-practices-report.md`
+1. `agents/report-writer.md` — reads all step artifacts and writes `reports/<YYYY-MM-DD>-<project>-nestjs-best-practices.md`
 
 ## Artifact Validation Protocol
 

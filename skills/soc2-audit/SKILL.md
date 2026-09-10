@@ -323,7 +323,7 @@ the CUEC and Deliverables sections are present, no secret values appear, and
 proper Markdown syntax. Fix any issues in-place. If scores are missing
 entirely, re-run Step 9 and Step 10 before exporting.
 
-**Export**: Save the validated report to `./reports/soc2_audit.md`
+**Export**: Save the validated report to `./reports/<YYYY-MM-DD>-<project>-soc2-audit.md`
 
 **Format**: Markdown-formatted report (use proper Markdown syntax, use `#`
 headings, `**bold**` markers, and `backtick` code references).
@@ -331,7 +331,7 @@ headings, `**bold**` markers, and `backtick` code references).
 **Command**:
 ```bash
 mkdir -p reports
-# Save validated report to ./reports/soc2_audit.md
+# Save validated report to ./reports/<YYYY-MM-DD>-<project>-soc2-audit.md
 ```
 
 ## Execution Summary
@@ -392,14 +392,48 @@ The orchestrator reads this SKILL.md for scope context, then fans out to evidenc
 
 | Agent file | Tier | References / steps covered | Artifact(s) written |
 |---|---|---|---|
-| `agents/detector.md` | cheap | `references/project-detection.md` (step 1) | `reports/.artifacts/step_01_soc2_project_detection.md` |
-| `agents/governance-analyzer.md` | cheap | `references/governance-program.md` (step 2, families A/B/J) | `reports/.artifacts/step_02_soc2_governance_program.md` |
-| `agents/access-analyzer.md` | mid | `references/access-management.md` (step 3, family C) + `references/data-protection.md` (step 4, family D) | `reports/.artifacts/step_03_soc2_access_management.md`, `reports/.artifacts/step_04_soc2_data_protection.md` |
-| `agents/pipeline-analyzer.md` | mid | `references/change-management.md` (step 5, family E) + `references/infrastructure-network.md` (step 6, family F) | `reports/.artifacts/step_05_soc2_change_management.md`, `reports/.artifacts/step_06_soc2_infrastructure_network.md` |
-| `agents/risk-analyzer.md` | mid | `references/vulnerability-assurance.md` (step 7, families G/I/K) + `references/incident-resilience.md` (step 8, family H) | `reports/.artifacts/step_07_soc2_vulnerability_assurance.md`, `reports/.artifacts/step_08_soc2_incident_resilience.md` |
-| `agents/report-writer.md` | frontier | `references/scoring.md` (step 9) + `references/report-generator.md` (step 10) + `references/report-format-enforcer.md` (step 11) + `assets/report-template.md` | `reports/soc2_audit.md`, `reports/soc2_audit.json`, `reports/.history/last_scores.json` |
+| `agents/detector.md` | cheap | `references/project-detection.md` (step 1) | `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` |
+| `agents/governance-analyzer.md` | cheap | `references/governance-program.md` (step 2, families A/B/J) | `reports/.artifacts/soc2-audit/step_02_soc2_governance_program.md` |
+| `agents/access-analyzer.md` | mid | `references/access-management.md` (step 3, family C) + `references/data-protection.md` (step 4, family D) | `reports/.artifacts/soc2-audit/step_03_soc2_access_management.md`, `reports/.artifacts/soc2-audit/step_04_soc2_data_protection.md` |
+| `agents/pipeline-analyzer.md` | mid | `references/change-management.md` (step 5, family E) + `references/infrastructure-network.md` (step 6, family F) | `reports/.artifacts/soc2-audit/step_05_soc2_change_management.md`, `reports/.artifacts/soc2-audit/step_06_soc2_infrastructure_network.md` |
+| `agents/risk-analyzer.md` | mid | `references/vulnerability-assurance.md` (step 7, families G/I/K) + `references/incident-resilience.md` (step 8, family H) | `reports/.artifacts/soc2-audit/step_07_soc2_vulnerability_assurance.md`, `reports/.artifacts/soc2-audit/step_08_soc2_incident_resilience.md` |
+| `agents/report-writer.md` | frontier | `references/scoring.md` (step 9) + `references/report-generator.md` (step 10) + `references/report-format-enforcer.md` (step 11) + `assets/report-template.md` | `reports/<YYYY-MM-DD>-<project>-soc2-audit.md`, `reports/<YYYY-MM-DD>-<project>-soc2-audit.json`, `reports/.history/last_scores.json` |
 
 **Model tiers** are provider-neutral symbolic names. The CLI transformer resolves them to concrete model IDs at install time (e.g. for Claude: cheap→haiku, mid→sonnet, frontier→opus).
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-soc2-audit.md
+```
+
+`<YYYY-MM-DD>-<project>-soc2-audit.json` — the JSON export, same name, `.json` extension.
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-soc2-audit.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-soc2-audit.md`, it
+means that resolved path.
+
+The JSON export uses the same base name with a `.json` extension. `reports/.history/last_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

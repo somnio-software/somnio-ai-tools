@@ -18,6 +18,7 @@ import '../runner/rule_names.dart';
 import '../runner/run_config.dart';
 import '../runner/step_executor.dart';
 import '../utils/command_helpers.dart';
+import '../utils/report_naming.dart';
 import '../utils/step_timeout_parser.dart';
 import '../utils/usage_summary.dart';
 
@@ -56,6 +57,11 @@ class RunCommand extends Command<int> {
       'step-timeout',
       help: 'Per-step timeout in minutes (default: 30).',
     );
+    argParser.addOption(
+      'project-name',
+      help: 'Project name used in the report file name '
+          '(default: the current directory name).',
+    );
   }
 
   final Logger _logger;
@@ -71,8 +77,8 @@ class RunCommand extends Command<int> {
       'The CLI handles setup steps (tool install, version alignment, tests)\n'
       'via pre-flight, then delegates analysis steps to an AI CLI.\n'
       '\n'
-      'Artifacts are saved to ./reports/.artifacts/ and the final report\n'
-      'to ./reports/{tech}_audit.md.';
+      'Artifacts are saved to ./reports/.artifacts/{audit}/ and the final\n'
+      'report to ./reports/YYYY-MM-DD-{project}-{audit}.md.';
 
   @override
   String get invocation => 'somnio run <code>';
@@ -108,16 +114,23 @@ class RunCommand extends Command<int> {
   }
 
   /// Derives the report file name from the bundle.
-  String _reportFileFromBundle(SkillBundle bundle) {
-    if (bundle.id.endsWith('_plan')) {
-      return '${bundle.techPrefix}_best_practices.md';
-    }
-    return '${bundle.techPrefix}_audit.md';
-  }
+  ///
+  /// `bundle.name` is already the kebab-case report type
+  /// (`flutter-best-practices`, `nestjs-health-audit`, `security-audit`), so
+  /// it is the report-type segment verbatim.
+  String _reportFileFromBundle(SkillBundle bundle, String projectName) =>
+      reportFileName(
+        date: DateTime.now(),
+        project: projectName,
+        reportType: bundle.name,
+      );
 
   /// Derives the artifacts directory for a bundle.
+  ///
+  /// Keyed by `bundle.name` (not `bundle.id`) so the directory matches the
+  /// kebab-case name the skills document.
   String _artifactsDirFromBundle(String cwd, SkillBundle bundle) =>
-      p.join(cwd, 'reports', '.artifacts', bundle.id);
+      p.join(cwd, 'reports', '.artifacts', bundle.name);
 
   /// Finds an audit bundle by name, alias, or short code.
   SkillBundle? _findBundleByCode(String code) {
@@ -167,6 +180,8 @@ class RunCommand extends Command<int> {
 
     final techPrefix = bundle.techPrefix;
     final cwd = Directory.current.path;
+    final projectName =
+        argResults!['project-name'] as String? ?? p.basename(cwd);
 
     // 2. Validate project type
     final skipValidation = argResults!['skip-validation'] as bool;
@@ -311,6 +326,7 @@ class RunCommand extends Command<int> {
       model: model,
       cwd: cwd,
       repoRoot: resolvedContent.repoRoot,
+      projectName: projectName,
       noPreflight: noPreflight,
       agentResolver: agentResolver,
       preflightResult: preflightResult,
@@ -349,6 +365,7 @@ class RunCommand extends Command<int> {
               model: model,
               cwd: cwd,
               repoRoot: resolvedContent.repoRoot,
+              projectName: projectName,
               noPreflight: noPreflight,
               agentResolver: agentResolver,
               preflightResult: null,
@@ -375,6 +392,7 @@ class RunCommand extends Command<int> {
     required String? model,
     required String cwd,
     required String repoRoot,
+    required String projectName,
     required bool noPreflight,
     required AgentResolver agentResolver,
     PreflightResult? preflightResult,
@@ -393,7 +411,7 @@ class RunCommand extends Command<int> {
     // Resolve rule paths and verify installation
     final planSubDir = bundle.planSubDir;
     final templateFile = _templateFileFromBundle(bundle);
-    final reportFile = _reportFileFromBundle(bundle);
+    final reportFile = _reportFileFromBundle(bundle, projectName);
 
     final ruleBase = agentResolver.ruleBasePath(
       agent,

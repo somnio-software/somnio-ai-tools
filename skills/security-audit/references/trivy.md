@@ -43,4 +43,4 @@ Include in artifact:
    for macOS)
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_07_security_trivy.md
+Save the full analysis output to: reports/.artifacts/security-audit/step_07_security_trivy.md

@@ -37,8 +37,13 @@ void main() {
           steps: const [step],
           ruleBasePath: p.join(tempDir.path, 'references'),
           templatePath: p.join(tempDir.path, 'template.md'),
-          artifactsDir: p.join(tempDir.path, 'reports', '.artifacts'),
-          reportPath: p.join(tempDir.path, 'reports', 'audit.md'),
+          artifactsDir:
+              p.join(tempDir.path, 'reports', '.artifacts', 'flutter-health-audit'),
+          reportPath: p.join(
+            tempDir.path,
+            'reports',
+            '2026-09-14-hoopis-app-flutter-health-audit.md',
+          ),
         );
 
     setUp(() {

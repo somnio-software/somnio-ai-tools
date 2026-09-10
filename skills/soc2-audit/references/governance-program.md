@@ -11,7 +11,7 @@ audit reports "policy artifact present? yes/no" and awards limited partial
 credit for a present artifact. It never invents a policy that is not there.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_soc2_project_detection.md for the governance
+- Read reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md for the governance
   document surface and repository structure.
 
 CONTROL RECORDING FORMAT (use for every control below):
@@ -81,7 +81,7 @@ STATUS RULES:
 - CLIENT/CUEC controls -> record as CUEC; never mark as a platform gap.
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_02_soc2_governance_program.md
+Save the full analysis output to: reports/.artifacts/soc2-audit/step_02_soc2_governance_program.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

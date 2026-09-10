@@ -95,6 +95,7 @@ somnio run sa --model opus             # Security audit with a specific model
 somnio run fh --skip-validation        # Skip project type check
 somnio run fh --no-preflight           # Send all steps to AI
 somnio run fh --step-timeout 45        # Per-step timeout of 45 minutes
+somnio run fh --project-name hoopis    # Override the name in the report file
 ```
 
 | Flag | Short | Description |
@@ -104,6 +105,37 @@ somnio run fh --step-timeout 45        # Per-step timeout of 45 minutes
 | `--skip-validation` | | Skip project type check |
 | `--no-preflight` | | Skip pre-flight and send all steps to AI |
 | `--step-timeout` | | Per-step timeout in minutes (default: 30) |
+| `--project-name` | | Project name used in the report file name (default: the current directory name) |
+
+#### Report file name
+
+Every audit writes one report, named:
+
+```
+reports/<YYYY-MM-DD>-<project>-<audit>.md
+```
+
+```
+reports/2026-09-14-hoopis-backend-flutter-health-audit.md
+reports/2026-09-14-hoopis-backend-security-audit.md
+reports/2026-09-14-hoopis-backend-security-audit.json
+```
+
+- `<YYYY-MM-DD>` — the date of the run, first so the directory listing sorts
+  chronologically on its own.
+- `<project>` — the current directory name, slugified to kebab-case (lowercase;
+  spaces, `_`, `.` and `/` become `-`; anything else dropped; repeated `-`
+  collapsed). Override it with `--project-name` when the checkout directory is
+  not named after the project.
+- `<audit>` — the skill name, unchanged (`security-audit`,
+  `nestjs-health-audit`, `flutter-best-practices`).
+
+Because the name carries the date, re-running an audit on a later day leaves the
+earlier report in place instead of overwriting it. Two runs on the same day do
+overwrite each other. `harness-audit`, `security-audit`, `soc2-audit` and
+`iso27001-audit` also write a `.json` export with the same base name;
+`reports/.history/last_scores.json` is trend state, not a report, and keeps its
+fixed name.
 
 ### somnio install
 
@@ -283,13 +315,13 @@ See the [Skills Catalog](skills.md) for full descriptions.
 
 When you run `somnio run <alias>`:
 
-1. **Parse arguments** — `--agent`, `--model`, `--skip-validation`, `--no-preflight`
+1. **Parse arguments** — `--agent`, `--model`, `--skip-validation`, `--no-preflight`, `--project-name`
 2. **Validate project type** — Flutter needs `pubspec.yaml`, NestJS needs `package.json` + `@nestjs/core`, Python needs `pyproject.toml`
 3. **Run pre-flight steps** — Tool installation, version alignment, test coverage (no AI needed)
 4. **Resolve AI agent and model** — Auto-detect or use `--agent` flag
 5. **Parse SKILL.md** — Extract step order from the execution plan
-6. **Execute each step** — Spawn a fresh AI CLI process per step, save artifacts to `./reports/.artifacts/`
-7. **Generate final report** — Write to `./reports/`
+6. **Execute each step** — Spawn a fresh AI CLI process per step, save artifacts to `./reports/.artifacts/<skill-name>/`
+7. **Generate final report** — Write to `./reports/<YYYY-MM-DD>-<project>-<skill-name>.md`
 
 ### Token Usage Tracking
 

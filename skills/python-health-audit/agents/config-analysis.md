@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A project using uv with a pyproject.toml and a uv.lock file.
   user: "Analyze the project configuration."
-  assistant: "I will read pyproject.toml, uv.lock, and .pre-commit-config.yaml in parallel, extract requires-python, dependency pinning strategy, Ruff/mypy/pytest/coverage configuration sections, and write findings to reports/.artifacts/python_health/step_02_config_analysis.md."
+  assistant: "I will read pyproject.toml, uv.lock, and .pre-commit-config.yaml in parallel, extract requires-python, dependency pinning strategy, Ruff/mypy/pytest/coverage configuration sections, and write findings to reports/.artifacts/python-health-audit/step_02_config_analysis.md."
   <commentary>
   config-analysis reads files and extracts key-value pairs — it does not reason about code quality implications (that is code-quality's job).
   </commentary>
@@ -59,9 +59,9 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_02_config_analysis.md`
+`reports/.artifacts/python-health-audit/step_02_config_analysis.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 ## Efficiency constraint
 

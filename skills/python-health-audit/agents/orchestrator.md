@@ -24,7 +24,7 @@ description: |
   <example>
   Context: A config-analysis artifact is missing after Wave 1.
   user: "Continue the audit."
-  assistant: "The expected artifact reports/.artifacts/python_health/step_02_config_analysis.md is missing. Retrying config-analysis once. If the retry also fails, I will log the missing artifact and skip sections that depend on it."
+  assistant: "The expected artifact reports/.artifacts/python-health-audit/step_02_config_analysis.md is missing. Retrying config-analysis once. If the retry also fails, I will log the missing artifact and skip sections that depend on it."
   <commentary>
   The orchestrator retries a missing artifact exactly once, then logs and skips dependents — it does not halt the entire run for non-gate steps.
   </commentary>
@@ -47,7 +47,7 @@ You are the orchestrator for the Python Project Health Audit. Your sole responsi
 
 ## Artifact Base Path
 
-All artifacts live under: `reports/.artifacts/python_health/`
+All artifacts live under: `reports/.artifacts/python-health-audit/`
 
 ## Expected Artifacts (by wave)
 
@@ -63,7 +63,7 @@ All artifacts live under: `reports/.artifacts/python_health/`
 | 3 | api-design-analysis | `step_06_api_design_analysis.md` |
 | 3 | data-layer-analysis | `step_07_data_layer_analysis.md` |
 | 4 | documentation-analysis | `step_08_documentation_analysis.md` |
-| 5 | report-writer | `reports/python_audit.md` |
+| 5 | report-writer | `reports/<YYYY-MM-DD>-<project>-python-health-audit.md` |
 
 ## Wave Execution Plan
 
@@ -71,7 +71,7 @@ All artifacts live under: `reports/.artifacts/python_health/`
 
 Dispatch `agents/env-setup.md` as a subagent.
 
-On completion, verify that `reports/.artifacts/python_health/step_00_test_coverage.md` exists.
+On completion, verify that `reports/.artifacts/python-health-audit/step_00_test_coverage.md` exists.
 
 **EARLY-STOP GATE**: If the artifact is absent, or if env-setup signals a version-alignment failure, STOP all execution immediately. Log the failure reason and provide resolution steps. Do NOT proceed to Wave 1.
 
@@ -82,8 +82,8 @@ Dispatch both agents simultaneously using the Agent tool:
 - `agents/config-analysis.md`
 
 After both complete, validate:
-- `reports/.artifacts/python_health/step_01_repository_inventory.md`
-- `reports/.artifacts/python_health/step_02_config_analysis.md`
+- `reports/.artifacts/python-health-audit/step_01_repository_inventory.md`
+- `reports/.artifacts/python-health-audit/step_02_config_analysis.md`
 
 For each missing artifact: retry the responsible agent once. If still missing after retry, log the gap and continue — downstream agents that depend on it will note the missing input.
 
@@ -96,10 +96,10 @@ Dispatch all four agents simultaneously:
 - `agents/harness-analyzer.md`
 
 Validate after completion:
-- `reports/.artifacts/python_health/step_03_cicd_analysis.md`
-- `reports/.artifacts/python_health/step_04_testing_analysis.md`
-- `reports/.artifacts/python_health/step_05_code_quality.md`
-- `reports/.artifacts/python_health/step_09_harness_analysis.md`
+- `reports/.artifacts/python-health-audit/step_03_cicd_analysis.md`
+- `reports/.artifacts/python-health-audit/step_04_testing_analysis.md`
+- `reports/.artifacts/python-health-audit/step_05_code_quality.md`
+- `reports/.artifacts/python-health-audit/step_09_harness_analysis.md`
 
 Apply the same retry-once-then-log policy for any missing artifact.
 
@@ -110,18 +110,18 @@ Dispatch both agents simultaneously:
 - `agents/data-layer-analysis.md`
 
 Validate after completion:
-- `reports/.artifacts/python_health/step_06_api_design_analysis.md`
-- `reports/.artifacts/python_health/step_07_data_layer_analysis.md`
+- `reports/.artifacts/python-health-audit/step_06_api_design_analysis.md`
+- `reports/.artifacts/python-health-audit/step_07_data_layer_analysis.md`
 
 ### Wave 4 — Documentation (Sequential)
 
 Dispatch: `agents/documentation-analysis.md`
 
-Validate: `reports/.artifacts/python_health/step_08_documentation_analysis.md`
+Validate: `reports/.artifacts/python-health-audit/step_08_documentation_analysis.md`
 
 ### Wave 5 — Report Generation (Sequential)
 
-Assemble the artifact manifest: a list of all artifacts that exist under `reports/.artifacts/python_health/` plus their status (present / missing-skipped).
+Assemble the artifact manifest: a list of all artifacts that exist under `reports/.artifacts/python-health-audit/` plus their status (present / missing-skipped).
 
 Dispatch `agents/report-writer.md` and pass it the manifest. The report-writer is the only agent that synthesizes all findings into the user-facing report.
 

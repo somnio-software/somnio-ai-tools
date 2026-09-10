@@ -9,7 +9,7 @@ tenants, and manages retention and disposal. Family D is heavily
 PLATFORM-AUDITABLE. Record Status + Owner/lane + evidence for each control.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_soc2_project_detection.md for stack and IaC.
+- Read reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md for stack and IaC.
 
 CONTROL RECORDING FORMAT: control ref (e.g. `D1`), criterion, Status, Owner/lane,
 Evidence. Family D controls are PLATFORM-AUDITABLE unless noted.
@@ -77,7 +77,7 @@ STATUS RULES:
 - No evidence -> gap; state the exact evidence that would satisfy it.
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_04_soc2_data_protection.md
+Save the full analysis output to: reports/.artifacts/soc2-audit/step_04_soc2_data_protection.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

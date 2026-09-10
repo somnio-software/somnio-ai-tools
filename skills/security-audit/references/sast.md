@@ -9,7 +9,7 @@ per detected project type. Findings are LOW/MEDIUM severity for
 Consolidated Findings; do not affect main section scores.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_security_tool_installer.md for
+- Read reports/.artifacts/security-audit/step_01_security_tool_installer.md for
   PROJECT_DETECTION_RESULTS (type@path|type@path...)
 - If multiple projects: for each type@path, cd to path and run
   SAST patterns for that language; concatenate results
@@ -214,5 +214,5 @@ For each project type detected, report:
 Classify each finding as LOW or MEDIUM. Do not affect main scoring.
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_08_security_sast.md
+Save the full analysis output to: reports/.artifacts/security-audit/step_08_security_sast.md
 Run before finishing: mkdir -p reports/.artifacts

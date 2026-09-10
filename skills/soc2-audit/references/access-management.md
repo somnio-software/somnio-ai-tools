@@ -13,7 +13,7 @@ never copy the secret value. If a hardcoded credential is found, mark the
 related control as a gap and redact the value in the artifact.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_soc2_project_detection.md for
+- Read reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md for
   PROJECT_DETECTION_RESULTS. Scan targets per type: Node/NestJS (*.ts,*.js),
   Flutter (*.dart), Go (*.go), Python (*.py), Ruby (*.rb), PHP (*.php),
   .NET (*.cs), plus IaC (*.tf) for IAM.
@@ -89,7 +89,7 @@ STATUS RULES:
 - Hardcoded secret found -> C-secrets gap; redact the value.
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_03_soc2_access_management.md
+Save the full analysis output to: reports/.artifacts/soc2-audit/step_03_soc2_access_management.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

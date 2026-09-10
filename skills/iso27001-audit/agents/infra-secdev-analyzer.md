@@ -20,11 +20,11 @@ You are the secure-development & infrastructure analyzer for a framework-agnosti
 
 ## Instructions
 
-First read `reports/.artifacts/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS, package managers, and CI/IaC surfaces, then:
+First read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for PROJECT_DETECTION_RESULTS, package managers, and CI/IaC surfaces, then:
 
-- Read and follow ALL instructions in `references/secure-development-change.md` -> write `reports/.artifacts/step_06_iso27001_secure_development_change.md`
-- Read and follow ALL instructions in `references/infrastructure-network-security.md` -> write `reports/.artifacts/step_07_iso27001_infrastructure_network_security.md`
-- Read and follow ALL instructions in `references/vulnerability-management-assurance.md` -> write `reports/.artifacts/step_08_iso27001_vulnerability_management_assurance.md`
+- Read and follow ALL instructions in `references/secure-development-change.md` -> write `reports/.artifacts/iso27001-audit/step_06_iso27001_secure_development_change.md`
+- Read and follow ALL instructions in `references/infrastructure-network-security.md` -> write `reports/.artifacts/iso27001-audit/step_07_iso27001_infrastructure_network_security.md`
+- Read and follow ALL instructions in `references/vulnerability-management-assurance.md` -> write `reports/.artifacts/iso27001-audit/step_08_iso27001_vulnerability_management_assurance.md`
 
 Run `mkdir -p reports/.artifacts` before writing.
 

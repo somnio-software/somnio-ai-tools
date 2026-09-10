@@ -87,7 +87,7 @@ STANDARD REFERENCE NOTE:
   Physical (A.7) controls are documentation-evidence checks.
 
 ARTIFACT SAVE (mandatory):
-Save the full detection output to: reports/.artifacts/step_01_iso27001_project_detection.md
+Save the full detection output to: reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format (in artifact):

@@ -362,7 +362,7 @@ coverage are present, no secret values appear, and proper Markdown syntax. Fix
 any issues in-place. If scores are missing entirely, re-run Step 13 and Step 14
 before exporting.
 
-**Export**: Save the validated report to `./reports/iso27001_audit.md`
+**Export**: Save the validated report to `./reports/<YYYY-MM-DD>-<project>-iso27001-audit.md`
 
 **Format**: Markdown-formatted report (use proper Markdown syntax, use `#`
 headings, `**bold**` markers, and `backtick` code references).
@@ -370,7 +370,7 @@ headings, `**bold**` markers, and `backtick` code references).
 **Command**:
 ```bash
 mkdir -p reports
-# Save validated report to ./reports/iso27001_audit.md
+# Save validated report to ./reports/<YYYY-MM-DD>-<project>-iso27001-audit.md
 ```
 
 ## Execution Summary
@@ -445,16 +445,50 @@ criteria in `references/scoring.md` and `references/report-generator.md`.
 
 | Agent file | Tier | References / steps covered | Artifact(s) written |
 |---|---|---|---|
-| `agents/project-detector.md` | cheap | `references/project-detection.md` (step 1) | `reports/.artifacts/step_01_iso27001_project_detection.md` |
-| `agents/governance-isms-analyzer.md` | mid | `references/governance-program.md` (step 2) + `references/human-resources-security.md` (step 3) + `references/evidence-isms-artifacts.md` (step 12) | `reports/.artifacts/step_02_iso27001_governance_program.md`, `reports/.artifacts/step_03_iso27001_human_resources_security.md`, `reports/.artifacts/step_12_iso27001_evidence_isms_artifacts.md` |
-| `agents/access-data-analyzer.md` | cheap | `references/identity-access-management.md` (step 4) + `references/data-protection-confidentiality.md` (step 5) | `reports/.artifacts/step_04_iso27001_identity_access_management.md`, `reports/.artifacts/step_05_iso27001_data_protection_confidentiality.md` |
-| `agents/infra-secdev-analyzer.md` | mid | `references/secure-development-change.md` (step 6) + `references/infrastructure-network-security.md` (step 7) + `references/vulnerability-management-assurance.md` (step 8) | `reports/.artifacts/step_06_iso27001_secure_development_change.md`, `reports/.artifacts/step_07_iso27001_infrastructure_network_security.md`, `reports/.artifacts/step_08_iso27001_vulnerability_management_assurance.md` |
-| `agents/resilience-supplier-ai-analyzer.md` | mid | `references/incident-bcp-dr.md` (step 9) + `references/vendor-supplier-management.md` (step 10) + `references/ai-governance.md` (step 11) | `reports/.artifacts/step_09_iso27001_incident_bcp_dr.md`, `reports/.artifacts/step_10_iso27001_vendor_supplier_management.md`, `reports/.artifacts/step_11_iso27001_ai_governance.md` |
-| `agents/report-writer.md` | frontier | `references/scoring.md` (step 13) + `references/report-generator.md` (step 14) + `references/report-format-enforcer.md` (step 15) + `assets/report-template.md` | `reports/.artifacts/step_13_iso27001_scoring.md`, `reports/iso27001_audit.md`, `reports/iso27001_audit.json`, `reports/.history/last_iso27001_scores.json` |
+| `agents/project-detector.md` | cheap | `references/project-detection.md` (step 1) | `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` |
+| `agents/governance-isms-analyzer.md` | mid | `references/governance-program.md` (step 2) + `references/human-resources-security.md` (step 3) + `references/evidence-isms-artifacts.md` (step 12) | `reports/.artifacts/iso27001-audit/step_02_iso27001_governance_program.md`, `reports/.artifacts/iso27001-audit/step_03_iso27001_human_resources_security.md`, `reports/.artifacts/iso27001-audit/step_12_iso27001_evidence_isms_artifacts.md` |
+| `agents/access-data-analyzer.md` | cheap | `references/identity-access-management.md` (step 4) + `references/data-protection-confidentiality.md` (step 5) | `reports/.artifacts/iso27001-audit/step_04_iso27001_identity_access_management.md`, `reports/.artifacts/iso27001-audit/step_05_iso27001_data_protection_confidentiality.md` |
+| `agents/infra-secdev-analyzer.md` | mid | `references/secure-development-change.md` (step 6) + `references/infrastructure-network-security.md` (step 7) + `references/vulnerability-management-assurance.md` (step 8) | `reports/.artifacts/iso27001-audit/step_06_iso27001_secure_development_change.md`, `reports/.artifacts/iso27001-audit/step_07_iso27001_infrastructure_network_security.md`, `reports/.artifacts/iso27001-audit/step_08_iso27001_vulnerability_management_assurance.md` |
+| `agents/resilience-supplier-ai-analyzer.md` | mid | `references/incident-bcp-dr.md` (step 9) + `references/vendor-supplier-management.md` (step 10) + `references/ai-governance.md` (step 11) | `reports/.artifacts/iso27001-audit/step_09_iso27001_incident_bcp_dr.md`, `reports/.artifacts/iso27001-audit/step_10_iso27001_vendor_supplier_management.md`, `reports/.artifacts/iso27001-audit/step_11_iso27001_ai_governance.md` |
+| `agents/report-writer.md` | frontier | `references/scoring.md` (step 13) + `references/report-generator.md` (step 14) + `references/report-format-enforcer.md` (step 15) + `assets/report-template.md` | `reports/.artifacts/iso27001-audit/step_13_iso27001_scoring.md`, `reports/<YYYY-MM-DD>-<project>-iso27001-audit.md`, `reports/<YYYY-MM-DD>-<project>-iso27001-audit.json`, `reports/.history/last_iso27001_scores.json` |
 
 **Model tiers** are provider-neutral symbolic names. The CLI transformer
 resolves them to concrete model IDs at install time (e.g. for Claude:
 cheap->haiku, mid->sonnet, frontier->opus).
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-iso27001-audit.md
+```
+
+`<YYYY-MM-DD>-<project>-iso27001-audit.json` — the JSON export, same name, `.json` extension.
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-iso27001-audit.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-iso27001-audit.md`, it
+means that resolved path.
+
+The JSON export uses the same base name with a `.json` extension. `reports/.history/last_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

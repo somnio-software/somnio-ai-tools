@@ -31,4 +31,4 @@ Read `harness-audit/references/report-generator.md` and follow ALL instructions 
 
 Read `harness-audit/references/report-format-enforcer.md` and follow ALL instructions in the prompt field
 
-Save the validated report to `./reports/harness_audit.md`
+Save the validated report to `./reports/<YYYY-MM-DD>-<project>-harness-audit.md`

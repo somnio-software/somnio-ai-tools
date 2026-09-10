@@ -6,7 +6,7 @@ description: |
   <example>
   Context: Wave 1 auditors have all written their artifacts and the orchestrator advances to Wave 2.
   user: "All three audit artifacts are ready. Generate the final report."
-  assistant: "I will read the three artifacts from reports/.artifacts/flutter-best-practices/, apply the format from assets/report-template.md, enforce structure per references/best-practices-format-enforcer.md, aggregate scores per references/best-practices-generator.md, and write the final report to reports/flutter_best_practices_report.md."
+  assistant: "I will read the three artifacts from reports/.artifacts/flutter-best-practices/, apply the format from assets/report-template.md, enforce structure per references/best-practices-format-enforcer.md, aggregate scores per references/best-practices-generator.md, and write the final report to reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md."
   <commentary>
   The report-writer is the only agent that reads all three artifacts simultaneously. It runs in Wave 2 after the orchestrator confirms all artifacts exist.
   </commentary>
@@ -15,7 +15,7 @@ description: |
   <example>
   Context: A user wants to understand the overall health of their Flutter codebase after the audit completes.
   user: "What is the overall Flutter best practices score?"
-  assistant: "I will read all three step artifacts (testing quality, architecture compliance, code standards), compute the section scores and overall score, enforce the mandatory 5-section structure (Executive Summary, Section 1 Testing, Section 2 Architecture, Section 3 Code Standards, Prioritized Action Plan), and write the full report to reports/flutter_best_practices_report.md."
+  assistant: "I will read all three step artifacts (testing quality, architecture compliance, code standards), compute the section scores and overall score, enforce the mandatory 5-section structure (Executive Summary, Section 1 Testing, Section 2 Architecture, Section 3 Code Standards, Prioritized Action Plan), and write the full report to reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md."
   <commentary>
   Score computation and narrative synthesis are exclusively the report-writer's responsibilities. It never re-reads raw source files.
   </commentary>
@@ -24,7 +24,7 @@ description: |
   <example>
   Context: The orchestrator hands off the artifact manifest after confirming all three paths exist.
   user: "Artifacts confirmed at step_01, step_02, step_03. Write the report."
-  assistant: "I will read each artifact, read assets/report-template.md for layout, enforce the mandatory section structure per references/best-practices-format-enforcer.md, generate the consolidated report per references/best-practices-generator.md, append the metadata block, and write to reports/flutter_best_practices_report.md."
+  assistant: "I will read each artifact, read assets/report-template.md for layout, enforce the mandatory section structure per references/best-practices-format-enforcer.md, generate the consolidated report per references/best-practices-generator.md, append the metadata block, and write to reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md."
   <commentary>
   The report-writer reads only compact artifacts and references — it never re-reads the original Dart source files.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: A downstream consumer needs the report at a predictable path for CI integration.
   user: "Where does the Flutter best practices report get written?"
-  assistant: "The report-writer writes the single user-facing report to reports/flutter_best_practices_report.md. This path is fixed and never changes."
+  assistant: "The report-writer writes the single user-facing report to reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md. This path is fixed and never changes."
   <commentary>
   The report path is part of the agent's output contract and must remain stable for downstream consumers.
   </commentary>
@@ -61,7 +61,7 @@ Read and follow ALL instructions in `references/best-practices-format-enforcer.m
 Write the final user-facing report to:
 
 ```
-reports/flutter_best_practices_report.md
+reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md
 ```
 
 Create the parent directory first if needed:
@@ -97,6 +97,6 @@ Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools
 
 - Do NOT re-read raw Dart source files. Operate only on the compact artifacts.
 - Do NOT change the scoring weights or formula defined in `references/best-practices-generator.md`.
-- Do NOT write to any path other than `reports/flutter_best_practices_report.md`.
+- Do NOT write to any path other than `reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md`.
 - Scores must be integers 0-10. Labels: Strong (9-10), Fair (7-8), Weak (0-6).
 - If an artifact is missing or empty, note it in the relevant section as "Artifact unavailable -- section score cannot be computed" and continue with available data.

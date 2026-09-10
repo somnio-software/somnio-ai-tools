@@ -63,7 +63,7 @@ You are an expert NestJS code quality analyst specializing in ESLint configurati
 5. **Check Automated Enforcement**: Check for `.husky/` directory, read pre-commit and commit-msg hooks. Read lint-staged configuration in package.json or `.lintstagedrc`. Check for `@commitlint/config-conventional`.
 6. **Detect Code Smells**: Use batch grep commands to find `console.log`, `debugger`, `TODO`, `FIXME`, and `eslint-disable` across the source code. Count and categorize.
 7. **Analyze Naming and Patterns**: Verify NestJS file naming conventions. Check for proper error handling (exception filters, custom exceptions extending HttpException).
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_05_code_quality.md`.
+8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_05_code_quality.md`.
 
 ## Detailed Instructions
 
@@ -93,9 +93,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_05_code_quality.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_05_code_quality.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or monorepo

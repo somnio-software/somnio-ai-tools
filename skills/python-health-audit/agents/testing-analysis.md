@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A FastAPI project with a tests/ directory and a conftest.py that provides a session-scoped database fixture.
   user: "Analyze testing infrastructure."
-  assistant: "I will read conftest.py files, grep for fixture scopes (function/class/module/session), check mocking patterns (pytest-mock vs unittest.mock), assess parametrize usage quality, detect async test configuration, and evaluate coverage enforcement. Writing findings to reports/.artifacts/python_health/step_04_testing_analysis.md."
+  assistant: "I will read conftest.py files, grep for fixture scopes (function/class/module/session), check mocking patterns (pytest-mock vs unittest.mock), assess parametrize usage quality, detect async test configuration, and evaluate coverage enforcement. Writing findings to reports/.artifacts/python-health-audit/step_04_testing_analysis.md."
   <commentary>
   testing-analysis requires reasoning about fixture scoping correctness and mocking isolation — it is not just keyword presence.
   </commentary>
@@ -64,9 +64,9 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_04_testing_analysis.md`
+`reports/.artifacts/python-health-audit/step_04_testing_analysis.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 ## Efficiency constraint
 

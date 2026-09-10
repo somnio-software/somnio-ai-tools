@@ -55,16 +55,16 @@ You are an expert dependency security analyst specializing in package vulnerabil
 
 ## Analysis Process
 
-1. **Read Preflight Artifact**: Read `reports/.artifacts/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Determine project type, package manager, and audit tools.
+1. **Read Preflight Artifact**: Read `reports/.artifacts/security-audit/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Determine project type, package manager, and audit tools.
 2. **Run Native Vulnerability Audit**: Execute the appropriate package manager audit command for the detected project type. Parse results by severity (critical, high, medium, low). Pipe output through `| head -100` or `| head -50`.
 3. **Verify Lock File Integrity**: Check for the presence of lock files (package-lock.json, yarn.lock, pnpm-lock.yaml, pubspec.lock, Cargo.lock, go.sum, etc.).
 4. **Run Dependency Age Check**: Execute outdated/deprecated checks. For npm, additionally check deprecated status via `npm view <pkg> deprecated`. Categorize by semver delta.
 5. **Run Trivy Scan**: Check if Trivy is installed (`command -v trivy`). If installed, run `trivy fs . -f table 2>/dev/null | head -100`. If not installed, output NOT_INSTALLED with installation instructions.
 6. **Check Automated Security Tooling**: Look for Dependabot config, Snyk config, Renovate config, and security scanning in CI/CD workflows. Check for pre-commit hooks with security tools.
 7. **Save Outputs**: Write three separate artifacts:
-   - `reports/.artifacts/step_05_security_dependency_audit.md` (vulnerability audit results)
-   - `reports/.artifacts/step_06_security_dependency_age.md` (outdated/deprecated analysis)
-   - `reports/.artifacts/step_07_security_trivy.md` (Trivy scan results)
+   - `reports/.artifacts/security-audit/step_05_security_dependency_audit.md` (vulnerability audit results)
+   - `reports/.artifacts/security-audit/step_06_security_dependency_age.md` (outdated/deprecated analysis)
+   - `reports/.artifacts/security-audit/step_07_security_trivy.md` (Trivy scan results)
 
 ## Detailed Instructions
 
@@ -96,7 +96,7 @@ If the reference files are unavailable, perform the analysis using the process a
 
 Save three separate artifacts:
 
-**`reports/.artifacts/step_05_security_dependency_audit.md`**:
+**`reports/.artifacts/security-audit/step_05_security_dependency_audit.md`**:
 - Detected project type and package manager
 - Vulnerability scan results: count by severity (critical, high, medium, low)
 - Lock file integrity status
@@ -104,14 +104,14 @@ Save three separate artifacts:
 - CI/CD security scanning status
 - Recommendations
 
-**`reports/.artifacts/step_06_security_dependency_age.md`**:
+**`reports/.artifacts/security-audit/step_06_security_dependency_age.md`**:
 - OUTDATED COUNT: integer
 - DEPRECATED COUNT: integer
 - OUTDATED LIST: Package name, current version, latest version, delta (major/minor/patch)
 - DEPRECATED LIST: Package name, deprecation message
 - SUMMARY: Brief recommendation
 
-**`reports/.artifacts/step_07_security_trivy.md`**:
+**`reports/.artifacts/security-audit/step_07_security_trivy.md`**:
 - TRIVY STATUS: INSTALLED or NOT_INSTALLED
 - If installed: vulnerability count by severity, critical findings summary, affected packages
 - If not installed: installation instruction (brew install trivy for macOS)

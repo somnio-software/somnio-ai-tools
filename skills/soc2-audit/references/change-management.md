@@ -9,7 +9,7 @@ reaching production. Family E is heavily PLATFORM-AUDITABLE from CI/CD config,
 repository settings evidence, and IaC. Record Status + Owner/lane + evidence.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_soc2_project_detection.md for the CI/CD
+- Read reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md for the CI/CD
   system, IaC presence, and lock files.
 
 CONTROL RECORDING FORMAT: control ref (e.g. `E1`), criterion, Status, Owner/lane,
@@ -86,7 +86,7 @@ STATUS RULES:
 - No evidence -> gap; state the exact evidence that would satisfy it.
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_05_soc2_change_management.md
+Save the full analysis output to: reports/.artifacts/soc2-audit/step_05_soc2_change_management.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

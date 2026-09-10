@@ -302,7 +302,7 @@ directory.
 
 **Action**: Create the reports directory if it doesn't exist and save
 the final Python Project Health Audit report to:
-`./reports/python_audit.md`
+`./reports/<YYYY-MM-DD>-<project>-python-health-audit.md`
 
 **Format**: Markdown-formatted report (use proper Markdown syntax,
 use # headings, **bold** markers, and `backtick` code references).
@@ -310,7 +310,7 @@ use # headings, **bold** markers, and `backtick` code references).
 **Command**:
 ```bash
 mkdir -p reports
-# Save report content to ./reports/python_audit.md
+# Save report content to ./reports/<YYYY-MM-DD>-<project>-python-health-audit.md
 ```
 
 **Note**: For security analysis, run the standalone Security Audit (`/somnio:security-audit`).
@@ -378,18 +378,48 @@ Invoke `agents/orchestrator.md` as the single entry point. The orchestrator hand
 | Agent File | Tier | Reference(s) Covered | Artifact |
 |------------|------|----------------------|----------|
 | `agents/orchestrator.md` | mid | — (routing only) | — |
-| `agents/env-setup.md` | cheap | tool-installer, version-alignment, test-coverage | `reports/.artifacts/python_health/step_00_test_coverage.md` |
-| `agents/version-validator.md` | cheap | version-validator | `reports/.artifacts/python_health/step_00_version_validation.md` |
-| `agents/repository-inventory.md` | cheap | repository-inventory | `reports/.artifacts/python_health/step_01_repository_inventory.md` |
-| `agents/config-analysis.md` | cheap | config-analysis | `reports/.artifacts/python_health/step_02_config_analysis.md` |
-| `agents/cicd-analysis.md` | cheap | cicd-analysis | `reports/.artifacts/python_health/step_03_cicd_analysis.md` |
-| `agents/testing-analysis.md` | mid | testing-analysis | `reports/.artifacts/python_health/step_04_testing_analysis.md` |
-| `agents/code-quality.md` | mid | code-quality | `reports/.artifacts/python_health/step_05_code_quality.md` |
-| `agents/api-design-analysis.md` | mid | api-design-analysis | `reports/.artifacts/python_health/step_06_api_design_analysis.md` |
-| `agents/data-layer-analysis.md` | mid | data-layer-analysis | `reports/.artifacts/python_health/step_07_data_layer_analysis.md` |
-| `agents/documentation-analysis.md` | cheap | documentation-analysis | `reports/.artifacts/python_health/step_08_documentation_analysis.md` |
-| `agents/harness-analyzer.md` | mid | harness-analysis | `reports/.artifacts/python_health/step_09_harness_analysis.md` |
-| `agents/report-writer.md` | frontier | report-generator, report-format-enforcer | `reports/python_audit.md` |
+| `agents/env-setup.md` | cheap | tool-installer, version-alignment, test-coverage | `reports/.artifacts/python-health-audit/step_00_test_coverage.md` |
+| `agents/version-validator.md` | cheap | version-validator | `reports/.artifacts/python-health-audit/step_00_version_validation.md` |
+| `agents/repository-inventory.md` | cheap | repository-inventory | `reports/.artifacts/python-health-audit/step_01_repository_inventory.md` |
+| `agents/config-analysis.md` | cheap | config-analysis | `reports/.artifacts/python-health-audit/step_02_config_analysis.md` |
+| `agents/cicd-analysis.md` | cheap | cicd-analysis | `reports/.artifacts/python-health-audit/step_03_cicd_analysis.md` |
+| `agents/testing-analysis.md` | mid | testing-analysis | `reports/.artifacts/python-health-audit/step_04_testing_analysis.md` |
+| `agents/code-quality.md` | mid | code-quality | `reports/.artifacts/python-health-audit/step_05_code_quality.md` |
+| `agents/api-design-analysis.md` | mid | api-design-analysis | `reports/.artifacts/python-health-audit/step_06_api_design_analysis.md` |
+| `agents/data-layer-analysis.md` | mid | data-layer-analysis | `reports/.artifacts/python-health-audit/step_07_data_layer_analysis.md` |
+| `agents/documentation-analysis.md` | cheap | documentation-analysis | `reports/.artifacts/python-health-audit/step_08_documentation_analysis.md` |
+| `agents/harness-analyzer.md` | mid | harness-analysis | `reports/.artifacts/python-health-audit/step_09_harness_analysis.md` |
+| `agents/report-writer.md` | frontier | report-generator, report-format-enforcer | `reports/<YYYY-MM-DD>-<project>-python-health-audit.md` |
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-python-health-audit.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-python-health-audit.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-python-health-audit.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

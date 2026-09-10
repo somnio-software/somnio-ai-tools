@@ -182,7 +182,7 @@ When invoked inside a Claude Code session (not via `somnio run`), the orchestrat
 | 2 | `agents/hooks-analyzer.md` | mid | `references/hooks-patterns.md` | `reports/.artifacts/angularjs-best-practices/step_05_scope_binding_analysis.md` |
 | 2 | `agents/state-analyzer.md` | mid | `references/state-management.md` | `reports/.artifacts/angularjs-best-practices/step_06_state_analysis.md` |
 | 2 | `agents/performance-analyzer.md` | mid | `references/performance.md` | `reports/.artifacts/angularjs-best-practices/step_07_performance_analysis.md` |
-| 3 | `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` + all step artifacts | `reports/angularjs-best-practices-report.md` |
+| 3 | `agents/report-writer.md` | frontier | `references/best-practices-format-enforcer.md` + `references/best-practices-generator.md` + all step artifacts | `reports/<YYYY-MM-DD>-<project>-angularjs-best-practices.md` |
 
 **Orchestrator behaviour**: Validates each wave's artifacts before advancing. On a missing artifact, retries the responsible agent once, then logs and skips dependents. Hands the artifact manifest to the report-writer. Never reads source or writes prose.
 
@@ -199,6 +199,36 @@ All standards are sourced from:
 | `state-management.md` | services/factories, `$http`/interceptors, `$rootScope` discipline |
 | `performance.md` | digest hygiene, one-way/one-time bindings, `ng-repeat track by` |
 | `javascript-standards.md` | minification-safe DI, IIFE + `'use strict'`, JSHint/ESLint |
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-angularjs-best-practices.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-angularjs-best-practices.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-angularjs-best-practices.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

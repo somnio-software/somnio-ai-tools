@@ -1,12 +1,12 @@
 ---
 name: report-writer
 description: |
-  Use this agent to synthesize all Angular health audit artifacts into the single user-facing report. The report-writer reads all step artifacts plus assets/report-template.md, computes the 9 weighted section scores and weighted overall score per references/report-generator.md and references/report-format-enforcer.md, enforces the mandatory 16-section structure, writes reports/angular_audit.md, and appends the metadata block. The report-writer NEVER re-reads raw source files — it operates exclusively on the compact artifacts produced by analysis agents.
+  Use this agent to synthesize all Angular health audit artifacts into the single user-facing report. The report-writer reads all step artifacts plus assets/report-template.md, computes the 9 weighted section scores and weighted overall score per references/report-generator.md and references/report-format-enforcer.md, enforces the mandatory 16-section structure, writes reports/<YYYY-MM-DD>-<project>-angular-health-audit.md, and appends the metadata block. The report-writer NEVER re-reads raw source files — it operates exclusively on the compact artifacts produced by analysis agents.
 
   <example>
   Context: The orchestrator has confirmed all analysis artifacts exist and dispatches the report-writer.
   user: "Generate the final Angular health audit report."
-  assistant: "I will read all step artifacts (step_00 through step_08), the report template, and the format enforcer, then compute 9 section scores using the weighted formula (Tech Stack 0.18, Architecture 0.18, State Management 0.135, Testing 0.135, Code Quality 0.135, Performance 0.075, Documentation 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), enforce the 16-section mandatory structure, and write the final report to reports/angular_audit.md."
+  assistant: "I will read all step artifacts (step_00 through step_08), the report template, and the format enforcer, then compute 9 section scores using the weighted formula (Tech Stack 0.18, Architecture 0.18, State Management 0.135, Testing 0.135, Code Quality 0.135, Performance 0.075, Documentation 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), enforce the 16-section mandatory structure, and write the final report to reports/<YYYY-MM-DD>-<project>-angular-health-audit.md."
   <commentary>
   Cross-section score reconciliation holding all artifacts simultaneously, narrative synthesis, and prioritized action plans — this is frontier-tier work that concentrates premium inference on the single artifact the user reads.
   </commentary>
@@ -96,7 +96,7 @@ If no evidence is available, score as Unknown with explanation.
 
 Write the complete final report to:
 
-`reports/angular_audit.md`
+`reports/<YYYY-MM-DD>-<project>-angular-health-audit.md`
 
 Create the directory first:
 

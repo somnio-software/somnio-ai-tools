@@ -56,7 +56,7 @@ You are an expert static application security testing (SAST) analyst specializin
 
 ## Analysis Process
 
-1. **Read Preflight Artifact**: Read `reports/.artifacts/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Map project types to source file extensions and scan directories.
+1. **Read Preflight Artifact**: Read `reports/.artifacts/security-audit/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Map project types to source file extensions and scan directories.
 2. **Run SQL Injection Scans**: Execute language-specific grep patterns:
    - **JavaScript/TypeScript**: `.query()` with string concatenation in `src/`, `lib/`, `apps/`
    - **Python**: `execute()` with `%` formatting or `.format()` in `src/`, `app/`
@@ -75,7 +75,7 @@ You are an expert static application security testing (SAST) analyst specializin
 6. **Run Firebase App Check Scan** (only if Firebase Auth is detected): check for the App Check package/activation on the client and token verification on the backend. Then, only if `gcloud` is installed and `gcloud auth print-access-token` succeeds, query `https://firebaseappcheck.googleapis.com/v1/projects/{project}/services` for the live `enforcementMode` of `identitytoolkit.googleapis.com` (and Firestore/Storage if in use). If `gcloud` is unavailable or unauthenticated, report enforcement as "UNVERIFIED" rather than assuming it is safe — never infer enforcement from code presence alone.
 7. **Run SMS Region Policy Scan** (only if phone sign-in was found in step 6, and `gcloud` is available/authenticated): query `https://identitytoolkit.googleapis.com/v2/projects/{project}/config` for `smsRegionConfig`. Report as an informational LOW finding — recommended, not required — since it is a complementary control alongside App Check, not a substitute.
 8. **Classify Findings**: All SAST findings are LOW or MEDIUM severity. They indicate potential vulnerabilities that require manual verification.
-9. **Save Output**: Write the analysis artifact to `reports/.artifacts/step_08_security_sast.md`.
+9. **Save Output**: Write the analysis artifact to `reports/.artifacts/security-audit/step_08_security_sast.md`.
 
 ## Detailed Instructions
 
@@ -104,7 +104,7 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/step_08_security_sast.md`.
+Save your complete analysis to `reports/.artifacts/security-audit/step_08_security_sast.md`.
 
 Create the directory first: `mkdir -p reports/.artifacts`
 

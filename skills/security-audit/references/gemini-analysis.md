@@ -59,16 +59,16 @@ PREREQUISITES CHECK:
    ```bash
    echo "Running Gemini Security Analysis..."
    mkdir -p reports/.artifacts
-   gemini prompt "/security:analyze" > reports/.artifacts/step_09_security_gemini_analysis.md 2>&1
+   gemini prompt "/security:analyze" > reports/.artifacts/security-audit/step_09_security_gemini_analysis.md 2>&1
 
    if [ $? -eq 0 ]; then
      echo "Gemini Security Analysis completed successfully."
-     echo "Report saved to reports/.artifacts/step_09_security_gemini_analysis.md"
-     head -20 reports/.artifacts/step_09_security_gemini_analysis.md 2>/dev/null || \
+     echo "Report saved to reports/.artifacts/security-audit/step_09_security_gemini_analysis.md"
+     head -20 reports/.artifacts/security-audit/step_09_security_gemini_analysis.md 2>/dev/null || \
        echo "Report file exists"
    else
      echo "Gemini Security Analysis failed or required interaction."
-     head -20 reports/.artifacts/step_09_security_gemini_analysis.md 2>/dev/null || \
+     head -20 reports/.artifacts/security-audit/step_09_security_gemini_analysis.md 2>/dev/null || \
        echo "Report file exists"
    fi
 
@@ -82,4 +82,4 @@ Output format:
 - Security Extension status (installed/not installed)
 - Analysis execution status (completed/failed/skipped)
 - Summary of findings from the security analysis (if completed)
-- Location of the detailed report (reports/.artifacts/step_09_security_gemini_analysis.md)
+- Location of the detailed report (reports/.artifacts/security-audit/step_09_security_gemini_analysis.md)

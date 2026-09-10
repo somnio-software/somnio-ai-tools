@@ -291,7 +291,7 @@ directory.
 
 **Action**: Create the reports directory if it doesn't exist and save
 the final React Project Health Audit report to:
-`./reports/react_audit.md`
+`./reports/<YYYY-MM-DD>-<project>-react-health-audit.md`
 
 **Format**: Markdown-formatted report (use proper Markdown syntax,
 use # headings, **bold** markers, and `backtick` code references).
@@ -299,7 +299,7 @@ use # headings, **bold** markers, and `backtick` code references).
 **Command**:
 ```bash
 mkdir -p reports
-# Save report content to ./reports/react_audit.md
+# Save report content to ./reports/<YYYY-MM-DD>-<project>-react-health-audit.md
 ```
 
 **Note**: For security analysis, run the standalone Security Audit (`/somnio:security-audit`).
@@ -362,7 +362,7 @@ Wave 0 emits a GATE status; the orchestrator halts all subsequent waves on `GATE
 | `agents/docs-analyzer.md` | cheap | documentation-analysis | `reports/.artifacts/react-health-audit/step_07_documentation.md` |
 | `agents/harness-analyzer.md` | mid | harness-analysis | `reports/.artifacts/react-health-audit/step_08_harness_analysis.md` |
 | `agents/orchestrator.md` | mid | (routing only — reads no reference) | n/a |
-| `agents/report-writer.md` | frontier | report-generator, report-format-enforcer | `reports/react_audit.md` |
+| `agents/report-writer.md` | frontier | report-generator, report-format-enforcer | `reports/<YYYY-MM-DD>-<project>-react-health-audit.md` |
 
 Tiers (`cheap`/`mid`/`frontier`) are symbolic and provider-neutral. The CLI transformer resolves them to concrete model IDs per `AgentConfig.modelTiers` at install time.
 
@@ -376,6 +376,36 @@ Tiers (`cheap`/`mid`/`frontier`) are symbolic and provider-neutral. The CLI tran
 - Comprehensive dependency management for monorepos
 - Complete nvm configuration enforcement
 - Full project environment setup with all dependencies
+
+## Report File Name (MANDATORY)
+
+The report file name is always:
+
+```
+<YYYY-MM-DD>-<project>-react-health-audit.md
+```
+
+- `<YYYY-MM-DD>` — the date of this run.
+- `<project>` — the project name slugified to kebab-case: lowercase, with
+  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
+  repeated `-` collapsed. Defaults to the current directory name.
+- The trailing segment is this skill's name and never changes.
+
+Derive it once, before writing anything:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-react-health-audit.md"
+```
+
+Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-react-health-audit.md`, it
+means that resolved path.
+
+**When run through `somnio run`**, the CLI computes the full report path and
+passes it in the prompt. Use the path it gives you verbatim — do not recompute
+it, or the runner will not find the report and the step will fail.
 
 ## Report Metadata (MANDATORY)
 

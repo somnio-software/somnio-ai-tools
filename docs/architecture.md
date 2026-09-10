@@ -105,8 +105,8 @@ When running from the terminal:
 3. **Run pre-flight steps** — tool installation, version alignment, test execution (direct shell, no AI)
 4. **Resolve AI agent** — auto-detect or use `--agent` flag (preference: Claude > Cursor > Gemini)
 5. **Parse SKILL.md** — extract step order from "Rule Execution Order" section
-6. **Execute each step** — spawn a fresh AI CLI process with the step prompt, save output to `./reports/.artifacts/`
-7. **Generate report** — combine artifacts into final report at `./reports/`
+6. **Execute each step** — spawn a fresh AI CLI process with the step prompt, save output to `./reports/.artifacts/<skill-name>/`
+7. **Generate report** — combine artifacts into the final report at `./reports/<YYYY-MM-DD>-<project>-<skill-name>.md`
 
 Each step runs in a **fresh AI context** to avoid context window exhaustion on large audits. This is a deliberate design choice — audits of up to 14 steps (flutter: 12, nestjs/python/react: 14) would exceed context limits in a single session.
 

@@ -33,7 +33,7 @@ description: |
   <example>
   Context: Coverage generation is part of environment setup so that analysis agents can reference the preflight artifact.
   user: "Start the Flutter health audit."
-  assistant: "After aligning the Flutter version and installing dependencies, I will run fvm flutter test --coverage to generate the lcov data and write the coverage summary to reports/.artifacts/flutter_health/step_00_test_coverage.md."
+  assistant: "After aligning the Flutter version and installing dependencies, I will run fvm flutter test --coverage to generate the lcov data and write the coverage summary to reports/.artifacts/flutter-health-audit/step_00_test_coverage.md."
   <commentary>
   Test coverage is captured in Wave 0 so that testing-analyzer (Wave 2) can reference the preflight artifact rather than re-running coverage.
   </commentary>
@@ -50,11 +50,11 @@ Execute them in this exact order:
 1. `references/tool-installer.md` — installs Node.js and FVM. MANDATORY; stop if it fails.
 2. `references/version-alignment.md` — aligns the global Flutter version to the project requirement via FVM. MANDATORY; stop if it fails.
 3. `references/version-validator.md` — verifies the FVM global setup and installs all dependencies (root, packages, apps).
-4. `references/test-coverage.md` — runs `fvm flutter test --coverage` and writes the coverage artifact to `reports/.artifacts/flutter_health/step_00_test_coverage.md`.
+4. `references/test-coverage.md` — runs `fvm flutter test --coverage` and writes the coverage artifact to `reports/.artifacts/flutter-health-audit/step_00_test_coverage.md`.
 
-Write the artifact for step 4 to: `reports/.artifacts/flutter_health/step_00_test_coverage.md`
+Write the artifact for step 4 to: `reports/.artifacts/flutter-health-audit/step_00_test_coverage.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 On success, output: `WAVE 0 COMPLETED: env-setup passed. Flutter version aligned. Coverage artifact written.`
 On failure of any MANDATORY step, output: `WAVE 0 FAILED: [step name] — [reason]. Stopping audit.` and halt.

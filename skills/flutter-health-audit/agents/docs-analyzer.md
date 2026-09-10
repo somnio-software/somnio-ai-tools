@@ -60,7 +60,7 @@ You are an expert Flutter documentation analyst specializing in technical docume
 3. **Read Documentation Files**: Read README.md files in parallel (multiple per tool call). For each, evaluate: project description, prerequisites, installation steps, build commands, environment setup, `--dart-define` documentation, and technical onboarding content.
 4. **Check Environment Files**: Read `sample.env.jsonc` or `.env.example` files to verify they document required variables without containing real secrets.
 5. **Documentation Consistency** (monorepo): Compare documentation quality across apps. Check whether each app's README is self-sufficient or relies on the root README.
-6. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter_health/step_06_documentation_analysis.md`.
+6. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter-health-audit/step_06_documentation_analysis.md`.
 
 ## Detailed Instructions
 
@@ -89,9 +89,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/flutter_health/step_06_documentation_analysis.md`.
+Save your complete analysis to `reports/.artifacts/flutter-health-audit/step_06_documentation_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or multi-app monorepo

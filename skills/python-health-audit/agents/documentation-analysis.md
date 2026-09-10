@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A FastAPI project with a README but no .env.example file.
   user: "Analyze documentation."
-  assistant: "README present. Installation section: Yes. Usage section: No. .env.example: MISSING — project uses environment variables but no template is committed. Docstring density: estimated via grep. Writing to reports/.artifacts/python_health/step_08_documentation_analysis.md."
+  assistant: "README present. Installation section: Yes. Usage section: No. .env.example: MISSING — project uses environment variables but no template is committed. Docstring density: estimated via grep. Writing to reports/.artifacts/python-health-audit/step_08_documentation_analysis.md."
   <commentary>
   documentation-analysis uses grep-based density estimates and file presence checks — it reads a few key files but does not open every source module.
   </commentary>
@@ -67,9 +67,9 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_08_documentation_analysis.md`
+`reports/.artifacts/python-health-audit/step_08_documentation_analysis.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 ## Efficiency constraint
 

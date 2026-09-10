@@ -9,7 +9,7 @@ a MANDATORY check that must appear in the artifact even if no issues
 are found.
 
 PROJECT DETECTION (execute first):
-- Read reports/.artifacts/step_01_security_tool_installer.md for
+- Read reports/.artifacts/security-audit/step_01_security_tool_installer.md for
   PROJECT_DETECTION_RESULTS (format: type@path|type@path...)
 - If multiple projects: for each type@path, cd to path and run
   secret pattern scan for that project; concatenate all results
@@ -189,7 +189,7 @@ If no issues are found, explicitly state:
 "No hardcoded secret patterns detected in source code."
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_03_security_secret_patterns.md
+Save the full analysis output to: reports/.artifacts/security-audit/step_03_security_secret_patterns.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

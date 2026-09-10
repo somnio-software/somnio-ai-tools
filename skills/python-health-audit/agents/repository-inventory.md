@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A FastAPI project using src-layout with a packages/ directory.
   user: "Inventory the repository structure."
-  assistant: "I will use find and wc to detect the src-layout, count Python files and lines per package, detect FastAPI from pyproject.toml dependencies, and write the findings to reports/.artifacts/python_health/step_01_repository_inventory.md."
+  assistant: "I will use find and wc to detect the src-layout, count Python files and lines per package, detect FastAPI from pyproject.toml dependencies, and write the findings to reports/.artifacts/python-health-audit/step_01_repository_inventory.md."
   <commentary>
   repository-inventory uses only find/wc/grep — it never reads individual source files to understand code logic.
   </commentary>
@@ -61,9 +61,9 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_01_repository_inventory.md`
+`reports/.artifacts/python-health-audit/step_01_repository_inventory.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 ## Efficiency constraint
 

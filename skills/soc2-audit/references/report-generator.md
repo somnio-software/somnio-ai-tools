@@ -11,7 +11,7 @@ standardized structure from assets/report-template.md.
 STEP ARTIFACT INTEGRATION:
 Read ALL step artifacts under the run's artifacts directory
 (reports/.artifacts/ for in-session subagent dispatch;
-reports/.artifacts/soc2_audit/ for `somnio run`). Match each artifact by its
+reports/.artifacts/soc2-audit/ for `somnio run`). Match each artifact by its
 step-number prefix:
 - step_01_* (project/tooling detection; PROJECT_DETECTION_RESULTS; Project Detection section)
 - step_02_* (families A/B/J governance, HR, AI evidence)
@@ -146,7 +146,7 @@ VALIDATION CHECKLIST (before finalizing):
 - No fabricated company/client/ticket names
 
 JSON EXPORT (mandatory):
-After writing the readiness output, write reports/soc2_audit.json:
+After writing the readiness output, write reports/<YYYY-MM-DD>-<project>-soc2-audit.json:
 {
   "overallScore": [integer 0-100],
   "band": "[Not Ready|Partially Ready|Largely Ready|Audit-Ready]",

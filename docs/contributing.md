@@ -121,7 +121,7 @@ If `skills/react-*` already exists, it runs in **auto-detect mode** — scans ex
    Detailed AI prompt with analysis instructions...
    ```
 
-4. Optionally add a report template in `assets/report-template.txt`.
+4. Optionally add a report template in `assets/report-template.md`.
 
 5. Register in `cli/lib/src/content/skill_registry.dart`:
 
@@ -134,7 +134,7 @@ If `skills/react-*` already exists, it runs in **auto-detect mode** — scans ex
      description: 'What it does',
      planRelativePath: 'skills/my-skill/SKILL.md',
      rulesDirectory: 'skills/my-skill/references',
-     templatePath: 'skills/my-skill/assets/report-template.txt',
+     templatePath: 'skills/my-skill/assets/report-template.md',
    );
    ```
 

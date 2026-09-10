@@ -15,7 +15,7 @@ description: |
   <example>
   Context: A Wave 1 agent fails to write one of its artifacts.
   user: "The governance analyzer seems to have failed."
-  assistant: "I detected that reports/.artifacts/step_02_iso27001_governance_program.md is missing after governance-isms-analyzer ran. I will retry that agent once. If the artifact is still missing, I will log the gap and let the report-writer assign the affected category a 0/100 (Not Ready) score with a missing-artifact note per the rejection criteria in references/scoring.md."
+  assistant: "I detected that reports/.artifacts/iso27001-audit/step_02_iso27001_governance_program.md is missing after governance-isms-analyzer ran. I will retry that agent once. If the artifact is still missing, I will log the gap and let the report-writer assign the affected category a 0/100 (Not Ready) score with a missing-artifact note per the rejection criteria in references/scoring.md."
   <commentary>
   Missing artifacts never halt the audit. The orchestrator retries once, logs, and lets the report-writer handle incomplete data.
   </commentary>
@@ -33,7 +33,7 @@ You are the ISO 27001 readiness-audit orchestrator. Your sole responsibilities a
 
 Dispatch `agents/project-detector.md` and wait for completion.
 
-Validate: `reports/.artifacts/step_01_iso27001_project_detection.md` exists.
+Validate: `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` exists.
 - If missing: retry once.
 - If still missing after retry: write a fallback artifact with `PROJECT_DETECTION_RESULTS=generic@.`, then continue.
 
@@ -53,7 +53,7 @@ Wait for all four to complete, then validate each expected artifact (step_02 thr
 
 Assemble the artifact manifest (all artifact paths that exist under `reports/.artifacts/`, step_01 through step_12). Note any missing artifacts.
 
-Dispatch `agents/report-writer.md` with the artifact manifest. The report-writer runs `references/scoring.md` (writing `step_13_iso27001_scoring.md`) and then `references/report-generator.md`. Wait for completion and verify that `reports/iso27001_audit.md` exists.
+Dispatch `agents/report-writer.md` with the artifact manifest. The report-writer runs `references/scoring.md` (writing `step_13_iso27001_scoring.md`) and then `references/report-generator.md`. Wait for completion and verify that `reports/<YYYY-MM-DD>-<project>-iso27001-audit.md` exists.
 
 ## Orchestrator Rules
 
@@ -62,4 +62,4 @@ Dispatch `agents/report-writer.md` with the artifact manifest. The report-writer
 - **Retry policy**: retry a failed agent exactly once before logging and continuing. Never retry more than once.
 - **Wave ordering is strict**: Wave 1 may not start until the Wave 0 artifact is validated; Wave 2 may not start until Wave 1 is complete.
 - **Parallel dispatch within Wave 1**: use the Agent tool to dispatch all four analysis agents simultaneously.
-- **Log all gaps**: write a brief orchestration log to `reports/.artifacts/orchestration_log.md` recording wave completion, missing artifacts, and retry outcomes.
+- **Log all gaps**: write a brief orchestration log to `reports/.artifacts/iso27001-audit/orchestration_log.md` recording wave completion, missing artifacts, and retry outcomes.

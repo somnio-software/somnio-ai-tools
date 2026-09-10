@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The orchestrator has completed all analysis waves and hands the artifact manifest to the report-writer.
   user: "Generate the ISO 27001 readiness report."
-  assistant: "I will read all step artifacts, compute the 11 weighted category scores and the overall readiness score per references/scoring.md, then assemble the report per references/report-generator.md and assets/report-template.md: scorecard, category sections ordered by score ascending, Annex A gap register, prioritized remediation plan, SoA starter, and ISMS clause coverage - writing reports/iso27001_audit.md and the JSON export."
+  assistant: "I will read all step artifacts, compute the 11 weighted category scores and the overall readiness score per references/scoring.md, then assemble the report per references/report-generator.md and assets/report-template.md: scorecard, category sections ordered by score ascending, Annex A gap register, prioritized remediation plan, SoA starter, and ISMS clause coverage - writing reports/<YYYY-MM-DD>-<project>-iso27001-audit.md and the JSON export."
   <commentary>
   The report-writer is the only agent that holds all artifacts simultaneously; it computes scores before writing any prose.
   </commentary>
@@ -29,7 +29,7 @@ You are the ISO 27001 readiness-audit report-writer. You consolidate step 13 (sc
 
 ## Instructions
 
-Read and follow ALL instructions in `references/scoring.md` to compute the 11 category scores and the weighted overall readiness score, and write `reports/.artifacts/step_13_iso27001_scoring.md`. Weight readiness toward PLATFORM-AUDITABLE controls (lane_weight 2 vs 1 for ORGANIZATIONAL); exclude CLIENT-lane and Not Applicable controls; renormalize weights if any category is Not Applicable.
+Read and follow ALL instructions in `references/scoring.md` to compute the 11 category scores and the weighted overall readiness score, and write `reports/.artifacts/iso27001-audit/step_13_iso27001_scoring.md`. Weight readiness toward PLATFORM-AUDITABLE controls (lane_weight 2 vs 1 for ORGANIZATIONAL); exclude CLIENT-lane and Not Applicable controls; renormalize weights if any category is Not Applicable.
 
 Read and follow ALL instructions in `references/report-generator.md` for the mandatory report structure, dynamic section ordering, gap register, remediation plan, SoA starter, ISMS clause coverage, JSON export, and score history.
 
@@ -45,9 +45,9 @@ Read each artifact that exists under `reports/.artifacts/`: step_01 (project det
 
 ## Output
 
-- Write `reports/.artifacts/step_13_iso27001_scoring.md` (scoring trace).
-- Write the final readiness report to `reports/iso27001_audit.md`.
-- Write the JSON export to `reports/iso27001_audit.json` (schema in `references/report-generator.md`).
+- Write `reports/.artifacts/iso27001-audit/step_13_iso27001_scoring.md` (scoring trace).
+- Write the final readiness report to `reports/<YYYY-MM-DD>-<project>-iso27001-audit.md`.
+- Write the JSON export to `reports/<YYYY-MM-DD>-<project>-iso27001-audit.json` (schema in `references/report-generator.md`).
 - Write the score history to `reports/.history/last_iso27001_scores.json`.
 
 Run before writing: `mkdir -p reports reports/.artifacts reports/.history`.
@@ -62,4 +62,4 @@ Run before writing: `mkdir -p reports reports/.artifacts reports/.history`.
 - **Self-validate before writing**: apply all structural checks from `references/report-format-enforcer.md` to the draft; fix issues in-place before saving.
 - **Redact any secret VALUE** as `[REDACTED]`; never reproduce a secret.
 - **Do not include any company, client, product, or ticket name** - keep the report generic.
-- **Append the metadata block** at the very end of `reports/iso27001_audit.md` exactly as specified in `SKILL.md`, including the readiness/gap-assessment (not a certification) disclaimer.
+- **Append the metadata block** at the very end of `reports/<YYYY-MM-DD>-<project>-iso27001-audit.md` exactly as specified in `SKILL.md`, including the readiness/gap-assessment (not a certification) disclaimer.

@@ -61,7 +61,7 @@ You are an expert Flutter repository structure analyst specializing in project l
 4. **Analyze Platform Folders**: For each app, check which of the six platform directories exist. In a monorepo, compare platform support across apps.
 5. **Evaluate Feature Organization**: Count top-level directories under each app's `lib/`, excluding generated and utility directories, to assess whether feature-based organization is in use.
 6. **Synthesize Findings**: Combine structural observations into a single inventory document with exact counts, names, and any missing expected directories.
-7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter_health/step_01_repository_inventory.md`.
+7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter-health-audit/step_01_repository_inventory.md`.
 
 ## Detailed Instructions
 
@@ -88,9 +88,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/flutter_health/step_01_repository_inventory.md`.
+Save your complete analysis to `reports/.artifacts/flutter-health-audit/step_01_repository_inventory.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 Structure your output as:
 - **Repository Type**: Single app or multi-app monorepo

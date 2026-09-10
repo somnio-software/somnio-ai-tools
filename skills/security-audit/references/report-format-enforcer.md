@@ -91,12 +91,12 @@ If formatting issues are found, fix them in-place and note what
 was corrected.
 
 Output: The formatted Markdown report content ready for export to
-./reports/security_audit.md
+./reports/<YYYY-MM-DD>-<project>-security-audit.md
 
 JSON EXPORT (mandatory):
-After validating and exporting the text report to reports/security_audit.md,
+After validating and exporting the text report to reports/<YYYY-MM-DD>-<project>-security-audit.md,
 extract the scores and findings from the validated report and write a valid
-JSON file to reports/security_audit.json with this schema:
+JSON file to reports/<YYYY-MM-DD>-<project>-security-audit.json with this schema:
 
 {
   "overallScore": [integer 0-100],
@@ -117,13 +117,13 @@ JSON file to reports/security_audit.json with this schema:
   "projectType": "[string from Section 11 Project Detection Results]"
 }
 
-If the report generator already produced reports/security_audit.json, validate
+If the report generator already produced reports/<YYYY-MM-DD>-<project>-security-audit.json, validate
 that the JSON is well-formed (valid syntax, required keys present). If invalid,
 regenerate from the text report. Ensure reports/ directory exists.
 
 SCORE HISTORY (mandatory after export):
-After validating and exporting both reports/security_audit.md and
-reports/security_audit.json, write reports/.history/last_scores.json with
+After validating and exporting both reports/<YYYY-MM-DD>-<project>-security-audit.md and
+reports/<YYYY-MM-DD>-<project>-security-audit.json, write reports/.history/last_scores.json with
 the same score and findings data for future score comparison. Format:
 { "overall": N, "timestamp": "ISO8601", "scores": {...}, "findings": {...},
   "projectType": "..." }

@@ -77,4 +77,4 @@ Only starts after all Wave 2 artifacts are confirmed.
 
 Read `angular-best-practices/agents/report-writer.md` and follow ALL instructions.
 Reads: all seven step artifacts + `assets/report-template.md`
-Writes: `reports/angular-best-practices-report.md`
+Writes: `reports/<YYYY-MM-DD>-<project>-angular-best-practices.md`

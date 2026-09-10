@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A Python project where uv sync has just completed, .venv exists, and Python 3.12 is required.
   user: "Validate the Python environment."
-  assistant: "I will confirm uv is installed, verify the .python-version pin, check the active Python interpreter, run uv pip list at the root, check .venv presence, and verify pytest, ruff, and mypy are importable. Writing validation results to reports/.artifacts/python_health/step_00_version_validation.md."
+  assistant: "I will confirm uv is installed, verify the .python-version pin, check the active Python interpreter, run uv pip list at the root, check .venv presence, and verify pytest, ruff, and mypy are importable. Writing validation results to reports/.artifacts/python-health-audit/step_00_version_validation.md."
   <commentary>
   version-validator is a mechanical confirmation step — it runs shell commands and records presence/absence of expected items without reasoning about their quality.
   </commentary>
@@ -62,9 +62,9 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_00_version_validation.md`
+`reports/.artifacts/python-health-audit/step_00_version_validation.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`
 
 ## Efficiency constraint
 

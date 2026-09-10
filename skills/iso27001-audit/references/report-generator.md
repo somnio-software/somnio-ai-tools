@@ -10,7 +10,7 @@ analysis and scoring artifacts using the standardized structure in
 
 PREREQUISITE: The 11 category scores and the weighted overall score MUST
 already be computed and present in
-`reports/.artifacts/step_13_iso27001_scoring.md`. If that artifact is missing
+`reports/.artifacts/iso27001-audit/step_13_iso27001_scoring.md`. If that artifact is missing
 or lacks scores, STOP and (re-)run `references/scoring.md` first. A report
 without computed scores is INVALID.
 
@@ -130,7 +130,7 @@ VALIDATION CHECKLIST (verify before finalizing):
 - Metadata block (from SKILL.md) appended at the very end
 
 JSON EXPORT (mandatory):
-After writing the output, write `reports/iso27001_audit.json`:
+After writing the output, write `reports/<YYYY-MM-DD>-<project>-iso27001-audit.json`:
 {
   "overallScore": [integer 0-100],
   "band": "[Not Ready|Partially Ready|Largely Ready|Certification-Ready]",

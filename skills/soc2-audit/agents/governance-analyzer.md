@@ -31,11 +31,11 @@ You are the SOC 2 governance, people, and AI-program analyzer. You gather eviden
 
 Read and follow ALL instructions in `references/governance-program.md`.
 
-First read `reports/.artifacts/step_01_soc2_project_detection.md` for the governance document surface. Then check for the presence of the family A/B/J policy artifacts and record, for each control: control ref, SOC 2 criterion, Status (met/partial/gap/organizational), Owner/lane (mostly ORGANIZATIONAL; some HR controls are CLIENT-CUEC), and Evidence (path found or "not found").
+First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for the governance document surface. Then check for the presence of the family A/B/J policy artifacts and record, for each control: control ref, SOC 2 criterion, Status (met/partial/gap/organizational), Owner/lane (mostly ORGANIZATIONAL; some HR controls are CLIENT-CUEC), and Evidence (path found or "not found").
 
 ## Output
 
-Save the artifact to `reports/.artifacts/step_02_soc2_governance_program.md`.
+Save the artifact to `reports/.artifacts/soc2-audit/step_02_soc2_governance_program.md`.
 Create the directory first: `mkdir -p reports/.artifacts`.
 
 Include: family A/B/J control tables (ref, criterion, Status, lane, evidence), a policy-artifact-present summary (yes/no per artifact), a list of CUEC controls surfaced (for the report's CUEC section), and gaps with the exact artifact that would satisfy each.

@@ -24,7 +24,7 @@ description: |
   <example>
   Context: An operator wants to understand the wave structure before running the audit.
   user: "How does the flutter-best-practices orchestrator work?"
-  assistant: "Wave 1 dispatches three mid-tier auditors in parallel: testing-auditor (step_01_testing_quality.md), architecture-auditor (step_02_architecture_compliance.md), and code-standards-auditor (step_03_code_standards.md). After confirming all artifacts exist, Wave 2 dispatches the frontier-tier report-writer which writes reports/flutter_best_practices_report.md."
+  assistant: "Wave 1 dispatches three mid-tier auditors in parallel: testing-auditor (step_01_testing_quality.md), architecture-auditor (step_02_architecture_compliance.md), and code-standards-auditor (step_03_code_standards.md). After confirming all artifacts exist, Wave 2 dispatches the frontier-tier report-writer which writes reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md."
   <commentary>
   The orchestrator describes its own wave plan precisely so operators can monitor progress and expected artifacts.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: The orchestrator completes and hands off the artifact manifest to the report-writer.
   user: "All three artifacts confirmed. What does the orchestrator do next?"
-  assistant: "I will dispatch the report-writer subagent with the confirmed artifact manifest: step_01_testing_quality.md, step_02_architecture_compliance.md, step_03_code_standards.md. The report-writer will synthesize these into reports/flutter_best_practices_report.md."
+  assistant: "I will dispatch the report-writer subagent with the confirmed artifact manifest: step_01_testing_quality.md, step_02_architecture_compliance.md, step_03_code_standards.md. The report-writer will synthesize these into reports/<YYYY-MM-DD>-<project>-flutter-best-practices.md."
   <commentary>
   After artifact validation, the orchestrator's only remaining action is dispatching the report-writer. It does not read or summarize the artifacts itself.
   </commentary>

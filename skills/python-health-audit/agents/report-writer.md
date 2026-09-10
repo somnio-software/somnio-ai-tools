@@ -1,12 +1,12 @@
 ---
 name: python-health-audit-report-writer
 description: |
-  Use this agent to synthesize all Python Project Health Audit artifacts into the single user-facing report. Reads all step artifacts plus assets/report-template.md and references/report-generator.md. Computes weighted section scores and overall score exactly per the existing formula, enforces the mandatory 16-section structure, and writes reports/python_audit.md. Never re-reads project source files.
+  Use this agent to synthesize all Python Project Health Audit artifacts into the single user-facing report. Reads all step artifacts plus assets/report-template.md and references/report-generator.md. Computes weighted section scores and overall score exactly per the existing formula, enforces the mandatory 16-section structure, and writes reports/<YYYY-MM-DD>-<project>-python-health-audit.md. Never re-reads project source files.
 
   <example>
   Context: All ten analysis artifacts are present and the orchestrator hands over the manifest.
   user: "Generate the final Python audit report."
-  assistant: "I will read all artifacts from reports/.artifacts/python_health/, apply the weighted scoring formula (Tech Stack 0.18, Architecture 0.18, API/Interface Design 0.18, Data Layer 0.10, Testing 0.10, Code Quality 0.10, Documentation & Operations 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), produce the 16-section report per assets/report-template.md, and write it to reports/python_audit.md."
+  assistant: "I will read all artifacts from reports/.artifacts/python-health-audit/, apply the weighted scoring formula (Tech Stack 0.18, Architecture 0.18, API/Interface Design 0.18, Data Layer 0.10, Testing 0.10, Code Quality 0.10, Documentation & Operations 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), produce the 16-section report per assets/report-template.md, and write it to reports/<YYYY-MM-DD>-<project>-python-health-audit.md."
   <commentary>
   The report-writer holds all artifacts simultaneously for cross-section reconciliation — this is the only step that warrants the frontier tier.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: The report-writer has computed all scores and is ready to finalize.
   user: "Finalize the report."
-  assistant: "Overall score: round(sum of weighted section scores). Writing the completed 16-section Markdown report to reports/python_audit.md and appending the mandatory metadata block at the end."
+  assistant: "Overall score: round(sum of weighted section scores). Writing the completed 16-section Markdown report to reports/<YYYY-MM-DD>-<project>-python-health-audit.md and appending the mandatory metadata block at the end."
   <commentary>
   The report-writer is the sole agent that writes the user-facing report and the metadata block — no other agent produces prose output.
   </commentary>
@@ -63,16 +63,16 @@ Read every artifact produced by the analysis subagents:
 
 | Artifact | Source Step |
 |----------|-------------|
-| `reports/.artifacts/python_health/step_00_test_coverage.md` | env-setup (coverage) |
-| `reports/.artifacts/python_health/step_01_repository_inventory.md` | repository-inventory |
-| `reports/.artifacts/python_health/step_02_config_analysis.md` | config-analysis |
-| `reports/.artifacts/python_health/step_03_cicd_analysis.md` | cicd-analysis |
-| `reports/.artifacts/python_health/step_04_testing_analysis.md` | testing-analysis |
-| `reports/.artifacts/python_health/step_05_code_quality.md` | code-quality |
-| `reports/.artifacts/python_health/step_06_api_design_analysis.md` | api-design-analysis |
-| `reports/.artifacts/python_health/step_07_data_layer_analysis.md` | data-layer-analysis |
-| `reports/.artifacts/python_health/step_08_documentation_analysis.md` | documentation-analysis |
-| `reports/.artifacts/python_health/step_09_harness_analysis.md` | harness-analyzer |
+| `reports/.artifacts/python-health-audit/step_00_test_coverage.md` | env-setup (coverage) |
+| `reports/.artifacts/python-health-audit/step_01_repository_inventory.md` | repository-inventory |
+| `reports/.artifacts/python-health-audit/step_02_config_analysis.md` | config-analysis |
+| `reports/.artifacts/python-health-audit/step_03_cicd_analysis.md` | cicd-analysis |
+| `reports/.artifacts/python-health-audit/step_04_testing_analysis.md` | testing-analysis |
+| `reports/.artifacts/python-health-audit/step_05_code_quality.md` | code-quality |
+| `reports/.artifacts/python-health-audit/step_06_api_design_analysis.md` | api-design-analysis |
+| `reports/.artifacts/python-health-audit/step_07_data_layer_analysis.md` | data-layer-analysis |
+| `reports/.artifacts/python-health-audit/step_08_documentation_analysis.md` | documentation-analysis |
+| `reports/.artifacts/python-health-audit/step_09_harness_analysis.md` | harness-analyzer |
 
 If any artifact is absent, note "Evidence unavailable — artifact missing" in the relevant section and assign a conservative score as directed by `references/report-generator.md`.
 
@@ -96,7 +96,7 @@ Labels: Strong (85-100), Fair (70-84), Weak (0-69). Use standard mathematical ro
 
 ## Step 4 — Write the report
 
-Write the complete 16-section report to `reports/python_audit.md`. Create the directory if it does not exist (`mkdir -p reports`).
+Write the complete 16-section report to `reports/<YYYY-MM-DD>-<project>-python-health-audit.md`. Create the directory if it does not exist (`mkdir -p reports`).
 
 ## Step 5 — Append the metadata block
 

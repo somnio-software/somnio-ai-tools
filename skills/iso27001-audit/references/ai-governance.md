@@ -10,7 +10,7 @@ category Not Applicable and score it neutrally per `references/scoring.md`
 (do not penalize a non-AI project).
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md`.
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md`.
 
 AI FOOTPRINT DETECTION (execute first - decide applicability):
 ```bash
@@ -57,7 +57,7 @@ READ-ONLY + SECRET SAFETY: read only; redact API keys / secret VALUES as
 `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_11_iso27001_ai_governance.md
+Save output to: reports/.artifacts/iso27001-audit/step_11_iso27001_ai_governance.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

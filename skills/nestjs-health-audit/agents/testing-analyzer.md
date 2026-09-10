@@ -50,7 +50,7 @@ You are an expert NestJS testing infrastructure analyst specializing in Jest con
 1. Find and classify all test files: unit tests (`*.spec.ts` in `src/`), e2e tests (`*.e2e-spec.ts` in `test/`), and integration tests. Count by type and by module.
 2. Analyze Jest configuration: `jest.config.js` or `package.json` jest section, checking testMatch patterns, collectCoverageFrom, coverageThreshold (global, branches, functions, lines, statements), moduleNameMapper, setupFilesAfterEnv, and testEnvironment.
 3. Evaluate NestJS-specific testing patterns: `@nestjs/testing` usage, `Test.createTestingModule()` patterns, dependency injection mocking (`useValue`, `useClass`, `useFactory`), supertest usage for HTTP testing, and proper mock isolation.
-4. Integrate coverage results from the preflight step artifact if available at `reports/.artifacts/nestjs_health/step_00_test_coverage.md`.
+4. Integrate coverage results from the preflight step artifact if available at `reports/.artifacts/nestjs-health-audit/step_00_test_coverage.md`.
 5. Identify test gaps by cross-referencing source files (services, controllers, guards, pipes) against their corresponding test files.
 
 ## Analysis Process
@@ -62,7 +62,7 @@ You are an expert NestJS testing infrastructure analyst specializing in Jest con
 5. **Check NestJS Testing Patterns**: Use grep to search for `createTestingModule`, `@nestjs/testing`, `useValue`, `useClass`, `useFactory`, and `supertest` usage patterns.
 6. **Integrate Coverage Data**: Read the preflight coverage artifact (step 00) if available. Cross-reference with coverage thresholds from Jest config and CI workflows.
 7. **Identify Test Gaps**: Cross-reference `*.service.ts` and `*.controller.ts` files with corresponding `*.spec.ts` files to find untested components.
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_04_testing_analysis.md`.
+8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_04_testing_analysis.md`.
 
 ## Detailed Instructions
 
@@ -90,9 +90,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_04_testing_analysis.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_04_testing_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or monorepo

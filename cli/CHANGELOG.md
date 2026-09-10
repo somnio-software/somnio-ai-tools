@@ -5,6 +5,20 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.12.0] - 2026-09-10
+
+### Changed
+
+- **Every audit report is now named `<YYYY-MM-DD>-<project>-<audit>.md`.** Reports had no date and no project name (`reports/flutter_audit.md`, `reports/security_audit.md`), which meant two things: re-running an audit silently overwrote the previous report, and reports from different projects collected into one shared folder were indistinguishable and collided. The name now carries the run date first (so a directory listing sorts chronologically) and the project name second — e.g. `reports/2026-09-14-hoopis-backend-nestjs-health-audit.md`. Applies to all `*-health-audit`, `*-best-practices`, `harness-audit`, `security-audit`, `soc2-audit` and `iso27001-audit` skills, plus the `/quick-check` command. `harness-audit`, `security-audit`, `soc2-audit` and `iso27001-audit` also write a `.json` export with the same base name; `reports/.history/last_scores.json` is trend state rather than a report, so it keeps its fixed, undated name.
+- **`somnio run` accepts `--project-name`.** The project segment defaults to the current directory name, slugified to kebab-case. Pass `--project-name` when the checkout directory is not named after the project (`backend/`, `tmp/`, a second clone).
+- **`dora-metrics` saves one pair of files per repo.** It previously wrote a single aggregated `YYYY-MM-DD_dora.{json,md}` per run. A repo is the unit this skill measures — deliberately never combined with its siblings — so it is now also the unit it saves: `<YYYY-MM-DD>-<repo>-dora-metrics.{json,md}`, each file holding only that repo's numbers plus the run-level context. The repo name alone is the slug (`example-org/example-frontend` → `example-frontend`), falling back to the org-qualified form only when two repos in one run share a name. `--project` is unchanged and still selects *what* to measure; the file name comes from the repo.
+
+### Fixed
+
+- **The artifacts directory now matches what the skills document.** `somnio run` keyed it off `bundle.id` (`reports/.artifacts/react_health/`) while nine of the sixteen audit skills documented the kebab-case `reports/.artifacts/react-health-audit/`, and `harness-audit`/`iso27001-audit` documented no sub-directory at all. Every skill and the runner now agree on `reports/.artifacts/<skill-name>/`. Artifact *file* names (`step_NN_<rule>.md`) are unchanged — those come from each SKILL.md's "Rule Execution Order".
+- **`*-best-practices` skills reported a report path the runner never wrote.** The CLI produced `reports/flutter_best_practices.md` while the skill docs and their report-writer agents said `reports/flutter_best_practices_report.md` (and the Angular/AngularJS/React/NestJS ones said `reports/<tech>-best-practices-report.md`). Deriving the name from the skill name removes the divergence.
+- **`docs/contributing.md` pointed new skills at `assets/report-template.txt`.** Every shipped skill uses `assets/report-template.md`; the contributing guide and its `templatePath` example now match.
+
 ## [2.11.2] - 2026-09-03
 
 ### Fixed

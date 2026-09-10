@@ -122,7 +122,7 @@ important finding — record "Not found" explicitly.
 
 ## ARTIFACT SAVE (mandatory)
 
-Save the full inventory to: `reports/.artifacts/step_01_harness_inventory.md`
+Save the full inventory to: `reports/.artifacts/harness-audit/step_01_harness_inventory.md`
 Run before finishing: `mkdir -p reports/.artifacts`
 
 Output format (one block per piece):

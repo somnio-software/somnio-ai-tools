@@ -224,7 +224,9 @@ here.
 TODO: Create \`${tech}_report_generator.md\` reference and reference it
 here.
 
-Output: Save report to \`./reports/${tech}_audit.md\`
+Output: Save report to
+\`./reports/<YYYY-MM-DD>-<project-slug>-${tech}-health-audit.md\`
+(date of the run, then the project directory name slugified to kebab-case)
 ''';
 
   String _sampleReferenceTemplate(String tech, String techTitle) => '''
@@ -401,7 +403,9 @@ TODO: Create \`code_standards.md\` reference and reference it here.
 TODO: Create \`best_practices_generator.md\` reference and reference it
 here.
 
-Output: Save report to \`./reports/${tech}_best_practices.md\`
+Output: Save report to
+\`./reports/<YYYY-MM-DD>-<project-slug>-${tech}-best-practices.md\`
+(date of the run, then the project directory name slugified to kebab-case)
 ''';
 
   String _bestPracticesReportTemplate(

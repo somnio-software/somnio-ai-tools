@@ -65,7 +65,7 @@ You are an expert Flutter state management analyst specializing in library detec
    ```
 4. **Check Quality Signals**: Search for multiple libraries co-existing, state classes without `Equatable`/`freezed`/manual equality, and Cubit/Bloc/Notifier/Controller files importing `package:flutter/material.dart` or accepting a `BuildContext` parameter.
 5. **Monorepo Comparison**: For multi-app repos, compare the detected library and usage counts per app/package.
-6. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter_health/step_08_state_management_analysis.md`.
+6. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter-health-audit/step_08_state_management_analysis.md`.
 
 ## Detailed Instructions
 
@@ -91,9 +91,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/flutter_health/step_08_state_management_analysis.md`.
+Save your complete analysis to `reports/.artifacts/flutter-health-audit/step_08_state_management_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 Structure your output as:
 - **State management detected**: [Pattern] (per app if multi-app) — this exact line label is consumed by the report generator for the Additional Metrics section

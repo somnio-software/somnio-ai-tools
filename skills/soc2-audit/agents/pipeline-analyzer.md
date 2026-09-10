@@ -31,13 +31,13 @@ You are the SOC 2 pipeline and infrastructure analyzer. You gather PLATFORM-AUDI
 
 Read and follow ALL instructions in `references/change-management.md` (family E) and then `references/infrastructure-network.md` (family F).
 
-First read `reports/.artifacts/step_01_soc2_project_detection.md` for the CI/CD system and IaC presence. For each control record: control ref, criterion, Status (met/partial/gap/organizational), Owner/lane, and Evidence (path).
+First read `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md` for the CI/CD system and IaC presence. For each control record: control ref, criterion, Status (met/partial/gap/organizational), Owner/lane, and Evidence (path).
 
 ## Output
 
 Save two artifacts (create the directory first: `mkdir -p reports/.artifacts`):
-- `reports/.artifacts/step_05_soc2_change_management.md` — family E control table, CI gate inventory (lint/test/build/scan per workflow), and gaps.
-- `reports/.artifacts/step_06_soc2_infrastructure_network.md` — family F control table, IaC coverage summary, any plaintext-secret locations (VALUES REDACTED), and gaps.
+- `reports/.artifacts/soc2-audit/step_05_soc2_change_management.md` — family E control table, CI gate inventory (lint/test/build/scan per workflow), and gaps.
+- `reports/.artifacts/soc2-audit/step_06_soc2_infrastructure_network.md` — family F control table, IaC coverage summary, any plaintext-secret locations (VALUES REDACTED), and gaps.
 
 ## Critical Rules
 

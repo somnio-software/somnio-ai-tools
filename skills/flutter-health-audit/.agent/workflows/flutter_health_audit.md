@@ -79,7 +79,7 @@ STEP 8 COMPLETED: [log result]
 Read `flutter-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field # model: frontier
 STEP 9 COMPLETED: [log result]
 
-Save the final Markdown report to `./reports/flutter_audit.md` # model: frontier
+Save the final Markdown report to `./reports/<YYYY-MM-DD>-<project>-flutter-health-audit.md` # model: frontier
 STEP 10 COMPLETED: Report exported
 
 ## Step 11: Optional Best Practices Check

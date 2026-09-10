@@ -62,7 +62,7 @@ You are an expert API design analyst specializing in RESTful API pattern evaluat
 5. **Evaluate DTOs**: Find all `*.dto.ts` files. Search for class-validator decorators. Check for create-*, update-*, query-*, and response DTO naming patterns.
 6. **Verify ValidationPipe**: Read `main.ts` for `useGlobalPipes(new ValidationPipe({...}))`. Check for `whitelist: true` (required) and `transform: true` (required).
 7. **Assess Swagger**: Check for `@nestjs/swagger` in dependencies, `SwaggerModule.setup()` in main.ts, and decorator usage on controllers and DTOs.
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_06_api_design_analysis.md`.
+8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_06_api_design_analysis.md`.
 
 ## Detailed Instructions
 
@@ -91,9 +91,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_06_api_design_analysis.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_06_api_design_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **API Type**: REST, GraphQL, or Hybrid

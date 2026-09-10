@@ -9,7 +9,7 @@ lifecycle and controlled change management. Record Status + Owner/lane per
 control.
 
 PROJECT DETECTION (execute first):
-- Read `reports/.artifacts/step_01_iso27001_project_detection.md` for
+- Read `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` for
   PROJECT_DETECTION_RESULTS and CI/CD surfaces.
 
 CONTROL EVIDENCE:
@@ -64,7 +64,7 @@ find . \( -name "*.tf" -o -name "docker-compose*.yml" -o -name "Dockerfile*" -o 
 READ-ONLY + SECRET SAFETY: read only; redact secret VALUES as `[REDACTED]`.
 
 ARTIFACT SAVE (mandatory):
-Save output to: reports/.artifacts/step_06_iso27001_secure_development_change.md
+Save output to: reports/.artifacts/iso27001-audit/step_06_iso27001_secure_development_change.md
 Run before finishing: mkdir -p reports/.artifacts
 
 Output format:

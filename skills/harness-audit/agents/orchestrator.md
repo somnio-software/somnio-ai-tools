@@ -15,7 +15,7 @@ description: |
   <example>
   Context: The scoring artifact is missing after Wave 1.
   user: "The audit seems stuck after the analysis step."
-  assistant: "I detected that reports/.artifacts/step_02_harness_scoring.md is missing after the harness-analyzer completed. I will retry the harness-analyzer once. If the artifact is still absent, I will log the gap and let the report-writer score every piece as Missing (0) with band 'No harness' per its rejection criteria."
+  assistant: "I detected that reports/.artifacts/harness-audit/step_02_harness_scoring.md is missing after the harness-analyzer completed. I will retry the harness-analyzer once. If the artifact is still absent, I will log the gap and let the report-writer score every piece as Missing (0) with band 'No harness' per its rejection criteria."
   <commentary>
   The orchestrator validates artifact existence before advancing and retries once on missing artifacts before logging and continuing.
   </commentary>
@@ -43,8 +43,8 @@ You are the AI harness audit orchestrator. Your sole responsibilities are routin
 Dispatch `agents/harness-analyzer.md` and wait for completion.
 
 The analyzer produces two artifacts:
-- `reports/.artifacts/step_01_harness_inventory.md` (read-only inventory of every harness piece)
-- `reports/.artifacts/step_02_harness_scoring.md` (per-piece scores, total, band, top-3 next steps)
+- `reports/.artifacts/harness-audit/step_01_harness_inventory.md` (read-only inventory of every harness piece)
+- `reports/.artifacts/harness-audit/step_02_harness_scoring.md` (per-piece scores, total, band, top-3 next steps)
 
 Validate both artifacts exist.
 - If either is missing: retry the harness-analyzer once.
@@ -58,7 +58,7 @@ Assemble the artifact manifest - the artifact paths that exist under `reports/.a
 
 Note any missing artifacts in the manifest (the report-writer must account for them).
 
-Dispatch `agents/report-writer.md` with the artifact manifest. Wait for completion and verify that `reports/harness_audit.md` exists.
+Dispatch `agents/report-writer.md` with the artifact manifest. Wait for completion and verify that `reports/<YYYY-MM-DD>-<project>-harness-audit.md` exists.
 
 ## Orchestrator Rules
 
@@ -67,4 +67,4 @@ Dispatch `agents/report-writer.md` with the artifact manifest. Wait for completi
 - **Never write report prose.** All narrative content is the report-writer's responsibility.
 - **Retry policy**: retry a failed agent exactly once before logging and continuing. Never retry more than once.
 - **Wave ordering is strict**: Wave 2 (report) may not start until Wave 1's artifacts are validated (or their absence is logged).
-- **Log all gaps**: write a brief orchestration log to `reports/.artifacts/orchestration_log.md` recording wave completion, any missing artifacts, and retry outcomes.
+- **Log all gaps**: write a brief orchestration log to `reports/.artifacts/harness-audit/orchestration_log.md` recording wave completion, any missing artifacts, and retry outcomes.

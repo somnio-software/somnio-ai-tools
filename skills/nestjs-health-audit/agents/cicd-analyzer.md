@@ -62,7 +62,7 @@ You are an expert CI/CD pipeline analyst specializing in GitHub Actions workflow
 5. **Read Auxiliary CI Files**: Check for `.github/dependabot.yaml`, PR template, and CodeQL analysis workflow.
 6. **Verify Coverage Thresholds**: Extract coverage threshold values from all test-related workflows. Verify each is >= 70%.
 7. **Monorepo Checks** (if applicable): Verify per-app workflows, path filters, affected commands, caching strategies, and parallel job execution.
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_03_cicd_analysis.md`.
+8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_03_cicd_analysis.md`.
 
 ## Detailed Instructions
 
@@ -90,9 +90,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_03_cicd_analysis.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_03_cicd_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or monorepo with type

@@ -86,7 +86,7 @@ PKG_NAME=$(resolve_pkg_name ".")
 echo "Coverage target package: ${PKG_NAME:-<not detected — using '.' as fallback>}"
 COV_TARGET="${PKG_NAME:-.}"
 
-mkdir -p "$(dirname "${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python_health/step_00_test_coverage.md}")"
+mkdir -p "$(dirname "${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python-health-audit/step_00_test_coverage.md}")"
 
 # Run pytest with branch coverage
 uv run pytest \
@@ -105,7 +105,7 @@ MONOREPO EXECUTION:
 
 ```bash
 echo "=== Running Tests with Coverage (monorepo) ==="
-mkdir -p "$(dirname "${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python_health/step_00_test_coverage.md}")"
+mkdir -p "$(dirname "${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python-health-audit/step_00_test_coverage.md}")"
 
 run_member_coverage() {
   local dir="$1"
@@ -231,7 +231,7 @@ SOMNIO_ARTIFACT_FILE yourself — shell state does not persist between
 your tool calls, so a manual export would be silently lost.
 
 ```bash
-ARTIFACT_FILE="${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python_health/step_00_test_coverage.md}"
+ARTIFACT_FILE="${SOMNIO_ARTIFACT_FILE:-reports/.artifacts/python-health-audit/step_00_test_coverage.md}"
 ARTIFACT_DIR="$(dirname "$ARTIFACT_FILE")"
 mkdir -p "$ARTIFACT_DIR"
 

@@ -67,6 +67,6 @@ That reference is the single source of truth for:
 ## Artifact
 
 Write your complete findings to:
-`reports/.artifacts/python_health/step_07_data_layer_analysis.md`
+`reports/.artifacts/python-health-audit/step_07_data_layer_analysis.md`
 
-Create the directory first: `mkdir -p reports/.artifacts/python_health`
+Create the directory first: `mkdir -p reports/.artifacts/python-health-audit`

@@ -26,7 +26,7 @@ Detect ALL project types (multi-tech monorepo support) and enumerate evidence su
 
 ## Output
 
-Write the detection artifact to `reports/.artifacts/step_01_iso27001_project_detection.md` (run `mkdir -p reports/.artifacts` first). Include PROJECT_DETECTION_RESULTS (pipe-separated type@path), package managers, repository structure, and the enumerated evidence surfaces with their actual paths.
+Write the detection artifact to `reports/.artifacts/iso27001-audit/step_01_iso27001_project_detection.md` (run `mkdir -p reports/.artifacts` first). Include PROJECT_DETECTION_RESULTS (pipe-separated type@path), package managers, repository structure, and the enumerated evidence surfaces with their actual paths.
 
 ## Critical Rules
 

@@ -61,7 +61,7 @@ You are an expert Flutter configuration analyst specializing in pubspec.yaml par
 4. **Check FVM Configuration**: Look for `.fvm/fvm_config.json` or `.fvmrc` at root and in each app directory. Extract the pinned Flutter version.
 5. **Check i18n Configuration**: For each app, check for `l10n.yaml`, verify `flutter_localizations` is in dependencies, and count `.arb` files in `lib/l10n/`.
 6. **Cross-App Comparison** (monorepo): Compare Flutter/Dart SDK versions, dependency versions, analysis options, and i18n configuration across apps. Flag inconsistencies.
-7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter_health/step_02_config_analysis.md`.
+7. **Save Output**: Write the analysis artifact to `reports/.artifacts/flutter-health-audit/step_02_config_analysis.md`.
 
 ## Detailed Instructions
 
@@ -89,9 +89,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/flutter_health/step_02_config_analysis.md`.
+Save your complete analysis to `reports/.artifacts/flutter-health-audit/step_02_config_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/flutter_health`
+Create the directory first: `mkdir -p reports/.artifacts/flutter-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or multi-app monorepo (from step 01 artifact)

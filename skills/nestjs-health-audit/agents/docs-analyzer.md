@@ -62,7 +62,7 @@ You are an expert NestJS documentation analyst specializing in technical documen
 5. **Assess API Documentation**: Cross-reference with step 06 findings for Swagger setup. Check if README mentions the Swagger endpoint URL. Look for Postman collections or OpenAPI spec files.
 6. **Evaluate Code Documentation**: Use grep to sample TSDoc/JSDoc usage on exported classes and complex methods. Check for comment quality (WHY vs WHAT). Identify anti-patterns (redundant comments, outdated docs).
 7. **Check Supplementary Docs**: Verify CHANGELOG.md presence and format, CONTRIBUTING.md completeness, architecture docs, and testing strategy documentation.
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_08_documentation_analysis.md`.
+8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_08_documentation_analysis.md`.
 
 ## Detailed Instructions
 
@@ -91,9 +91,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_08_documentation_analysis.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_08_documentation_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or monorepo

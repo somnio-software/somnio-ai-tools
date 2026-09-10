@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The orchestrator has completed all evidence waves and hands the artifact manifest to the report-writer.
   user: "Generate the SOC 2 readiness report."
-  assistant: "I will read all artifact files from reports/.artifacts/, load the rubrics and weights from references/scoring.md, compute the 10 weighted family scores and the overall readiness score, enforce the 19-section structure per references/report-generator.md, references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/soc2_audit.md and the JSON export to reports/soc2_audit.json."
+  assistant: "I will read all artifact files from reports/.artifacts/, load the rubrics and weights from references/scoring.md, compute the 10 weighted family scores and the overall readiness score, enforce the 19-section structure per references/report-generator.md, references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/<YYYY-MM-DD>-<project>-soc2-audit.md and the JSON export to reports/<YYYY-MM-DD>-<project>-soc2-audit.json."
   <commentary>
   The report-writer is the only agent that holds all artifacts simultaneously. It performs cross-family score reconciliation, applies ownership lanes, and produces the single user-facing output.
   </commentary>
@@ -81,8 +81,8 @@ Execute the computation steps from `references/scoring.md` (extract evidence per
 
 ## Output
 
-Write the final validated report to `reports/soc2_audit.md`.
-Write the JSON export to `reports/soc2_audit.json` (schema in `references/report-generator.md`).
+Write the final validated report to `reports/<YYYY-MM-DD>-<project>-soc2-audit.md`.
+Write the JSON export to `reports/<YYYY-MM-DD>-<project>-soc2-audit.json` (schema in `references/report-generator.md`).
 Write the score history to `reports/.history/last_scores.json`.
 Run before writing: `mkdir -p reports reports/.history`
 
@@ -95,4 +95,4 @@ Run before writing: `mkdir -p reports reports/.history`
 - **Redact secret values**: never copy a live secret into the report; keep the location and replace the value with `[REDACTED]`.
 - **No fabricated identifiers**: never invent company, client, tenant, or ticket names.
 - **Self-validate before writing**: apply all structural checks from `references/report-format-enforcer.md` to the draft; fix issues in-place before saving.
-- **Append the metadata block** at the very end of `reports/soc2_audit.md` exactly as specified in `SKILL.md`.
+- **Append the metadata block** at the very end of `reports/<YYYY-MM-DD>-<project>-soc2-audit.md` exactly as specified in `SKILL.md`.

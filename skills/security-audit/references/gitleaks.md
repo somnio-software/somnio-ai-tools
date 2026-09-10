@@ -53,4 +53,4 @@ Include in artifact:
 4. GIT_HISTORY_FINDINGS: count (0 if none or not installed)
 
 ARTIFACT SAVE (mandatory):
-Save the full analysis output to: reports/.artifacts/step_04_security_gitleaks.md
+Save the full analysis output to: reports/.artifacts/security-audit/step_04_security_gitleaks.md

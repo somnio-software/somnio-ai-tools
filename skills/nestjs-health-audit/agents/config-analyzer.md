@@ -62,7 +62,7 @@ You are an expert NestJS configuration analyst specializing in package.json depe
 5. **Assess Environment Configuration**: Check for `.env.example`, read ConfigModule setup in `src/config/`, verify Joi validation schema or typed configuration, and search for direct `process.env` usage in source code.
 6. **Analyze Scripts**: Verify the presence and correctness of build, dev, test, lint, format, migration, and documentation scripts.
 7. **Monorepo Comparison** (if applicable): Read configuration from each app, compare NestJS versions, TypeScript options, and environment patterns for consistency.
-8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_02_config_analysis.md`.
+8. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_02_config_analysis.md`.
 
 ## Detailed Instructions
 
@@ -91,9 +91,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_02_config_analysis.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_02_config_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **Repository Structure**: Single app or monorepo with type

@@ -113,7 +113,19 @@ then map to a grade:
 
 ## Phase 4 — Report Output
 
-Write the report to `./reports/quick-check-report.md` with this format:
+Write the report to `./reports/<YYYY-MM-DD>-<project>-quick-check.md`, where
+`<YYYY-MM-DD>` is today's date and `<project>` is the current directory name
+slugified to kebab-case (lowercase; spaces, `_`, `.` and `/` become `-`; any
+other character dropped; repeated `-` collapsed). Derive it once first:
+
+```bash
+mkdir -p reports
+REPORT="reports/$(date +%F)-$(basename "$PWD" \
+  | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
+  | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-quick-check.md"
+```
+
+Use this format:
 
 ```
 # Quick Health Check Report

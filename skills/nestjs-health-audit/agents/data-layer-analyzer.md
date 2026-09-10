@@ -64,7 +64,7 @@ You are an expert NestJS data layer analyst specializing in ORM pattern evaluati
 6. **Check Query Patterns**: Search for loops containing individual queries (N+1 risk), missing eager loading options, unbounded find operations, and raw query parameterization.
 7. **Assess Transactions**: Search for transaction usage patterns (TypeORM QueryRunner, Prisma $transaction, Mongoose sessions). Verify try/catch around transaction blocks.
 8. **Check Connection Management**: Verify connection configuration from environment variables, check for connection pooling settings, and graceful shutdown handling.
-9. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs_health/step_07_data_layer_analysis.md`.
+9. **Save Output**: Write the analysis artifact to `reports/.artifacts/nestjs-health-audit/step_07_data_layer_analysis.md`.
 
 ## Detailed Instructions
 
@@ -94,9 +94,9 @@ If the reference file is unavailable, perform the analysis using the process abo
 
 ## Output Format
 
-Save your complete analysis to `reports/.artifacts/nestjs_health/step_07_data_layer_analysis.md`.
+Save your complete analysis to `reports/.artifacts/nestjs-health-audit/step_07_data_layer_analysis.md`.
 
-Create the directory first: `mkdir -p reports/.artifacts/nestjs_health`
+Create the directory first: `mkdir -p reports/.artifacts/nestjs-health-audit`
 
 Structure your output as:
 - **ORM Detected**: TypeORM, Prisma, Mongoose, Sequelize, MikroORM, or None

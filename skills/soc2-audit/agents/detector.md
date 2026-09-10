@@ -41,7 +41,7 @@ whole-project surface, not only the application stack.
 
 ## Output
 
-Save the detection artifact to `reports/.artifacts/step_01_soc2_project_detection.md`.
+Save the detection artifact to `reports/.artifacts/soc2-audit/step_01_soc2_project_detection.md`.
 Create the directory first: `mkdir -p reports/.artifacts`.
 
 Structure the output as specified in `references/project-detection.md`, including:

@@ -13,7 +13,7 @@ and scoring results using the standardized format in `assets/report-template.md`
 
 READ-ONLY DISCIPLINE:
 - Do NOT re-scan or modify the audited repository. Operate on artifact files.
-  Your only writes are `reports/harness_audit.md`, `reports/harness_audit.json`,
+  Your only writes are `reports/<YYYY-MM-DD>-<project>-harness-audit.md`, `reports/<YYYY-MM-DD>-<project>-harness-audit.json`,
   and `reports/.history/last_scores.json`.
 
 STEP ARTIFACT INTEGRATION:
@@ -143,7 +143,7 @@ Before finalizing, verify:
 
 ## JSON EXPORT (mandatory)
 
-After writing the report, write `reports/harness_audit.json`:
+After writing the report, write `reports/<YYYY-MM-DD>-<project>-harness-audit.json`:
 
     {
       "totalScore": [integer 0-100],
