@@ -6,6 +6,7 @@ import 'dart:io';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../utils/platform_utils.dart';
 import '../version.dart';
 import 'run_config.dart';
 
@@ -168,6 +169,11 @@ class StepExecutor {
   ///
   /// Set by the caller (RunCommand) based on the agent's cheapest model.
   String? fallbackModel;
+
+  /// Resolved real executable path (bypassing a Windows npm shim), cached
+  /// for the lifetime of this executor since it's the same for every step.
+  String? _resolvedExecutable;
+  bool _executableResolutionAttempted = false;
 
   /// Resolves the effective per-step base model for [step].
   ///
@@ -645,17 +651,24 @@ class StepExecutor {
   /// on the model substituting it into the script. The parent environment
   /// is preserved (merged), not replaced.
   ///
+  /// Prefers spawning the real executable behind a Windows npm shim (see
+  /// [_resolveExecutable]) so a multi-line prompt reaches the process
+  /// atomically via argv, instead of being re-tokenized by a `.cmd`/`.ps1`
+  /// wrapper's line-oriented batch parsing. Falls back to the bare binary
+  /// name (as before) when that resolution doesn't find anything.
+  ///
   /// Throws [StepTimeoutException] if the process outlives [stepTimeout].
   Future<ProcessResult> _runProcess(
     String prompt, {
     String? modelOverride,
     String? artifactPath,
-  }) {
+  }) async {
     final model = modelOverride ?? config.model;
     final agent = config.agentConfig;
     final args = agent.buildArgs(prompt, model: model);
+    final executable = await _resolveExecutable();
     return runBoundedProcess(
-      agent.binary!,
+      executable,
       args,
       workingDirectory: Directory.current.path,
       environment: artifactPath == null
@@ -664,6 +677,27 @@ class StepExecutor {
       timeout: stepTimeout,
       processStarter: _processStarter,
     );
+  }
+
+  /// Resolves the executable to invoke for [config.agentConfig], preferring
+  /// the real native binary behind a Windows npm shim when available.
+  ///
+  /// See [PlatformUtils.resolveWindowsNpmExecutable] for why this matters:
+  /// npm's `.cmd`/`.ps1` wrappers corrupt multi-line prompt arguments on
+  /// Windows because their batch-style argument forwarding is line-oriented.
+  Future<String> _resolveExecutable() async {
+    if (_executableResolutionAttempted) {
+      return _resolvedExecutable ?? config.agentConfig.binary!;
+    }
+    _executableResolutionAttempted = true;
+
+    final agent = config.agentConfig;
+    final real = await PlatformUtils.resolveWindowsNpmExecutable(
+      agent.binary!,
+      agent.npmPackage,
+    );
+    _resolvedExecutable = real;
+    return real ?? agent.binary!;
   }
 
   /// Parses token usage from the JSON stdout of an AI CLI invocation.

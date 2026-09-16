@@ -5,6 +5,23 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.14.0] - 2026-09-14
+
+### Added
+
+- **.NET Health Audit Skill**: New `dotnet-health-audit` skill (`somnio-dh` / `dh`) that performs a comprehensive .NET / ASP.NET Core Project Health Audit across 17 steps. Analyzes tech stack (SDK/TargetFramework currency, official Microsoft support-lifecycle status computed from release-cadence rules rather than a hardcoded date table, NuGet dependency vulnerabilities/outdated packages via `dotnet list package --vulnerable/--outdated`), architecture (Vertical Slice/Onion/Clean Architecture/N-Layer/Flat pattern detection, SOLID principle compliance, and real cyclomatic complexity measured via a forced-on Roslyn analyzer build that modifies no files), API design, data layer, testing, code quality, CI/CD, and documentation. Produces a Google Docs-ready report with section scores and a weighted overall score.
+- **.NET Best Practices Skill**: New `dotnet-best-practices` skill (`somnio-dp` / `dp`) that runs a micro-level .NET / ASP.NET Core code quality audit across 8 steps, including a dedicated SOLID Compliance dimension. Validates code against `agent-rules/rules/dotnet/*.md` standards for testing, architecture compliance, SOLID principles, code standards, DTO validation, and error handling. Produces a detailed violations report with a prioritized action plan.
+- **.NET agent rules stack**: Added a new `dotnet` stack with 10 canonical rule files (`controller-patterns`, `dto-validation`, `error-handling`, `module-structure`, `repository-patterns`, `service-patterns`, `testing-unit`, `testing-integration`, `csharp`, `solid-principles`) to `AgentRuleRegistry.stacks`, enabling `somnio rules install --stacks dotnet` alongside the existing stacks.
+
+### Fixed
+
+- **Windows npm-shim argument corruption**: `somnio run` invoked AI CLIs installed via npm (e.g. `claude`) through their Windows `.cmd`/`.ps1` shim, whose batch-style argument forwarding is line-oriented and silently truncated/corrupted multi-line prompts. `StepExecutor` now resolves the real bundled executable behind the shim (`node_modules/<npmPackage>/bin/<binary>.exe`, via a new `PlatformUtils.resolveWindowsNpmExecutable`) and invokes it directly, falling back to the previous behavior only when the real executable can't be located. This affects every skill run via `somnio run` on Windows, not just the new .NET skills.
+- **`somnio rules install` Python resolution**: `_generateAdapters` now tries `python3`, `python`, and `py` in order instead of only `python3`, which fails on Windows machines where `python3` is a broken "App execution alias" Store stub even though a working Python install exists under a different launcher name.
+
+### Changed
+
+- **Two hardcoded registry-derived test expectations updated**: `agent_rule_registry_test.dart`'s canonical stack list now includes `dotnet`, and `skill_registry_test.dart`'s technology-list assertion (already loosened to `containsAll` in 2.13.0) now also covers the new `.NET` entry.
+
 ## [2.13.0] - 2026-09-10
 
 ### Removed

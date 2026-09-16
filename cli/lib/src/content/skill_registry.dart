@@ -311,6 +311,42 @@ class SkillRegistry {
       agentsDirectory: 'skills/python-best-practices/agents',
     ),
     SkillBundle(
+      id: 'dotnet_health',
+      name: 'dotnet-health-audit',
+      aliases: ['somnio-dh', 'dh'],
+      displayName: '.NET Project Health Audit',
+      description:
+          'Execute a comprehensive .NET / ASP.NET Core Project Health '
+          'Audit. Analyzes tech stack, architecture, API design, data '
+          'layer, testing, code quality, CI/CD, and documentation. '
+          'Produces a Google Docs-ready report with section scores and '
+          'weighted overall score.',
+      planRelativePath: 'skills/dotnet-health-audit/SKILL.md',
+      rulesDirectory: 'skills/dotnet-health-audit/references',
+      workflowPath:
+          'skills/dotnet-health-audit/.agent/workflows/dotnet_health_audit.md',
+      templatePath: 'skills/dotnet-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/dotnet-health-audit/agents',
+    ),
+    SkillBundle(
+      id: 'dotnet_plan',
+      name: 'dotnet-best-practices',
+      aliases: ['somnio-dp', 'dp'],
+      displayName: '.NET Best Practices Check',
+      description:
+          'Execute a micro-level .NET / ASP.NET Core code quality audit. '
+          'Validates code against live GitHub standards for testing, '
+          'architecture compliance, code standards, DTO validation, and '
+          'error handling. Produces a detailed violations report with '
+          'prioritized action plan.',
+      planRelativePath: 'skills/dotnet-best-practices/SKILL.md',
+      rulesDirectory: 'skills/dotnet-best-practices/references',
+      workflowPath:
+          'skills/dotnet-best-practices/.agent/workflows/dotnet_best_practices.md',
+      templatePath: 'skills/dotnet-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/dotnet-best-practices/agents',
+    ),
+    SkillBundle(
       id: 'security_audit',
       name: 'security-audit',
       aliases: ['somnio-sa', 'sa'],
