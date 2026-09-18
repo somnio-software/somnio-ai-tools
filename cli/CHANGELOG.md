@@ -5,6 +5,21 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Changed
+
+- **`*-health-audit` skills unified report format.** The six health audit skills (`angular-health-audit`, `angularjs-health-audit`, `flutter-health-audit`, `nestjs-health-audit`, `python-health-audit`, `react-health-audit`) now produce reports with identical structure and styling. Test coverage is now reported in every audit — a summary line under the At-a-Glance Scorecard and full `Code Coverage` / `Coverage Breakdown` fields in the Testing section, which previously only Flutter implemented. The duplicated "Quality Index" section was removed; reports are now 15 sections instead of 16. Report headers are now unified across all six, displaying project metadata and exclusions consistently. The AI Harness section's `Coverage` subheading was renamed to `Harness Coverage` for clarity. The common skeleton is documented in a new `docs/report-template-canonical.md`. Nothing consumes it at runtime — the six templates stay hand-maintained; it is the written reference a skill author copies from.
+
+### Removed
+
+- **Deleted the six orphaned `assets/report-template.txt` files** from `angular-health-audit`, `angularjs-health-audit`, `flutter-health-audit`, `nestjs-health-audit`, `python-health-audit`, and `react-health-audit`. Nothing referenced them — each skill's registered template is `report-template.md`. The files were remnants of an earlier report generation pipeline.
+
+### Added
+
+- **`Appendix: Scoring Methodology` in every health-audit report.** A closing, unnumbered block that renders the weighted formula used to compute the overall score, its rounding rule and the scoring bands. The weights were previously invisible to report readers, who could not reconcile the section scores against the single overall number. Weights appear only here — never as a column in the At-a-Glance Scorecard — and each skill renders its own family (the six split into two formulas depending on whether the stack has a Performance section). `references/report-generator.md` remains the single source of truth for the numbers.
+- **`docs/report-template-canonical.md`**: New canonical report template skeleton documenting the unified 15-section structure for all six health audits, with metadata, scoring notes, and section layout.
+
 ## [2.13.0] - 2026-09-10
 
 ### Removed

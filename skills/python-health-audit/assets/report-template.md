@@ -1,5 +1,10 @@
 # Python Project Health Audit Report
 
+**Project:** [PROJECT_NAME]
+**Date:** [AUDIT_DATE]
+**Auditor:** AI-Assisted Analysis
+**Framework:** [FastAPI/Django/Flask]
+
 > **Exclusions:** no new languages/translations; no CODEOWNERS/SECURITY.md; no platform deploy/runbook docs.
 
 ---
@@ -48,7 +53,12 @@
 | AI Harness & Adoption | [Score]/100 | [Label] |
 | **Overall** | **[Score]/100** | **[Label]** |
 
+> **Test Coverage:** [X]% (lines) — full breakdown in the Testing section.
+> Fallback when no coverage tool is detected: `Not measured (no coverage tool detected/configured)`
+
 > **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+[One-sentence interpretation of the Overall Score.]
 
 ---
 
@@ -178,6 +188,17 @@
 
 **Score:** [Score]/100 ([Label])
 
+**Code Coverage:** [X]% (lines)
+> Multi-dimension stacks (JS/TS): `[X]% lines / [Y]% branches / [Z]% functions`
+> Monorepo / multi-app: `App [name]: [X]%, App [name2]: [Y]%`
+> No coverage tool: `Not measured (no coverage tool detected/configured)`
+
+**Coverage Breakdown:**
+- `[module/package/app]`: [X]% (lines[, [Y]% branches, [Z]% functions — where extracted])
+- [Continue per module/package/app]
+- [Single-package projects: "N/A — single package, see Code Coverage above"]
+- [No data: "(no coverage data — artifact missing or no coverage tool configured)"]
+
 ### Key Findings
 - [Finding 1]
 - [Finding 2]
@@ -197,8 +218,6 @@
 - [Continue as needed]
 
 ### Counts & Metrics
-- **Test coverage:** [Percentage]%
-- **Coverage by module:** [Breakdown]
 - [Continue as needed]
 
 ---
@@ -301,7 +320,7 @@
 
 **Maturity:** [sin harness | harness básico | harness sólido | paved path]
 
-### Coverage
+### Harness Coverage
 | Dimension | Status | Points |
 |---|---|---|
 | CLAUDE.md | [Status] | [Score]/13 |
@@ -350,26 +369,7 @@
 
 ---
 
-## 13. Quality Index
-
-| Section | Score | Label |
-|---------|-------|-------|
-| Tech Stack | [Score]/100 | [Label] |
-| Architecture | [Score]/100 | [Label] |
-| API Design | [Score]/100 | [Label] |
-| Data Layer | [Score]/100 | [Label] |
-| Testing | [Score]/100 | [Label] |
-| Code Quality | [Score]/100 | [Label] |
-| Documentation & Operations | [Score]/100 | [Label] |
-| CI/CD | [Score]/100 | [Label] |
-| AI Harness & Adoption | [Score]/100 | [Label] |
-| **Overall** | **[Score]/100** | **[Label]** |
-
-[One-sentence interpretation of the overall score]
-
----
-
-## 14. Risks & Opportunities
+## 13. Risks & Opportunities
 
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
@@ -382,7 +382,7 @@
 
 ---
 
-## 15. Recommendations
+## 14. Recommendations
 
 1. **[Priority Level]:** [Recommendation 1]
 2. **[Priority Level]:** [Recommendation 2]
@@ -397,7 +397,7 @@
 
 ---
 
-## 16. Appendix: Evidence Index
+## 15. Appendix: Evidence Index
 
 **Tech Stack:**
 - [File path or config reference]
@@ -430,6 +430,30 @@
 **CI/CD:**
 - [File path or config reference]
 - [Continue as needed]
+
+---
+
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 1.00 — the authoritative source is this skill's
+`references/report-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Tech Stack | 0.18 |
+| Architecture | 0.18 |
+| API Design | 0.18 |
+| Data Layer | 0.10 |
+| Testing | 0.10 |
+| Code Quality (Linter & Warnings) | 0.10 |
+| Documentation & Operations | 0.03 |
+| CI/CD (Configs Found in Repo) | 0.03 |
+| AI Harness & Adoption | 0.10 |
+| **Total** | **1.00** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
 
 ---
 

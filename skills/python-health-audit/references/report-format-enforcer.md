@@ -19,10 +19,23 @@ NEVER include recommendations for:
   technical requirements)
 
 --------------------------------------------------------------------
+MANDATORY HEADER
+--------------------------------------------------------------------
+
+The header MUST carry BOTH blocks, in this order, exactly as
+assets/report-template.md renders them:
+1. The project-metadata block (Project / Date / Auditor / Framework)
+2. The Exclusions blockquote
+
+Neither block replaces the other — do not drop the project-metadata
+block in favor of the Exclusions blockquote or vice versa.
+
+--------------------------------------------------------------------
 MANDATORY REPORT STRUCTURE
 --------------------------------------------------------------------
 
-The report MUST contain exactly these 16 sections in this order:
+The report MUST contain exactly these 15 numbered sections in this order,
+plus two trailing unnumbered blocks:
 
 1. Executive Summary
 2. At-a-Glance Scorecard
@@ -36,10 +49,15 @@ The report MUST contain exactly these 16 sections in this order:
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
+Appendix: Scoring Methodology (unnumbered — see below)
+Report Metadata (unnumbered)
+
+There is no "Quality Index" section. It was removed (it duplicated the
+At-a-Glance Scorecard table byte-for-byte); its one non-duplicate sentence
+now lives at the end of Section 2. NEVER emit a "Quality Index" section.
 
 --------------------------------------------------------------------
 SECTION FORMAT REQUIREMENTS
@@ -53,8 +71,9 @@ Description: [One-sentence description of the section's purpose]
 
 Score: [Score]/100 ([Label])
 
-Section 7 (Testing) MUST include "Code Coverage:" on a line after Score.
-Extract from @python_test_coverage artifact.
+Section 7 (Testing) MUST include, between "Score:" and "Key Findings:",
+in this order: "Code Coverage:" then "Coverage Breakdown:". Extract from
+@python_test_coverage artifact.
 
 Key Findings:
 - [Bullet point 1]
@@ -113,12 +132,23 @@ Priority Recommendations:
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
+Do NOT add a Weight column to this table — weights appear ONLY in the
+Appendix: Scoring Methodology block (see below), never in the scorecard.
+Immediately below the table, in this exact order:
+- Test Coverage: [X]% (lines) — full breakdown in the Testing section.
+  Second line, same blockquote: fallback "Not measured (no coverage tool
+  detected/configured)" when no coverage tool is detected.
+- Scoring: Strong (85–100) · Fair (70–84) · Weak (0–69) (en dash inside
+  each range, middle dot as separator — exact typography, no ASCII
+  hyphens)
+- [One-sentence interpretation of the Overall Score] (absorbed from the
+  removed Quality Index section)
 
 11. AI Harness & Adoption:
 Description: [One-sentence description of the harness's state]
 Score: [Score]/100 ([Label])
 Maturity: [sin harness | harness básico | harness sólido | paved path]
-Coverage: one row per rubric dimension (CLAUDE.md, Rules, Permissions,
+Harness Coverage: one row per rubric dimension (CLAUDE.md, Rules, Permissions,
 Hooks, Pre-push git hook, Agents, Commands / Skills, Advanced
 orchestration, Lifecycle, Harness versioning) plus a bold Total row
 Key Findings:
@@ -146,42 +176,45 @@ Counts & Metrics:
 - Total classes count: [Count]
 - Total functions count: [Count]
 - Total data models count: [Count]
-- Coverage %: [Percentage or status]
 - API type detected: [REST/GraphQL/Hybrid]
 - OpenAPI/Swagger enabled: [Yes/No]
 - Database ORM: [SQLAlchemy/Django ORM/Tortoise ORM/Pydantic/none]
 - Authentication method: [JWT/OAuth2/Session/none]
 - Type checking: [mypy/pyright/none]
+NEVER restate a coverage percentage here (no "Coverage %" bullet, no
+per-package coverage breakdown) — coverage lives only in the Test
+Coverage line under the scorecard (Section 2) and the Code Coverage /
+Coverage Breakdown fields in Testing (Section 7).
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- API Design: [Score]/100 ([Label])
-- Data Layer: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
-
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
 - [Continue as needed]
+
+Appendix: Scoring Methodology (unnumbered, comes after Section 15 and
+before Report Metadata):
+- A "| Section | Weight |" Markdown table, one row per scorecard row in
+  the same order, plus a bold Total row equal to 1.00.
+- The weight VALUES are never re-typed here from memory — read them from
+  `references/report-generator.md`, the single source of truth for the
+  weights; this table is a read-only summary of what was applied.
+- Followed by the rounding rule ("Standard mathematical rounding (0.5
+  rounds up). No subjective adjustment.") and the scoring bands line
+  ("Strong (85–100) · Fair (70–84) · Weak (0–69)").
+- This appendix is the ONLY place in the report where weights may appear.
+  The At-a-Glance Scorecard table (Section 2) NEVER carries a Weight
+  column.
 
 --------------------------------------------------------------------
 FORMATTING RULES
@@ -217,7 +250,9 @@ MONOREPO HANDLING
 
 For monorepo repositories (using tools like poetry workspaces, setuptools, or tox):
 1. Include app-specific metrics in Counts & Metrics
-2. Report per-app coverage in Additional Metrics
+2. Report per-app coverage in the Testing section's Coverage Breakdown
+   field and in the Test Coverage line under the scorecard — never in
+   Additional Metrics
 3. Include app-specific evidence in Evidence sections
 4. Mention app names in descriptions where relevant
 5. Report cross-app consistency in Key Findings
@@ -227,7 +262,22 @@ VALIDATION CHECKLIST
 --------------------------------------------------------------------
 
 Before finalizing the report, verify:
-✓ All 16 sections are present
+✓ All 15 numbered sections are present, in order, with no "Quality Index"
+  section
+✓ The header carries both the project-metadata block and the Exclusions
+  blockquote
+✓ The "Test Coverage" line (with its fallback line in the same
+  blockquote) sits directly under the At-a-Glance Scorecard table
+✓ The Testing section has "Code Coverage:" and "Coverage Breakdown:"
+  between "Score:" and "Key Findings:"
+✓ The AI Harness & Adoption section uses "Harness Coverage:", not a bare
+  "Coverage:"
+✓ No coverage percentage is restated in Counts & Metrics or in Additional
+  Metrics anywhere in the report
+✓ The "Appendix: Scoring Methodology" block is present, after Section 15
+  and before "Report Metadata"
+✓ Weights appear ONLY in the Appendix: Scoring Methodology — never as a
+  column in the At-a-Glance Scorecard table
 ✓ All sections follow the required format
 ✓ All scores are integers with proper labels
 ✓ All evidence references actual files

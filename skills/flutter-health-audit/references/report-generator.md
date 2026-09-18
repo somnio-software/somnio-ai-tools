@@ -33,7 +33,11 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (16 sections in exact order):
+MANDATORY REPORT STRUCTURE (15 numbered sections + 2 trailing
+unnumbered blocks, in exact order). Section 13 "Quality Index" no
+longer exists — it was a byte-for-byte duplicate of the Section 2
+scorecard and has been deleted; its one non-duplicate line (a trailing
+interpretation sentence) now lives at the end of Section 2:
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -46,10 +50,11 @@ MANDATORY REPORT STRUCTURE (16 sections in exact order):
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
+Appendix: Scoring Methodology (UNNUMBERED — see the special format below)
+Report Metadata (UNNUMBERED — content specified in SKILL.md)
 
 Integrate results from all previous analysis steps:
 - Flutter Version Alignment results
@@ -191,12 +196,25 @@ Priority Recommendations:
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
+Do NOT add a Weight column to this table — weights appear ONLY in the
+Appendix: Scoring Methodology block.
+Immediately below the scorecard rows, in this exact order:
+- Test Coverage: [X]% (lines) — full breakdown in the Testing section.
+  Fallback when no coverage tool is detected: "Not measured (no
+  coverage tool detected/configured)"
+- Scoring: Strong (85-100), Fair (70-84), Weak (0-69)
+- [One-sentence interpretation of the Overall Score] — this is the
+  sentence absorbed from the deleted Quality Index section; if Quality
+  Index used to end with a concrete interpretation sentence, move it
+  here adapted, otherwise use a placeholder.
+The label is always "Test Coverage", never a bare "Coverage" — that
+word is the AI Harness rubric heading in Section 11 (Harness Coverage).
 
 11. AI Harness & Adoption:
 Description: [One-sentence description of the harness analysis].
 Score: [Score]/100 ([Label])
 Maturity: [sin harness | harness básico | harness sólido | paved path]
-Coverage:
+Harness Coverage:
 - CLAUDE.md: [Status] — [Points]/13
 - Rules: [Status] — [Points]/9
 - Permissions: [Status] — [Points]/13
@@ -228,47 +246,55 @@ Counts & Metrics:
 - Supported platforms: [Platform list]
 - Number of feature folders: [Count] ([App breakdown if multi-app])
 - Packages count: [Count]
-- Coverage %: [Percentage or status] (per app if multi-app)
-- Coverage breakdown by component:
-  [ProjectName]/lib: X%
-  packages/[package_name]: X%
-  [Continue for each package]
-- Overall aggregated coverage %: [Total percentage combining all
-  apps and packages]
 - State management detected: [Pattern]
 - Force-upgrade/maintenance mode: [Status]
 - Spell-check scope: [Scope]
 - Public API docs enforcement: [Status]
+Do NOT restate any coverage percentage here (no "Coverage %:", no
+"Coverage breakdown by component:", no "Overall aggregated coverage
+%:"). Coverage appears in exactly two places in the whole report: the
+Test Coverage line under the Section 2 scorecard, and the Code
+Coverage / Coverage Breakdown fields in Section 7 (Testing). Nowhere
+else, including here.
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- State Management: [Score]/100 ([Label])
-- Repositories & Data Layer: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
-
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
 - [Continue as needed]
+
+Appendix: Scoring Methodology (UNNUMBERED, follows Section 15, comes
+before Report Metadata):
+This is the ONLY report-facing surface where weights may appear. Do
+NOT put a Weight column in the Section 2 scorecard table.
+Weighted formula (weights sum to 1.00):
+- Tech Stack: 0.18
+- Architecture: 0.18
+- State Management: 0.18
+- Repositories & Data Layer: 0.10
+- Testing: 0.10
+- Code Quality (Linter & Warnings): 0.10
+- Documentation & Operations: 0.03
+- CI/CD (Configs Found in Repo): 0.03
+- AI Harness & Adoption: 0.10
+- Total: 1.00
+Rounding rule: Standard mathematical rounding (0.5 rounds up). No
+subjective adjustment.
+Scoring bands: Strong (85-100), Fair (70-84), Weak (0-69)
+These are the same weight literals used to compute the Overall Score
+above — this file is their single source of truth. The report-writer
+agent renders this exact table into the report; it must not invent or
+alter these numbers.
 
 FORMATTING RULES:
 - USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
@@ -292,7 +318,8 @@ For multi-app repositories:
 
 VALIDATION CHECKLIST:
 Before finalizing the report, verify:
-✓ All 16 sections are present
+✓ All 15 numbered sections are present (no Quality Index), plus the
+  unnumbered Appendix: Scoring Methodology and Report Metadata blocks
 ✓ All sections follow the required format
 ✓ All scores are integers with proper labels
 ✓ All evidence references actual files
@@ -301,6 +328,10 @@ Before finalizing the report, verify:
 ✓ Multi-app metrics are included if applicable
 ✓ Overall score calculation is correct
 ✓ Report uses proper Markdown headings and formatting
+✓ Coverage appears exactly twice (Section 2 Test Coverage line, Section
+  7 Code Coverage/Coverage Breakdown fields) and nowhere else
+✓ No Weight column in the Section 2 scorecard table; weights appear
+  only in the Appendix: Scoring Methodology
 
 Format: Markdown-formatted report (use proper Markdown syntax,
 syntax, no # headings, no bold markers, no fenced code blocks).

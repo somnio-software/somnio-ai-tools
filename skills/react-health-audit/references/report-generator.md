@@ -32,7 +32,7 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (16 sections in exact order):
+MANDATORY REPORT STRUCTURE (15 sections in exact order):
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -45,10 +45,20 @@ MANDATORY REPORT STRUCTURE (16 sections in exact order):
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
+
+Two further UNNUMBERED blocks follow section 15, in this order:
+`## Appendix: Scoring Methodology` (weight table — see the special
+format below; this file is the authoritative source for the weight
+literals) and `## Report Metadata` (see SKILL.md).
+
+There is no "Quality Index" section. It was removed; its former
+content was a byte-for-byte duplicate of the At-a-Glance Scorecard plus
+a one-sentence interpretation, which is now the interpretation sentence
+under the scorecard (see the Section 2 special format below). Never
+emit a "Quality Index" heading.
 
 Integrate results from all previous analysis steps:
 - Node.js Version Alignment results
@@ -91,10 +101,22 @@ Description: [One-sentence description of the section's purpose]
 
 Score: [Score]/100 ([Label])
 
-Section 6 (Testing) EXCEPTION: MUST include "Code Coverage:" on a line
-immediately after Score, before Key Findings. Extract from
-test_coverage results (format: "Code Coverage: XX% lines / XX%
-branches / XX% functions").
+Section 6 (Testing) EXCEPTION: MUST include, immediately after Score
+and before Key Findings, exactly these two fields (this is the report's
+canonical, and only other, coverage surface besides the Section 2
+scorecard line below):
+- "Code Coverage: XX% (lines)" plus a sub-line for multi-dimension
+  stacks ("XX% lines / XX% branches / XX% functions"), monorepos
+  ("App [name]: XX%, App [name2]: YY%"), or "Not measured (no coverage
+  tool detected/configured)" if none was found. Extract from
+  test_coverage results.
+- "Coverage Breakdown:" — a bullet list, one line per
+  module/package/app ("`[module]`: XX% (lines[, YY% branches, ZZ%
+  functions])"), or "N/A — single package, see Code Coverage above" for
+  single-package projects, or "(no coverage data — artifact missing or
+  no coverage tool configured)" if none was found.
+Section 6's Counts & Metrics subsection must NOT restate the coverage
+percentage — it lives only in the two fields above.
 
 Key Findings:
 - [Bullet point 1]
@@ -151,6 +173,21 @@ Priority Recommendations:
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
 
+Immediately below the scorecard, in this exact order, three more lines
+(no Weight column on the table itself — weights appear only in the
+Appendix: Scoring Methodology, never in the scorecard):
+- "Test Coverage: [X]% (lines) — full breakdown in the Testing
+  section." with a second line inside the same quoting, the fallback
+  "Not measured (no coverage tool detected/configured)" for when no
+  coverage tool was detected. Never label this bare "Coverage" — that
+  word is already the AI Harness rubric table heading in section 11.
+- "Scoring: Strong (85-100) / Fair (70-84) / Weak (0-69)" (in the
+  rendered Markdown this uses an en dash in each range and a middle dot
+  separator; see assets/report-template.md for the exact characters).
+- A one-sentence interpretation of the Overall Score. This is the
+  sentence formerly carried by the deleted Quality Index section — if
+  there is a concrete interpretation to give, put it here.
+
 11. AI Harness & Adoption:
 Description: [One-sentence description of the state of the harness]
 Score: [Score]/100 ([Label])
@@ -193,41 +230,45 @@ Counts & Metrics:
 - Monorepo tool: [nx/turborepo/lerna/none]
 - Total components count: [Count]
 - Total hooks count: [Count]
-- Coverage %: [Percentage or status]
 - State management: [useState/Context/Zustand/Redux/Mixed]
 - Server state library: [TanStack Query/SWR/None]
 - Rendering strategy: [CSR/SSR/SSG/ISR/Mixed]
 - Styling approach: [CSS Modules/Styled Components/Tailwind/Other]
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- State Management: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Performance: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
-
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
 - [Continue as needed]
+
+Appendix: Scoring Methodology (UNNUMBERED — this file is the
+authoritative source of the weight literals; report-format-enforcer.md
+and agents/report-writer.md must not restate these numbers, only point
+here):
+| Section | Weight |
+|---------|--------|
+| Tech Stack | 0.18 |
+| Architecture | 0.18 |
+| State Management | 0.135 |
+| Testing | 0.135 |
+| Code Quality (Linter & Warnings) | 0.135 |
+| Performance | 0.075 |
+| Documentation & Operations | 0.03 |
+| CI/CD (Configs Found in Repo) | 0.03 |
+| AI Harness & Adoption | 0.10 |
+| Total | 1.00 |
+Row labels must match the scorecard row labels verbatim. Rounding rule
+and scoring bands as stated above.
 
 FORMATTING RULES:
 - USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
@@ -244,7 +285,8 @@ FORMATTING RULES:
 MONOREPO HANDLING:
 For monorepo repositories (nx, turborepo, lerna):
 - Include app-specific metrics in Counts & Metrics
-- Report per-app coverage in Additional Metrics
+- Report per-app coverage in the Testing section's Coverage Breakdown
+  field (never in Additional Metrics)
 - Include app-specific evidence in Evidence sections
 - Mention app names in descriptions where relevant
 - Report cross-app consistency in Key Findings

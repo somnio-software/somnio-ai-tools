@@ -5,6 +5,8 @@
 **Auditor:** AI-Assisted Analysis
 **Framework:** [React/Next.js/Remix/Vite]
 
+> **Exclusions:** Never recommend adding new languages/translations, CODEOWNERS/SECURITY.md files, or deployment-specific workflows.
+
 ---
 
 ## 1. Executive Summary
@@ -45,7 +47,12 @@
 | AI Harness & Adoption | [XX]/100 | [Label] |
 | **Overall** | **[XX]/100** | **[Label]** |
 
+> **Test Coverage:** [X]% (lines) — full breakdown in the Testing section.
+> Fallback when no coverage tool is detected: `Not measured (no coverage tool detected/configured)`
+
 > **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+[One-sentence interpretation of the Overall Score.]
 
 ---
 
@@ -142,6 +149,17 @@
 **Description:** [One-sentence description of the testing analysis].
 
 **Score:** [XX]/100 ([Label])
+
+**Code Coverage:** [X]% (lines)
+> Multi-dimension stacks (JS/TS): `[X]% lines / [Y]% branches / [Z]% functions`
+> Monorepo / multi-app: `App [name]: [X]%, App [name2]: [Y]%`
+> No coverage tool: `Not measured (no coverage tool detected/configured)`
+
+**Coverage Breakdown:**
+- `[module/package/app]`: [X]% (lines[, [Y]% branches, [Z]% functions — where extracted])
+- [Continue per module/package/app]
+- [Single-package projects: "N/A — single package, see Code Coverage above"]
+- [No data: "(no coverage data — artifact missing or no coverage tool configured)"]
 
 ### Key Findings
 - [Finding 1]
@@ -290,7 +308,7 @@
 
 **Maturity:** [sin harness | harness básico | harness sólido | paved path]
 
-### Coverage
+### Harness Coverage
 | Dimension | Status | Points |
 |---|---|---|
 | CLAUDE.md | [Status] | [XX]/13 |
@@ -339,26 +357,7 @@
 
 ---
 
-## 13. Quality Index
-
-| Section | Score | Label |
-|---------|-------|-------|
-| Tech Stack | [XX]/100 | [Label] |
-| Architecture | [XX]/100 | [Label] |
-| State Management | [XX]/100 | [Label] |
-| Testing | [XX]/100 | [Label] |
-| Code Quality | [XX]/100 | [Label] |
-| Performance | [XX]/100 | [Label] |
-| Documentation & Operations | [XX]/100 | [Label] |
-| CI/CD | [XX]/100 | [Label] |
-| AI Harness & Adoption | [XX]/100 | [Label] |
-| **Overall** | **[XX]/100** | **[Label]** |
-
-[One-sentence interpretation of the overall score]
-
----
-
-## 14. Risks & Opportunities
+## 13. Risks & Opportunities
 
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
@@ -368,7 +367,7 @@
 
 ---
 
-## 15. Recommendations
+## 14. Recommendations
 
 1. **[Priority Level]:** [Recommendation 1]
 2. **[Priority Level]:** [Recommendation 2]
@@ -383,7 +382,7 @@
 
 ---
 
-## 16. Appendix: Evidence Index
+## 15. Appendix: Evidence Index
 
 **Tech Stack:**
 - [File path or config reference]
@@ -420,6 +419,30 @@
 **AI Harness & Adoption:**
 - [File path or config reference]
 - [Continue as needed]
+
+---
+
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 1.00 — the authoritative source is this skill's
+`references/report-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Tech Stack | 0.18 |
+| Architecture | 0.18 |
+| State Management | 0.135 |
+| Testing | 0.135 |
+| Code Quality (Linter & Warnings) | 0.135 |
+| Performance | 0.075 |
+| Documentation & Operations | 0.03 |
+| CI/CD (Configs Found in Repo) | 0.03 |
+| AI Harness & Adoption | 0.10 |
+| **Total** | **1.00** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
 
 ---
 

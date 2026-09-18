@@ -38,18 +38,46 @@
     - Fair: 70-84
     - Weak: 0-69
 
-5.  **SPECIAL SECTIONS**:
-    - Section 6 (Testing) MUST include "Code Coverage:" line after Score
+5.  **HEADER REQUIREMENTS**:
+    - The header carries BOTH blocks, in order: the project-metadata block
+      (`**Project:**` / `**Date:**` / `**Auditor:**` / `**Framework:**`) AND
+      the `> **Exclusions:**` blockquote directly below it, before the `---`.
+
+6.  **SCORECARD REQUIREMENTS (Section 2)**:
+    - Directly under the At-a-Glance Scorecard table, in this exact order:
+      a `> **Test Coverage:** [X]% (lines) — full breakdown in the Testing
+      section.` line with its "no coverage tool" fallback as a second line
+      inside the same blockquote; the `> **Scoring:** Strong (85–100) · Fair
+      (70–84) · Weak (0–69)` legend (en dash, middle dot); then the
+      one-sentence Overall Score interpretation.
+    - NEVER a bare "Coverage" label here — always "Test Coverage" (a bare
+      "Coverage" collides with the AI Harness & Adoption rubric heading).
+    - NEVER add a Weight column to this table — weights appear ONLY in the
+      unnumbered Appendix: Scoring Methodology (see item 9 below), never as
+      a column in the scorecard.
+
+7.  **SPECIAL SECTIONS**:
+    - Section 6 (Testing) MUST include, between Score and Key Findings, the
+      canonical `**Code Coverage:**` block and `**Coverage Breakdown:**`
+      list (see `references/report-generator.md` for the exact wording).
     - Section 8 (Performance) reflects digest-cycle/`$watch`/one-way-binding
       hygiene plus `ng-repeat track by` and template/DOM patterns
     - Section 11 (AI Harness & Adoption) uses the richer shape: Description,
-      Score, Maturity, Coverage table (or bullet list), Key Findings,
-      Evidence, Risks, Actions to Raise the Score (each with a `[+N]`
-      delta and a `-> dimension D, X/Y -> Y/Y` trace), Counts & Metrics
-    - Section 12 (Additional Metrics) uses flat bullet list format
-    - Section 13 (Quality Index) repeats all scores then overall
+      Score, Maturity, a `### Harness Coverage` table (never a bare
+      `### Coverage` — that heading is reserved for this rubric table only,
+      to avoid colliding with the scorecard's "Test Coverage" line), Key
+      Findings, Evidence, Risks, Actions to Raise the Score (each with a
+      `[+N]` delta and a `-> dimension D, X/Y -> Y/Y` trace), Counts &
+      Metrics
+    - Section 12 (Additional Metrics) uses flat bullet list format and MUST
+      NOT restate any coverage percentage
+    - Counts & Metrics in ANY section MUST NOT restate a coverage
+      percentage either — coverage appears EXACTLY TWICE in the whole
+      report: the Section 2 scorecard line and the Section 6 Testing
+      fields. Nowhere else.
 
-6.  **TOTAL SECTIONS**: Report MUST have exactly 16 sections:
+8.  **TOTAL SECTIONS**: Report MUST have exactly 15 numbered sections, plus
+    two trailing unnumbered blocks:
     1. Executive Summary
     2. At-a-Glance Scorecard
     3. Tech Stack
@@ -62,24 +90,31 @@
     10. CI/CD (Configs Found in Repo)
     11. AI Harness & Adoption
     12. Additional Metrics
-    13. Quality Index
-    14. Risks & Opportunities
-    15. Recommendations
-    16. Appendix: Evidence Index
+    13. Risks & Opportunities
+    14. Recommendations
+    15. Appendix: Evidence Index
+    Then, unnumbered, in order:
+    - Appendix: Scoring Methodology
+    - Report Metadata
+    There is no "Quality Index" section — do not emit one. It was removed;
+    its one non-duplicate sentence was absorbed into Section 2 (item 6
+    above).
+
+9.  **APPENDIX: SCORING METHODOLOGY REQUIREMENT**:
+    - Must be present, unnumbered, between Section 15 (Appendix: Evidence
+      Index) and Report Metadata.
+    - It is the ONLY report-facing surface where weights may appear.
+    - Weights are defined in `references/report-generator.md` — that file
+      is the single source of truth; do not restate the numbers here. Read
+      them from there when validating this appendix's table.
 
 ## WEIGHTED SCORE CALCULATION
 
-Overall Score = round(
-  Tech Stack x 0.18 +
-  Architecture x 0.18 +
-  State Management x 0.135 +
-  Testing x 0.135 +
-  Code Quality x 0.135 +
-  Performance x 0.075 +
-  Documentation x 0.03 +
-  CI/CD x 0.03 +
-  AI Harness & Adoption x 0.10
-)
+Overall Score = round( sum of each of the 9 scored sections' score ×
+its weight )
+
+Weights are defined in `references/report-generator.md` — that file is
+the single source of truth; do not restate the numbers here.
 
 ROUNDING RULE: Use standard mathematical rounding (0.5 rounds up).
 Do NOT apply subjective adjustments.
@@ -87,7 +122,20 @@ Do NOT apply subjective adjustments.
 ## VALIDATION CHECKLIST
 
 Before finalizing the report, verify:
-- All 16 sections are present
+- All 15 numbered sections are present, in order (no gaps, no
+  duplicates, no "Quality Index"), plus both trailing unnumbered blocks
+- The header has both the project-metadata block and the Exclusions
+  blockquote
+- The scorecard has the Test Coverage line, the Scoring legend, and the
+  interpretation sentence directly below the table, and no Weight column
+- Section 6 (Testing) has the Code Coverage / Coverage Breakdown fields
+  between Score and Key Findings
+- Section 11 (AI Harness & Adoption) uses `### Harness Coverage`, not
+  `### Coverage`
+- No coverage percentage is restated in Counts & Metrics or Additional
+  Metrics — coverage appears exactly twice, total
+- The Appendix: Scoring Methodology block is present, before Report
+  Metadata, and is the only place weights appear
 - All sections follow the required format
 - All scores are integers with proper labels
 - All evidence references actual files

@@ -96,7 +96,7 @@ If the reference file is unavailable, perform the analysis using the process abo
 - Record verified absence as evidence: "No `hooks` key in `.claude/settings.json`", not "hooks may be missing".
 - Quote the discriminating detail — the hollow hook's command, the names of agents missing `model:` — so the reader can verify the judgement without re-running the audit.
 - Distinguish "missing" from "untracked" everywhere. They are different findings, different fixes, and different SCORES: missing costs the dimension's existence points, untracked costs dimension 10 and nothing else. Confusing the two is a scoring error, not a wording error.
-- The Coverage table's `Status` column must state facts ("3 agents, 2 without `model:`"), never verdicts ("poor", "needs work").
+- The Harness Coverage table's `Status` column must state facts ("3 agents, 2 without `model:`"), never verdicts ("poor", "needs work").
 - Do not apply subjective adjustments to the total. If a dimension's score feels harsh, the adjustment belongs in the action list, not the arithmetic.
 
 ## Output Format
@@ -109,7 +109,7 @@ Structure your output as:
 - **Description**: One sentence on the state of the harness
 - **Score**: `[N]/100 ([Label])` — if the cap applied, say so and give the uncapped sum: `60/100 (capped — dimensions 1-9 sum to 74, but .claude/ is excluded by .gitignore:12)`
 - **Maturity**: sin harness | harness básico | harness sólido | paved path
-- **Coverage**: A table with one row per dimension — Dimension, Status (a fact), Points (`N/M`) — plus a bold Total row
+- **Harness Coverage**: A table with one row per dimension — Dimension, Status (a fact), Points (`N/M`) — plus a bold Total row (heading it `### Harness Coverage`, never a bare `### Coverage` — that word is the At-a-Glance Scorecard's Test Coverage label)
 - **Key Findings**: What the score means, leading with anything that invalidates the rest (an uncommitted harness, a silent no-op hook)
 - **Evidence**: Real file paths only, never invented, with the supporting line or key
 - **Risks**: What the missing enforcement allows to happen

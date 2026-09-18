@@ -34,7 +34,8 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (16 sections in exact order):
+MANDATORY REPORT STRUCTURE (15 numbered sections in exact order, plus
+two trailing unnumbered blocks):
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -47,10 +48,13 @@ MANDATORY REPORT STRUCTURE (16 sections in exact order):
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
+Then, unnumbered and in this order: Appendix: Scoring Methodology,
+Report Metadata. (There is no "Quality Index" section — it was removed;
+its one non-duplicate piece of content, the interpretation sentence, now
+lives under the At-a-Glance Scorecard, see section 2 below.)
 
 The section titles above are fixed for scoring consistency; the BODY of each
 section is calibrated to AngularJS 1.x concepts:
@@ -112,10 +116,22 @@ Description: [One-sentence description of the section's purpose]
 
 Score: [Score]/100 ([Label])
 
-Section 6 (Testing) EXCEPTION: MUST include "Code Coverage:" on a line
-immediately after Score, before Key Findings. Extract from
-test_coverage results (format: "Code Coverage: XX% lines / XX%
-branches / XX% functions").
+Section 6 (Testing) EXCEPTION: MUST include the canonical coverage
+contract immediately after Score, before Key Findings:
+  Code Coverage: [X]% (lines)
+    Multi-dimension stacks (JS/TS): "[X]% lines / [Y]% branches / [Z]% functions"
+    Monorepo / multi-app: "App [name]: [X]%, App [name2]: [Y]%"
+    No coverage tool: "Not measured (no coverage tool detected/configured)"
+  Coverage Breakdown:
+  - [module/package/app]: [X]% (lines[, [Y]% branches, [Z]% functions — where extracted])
+  - [Continue per module/package/app]
+  - [Single-package projects: "N/A — single package, see Code Coverage above"]
+  - [No data: "(no coverage data — artifact missing or no coverage tool configured)"]
+Extract from test_coverage results. Coverage appears EXACTLY TWICE in
+the whole report: this Testing block, and the one-line "Test Coverage"
+summary under the At-a-Glance Scorecard (Section 2). Never restate the
+coverage percentage anywhere else (not in Counts & Metrics, not in
+Additional Metrics).
 
 Key Findings:
 - [Bullet point 1]
@@ -171,12 +187,22 @@ Priority Recommendations:
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
+Immediately below the table (do NOT add a Weight column — weights only
+ever appear in the unnumbered Appendix: Scoring Methodology):
+Test Coverage: [X]% (lines) — full breakdown in the Testing section.
+  Fallback when no coverage tool is detected: "Not measured (no
+  coverage tool detected/configured)"
+Scoring: Strong (85-100) - Fair (70-84) - Weak (0-69)
+  (rendered in the report with en dash and middle dot per the template:
+  "Strong (85–100) · Fair (70–84) · Weak (0–69)")
+[One-sentence interpretation of the Overall Score] — this is the
+sentence absorbed from the removed Quality Index section.
 
 11. AI Harness & Adoption:
 Description: [One-sentence description of the state of the harness]
 Score: [Score]/100 ([Label])
 Maturity: [sin harness | harness basico | harness solido | paved path]
-Coverage:
+Harness Coverage:
 - CLAUDE.md: [Status] - [Points]/13
 - Rules: [Status] - [Points]/9
 - Permissions: [Status] - [Points]/13
@@ -214,41 +240,43 @@ Counts & Metrics:
 - Router: [ngRoute/ui-router/None]
 - Total controllers/directives/components count: [Count]
 - Total services/factories count: [Count]
-- Coverage %: [Percentage or status]
 - Minification-safe DI: [Consistent annotations/ngAnnotate/UNSAFE]
 - Template caching: [Configured/Missing]
 - Test runner: [Karma/None]
+(No coverage bullet here — coverage lives only in Section 6 Testing's
+Code Coverage / Coverage Breakdown fields and the Section 2 scorecard
+Test Coverage line. There is no "Quality Index" section any more; it was
+removed and its one non-duplicate sentence absorbed into Section 2.)
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- State Management: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Performance: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
-
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed - include the AngularJS EOL / Bower-abandonment
   migration risk]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
 - [Continue as needed]
+
+Then, unnumbered:
+
+Appendix: Scoring Methodology:
+A read-only summary table of the weights this file defines (see the
+weighted-overall-score bullet near the top of this file for the
+authoritative numbers), one row per scored section matching the
+scorecard row labels, plus a Total row of 1.00, the rounding rule, and
+the Strong/Fair/Weak scoring bands.
+
+Report Metadata:
+See SKILL.md's "Report Metadata (MANDATORY)" section for the exact
+table shape.
 
 FORMATTING RULES:
 - USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
@@ -265,7 +293,9 @@ FORMATTING RULES:
 MONOREPO HANDLING:
 For the rare AngularJS monorepo (multiple apps under one repo):
 - Include app-specific metrics in Counts & Metrics
-- Report per-app coverage in Additional Metrics
+- Report per-app coverage using the Testing section's Coverage Breakdown
+  list and the Code Coverage "Monorepo / multi-app" line (never in
+  Additional Metrics — see the coverage rule under section 12 above)
 - Include app-specific evidence in Evidence sections
 - Mention app names in descriptions where relevant
 - Report cross-app consistency in Key Findings

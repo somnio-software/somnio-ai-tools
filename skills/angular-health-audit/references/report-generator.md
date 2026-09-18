@@ -18,6 +18,10 @@ report with:
   State Management 0.135, Testing 0.135, Code Quality 0.135,
   Performance 0.075, Documentation & Operations 0.03, CI/CD 0.03,
   AI Harness & Adoption 0.10
+  (These weights are the authoritative source for this skill — every
+  other file, including references/report-format-enforcer.md and
+  agents/report-writer.md, must point back here rather than restate
+  them.)
 - ROUNDING RULE: Use standard mathematical rounding (0.5 rounds up).
   Do NOT apply subjective adjustments.
 - Important exclusions:
@@ -32,7 +36,9 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (16 sections in exact order):
+MANDATORY REPORT STRUCTURE (15 numbered sections in exact order, plus
+two trailing UNNUMBERED blocks — Appendix: Scoring Methodology and
+Report Metadata):
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -45,10 +51,9 @@ MANDATORY REPORT STRUCTURE (16 sections in exact order):
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
 
 Integrate results from all previous analysis steps:
 - Node.js Version Alignment results
@@ -92,10 +97,20 @@ Description: [One-sentence description of the section's purpose]
 
 Score: [Score]/100 ([Label])
 
-Section 6 (Testing) EXCEPTION: MUST include "Code Coverage:" on a line
-immediately after Score, before Key Findings. Extract from
-test_coverage results (format: "Code Coverage: XX% lines / XX%
-branches / XX% functions").
+Section 6 (Testing) EXCEPTION: immediately after Score, before Key
+Findings, include BOTH canonical coverage fields (never just one):
+- "Code Coverage: [X]% (lines)" — or, when applicable, the
+  multi-dimension ("[X]% lines / [Y]% branches / [Z]% functions"),
+  monorepo/multi-app, or "no coverage tool detected" fallback wording
+  from assets/report-template.md.
+- "Coverage Breakdown:" — a bullet list, one line per module/package/
+  app, or the single-package / no-data fallback wording from
+  assets/report-template.md.
+Extract from test_coverage results. These two Testing fields, plus the
+At-a-Glance Scorecard's "Test Coverage:" summary line (Section 2), are
+the ONLY places a coverage percentage may appear anywhere in the
+report — never restate it in Counts & Metrics or in Additional
+Metrics (Section 12).
 
 Key Findings:
 - [Bullet point 1]
@@ -151,12 +166,23 @@ Priority Recommendations:
 - CI/CD (Configs Found in Repo): [Score]/100 ([Label])
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
+Immediately below the scorecard, in this order (see
+assets/report-template.md for exact wording):
+- Test Coverage: [X]% (lines) — full breakdown in the Testing
+  section. (Fallback when no coverage tool is detected: "Not measured
+  (no coverage tool detected/configured)".)
+- Scoring legend: "Strong (85–100) · Fair (70–84) · Weak (0–69)"
+  (en dash in the ranges, middle dot as separator — do not use ASCII
+  hyphens).
+- [One-sentence interpretation of the Overall Score]. This sentence is
+  what used to close the old Quality Index section — carry that
+  interpretation here instead of reintroducing a Quality Index section.
 
 11. AI Harness & Adoption:
 Description: [One-sentence description of the state of the harness]
 Score: [Score]/100 ([Label])
 Maturity: [sin harness | harness básico | harness sólido | paved path]
-Coverage:
+Harness Coverage:
 - CLAUDE.md: [Status] — [Points]/13
 - Rules: [Status] — [Points]/9
 - Permissions: [Status] — [Points]/13
@@ -196,41 +222,43 @@ Counts & Metrics:
 - Module strategy: [NgModules/Standalone/Mixed]
 - Total components count: [Count]
 - Total services count: [Count]
-- Coverage %: [Percentage or status]
 - State management: [Signals/NgRx/NGXS/ComponentStore/BehaviorSubject services/Mixed]
 - Change detection: [OnPush usage count / Default]
 - Rendering strategy: [CSR/SSR (Angular Universal)/SSG (prerender)/Mixed]
 - Styling approach: [CSS/SCSS/Tailwind/Component styles/Other]
+Do NOT add a coverage percentage bullet here (e.g. "Coverage %:" or
+similar) — coverage is reported exactly twice in the whole document:
+the Section 2 scorecard's "Test Coverage:" line and the Section 6
+Testing "Code Coverage:" / "Coverage Breakdown:" fields. Nowhere else.
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- State Management: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Performance: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
-
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
 - [Continue as needed]
+
+Appendix: Scoring Methodology (UNNUMBERED, trailing — after Section 15
+and before Report Metadata):
+- Render the weighted formula (see the weights list at the top of this
+  file) as a "| Section | Weight |" table, one row per scored section
+  using this skill's own scorecard row labels, plus a
+  "| Total | 1.00 |" row.
+- State the rounding rule (standard mathematical rounding, 0.5 rounds
+  up, no subjective adjustment) and the scoring bands
+  ("Strong (85–100) · Fair (70–84) · Weak (0–69)").
+- This appendix is the ONLY report-facing surface where weights may
+  appear — never add a Weight column to the Section 2 scorecard table.
+- See assets/report-template.md for the exact block shape.
 
 FORMATTING RULES:
 - USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
@@ -247,7 +275,8 @@ FORMATTING RULES:
 MULTI-PROJECT WORKSPACE HANDLING:
 For multi-project Angular workspaces (multiple projects, Nx):
 - Include project-specific metrics in Counts & Metrics
-- Report per-project coverage in Additional Metrics
+- Report per-project coverage in the Section 6 Testing Coverage
+  Breakdown (not in Additional Metrics)
 - Include project-specific evidence in Evidence sections
 - Mention project names in descriptions where relevant
 - Report cross-project consistency in Key Findings

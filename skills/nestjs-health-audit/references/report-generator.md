@@ -31,7 +31,8 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (16 sections in exact order):
+MANDATORY REPORT STRUCTURE (15 numbered sections in exact order, plus
+two trailing unnumbered blocks):
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -44,10 +45,13 @@ MANDATORY REPORT STRUCTURE (16 sections in exact order):
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
+
+Followed by two unnumbered blocks, in this order: "Appendix: Scoring
+Methodology" (see assets/report-template.md for its exact shape — the
+weights below are its authoritative source), then "Report Metadata".
 
 Integrate results from all previous analysis steps:
 - Node.js Version Alignment results
@@ -78,9 +82,13 @@ Description: [One-sentence description of the section's purpose]
 
 Score: [Score]/100 ([Label])
 
-Section 7 (Testing) EXCEPTION: MUST include "Code Coverage:" on a line
-immediately after Score, before Key Findings. Extract from
-@nestjs_test_coverage artifact (line starting with "Code Coverage:").
+Section 7 (Testing) EXCEPTION: MUST include the canonical coverage
+fields between Score and Key Findings — "Code Coverage:" (with its
+multi-dimension/monorepo/no-tool fallback sub-lines) and "Coverage
+Breakdown:" — exactly as shown in assets/report-template.md. Extract
+the values from the @nestjs_test_coverage artifact. Do NOT restate the
+coverage percentage anywhere else in the section (Counts & Metrics
+must not repeat it).
 
 Key Findings:
 - [Bullet point 1]
@@ -137,6 +145,15 @@ Priority Recommendations:
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
 
+Immediately below the scorecard, in this exact order: a
+"> Test Coverage: [X]% (lines) — full breakdown in the Testing
+section." blockquote (with its "no coverage tool detected" fallback as
+a second line inside the SAME blockquote), the
+"> Scoring: Strong (85–100) · Fair (70–84) · Weak (0–69)" legend, then
+a one-sentence interpretation of the Overall Score. See
+assets/report-template.md for the exact wording and punctuation (en
+dash, middle dot).
+
 12. Additional Metrics:
 - Node.js version: [Version]
 - NestJS version: [Version]
@@ -147,38 +164,27 @@ Priority Recommendations:
 - Total controllers count: [Count]
 - Total services count: [Count]
 - Total DTOs count: [Count]
-- Coverage %: [Percentage or status] (per app if monorepo)
-- Overall aggregated coverage %: [Total percentage]
 - API type detected: [REST/GraphQL/Hybrid]
 - OpenAPI/Swagger enabled: [Yes/No]
 - Database ORM: [TypeORM/Prisma/Sequelize/MikroORM/none]
 - Authentication method: [JWT/Passport/Session/none]
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- API Design: [Score]/100 ([Label])
-- Data Layer: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
+Do NOT include a coverage percentage bullet here (no "Coverage %:" or
+"Overall aggregated coverage %:"). Coverage lives only in the At-a-
+Glance Scorecard's "Test Coverage" line and in the Testing section's
+"Code Coverage:" / "Coverage Breakdown:" fields (see Section 7 above).
 
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
@@ -199,14 +205,16 @@ FORMATTING RULES:
 MONOREPO HANDLING:
 For monorepo repositories (nx, turborepo, lerna):
 - Include app-specific metrics in Counts & Metrics
-- Report per-app coverage in Additional Metrics
+- Report per-app coverage in the Testing section's "Coverage
+  Breakdown:" field (e.g. `App [name]: [X]%, App [name2]: [Y]%`)
 - Include app-specific evidence in Evidence sections
 - Mention app names in descriptions where relevant
 - Report cross-app consistency in Key Findings
 
 VALIDATION CHECKLIST:
 Before finalizing the report, verify:
-✓ All 16 sections are present
+✓ All 15 numbered sections are present, plus the two trailing
+  unnumbered blocks (Appendix: Scoring Methodology, Report Metadata)
 ✓ All sections follow the required format
 ✓ All scores are integers with proper labels
 ✓ All evidence references actual files

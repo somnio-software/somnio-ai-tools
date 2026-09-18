@@ -32,7 +32,8 @@ report with:
 
 NOTE: For security analysis, run the standalone Security Audit (/somnio-sa).
 
-MANDATORY REPORT STRUCTURE (16 sections in exact order):
+MANDATORY REPORT STRUCTURE (15 numbered sections in exact order, plus two
+trailing unnumbered blocks):
 1. Executive Summary
 2. At-a-Glance Scorecard
 3. Tech Stack
@@ -45,10 +46,19 @@ MANDATORY REPORT STRUCTURE (16 sections in exact order):
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
+Appendix: Scoring Methodology (unnumbered)
+Report Metadata (unnumbered)
+
+NOTE: The old 16-section structure had a "13. Quality Index" section
+between Additional Metrics and Risks & Opportunities. It was a
+byte-for-byte duplicate of the At-a-Glance Scorecard table and has been
+removed; its one piece of non-duplicate content (a one-sentence
+interpretation of the Overall Score) now lives at the end of Section 2
+(see the "2. At-a-Glance Scorecard" special format below). Do NOT emit a
+"Quality Index" section.
 
 Integrate results from all previous analysis steps:
 - Version Alignment results
@@ -188,6 +198,19 @@ Priority Recommendations:
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
 
+Immediately below the scorecard, in this exact order:
+- Test Coverage: [X]% (lines) — full breakdown in the Testing section.
+  Fallback when no coverage tool is detected: "Not measured (no coverage
+  tool detected/configured)". Never label this line a bare "Coverage" —
+  that word (as "Harness Coverage") is a distinct heading inside the AI
+  Harness & Adoption section (Section 11).
+- Scoring: Strong (85–100) · Fair (70–84) · Weak (0–69) (en dash in each
+  range, middle dot as separator — matches assets/report-template.md exactly)
+- [One-sentence interpretation of the Overall Score] — this is the sentence
+  absorbed from the old "Quality Index" section (see the removal note
+  above); if there is no natural interpretation sentence, use the
+  bracketed placeholder as-is.
+
 11. AI Harness & Adoption:
 This section is richer than the standard 5-subsection block. In this
 run's artifacts directory, find the single file matching the glob
@@ -203,7 +226,7 @@ Score: [Score]/100 ([Label])
 
 Maturity: [sin harness | harness básico | harness sólido | paved path]
 
-Coverage:
+Harness Coverage:
 [Dimension] | [Status] | [Points]
 (one row per rubric dimension: CLAUDE.md, Rules, Permissions, Hooks,
 Pre-push git hook, Agents, Commands / Skills, Advanced orchestration,
@@ -233,48 +256,46 @@ Counts & Metrics:
 - Python version: [Version or range]
 - Package manager: [uv / pip / poetry / pdm]
 - Number of packages/apps: [Count] ([Breakdown if monorepo])
-- Coverage %: [Percentage or status] (per package if monorepo)
-- Coverage breakdown by component:
-  [PackageName]/src: X%
-  packages/[package_name]: X%
-  [Continue for each package]
-- Overall aggregated coverage %: [Total percentage combining all
-  packages]
 - Framework detected: [FastAPI / Django / Flask / library / CLI / other]
 - Type checker: [pyright / basedpyright / mypy / none]
 - Linter/formatter: [Ruff / flake8+black / other]
 - API versioning strategy: [Status]
 - OpenAPI/schema docs enforcement: [Status]
+NOTE: Do NOT restate any coverage percentage here. Coverage appears
+exactly twice in the report — the "Test Coverage" line under the
+At-a-Glance Scorecard (Section 2) and the "Code Coverage" / "Coverage
+Breakdown" fields in Testing (Section 7). Nowhere else.
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- API Design: [Score]/100 ([Label])
-- Data Layer: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
-
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
 - [Continue as needed]
+
+Appendix: Scoring Methodology (unnumbered, comes after Section 15):
+Read the weighted formula and weight literals from the "Weighted overall
+score using: ..." line near the top of this file — that line is the
+single source of truth for the weights. Render them as a read-only
+summary table:
+| Section | Weight |
+[one row per scored section above, in scorecard order, matching the
+scorecard's row labels exactly] | **Total** | **1.00** |
+Rounding rule: Standard mathematical rounding (0.5 rounds up). No
+subjective adjustment.
+Scoring bands: Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+Report Metadata (unnumbered, trailing block): see SKILL.md "Report
+Metadata (MANDATORY)" for the exact table shape.
 
 FORMATTING RULES:
 - USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
@@ -291,14 +312,21 @@ FORMATTING RULES:
 MONOREPO HANDLING:
 For monorepo repositories:
 - Include package-specific metrics in Counts & Metrics
-- Report per-package coverage in Additional Metrics
+- Report per-package coverage in the Testing section's Coverage Breakdown
+  field (see the Section 7 EXCEPTION above) and in the Test Coverage line
+  under the At-a-Glance Scorecard — NOT in Additional Metrics
 - Include package-specific evidence in Evidence sections
 - Mention package names in descriptions where relevant
 - Report cross-package consistency in Key Findings
 
 VALIDATION CHECKLIST:
 Before finalizing the report, verify:
-✓ All 16 sections are present
+✓ All 15 numbered sections are present, plus the two trailing unnumbered
+  blocks (Appendix: Scoring Methodology, Report Metadata)
+✓ No "Quality Index" section is emitted
+✓ Weight literals are only stated once, near the top of this file — the
+  Appendix: Scoring Methodology table is a read-only rendering of them,
+  never a second authoritative source
 ✓ All sections follow the required format
 ✓ All scores are integers with proper labels
 ✓ All evidence references actual files
