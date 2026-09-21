@@ -6,7 +6,7 @@ description: |
   <example>
   Context: The orchestrator has completed all analysis waves and hands the artifact manifest to the report-writer.
   user: "Generate the security audit report."
-  assistant: "I will read all artifact files from reports/.artifacts/, load the scoring rubrics from references/report-generator.md, compute the 5 weighted section scores and the overall score, enforce the 12-section structure per references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/<YYYY-MM-DD>-<project>-security-audit.md and the JSON export to reports/<YYYY-MM-DD>-<project>-security-audit.json."
+  assistant: "I will read all artifact files from reports/.artifacts/, load the scoring rubrics from references/report-generator.md, compute the 5 weighted section scores and the overall score, enforce the 12-section structure per references/report-format-enforcer.md and assets/report-template.md, then write the final report to reports/<YYYY-MM-DD>-<project>-security-audit.md."
   <commentary>
   The report-writer is the only agent that holds all artifacts simultaneously. It performs cross-section score reconciliation and produces the single user-facing output.
   </commentary>
@@ -47,7 +47,7 @@ You are the security audit report-writer. You consolidate step 10 (report genera
 
 ## Instructions
 
-Read and follow ALL instructions in `references/report-generator.md` for scoring computation, mandatory report structure, dynamic section ordering, and JSON export requirements.
+Read and follow ALL instructions in `references/report-generator.md` for scoring computation, mandatory report structure, dynamic section ordering, and score history requirements.
 
 Read and follow ALL instructions in `references/report-format-enforcer.md` for structural validation, formatting rules, exclusion leak detection, and score history export.
 
@@ -86,8 +86,6 @@ Execute Steps A through E from `references/report-generator.md` (extract scoring
 ## Output
 
 Write the final validated report to `reports/<YYYY-MM-DD>-<project>-security-audit.md`.
-
-Write the JSON export to `reports/<YYYY-MM-DD>-<project>-security-audit.json` (exact schema defined in `references/report-generator.md`).
 
 Write the score history to `reports/.history/last_scores.json`.
 

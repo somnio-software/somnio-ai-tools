@@ -30,7 +30,7 @@ MANDATORY REPORT STRUCTURE (12 sections):
 9. Remediation Priority Matrix
 10. Project Detection Results
 11. Appendix: Evidence Index
-12. Scan Metadata
+12. Report Metadata
 
 DYNAMIC ORDERING INSTRUCTION:
 After computing all 5 section scores in Step B, sort the scored detail
@@ -307,34 +307,10 @@ labels and pipe tables, exactly as assets/report-template.md renders
 them. That template and references/report-format-enforcer.md are
 authoritative on formatting; this file must not contradict them.
 
-JSON EXPORT (mandatory):
-In addition to the text report, produce a machine-readable JSON file.
-After writing the report, write a second file to reports/<YYYY-MM-DD>-<project>-security-audit.json
-with the following schema (extract values from the generated report):
-
-{
-  "overallScore": [integer 0-100],
-  "posture": "[Secure|Needs Attention|At Risk|Critical]",
-  "scores": {
-    "sensitiveFile": [0-100],
-    "secretDetection": [0-100],
-    "dependencySecurity": [0-100],
-    "supplyChainIntegrity": [0-100],
-    "securityAutomation": [0-100]
-  },
-  "findings": {
-    "high": [integer],
-    "medium": [integer],
-    "low": [integer]
-  },
-  "timestamp": "[ISO8601 datetime]",
-  "projectType": "[detected type string]"
-}
-
 Run before saving: mkdir -p reports
 
-SCORE HISTORY (mandatory after writing report and JSON):
-After writing reports/<YYYY-MM-DD>-<project>-security-audit.md and reports/<YYYY-MM-DD>-<project>-security-audit.json,
+SCORE HISTORY (mandatory after writing report):
+After writing reports/<YYYY-MM-DD>-<project>-security-audit.md,
 write reports/.history/last_scores.json with:
 { "overall": [current overall score], "timestamp": "[ISO8601]",
   "scores": { "sensitiveFile": N, "secretDetection": N, "dependencySecurity": N,

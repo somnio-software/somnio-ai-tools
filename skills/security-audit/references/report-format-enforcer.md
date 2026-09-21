@@ -73,7 +73,7 @@ VALIDATION CHECKLIST:
   8. Consolidated Findings by Severity,
   9. Remediation Priority Matrix,
   10. Project Detection Results, 11. Appendix: Evidence Index,
-  12. Scan Metadata
+  12. Report Metadata
 - Markdown formatting applied correctly throughout
 - Severity classifications use correct format
 - Section 1 has 5 scored lines + Overall + Posture
@@ -83,7 +83,7 @@ VALIDATION CHECKLIST:
 - Evidence references include file paths
 - Recommendations are numbered and prioritized
 - Report starts with "Security Audit Report" title
-- Report ends with "12. Scan Metadata" section
+- Report ends with "12. Report Metadata" section
 - No EXCLUSIONS block or generator instructions in output
 - No duplicate score displays
 
@@ -93,38 +93,11 @@ was corrected.
 Output: The formatted Markdown report content ready for export to
 ./reports/<YYYY-MM-DD>-<project>-security-audit.md
 
-JSON EXPORT (mandatory):
-After validating and exporting the text report to reports/<YYYY-MM-DD>-<project>-security-audit.md,
-extract the scores and findings from the validated report and write a valid
-JSON file to reports/<YYYY-MM-DD>-<project>-security-audit.json with this schema:
-
-{
-  "overallScore": [integer 0-100],
-  "posture": "[Secure|Needs Attention|At Risk|Critical]",
-  "scores": {
-    "sensitiveFile": [0-100],
-    "secretDetection": [0-100],
-    "dependencySecurity": [0-100],
-    "supplyChainIntegrity": [0-100],
-    "securityAutomation": [0-100]
-  },
-  "findings": {
-    "high": [integer],
-    "medium": [integer],
-    "low": [integer]
-  },
-  "timestamp": "[ISO8601 datetime, e.g. 2025-02-26T12:00:00Z]",
-  "projectType": "[string from Section 10 Project Detection Results]"
-}
-
-If the report generator already produced reports/<YYYY-MM-DD>-<project>-security-audit.json, validate
-that the JSON is well-formed (valid syntax, required keys present). If invalid,
-regenerate from the text report. Ensure reports/ directory exists.
-
 SCORE HISTORY (mandatory after export):
-After validating and exporting both reports/<YYYY-MM-DD>-<project>-security-audit.md and
-reports/<YYYY-MM-DD>-<project>-security-audit.json, write reports/.history/last_scores.json with
-the same score and findings data for future score comparison. Format:
+After validating and exporting reports/<YYYY-MM-DD>-<project>-security-audit.md,
+write reports/.history/last_scores.json using the scores and findings computed
+for this report, in the exact schema given in references/report-generator.md's
+SCORE HISTORY block, for future score comparison. Format:
 { "overall": N, "timestamp": "ISO8601", "scores": {...}, "findings": {...},
   "projectType": "..." }
 Run: mkdir -p reports/.history

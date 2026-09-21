@@ -118,7 +118,6 @@ reports/<YYYY-MM-DD>-<project>-<audit>.md
 ```
 reports/2026-09-14-hoopis-backend-flutter-health-audit.md
 reports/2026-09-14-hoopis-backend-security-audit.md
-reports/2026-09-14-hoopis-backend-security-audit.json
 ```
 
 - `<YYYY-MM-DD>` — the date of the run, first so the directory listing sorts
