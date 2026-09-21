@@ -56,6 +56,26 @@ void main() {
       final report = _read('$base/assets/report-template.md');
       expect(report, contains('Svelte Project Health Audit Report'));
       expect(report, contains('At-a-Glance Scorecard'));
+      expect(
+        report,
+        contains(
+          '> **Test Coverage:** [X]% (lines) — full breakdown in the '
+          'Testing section.',
+        ),
+      );
+      expect(report, contains('**Code Coverage:**'));
+      expect(report, contains('### Harness Coverage'));
+      expect(report, contains('## Appendix: Scoring Methodology'));
+      expect(report, isNot(contains('Quality Index')));
+      expect(report, isNot(contains('| Security |')));
+
+      // Exactly 15 numbered `## N.` section headings, numbered 1..15.
+      final numberedHeadings = RegExp(r'^## (\d+)\. ', multiLine: true)
+          .allMatches(report)
+          .map((m) => int.parse(m.group(1)!))
+          .toList();
+      expect(numberedHeadings, hasLength(15));
+      expect(numberedHeadings, List.generate(15, (i) => i + 1));
     });
   });
 

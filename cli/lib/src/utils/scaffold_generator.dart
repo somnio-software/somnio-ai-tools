@@ -41,7 +41,7 @@ class ScaffoldGenerator {
     // Report template
     await _writeFile(
       p.join(baseDir, 'assets', 'report-template.md'),
-      _reportTemplate(techTitle, displayName),
+      _reportTemplate(tech, techTitle, displayName),
     );
   }
 
@@ -289,59 +289,465 @@ TODO: Customize this reference for $techTitle-specific patterns
 and conventions.
 ''';
 
-  String _reportTemplate(String techTitle, String displayName) => '''
-$displayName Report
+  /// Canonical 15-numbered-section report skeleton (see
+  /// `docs/report-template-canonical.md`). A freshly scaffolded skill has
+  /// no stack yet, so it has neither a real slot-B section nor a
+  /// Performance section — it uses the "both slots, no Performance" (Group
+  /// A) arrangement with generic `[Domain-Specific Section]` placeholders
+  /// for slot A/B that the skill author renames (or, for a Group-B-shaped
+  /// stack, replaces with a real slot A and a Performance section instead
+  /// — see the canonical doc).
+  String _reportTemplate(String tech, String techTitle, String displayName) =>
+      '''
+# $displayName Report
 
-1. Executive Summary
+**Project:** [PROJECT_NAME]
+**Date:** [AUDIT_DATE]
+**Auditor:** AI-Assisted Analysis
+**Framework:** [$techTitle — describe the stack/runtime this audit targets]
 
-Description: Comprehensive analysis of [Project Name].
+> **Exclusions:** [Describe what this audit should never recommend, e.g. unrelated language/tooling changes or out-of-scope files].
 
-Overall Score: [Score]/100 ([Label])
+---
 
-Top Strengths:
+## 1. Executive Summary
+
+**Description:** Comprehensive analysis of [Project Name] $techTitle [describe project shape, e.g. single app/monorepo].
+
+**Overall Score:** [Score]/100 ([Label])
+
+**Top Strengths:**
 - [Strength 1]
 - [Strength 2]
 - [Strength 3]
 
-Top Risks:
+**Top Risks:**
 - [Risk 1]
 - [Risk 2]
 - [Risk 3]
 
-Priority Recommendations:
+**Priority Recommendations:**
 1. [Recommendation 1]
 2. [Recommendation 2]
 3. [Recommendation 3]
 
-2. At-a-Glance Scorecard
+---
 
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Security: [Score]/100 ([Label])
-- Documentation: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- Overall: [Score]/100 ([Label])
+## 2. At-a-Glance Scorecard
 
-TODO: Add detailed sections for each category.
+| Section | Score | Label |
+|---------|-------|-------|
+| Tech Stack | [Score]/100 | [Label] |
+| Architecture | [Score]/100 | [Label] |
+| [Domain-Specific Section] | [Score]/100 | [Label] |
+| [Additional Domain-Specific Section] | [Score]/100 | [Label] |
+| Testing | [Score]/100 | [Label] |
+| Code Quality (Linter & Warnings) | [Score]/100 | [Label] |
+| Documentation & Operations | [Score]/100 | [Label] |
+| CI/CD (Configs Found in Repo) | [Score]/100 | [Label] |
+| AI Harness & Adoption | [Score]/100 | [Label] |
+| **Overall** | **[Score]/100** | **[Label]** |
 
-3. Tech Stack
+> **Test Coverage:** [X]% (lines) — full breakdown in the Testing section.
+> Fallback when no coverage tool is detected: `Not measured (no coverage tool detected/configured)`
 
-Description: [One-sentence description].
-Score: [Score]/100 ([Label])
+> **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
 
-Key Findings:
+[One-sentence interpretation of the Overall Score.]
+
+---
+
+## 3. Tech Stack
+
+**Description:** [One-sentence description of the tech stack analysis].
+
+**Score:** [Score]/100 ([Label])
+
+### Key Findings
 - [Finding 1]
 - [Finding 2]
+- [Continue as needed]
 
-Evidence:
-- [Evidence 1]
-- [Evidence 2]
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
 
-Recommendations:
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
 - [Recommendation 1]
-- [Recommendation 2]
+- [Continue as needed]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 4. Architecture
+
+**Description:** [One-sentence description of the architecture analysis].
+
+**Score:** [Score]/100 ([Label])
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
+- [Recommendation 1]
+- [Continue as needed]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 5. [Domain-Specific Section]
+
+> TODO(author): rename this section (and its rows in the Scorecard above and the Scoring Methodology appendix below) to whatever your stack's "slot A" category is — e.g. "State Management" or "API Design". See `docs/report-template-canonical.md`.
+
+**Description:** [One-sentence description of the analysis].
+
+**Score:** [Score]/100 ([Label])
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
+- [Recommendation 1]
+- [Continue as needed]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 6. [Additional Domain-Specific Section]
+
+> TODO(author): rename this section (and its rows in the Scorecard above and the Scoring Methodology appendix below) to whatever your stack's "slot B" category is — e.g. "Data Layer" or "Repositories & Data Layer". If your stack has no natural slot B, delete this section (and its Scorecard/appendix rows) and add a "Performance" section instead (weight 0.075), right after Code Quality — see `docs/report-template-canonical.md`.
+
+**Description:** [One-sentence description of the analysis].
+
+**Score:** [Score]/100 ([Label])
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
+- [Recommendation 1]
+- [Continue as needed]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 7. Testing
+
+**Description:** [One-sentence description of the testing analysis].
+
+**Score:** [Score]/100 ([Label])
+
+**Code Coverage:** [X]% (lines)
+> Multi-dimension stacks (JS/TS): `[X]% lines / [Y]% branches / [Z]% functions`
+> Monorepo / multi-app: `App [name]: [X]%, App [name2]: [Y]%`
+> No coverage tool: `Not measured (no coverage tool detected/configured)`
+
+**Coverage Breakdown:**
+- `[module/package/app]`: [X]% (lines[, [Y]% branches, [Z]% functions — where extracted])
+- [Continue per module/package/app]
+- [Single-package projects: "N/A — single package, see Code Coverage above"]
+- [No data: "(no coverage data — artifact missing or no coverage tool configured)"]
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
+- [Recommendation 1]
+- [Continue as needed]
+
+### Counts & Metrics
+- Test count: [Value]
+- Test framework: [Value]
+- [Do NOT restate the coverage percentage here — it lives only in the fields above]
+
+---
+
+## 8. Code Quality (Linter & Warnings)
+
+**Description:** [One-sentence description of the code quality analysis].
+
+**Score:** [Score]/100 ([Label])
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
+- [Recommendation 1]
+- [Continue as needed]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 9. Documentation & Operations
+
+**Description:** [One-sentence description of the documentation and operations analysis].
+
+**Score:** [Score]/100 ([Label])
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
+- [Recommendation 1]
+- [Continue as needed]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 10. CI/CD (Configs Found in Repo)
+
+**Description:** [One-sentence description of the CI/CD analysis].
+
+**Score:** [Score]/100 ([Label])
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Recommendations
+- [Recommendation 1]
+- [Continue as needed]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 11. AI Harness & Adoption
+
+**Description:** [One-sentence description of the harness analysis].
+
+**Score:** [Score]/100 ([Label])
+
+**Maturity:** [sin harness | harness básico | harness sólido | paved path]
+
+### Harness Coverage
+| Dimension | Status | Points |
+|---|---|---|
+| CLAUDE.md | [Status] | [Points]/13 |
+| Rules | [Status] | [Points]/9 |
+| Permissions | [Status] | [Points]/13 |
+| Hooks | [Status] | [Points]/14 |
+| Pre-push git hook | [Status] | [Points]/11 |
+| Agents | [Status] | [Points]/11 |
+| Commands / Skills | [Status] | [Points]/9 |
+| Advanced orchestration | [Status] | [Points]/5 |
+| Lifecycle | [Status] | [Points]/3 |
+| Harness versioning | [Status] | [Points]/12 |
+| **Total** | | **[Score]/100** |
+
+### Key Findings
+- [Finding 1]
+- [Continue as needed]
+
+### Evidence
+- [Real file path only, never invented]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Actions to Raise the Score
+1. **[+N] [Action title].** [Concrete how-to naming the file/key to create or edit]. → dimension D, X/Y → Y/Y.
+2. [Continue as needed, sorted by points recovered descending]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
+
+---
+
+## 12. Additional Metrics
+
+- **[Metric name]:** [Value]
+- **[Metric name]:** [Value]
+- [Continue as needed — stack-variable field list]
+
+---
+
+## 13. Risks & Opportunities
+
+- [Risk/Opportunity 1]
+- [Risk/Opportunity 2]
+- [Risk/Opportunity 3]
+- [Continue as needed]
+
+---
+
+## 14. Recommendations
+
+1. **[Priority Level]:** [Recommendation 1]
+2. **[Priority Level]:** [Recommendation 2]
+3. **[Priority Level]:** [Recommendation 3]
+4. [Continue as needed]
+
+---
+
+## 15. Appendix: Evidence Index
+
+**Tech Stack:**
+- [File path or config reference]
+- [Continue as needed]
+
+**Architecture:**
+- [File path or config reference]
+- [Continue as needed]
+
+**[Domain-Specific Section]:**
+- [File path or config reference]
+- [Continue as needed]
+
+**[Additional Domain-Specific Section]:**
+- [File path or config reference]
+- [Continue as needed]
+
+**Testing:**
+- [File path or config reference]
+- [Continue as needed]
+
+**Code Quality:**
+- [File path or config reference]
+- [Continue as needed]
+
+**Documentation:**
+- [File path or config reference]
+- [Continue as needed]
+
+**CI/CD:**
+- [File path or config reference]
+- [Continue as needed]
+
+**AI Harness & Adoption:**
+- [File path or config reference]
+- [Continue as needed]
+
+---
+
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 1.00 — the authoritative source is this skill's
+`references/report-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Tech Stack | 0.18 |
+| Architecture | 0.18 |
+| [Domain-Specific Section] | 0.18 |
+| [Additional Domain-Specific Section] | 0.10 |
+| Testing | 0.10 |
+| Code Quality (Linter & Warnings) | 0.10 |
+| Documentation & Operations | 0.03 |
+| CI/CD (Configs Found in Repo) | 0.03 |
+| AI Harness & Adoption | 0.10 |
+| **Total** | **1.00** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+---
+
+## Report Metadata
+
+| Field | Value |
+|-------|-------|
+| Generated by | [Plugin Name] v[Plugin Version] |
+| Skill | $tech-health-audit |
+| Date | [YYYY-MM-DD] |
+| Somnio AI Tools | https://github.com/somnio-software/somnio-ai-tools |
 ''';
 
   String _bestPracticesPlanTemplate(
