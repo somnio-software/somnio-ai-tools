@@ -402,6 +402,179 @@ class TestGuidanceDrift(unittest.TestCase):
         self.assertEqual(documented, expected)
 
 
+class TestPracticeGuidanceDrift(unittest.TestCase):
+    """Every code in PRACTICE_GUIDANCE_CODES must have an entry in
+    practice-guidance.md, and vice versa. Without this the single source of
+    truth drifts silently and reports include guidance with no prose."""
+
+    def test_codes_and_entries_match(self):
+        import importlib.util as _ilu
+        path = os.path.join(os.path.dirname(__file__), "..", "scripts", "practice_guidance.py")
+        spec = _ilu.spec_from_file_location("practice_guidance", path)
+        practice_guidance = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(practice_guidance)
+
+        documented = set(practice_guidance.load_guidance(practice_guidance.default_path()))
+        expected = set(dora_metrics.PRACTICE_GUIDANCE_CODES)
+        self.assertEqual(documented, expected)
+
+
+class TestPracticeGuidanceInvariance(unittest.TestCase):
+    """The practice guidance catalog is fixed and independent of any repo's
+    measured numbers. Two runs with different measurements must produce
+    identical guidance, per D1-a: the guidance is about engineering practices,
+    never about interpreting a specific team's numbers. This test is the
+    regression gate for that contract."""
+
+    def test_guidance_is_identical_regardless_of_measurements(self):
+        """Build two result dicts with vastly different numbers and assert
+        the guidance attached is identical. This directly tests D1-a: guidance
+        must never vary with the numbers."""
+        import importlib.util as _ilu
+        path = os.path.join(os.path.dirname(__file__), "..", "scripts", "practice_guidance.py")
+        spec = _ilu.spec_from_file_location("practice_guidance", path)
+        practice_guidance = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(practice_guidance)
+
+        catalog = practice_guidance.load_guidance(practice_guidance.default_path())
+
+        # Two very different result dicts
+        result1 = {"deployment_frequency": 1, "lead_time_median_hours": 100}
+        result2 = {"deployment_frequency": 10, "lead_time_median_hours": 2}
+
+        # Attach guidance to both
+        dora_metrics.attach_practice_guidance(result1, catalog)
+        dora_metrics.attach_practice_guidance(result2, catalog)
+
+        # Guidance must be identical regardless of numbers
+        self.assertEqual(result1["practice_guidance"], result2["practice_guidance"])
+
+    def test_guidance_is_identical_on_empty_result(self):
+        """Guidance is present and identical even when no measurements exist."""
+        import importlib.util as _ilu
+        path = os.path.join(os.path.dirname(__file__), "..", "scripts", "practice_guidance.py")
+        spec = _ilu.spec_from_file_location("practice_guidance", path)
+        practice_guidance = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(practice_guidance)
+
+        catalog = practice_guidance.load_guidance(practice_guidance.default_path())
+
+        result_with_numbers = {"deployment_frequency": 5}
+        result_with_nothing = {}
+
+        dora_metrics.attach_practice_guidance(result_with_numbers, catalog)
+        dora_metrics.attach_practice_guidance(result_with_nothing, catalog)
+
+        # Both must have identical guidance
+        self.assertEqual(
+            result_with_numbers["practice_guidance"],
+            result_with_nothing["practice_guidance"]
+        )
+
+
+class TestPracticeGuidancePresentOnEveryRun(unittest.TestCase):
+    """Practice guidance must be present and non-empty on every report,
+    including runs with no repos measured or no credentials."""
+
+    def test_no_credential_result_has_guidance(self):
+        """When no credentials are available, the fallback result still
+        carries the full, unfiltered guidance catalog."""
+        import importlib.util as _ilu
+        path = os.path.join(os.path.dirname(__file__), "..", "scripts", "practice_guidance.py")
+        spec = _ilu.spec_from_file_location("practice_guidance", path)
+        practice_guidance = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(practice_guidance)
+
+        catalog = practice_guidance.load_guidance(practice_guidance.default_path())
+        result = dora_metrics.no_credential_result(
+            now=dt("2026-09-14T10:00:00Z"), window_days=14, tag_pattern=r"^v"
+        )
+
+        dora_metrics.attach_practice_guidance(result, catalog)
+
+        self.assertIn("practice_guidance", result)
+        self.assertIsNotNone(result["practice_guidance"])
+        self.assertTrue(len(result["practice_guidance"]) > 0)
+
+    def test_normal_run_has_guidance(self):
+        """A normal measurement run includes the full guidance catalog."""
+        import importlib.util as _ilu
+        path = os.path.join(os.path.dirname(__file__), "..", "scripts", "practice_guidance.py")
+        spec = _ilu.spec_from_file_location("practice_guidance", path)
+        practice_guidance = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(practice_guidance)
+
+        catalog = practice_guidance.load_guidance(practice_guidance.default_path())
+        result = {"issues": [], "projects": []}
+
+        dora_metrics.attach_practice_guidance(result, catalog)
+
+        self.assertIn("practice_guidance", result)
+        self.assertIsNotNone(result["practice_guidance"])
+        self.assertTrue(len(result["practice_guidance"]) > 0)
+
+    def test_guidance_count_matches_codes(self):
+        """The attached guidance has exactly as many entries as codes defined,
+        less any that are missing from the file."""
+        import importlib.util as _ilu
+        path = os.path.join(os.path.dirname(__file__), "..", "scripts", "practice_guidance.py")
+        spec = _ilu.spec_from_file_location("practice_guidance", path)
+        practice_guidance = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(practice_guidance)
+
+        catalog = practice_guidance.load_guidance(practice_guidance.default_path())
+        result = {}
+
+        dora_metrics.attach_practice_guidance(result, catalog)
+
+        # If the catalog loaded successfully, entry count should equal code count
+        self.assertEqual(
+            len(result["practice_guidance"]),
+            len(dora_metrics.PRACTICE_GUIDANCE_CODES)
+        )
+
+
+class TestPracticeEntryRendersTitle(unittest.TestCase):
+    """`_render_practice_entry` must show the catalog's human-readable title,
+    not the raw anchor code, and must fall back to the code only when an
+    entry genuinely has no title."""
+
+    def test_attached_entries_carry_the_title_field(self):
+        """build_practice_guidance includes `title` on every entry, sourced
+        from the parsed catalog."""
+        import importlib.util as _ilu
+        path = os.path.join(os.path.dirname(__file__), "..", "scripts", "practice_guidance.py")
+        spec = _ilu.spec_from_file_location("practice_guidance", path)
+        practice_guidance = _ilu.module_from_spec(spec)
+        spec.loader.exec_module(practice_guidance)
+
+        catalog = practice_guidance.load_guidance(practice_guidance.default_path())
+        entries = dora_metrics.build_practice_guidance(catalog)
+
+        trunk = next(e for e in entries if e["code"] == "trunk_based_development")
+        self.assertEqual(trunk["title"], "Trunk-based development")
+
+    def test_renders_the_title_not_the_code(self):
+        lines = []
+        dora_metrics._render_practice_entry(
+            {"code": "trunk_based_development", "title": "Trunk-based development",
+             "what": "", "why": "", "how_to_adopt": ""},
+            lines,
+        )
+        self.assertIn("- **Trunk-based development**", lines)
+        self.assertNotIn("- **trunk_based_development**", lines)
+
+    def test_falls_back_to_the_code_when_title_is_empty(self):
+        """An entry with no title (title == "") degrades to showing the code,
+        instead of rendering a blank bold heading or crashing."""
+        lines = []
+        dora_metrics._render_practice_entry(
+            {"code": "no_title_example", "title": "", "what": "", "why": "", "how_to_adopt": ""},
+            lines,
+        )
+        self.assertIn("- **no_title_example**", lines)
+
+
 class FakeResponse:
     def __init__(self, status_code, text=""):
         self.status_code = status_code
@@ -751,7 +924,7 @@ class TestSingleRepoResult(unittest.TestCase):
 
 class TestWriteOutput(unittest.TestCase):
     """The saved file names are the contract this skill shares with the other
-    audits: <YYYY-MM-DD>-<repo>-dora-metrics.{json,md}, one pair per repo."""
+    audits: <YYYY-MM-DD>-<repo>-dora-metrics.md, one file per repo (markdown only)."""
 
     def _repo(self, name):
         return {"repo": name, "type": ["backend"], "deploy_source": "release",
@@ -764,15 +937,14 @@ class TestWriteOutput(unittest.TestCase):
                                   now=dt("2026-09-14T10:00:00Z"))
         return sorted(os.listdir(tmp))
 
-    def test_one_pair_of_files_per_repo(self):
+    def test_one_markdown_file_per_repo(self):
+        """Verify that one markdown file is written per repo, never JSON."""
         result = {"issues": [], "projects": [{"name": "Example Project", "repos": [
             self._repo("example-org/example-frontend"),
             self._repo("partner-org/example-backend")]}]}
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(self._write(result, tmp), [
-                "2026-09-14-example-backend-dora-metrics.json",
                 "2026-09-14-example-backend-dora-metrics.md",
-                "2026-09-14-example-frontend-dora-metrics.json",
                 "2026-09-14-example-frontend-dora-metrics.md",
             ])
 
@@ -788,12 +960,12 @@ class TestWriteOutput(unittest.TestCase):
             self.assertIn("example-org/example-frontend", text)
             self.assertNotIn("example-backend", text)
 
-    def test_still_writes_one_file_when_nothing_was_measured(self):
+    def test_writes_one_markdown_file_when_nothing_was_measured(self):
+        """Verify fallback markdown file when no repos are measured, never JSON."""
         result = dora_metrics.no_credential_result(
             now=dt("2026-09-14T10:00:00Z"), window_days=14, tag_pattern=r"^v")
         with tempfile.TemporaryDirectory() as tmp:
             self.assertEqual(self._write(result, tmp), [
-                "2026-09-14-no-repositories-dora-metrics.json",
                 "2026-09-14-no-repositories-dora-metrics.md",
             ])
 
@@ -804,6 +976,19 @@ class TestWriteOutput(unittest.TestCase):
             dora_metrics.write_output(result, window_days=14, out_dir=None,
                                       now=dt("2026-09-14T10:00:00Z"))
             self.assertEqual(os.listdir(tmp), [])
+
+    def test_never_writes_json_files(self):
+        """Verify that no .json files are ever written to --out-dir.
+        This guards against accidental reintroduction of JSON output."""
+        result = {"issues": [], "projects": [{"name": "Example Project", "repos": [
+            self._repo("example-org/example-frontend"),
+            self._repo("partner-org/example-backend")]}]}
+        with tempfile.TemporaryDirectory() as tmp:
+            self._write(result, tmp)
+            files = os.listdir(tmp)
+            json_files = [f for f in files if f.endswith(".json")]
+            self.assertEqual(json_files, [],
+                           f"Found unexpected JSON files in --out-dir: {json_files}")
 
 
 if __name__ == "__main__":

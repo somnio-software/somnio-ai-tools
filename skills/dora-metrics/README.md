@@ -50,7 +50,7 @@ of the project's repos — a multi-repo project, for example, can have repos in
 |---|---|---|
 | `--config` | `config/projects.json` | Path to the config to use. |
 | `--project` | all in the config | Exact name of the project to run. |
-| `--out-dir` | doesn't save | If passed, in addition to stdout it saves one pair of files **per repo** there: `YYYY-MM-DD-<repo>-dora-metrics.json` (portable data) and `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable file). |
+| `--out-dir` | doesn't save | If passed, in addition to stdout it saves one file **per repo** there: `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable file). |
 | `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--project`). Doesn't touch the config. |
 | `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--project`). Doesn't touch the config. |
 | `--window-days N` | — | One-off override of the window in days. Doesn't touch the config. |
@@ -132,7 +132,7 @@ so it's easy to open and read without re-parsing the JSON):
 - **Median Lead Time**: 4.3h (n=3)
 ```
 
-Portable JSON (if `--out-dir` is used), one repo inside `projects[].repos[]`:
+Portable JSON (always printed to stdout), one repo inside `projects[].repos[]`:
 
 ```json
 {
