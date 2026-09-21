@@ -349,4 +349,43 @@ prose to match the table, not the other way around.
 | C3 | Renumbering demands a full literal `Section N` prose sweep across `references/report-generator.md`, `references/report-format-enforcer.md` and `references/harness-analysis.md` | A missed literal reference makes the rubric validate the wrong section, silently |
 | C4 | Do not touch `harness-analysis.md`'s internal `Section 6` (or similar) references | Those point at sections of that document's own 10-dimension rubric, not at report sections. Only renumber a reference if it unambiguously points at a numbered section of the generated report |
 | C5 | Weight family A and family B stay separate; never cross-apply | They are different formulas for a reason (presence of a Performance section); cross-applying changes every score the skill produces |
-| C6 | Nothing in Dart validates report structure | The format-enforcer pass (`references/report-format-enforcer.md`) is the only safety net, so its instructions must be exactly right |
+| C6 | Nothing in Dart validates a **generated report** | `cli/test/src/content/report_template_drift_test.dart` validates the six **templates**, but no code parses a produced report. For the report itself, the format-enforcer pass (`references/report-format-enforcer.md`) is still the only safety net, so its instructions must be exactly right |
+
+
+---
+
+## 12. Automated check — the templates are not hand-verified any more
+
+`cli/test/src/content/report_template_drift_test.dart` reads all six
+`skills/<stack>-health-audit/assets/report-template.md` files and fails the build on
+divergence. It enforces the invariants in this document: the 15-section numbering, the canonical
+section-name sequence (tolerating only the documented stack-variable slots), the two trailing
+unnumbered blocks, the single `> **Test Coverage:**` line, the Testing coverage fields, the
+`### Harness Coverage` rename, the byte-identical scoring legend, the absence of a `Weight` column
+in the scorecard, and that each skill's Scoring Methodology weights match its family and sum to 1.00.
+
+If you edit a template, run it:
+
+```bash
+cd cli && dart test test/src/content/report_template_drift_test.dart
+```
+
+A failure names the offending skill and what diverged. If the test and this document ever disagree,
+**one of them is a bug** — decide which, and fix that one. Do not weaken the test to make an edit pass.
+
+---
+
+## 13. Worked examples
+
+Two fully filled-in example reports live in `docs/examples/`, one per weight family:
+
+| File | Stack | Weight family |
+|------|-------|---------------|
+| `sample-flutter-health-audit-report.md` | Flutter (slot A + slot B, no Performance) | A |
+| `sample-react-health-audit-report.md` | React (slot A, Performance, no slot B) | B |
+
+Both audit **fictional projects that do not exist**, and every score, percentage, path and finding
+in them is invented. They exist to show what a conforming, fully-populated report looks like — in
+particular how the Overall Score reconciles against the section scores and weights, and how the
+coverage figure stays consistent between the scorecard and the Testing section. Each file opens with
+an admonition saying so. Never cite them as audit results.
