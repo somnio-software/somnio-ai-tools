@@ -1,5 +1,9 @@
-### React component architecture including file structure, naming conventions, composition patterns, and folder organization.
-> Applies to: `src/**/*.tsx`
+---
+description: "React component architecture including file structure, naming conventions, composition patterns, and folder organization."
+paths:
+  - "src/**/*.tsx"
+---
+
 # React Component Architecture
 
 How to structure React applications with feature-based organization, consistent naming, and composable component patterns.

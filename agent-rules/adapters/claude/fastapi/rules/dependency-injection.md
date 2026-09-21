@@ -1,5 +1,9 @@
-### FastAPI dependency injection — Depends, sub-dependency composition, per-request caching, and yield dependencies with correct setup/teardown and re-raise discipline.
-> Applies to: `**/*.py`
+---
+description: "FastAPI dependency injection — Depends, sub-dependency composition, per-request caching, and yield dependencies with correct setup/teardown and re-raise discipline."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Extract every shared request concern (auth, pagination, existence checks, DB sessions) into a `Depends`-injected function; never duplicate this logic in handlers.

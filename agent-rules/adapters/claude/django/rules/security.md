@@ -1,5 +1,9 @@
-### Django security hardening — CSRF, template XSS/autoescape, ORM vs raw SQL, clickjacking, HTTPS/HSTS/secure cookies, host header validation, upload hardening, CSP. Applies to all Python files in a Django project.
-> Applies to: `**/*.py`
+---
+description: "Django security hardening — CSRF, template XSS/autoescape, ORM vs raw SQL, clickjacking, HTTPS/HSTS/secure cookies, host header validation, upload hardening, CSP. Applies to all Python files in a Django project."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Never apply `@csrf_exempt` to a state-changing endpoint. Pass the CSRF token in the `X-CSRFToken` request header for AJAX clients instead of disabling protection. ([Django security topic](https://docs.djangoproject.com/en/stable/topics/security/))

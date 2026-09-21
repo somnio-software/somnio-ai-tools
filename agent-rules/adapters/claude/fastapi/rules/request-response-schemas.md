@@ -1,5 +1,9 @@
-### FastAPI request/response schemas — Pydantic input models, dedicated response_model/return-type output models, and field filtering as a security boundary. Layers on the python stack's data-validation rules.
-> Applies to: `**/*.py`
+---
+description: "FastAPI request/response schemas — Pydantic input models, dedicated response_model/return-type output models, and field filtering as a security boundary. Layers on the python stack's data-validation rules."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Every request body parameter and every route response must use a Pydantic model; bare `dict` return types and untyped `dict` bodies are forbidden.

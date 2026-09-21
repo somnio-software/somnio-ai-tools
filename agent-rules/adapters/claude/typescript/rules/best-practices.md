@@ -1,5 +1,9 @@
-### TypeScript conventions — naming, types, async/await, error handling, logging. Applies to all .ts files (Functions, scripts, utilities).
-> Applies to: `**/*.ts`
+---
+description: "TypeScript conventions — naming, types, async/await, error handling, logging. Applies to all .ts files (Functions, scripts, utilities)."
+paths:
+  - "**/*.ts"
+---
+
 ### General guidelines for TypeScript code in this repo.
 # TypeScript Best Practices
 

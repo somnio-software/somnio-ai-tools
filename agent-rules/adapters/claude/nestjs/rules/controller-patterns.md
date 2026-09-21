@@ -1,5 +1,9 @@
-### Controller patterns for NestJS including decorators, meaningful documentation, and guards.
-> Applies to: `src/**/*.controller.ts`
+---
+description: "Controller patterns for NestJS including decorators, meaningful documentation, and guards."
+paths:
+  - "src/**/*.controller.ts"
+---
+
 # NestJS Controller Patterns
 
 How to implement clean, well-documented controllers with proper decorators, guards, and meaningful Swagger documentation.

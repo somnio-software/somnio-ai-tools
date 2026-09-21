@@ -1,5 +1,9 @@
-### Unit test patterns for NestJS including mocking, structure, grouping, and assertions.
-> Applies to: `src/**/*.spec.ts`
+---
+description: "Unit test patterns for NestJS including mocking, structure, grouping, and assertions."
+paths:
+  - "src/**/*.spec.ts"
+---
+
 # NestJS Unit Testing Standards
 
 How to write comprehensive unit tests following industry standards with proper structure, mocking, and assertions.

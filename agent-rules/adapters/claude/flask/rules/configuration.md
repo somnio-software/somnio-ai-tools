@@ -1,5 +1,9 @@
-### Flask configuration objects, config-class hierarchy, SECRET_KEY and secrets handling, debug flag, instance folder, and cookie hardening. Applies to all Flask .py files.
-> Applies to: `**/*.py`
+---
+description: "Flask configuration objects, config-class hierarchy, SECRET_KEY and secrets handling, debug flag, instance folder, and cookie hardening. Applies to all Flask .py files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. **UPPERCASE keys only.** All `app.config` keys must be uppercase; lowercase keys are silently ignored by Flask. ([config](https://flask.palletsprojects.com/en/stable/config/))

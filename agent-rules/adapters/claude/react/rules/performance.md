@@ -1,5 +1,9 @@
-### React performance optimization patterns including memoization, code splitting, and list virtualization.
-> Applies to: `src/**/*.tsx`
+---
+description: "React performance optimization patterns including memoization, code splitting, and list virtualization."
+paths:
+  - "src/**/*.tsx"
+---
+
 # React Performance Optimization
 
 How to optimize React application performance through memoization, code splitting, and rendering strategies.

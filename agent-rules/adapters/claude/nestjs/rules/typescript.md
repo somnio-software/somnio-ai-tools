@@ -1,5 +1,9 @@
-### TypeScript guidelines, naming conventions, and NestJS architectural principles.
-> Applies to: `src/modules/**/*.ts`
+---
+description: "TypeScript guidelines, naming conventions, and NestJS architectural principles."
+paths:
+  - "src/modules/**/*.ts"
+---
+
 You are a senior TypeScript programmer with experience in the NestJS framework and a preference for clean programming and design patterns. Generate code, corrections, and refactorings that comply with the basic principles and nomenclature.
 
 ## TypeScript General Guidelines

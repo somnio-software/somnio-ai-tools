@@ -1,5 +1,10 @@
-### Flutter principles, workflow, testing standards, documentation, and project-specific rules.
-> Applies to: `mobile/lib/**/*.dart, mobile/packages/*/lib/**/*.dart`
+---
+description: "Flutter principles, workflow, testing standards, documentation, and project-specific rules."
+paths:
+  - "mobile/lib/**/*.dart"
+  - "mobile/packages/*/lib/**/*.dart"
+---
+
 # Flutter Best Practices
 
 ## Interaction Guidelines

@@ -1,5 +1,9 @@
-### Service layer patterns for NestJS including method organization, validation, and error handling.
-> Applies to: `src/**/*.service.ts`
+---
+description: "Service layer patterns for NestJS including method organization, validation, and error handling."
+paths:
+  - "src/**/*.service.ts"
+---
+
 # NestJS Service Patterns
 
 How to implement robust service layer patterns with proper method organization, dependency injection, validation, and error handling.

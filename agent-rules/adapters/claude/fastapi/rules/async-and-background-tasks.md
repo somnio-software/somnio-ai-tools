@@ -1,5 +1,9 @@
-### FastAPI concurrency — async def vs def handler choice, never blocking the event loop, run_in_threadpool offload, and BackgroundTasks vs a real task queue.
-> Applies to: `**/*.py`
+---
+description: "FastAPI concurrency — async def vs def handler choice, never blocking the event loop, run_in_threadpool offload, and BackgroundTasks vs a real task queue."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Choose handler type by the official rule: `async def` only when the function body `await`s async-native libraries; plain `def` for blocking libraries; plain `def` when unsure. ([async])

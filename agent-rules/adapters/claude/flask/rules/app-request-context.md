@@ -1,5 +1,9 @@
-### Using Flask current_app and g proxies, application and request context lifetime, and keeping view functions thin.
-> Applies to: `**/*.py`
+---
+description: "Using Flask current_app and g proxies, application and request context lifetime, and keeping view functions thin."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Always reach the running application via `current_app`; never import the `app` instance from another module. ([appcontext](https://flask.palletsprojects.com/en/stable/appcontext/))

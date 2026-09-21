@@ -1,5 +1,9 @@
-### Django service layer — HackSoft services/selectors pattern, business-logic placement, model clean()/full_clean(), per-app services.py/selectors.py/apis.py separation, and Celery task queuing via transaction.on_commit.
-> Applies to: `**/*.py`
+---
+description: "Django service layer — HackSoft services/selectors pattern, business-logic placement, model clean()/full_clean(), per-app services.py/selectors.py/apis.py separation, and Celery task queuing via transaction.on_commit."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Business logic belongs in services (writes) and selectors (reads); views, serializers, Celery tasks, `Model.save()` overrides, managers, and signals must not contain domain logic. ([HackSoft Django-Styleguide](https://github.com/HackSoftware/Django-Styleguide))

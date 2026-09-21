@@ -1,5 +1,9 @@
-### Flask application factory (create_app) and installable package layout; avoid module-level global app instances.
-> Applies to: `**/*.py`
+---
+description: "Flask application factory (create_app) and installable package layout; avoid module-level global app instances."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. **Factory-created app object.** The `Flask(...)` constructor call must appear inside `create_app`, not at module scope. No file in the project may contain a bare `app = Flask(__name__)` outside a function body.

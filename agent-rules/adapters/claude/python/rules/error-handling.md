@@ -1,5 +1,9 @@
-### Python error handling — EAFP over LBYL, narrowest except, custom exception hierarchy, translate at boundaries, never swallow, no control-flow-by-exception. Applies to all .py files.
-> Applies to: `**/*.py`
+---
+description: "Python error handling — EAFP over LBYL, narrowest except, custom exception hierarchy, translate at boundaries, never swallow, no control-flow-by-exception. Applies to all .py files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Prefer EAFP: attempt the operation and handle the resulting exception rather than pre-checking conditions that could change. Source: https://realpython.com/ref/best-practices/exception-handling/

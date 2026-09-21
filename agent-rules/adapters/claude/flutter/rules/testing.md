@@ -1,5 +1,10 @@
-### Flutter/Dart testing best practices.
-> Applies to: `mobile/test/**/*.dart, mobile/packages/*/test/**/*.dart`
+---
+description: "Flutter/Dart testing best practices."
+paths:
+  - "mobile/test/**/*.dart"
+  - "mobile/packages/*/test/**/*.dart"
+---
+
 # Flutter/Dart Testing Best Practices
 
 This rule provides comprehensive guidelines for writing high-quality tests in Flutter/Dart projects, following testing standards.

@@ -1,5 +1,9 @@
-### FastAPI data, config, and testing — session-per-request yield dependency, table-model vs API-schema separation, pydantic-settings via lru_cache dependency, and TestClient/AsyncClient with dependency_overrides.
-> Applies to: `**/*.py`
+---
+description: "FastAPI data, config, and testing — session-per-request yield dependency, table-model vs API-schema separation, pydantic-settings via lru_cache dependency, and TestClient/AsyncClient with dependency_overrides."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Session-per-request only: provide the DB session exclusively through a `yield` dependency; never hold a module-level or global session. ([sql])
