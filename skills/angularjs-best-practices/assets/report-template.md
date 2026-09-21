@@ -304,6 +304,27 @@
 
 ---
 
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 100% — the authoritative source is this skill's
+`references/best-practices-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Testing Quality | 20% |
+| Component Architecture | 25% |
+| Scope & Binding Patterns | 15% |
+| State Management | 15% |
+| Performance | 15% |
+| JavaScript Standards | 10% |
+| **Total** | **100%** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+---
+
 ## Report Metadata
 
 | Field | Value |

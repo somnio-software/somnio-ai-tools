@@ -8,6 +8,11 @@ import 'package:test/test.dart';
 
 class MockLogger extends Mock implements Logger {}
 
+/// The canonical scoring legend every best-practices template carries,
+/// byte-identical (en dash U+2013, middle dot U+00B7).
+const _scoringLegend =
+    '> **Scoring:** Strong (85\u2013100) \u00b7 Fair (70\u201384) \u00b7 Weak (0\u201369)';
+
 void main() {
   late Directory tmpDir;
   late MockLogger logger;
@@ -98,7 +103,49 @@ void main() {
 
       final report = _read('$base/assets/report-template.md');
       expect(report, contains('Svelte Best Practices Check Report'));
-      expect(report, contains('Violations by Category'));
+
+      // A freshly scaffolded best-practices template must already satisfy the
+      // shared skeleton in docs/best-practices-template-canonical.md. The
+      // drift test guards the six known skills by name, so it would never see
+      // a seventh, scaffolded one — these assertions are what stop the
+      // scaffolder from birthing a divergent skill.
+      expect(report, contains('## 1. Executive Summary'));
+      expect(report, contains('## 2. Score Breakdown'));
+      expect(report, contains('| Section | Score | Label |'));
+      expect(report, contains('**Weighted Overall**'));
+      expect(report, contains('## 6. Prioritized Recommendations'));
+      expect(report, contains('## 7. Evidence Index'));
+      expect(report, contains('## Appendix: Scoring Methodology'));
+      expect(report, contains('## Report Metadata'));
+      expect(report, contains('| Skill | svelte-best-practices |'));
+      expect(
+        report,
+        contains(_scoringLegend),
+        reason: 'scaffolded template must carry the canonical scoring legend '
+            '(en dash U+2013, middle dot U+00B7)',
+      );
+
+      // The retired heading forms and the old /10 scale must not come back.
+      expect(report, isNot(contains('## Section ')));
+      expect(report, isNot(contains('Prioritized Action Plan')));
+      expect(
+        report,
+        isNot(contains(RegExp(r'/10(?!\d)'))),
+        reason: 'scaffolded template must score on /100, never the old /10 scale',
+      );
+
+      // The placeholder appendix weights must themselves sum to 100, so a new
+      // skill starts valid instead of starting broken.
+      final weights = RegExp(r'^\| (?!\*\*Total)[^|]+ \| (\d+)% \|', multiLine: true)
+          .allMatches(report)
+          .map((m) => int.parse(m.group(1)!))
+          .toList();
+      expect(weights, isNotEmpty, reason: 'no appendix weight rows parsed');
+      expect(
+        weights.fold<int>(0, (a, b) => a + b),
+        100,
+        reason: 'scaffolded appendix weights must sum to 100, found $weights',
+      );
     });
   });
 

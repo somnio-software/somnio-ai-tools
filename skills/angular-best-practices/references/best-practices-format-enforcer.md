@@ -39,6 +39,14 @@
     - Always use: "path/to/file.ts:line_number"
     - Example: "src/app/features/auth/login-form.component.ts:42 - Untyped @Input()"
 
+6.  **REPORT-CLOSING APPENDIX**:
+    - The report MUST close with an unnumbered `## Appendix: Scoring Methodology` block, placed
+      between `## 10. Evidence Index` and `## Report Metadata`
+    - Its `| Section | Weight |` rows MUST match this skill's own Score Breakdown row labels
+      byte-for-byte, in the same order, and sum to 100%
+    - Weights MUST appear ONLY in that appendix and in `references/best-practices-generator.md` —
+      NEVER as a column in the `## 2. Score Breakdown` table
+
 ## EXAMPLE OUTPUT FORMAT
 
 TESTING QUALITY

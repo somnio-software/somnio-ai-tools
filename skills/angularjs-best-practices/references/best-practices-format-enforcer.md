@@ -39,6 +39,14 @@
     - Always use: "path/to/file.js:line_number"
     - Example: "app/orders/order-list.component.js:42 - Unsafe DI annotation"
 
+6.  **CLOSING APPENDIX**:
+    *   The report MUST close with an unnumbered `## Appendix: Scoring Methodology` block, placed between the Evidence Index section and `## Report Metadata`
+    *   Its `| Section | Weight |` rows must match this skill's own Score Breakdown rows, in the same order, and sum to 100%
+
+7.  **WEIGHT PLACEMENT**:
+    *   Weights appear ONLY in the `## Appendix: Scoring Methodology` block and in `references/best-practices-generator.md`
+    *   NEVER add a Weight column to the `## 2. Score Breakdown` table
+
 ## EXAMPLE OUTPUT FORMAT
 
 TESTING QUALITY

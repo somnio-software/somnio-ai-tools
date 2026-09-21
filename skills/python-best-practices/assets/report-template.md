@@ -321,6 +321,28 @@
 
 ---
 
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 100% — the authoritative source is this skill's
+`references/best-practices-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Typing | 15% |
+| Code Style | 10% |
+| Function Design | 15% |
+| Data Validation | 15% |
+| Error Handling | 15% |
+| Module Structure | 10% |
+| Testing Quality | 20% |
+| **Total** | **100%** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+---
+
 ## Report Metadata
 
 | Field | Value |

@@ -39,6 +39,17 @@
     - Always use: "path/to/file.ts:line_number"
     - Example: "src/users/users.service.ts:42 - Missing validation"
 
+6.  **CLOSE WITH SCORING METHODOLOGY**:
+    *   The report MUST close with an unnumbered `## Appendix: Scoring Methodology` block,
+        placed between `## 9. Evidence Index` and `## Report Metadata`
+    *   Its `| Section | Weight |` rows MUST match this skill's own `## 2. Score Breakdown`
+        row labels, in the same order, and MUST sum to 100%
+
+7.  **WEIGHTS APPEAR ONLY IN THE APPENDIX**:
+    *   Weights are shown ONLY in the `## Appendix: Scoring Methodology` block and in
+        `references/best-practices-generator.md`
+    *   NEVER add a Weight column to the `## 2. Score Breakdown` table
+
 ## EXAMPLE OUTPUT FORMAT
 
 TESTING QUALITY
