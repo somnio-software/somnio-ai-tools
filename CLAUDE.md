@@ -55,7 +55,7 @@ The CLI is **data-driven**: agents and skills are declared as config/registry en
 
 ## Agent rules (`agent-rules/`)
 
-`rules/<stack>/*.md` (django, fastapi, flask, flutter, functions, nestjs, python, react, typescript) are the **single source of truth**. Adapters under `adapters/` (claude, cursor, antigravity, copilot, codex, windsurf) are **generated — never edit them directly**. After editing a rule, regenerate:
+`rules/<stack>/*.md` (dart, django, fastapi, flask, flutter, functions, nestjs, python, react, typescript) are the **single source of truth**. Adapters under `adapters/` (claude, cursor, antigravity, copilot, codex, windsurf) are **generated — never edit them directly**. After editing a rule, regenerate:
 
 ```bash
 cd agent-rules
@@ -73,3 +73,15 @@ Each `SKILL.md` starts with YAML frontmatter (`name`, `description`, `allowed-to
 
 - **Commits:** Conventional Commits. **Branches:** `{type}/{TICKET}_{description}`. (Dedicated `git-commit-format` / `git-branch-format` skills exist for these.)
 - Markdown skills should not invent data — audits are explicitly evidence-based; the same applies when authoring skill instructions.
+
+<!-- BEGIN SOMNIO RULES — do not edit this block manually -->
+## Dart Rules
+
+Loaded on demand from `.claude/rules/dart/` when you open a matching file — see each rule's `paths:` frontmatter.
+
+- `.claude/rules/dart/design.md` — Dart API design
+- `.claude/rules/dart/documentation.md` — Dart documentation
+- `.claude/rules/dart/style.md` — Dart style
+- `.claude/rules/dart/testing.md` — Dart testing with package:test
+- `.claude/rules/dart/usage.md` — Dart usage
+<!-- END SOMNIO RULES -->

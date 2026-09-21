@@ -13,6 +13,7 @@ class AgentRuleRegistry {
   /// `agent-rules/rules/` and the per-stack subfolders the generator emits
   /// under `agent-rules/adapters/<agent>/`.
   static const List<String> stacks = [
+    'dart',
     'django',
     'fastapi',
     'flask',
