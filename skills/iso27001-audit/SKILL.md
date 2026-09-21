@@ -338,7 +338,7 @@ report content. A report without computed scores is INVALID.
 - ISMS Clause Coverage (clauses 4-10)
 - Project Detection Results
 - Appendix: Evidence Index
-- Scan Metadata
+- Report Metadata
 
 **Scoring Requirement**: Every scored category section MUST include: a Score
 line with [Score]/100 ([Band]) format, a Score Breakdown (base,

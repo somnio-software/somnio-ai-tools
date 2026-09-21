@@ -121,7 +121,7 @@ rules, then save the final Markdown report.
 Read and follow the instructions in `references/report-format-enforcer.md`
 
 **Validation**: Read the generated report and validate ALL structural checks
-from the format enforcer rule: exactly 7 sections, Section 1 has one row per
+from the format enforcer rule: exactly 8 sections, Section 1 has one row per
 harness piece + Total + Maturity Band + legend, the per-piece scores sum to the
 Total, the Total matches Sections 2 and 5 and the JSON export, the band label
 matches the total's range, Section 3 is ordered by points recoverable

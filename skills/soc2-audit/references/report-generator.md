@@ -38,6 +38,11 @@ Overall = round(A*0.08 + B*0.04 + C*0.18 + D*0.16 + E*0.16 + F*0.14 + G*0.08
 Bands: Not Ready (0-40), Partially Ready (41-70), Largely Ready (71-85),
 Audit-Ready (86-100).
 
+The Section 1 scorecard NEVER renders a Weight column or per-row weight
+values — it shows only Control Family, Criteria, and Score. The weights,
+formula, rounding rule, and bands are rendered exactly once, in the closing
+unnumbered "Appendix: Scoring Methodology" block (see below).
+
 MANDATORY REPORT STRUCTURE (19 sections):
 1. SOC 2 Readiness Scorecard (10 scored family lines + Overall + Band)
 2. Executive Summary (Overall Readiness Score + top gaps + priority recommendations)
@@ -58,7 +63,8 @@ MANDATORY REPORT STRUCTURE (19 sections):
 16. Remediation Roadmap
 17. Project Detection Results
 18. Appendix: Evidence Index
-19. Scan Metadata
+    Appendix: Scoring Methodology (UNNUMBERED — closing block, after 18 and before 19)
+19. Report Metadata
 
 DYNAMIC ORDERING INSTRUCTION:
 After computing all 10 family scores, sort the scored detail sections (3-12) by
@@ -117,6 +123,13 @@ Group prioritized actions into phases:
 - Phase 2 — Short-term (P2, within ~30-60 days)
 - Phase 3 — Program build-out (P3 + organizational policy authoring + deliverables)
 
+SCORING METHODOLOGY APPENDIX (unnumbered, closing block — after Section 18,
+before Section 19):
+Render the weighted formula, the rounding rule, and the readiness bands using
+the exact weights from references/scoring.md, one row per control family
+(A-J) plus a Total row of 1.00. This is the only place in the report where a
+family weight may appear; do not repeat it in Section 1 or anywhere else.
+
 REJECTION CRITERIA:
 If a family score cannot be computed due to a missing artifact, assign score 0
 and note "Score: 0/100 (Not Ready) - Insufficient data from [missing artifact]".
@@ -133,14 +146,17 @@ FORMATTING RULES:
 - Output starts with the title "SOC 2 Readiness Audit Report".
 
 VALIDATION CHECKLIST (before finalizing):
-- All 19 sections present
-- Section 1 has 10 scored family lines + Overall + Band + Formula
+- All 19 numbered sections present, plus the unnumbered closing
+  "Appendix: Scoring Methodology" block between Sections 18 and 19
+- Section 1 has 10 scored family lines + Overall + Band, and NO Weight column
 - Scored sections (3-12) each have Score line + Score Breakdown + Controls
   Assessed (with Status + Owner/lane) + Gaps + Recommendations
 - Scored sections ordered by score ascending
 - Scores in Section 1 match their detail sections
 - Gaps table (Section 13) has all required columns including Owner/Lane and Priority
 - CUEC section (14) and Deliverables section (15) present
+- Appendix: Scoring Methodology present, with the weighted formula, rounding
+  rule, and readiness bands, matching references/scoring.md exactly
 - Band label matches the Overall Score range
 - No secret values anywhere (redacted)
 - No fabricated company/client/ticket names

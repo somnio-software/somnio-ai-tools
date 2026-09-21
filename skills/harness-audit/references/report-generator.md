@@ -27,7 +27,7 @@ If `step_02_harness_scoring.md` is absent, you cannot produce a valid report:
 re-run the scoring step first. If `step_01_harness_inventory.md` is absent, note
 it and score every piece as Missing (0) with the band "No harness".
 
-MANDATORY REPORT STRUCTURE (7 sections):
+MANDATORY REPORT STRUCTURE (8 sections):
 1. Harness Scoring Breakdown (per-piece table + Total + Maturity Band)
 2. Executive Summary (Total Score + band reading + the 3 top next steps in brief)
 3. Harness Piece Detail (one entry per piece, ordered by points recoverable
@@ -35,7 +35,8 @@ MANDATORY REPORT STRUCTURE (7 sections):
 4. Top 3 Highest-Impact Next Steps
 5. Maturity Band Reading
 6. Harness Detection Results (what was located and where)
-7. Scan Metadata
+7. Appendix: Evidence Index
+8. Report Metadata
 
 ## SCORING SYSTEM (reproduce exactly from references/harness-scoring.md)
 
@@ -115,7 +116,33 @@ Reproduce the ranked top-3 from step_02. For each:
 - Primary CLAUDE.md path and line count.
 - Any sibling-tool harness noted (e.g. `.cursor/`).
 
-### Section 7 - Scan Metadata
+### Section 7 - Appendix: Evidence Index
+
+Render this as a numbered `## 7. Appendix: Evidence Index` block, placed
+immediately before Section 8 (Report Metadata) - modelled on how
+security-audit numbers its own Evidence Index immediately before its Report
+Metadata section (`## 11. Appendix: Evidence Index` then `## 12. Report
+Metadata` there). Like security-audit's version, this section counts as one
+of the mandatory numbered sections (8 total).
+
+One labelled group per harness piece, in this fixed order, each with one or
+more bullets citing the concrete evidence from `step_01_harness_inventory.md`
+(exact file path, line count, frontmatter value, or command excerpt):
+- **CLAUDE.md**
+- **Rules**
+- **Permissions**
+- **Commands / Skills**
+- **Hooks**
+- **Agents**
+- **Autotest -> PR Lifecycle**
+
+Do not invent an evidence category this skill does not collect (no dependency,
+secret, or CI-vulnerability entries - those belong to security-audit, not
+harness-audit). If a piece has no evidence (Status: Missing in step_02), the
+group still appears with a single bullet reading exactly `Not found` - never
+leave a group blank and never fabricate a path.
+
+### Section 8 - Report Metadata
 
 - Scan date, project path, total pieces present, total score, band, generated-by
   line, skill name, and the Somnio AI Tools URL.
@@ -132,13 +159,15 @@ Reproduce the ranked top-3 from step_02. For each:
 ## VALIDATION CHECKLIST
 
 Before finalizing, verify:
-- All 7 sections are present and in order.
+- All 8 sections are present and in order.
 - Section 1 has one table row per harness piece + Total + Maturity Band + legend.
 - The Total in Section 1 matches the Total in Section 2 and the JSON export.
 - The Maturity Band matches the Total Score range.
 - Section 3 orders pieces by points recoverable descending.
 - Section 4 lists exactly the top-3 next steps, each naming an exact file.
 - Every Present piece cites evidence; every Missing/Weak piece names the fix.
+- Section 7 (`Appendix: Evidence Index`) has a group for each of the 7 harness
+  pieces and no blank group, immediately before Section 8.
 - The metadata block from SKILL.md is appended at the very end.
 
 ## JSON EXPORT (mandatory)

@@ -38,7 +38,7 @@ You are the AI harness audit report-writer. You synthesize the inventory and sco
 
 ## Instructions
 
-Read and follow ALL instructions in `references/report-generator.md` for the mandatory 7-section structure, per-piece detail ordering, the top-3 action plan, the JSON export, and the score-history export.
+Read and follow ALL instructions in `references/report-generator.md` for the mandatory 8-section structure, per-piece detail ordering, the top-3 action plan, the JSON export, and the score-history export.
 
 Read and follow ALL instructions in `references/report-format-enforcer.md` for structural validation, formatting rules, point arithmetic checks, secret redaction, and exclusion/leak detection.
 

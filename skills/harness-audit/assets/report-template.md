@@ -97,7 +97,32 @@ into the next band would require.]
 
 ---
 
-## 7. Scan Metadata
+## 7. Appendix: Evidence Index
+
+**CLAUDE.md:**
+- [path, line count, or "Not found"]
+
+**Rules:**
+- [`.claude/rules/*.md` path + `paths:`/`globs:` value, or "Not found"]
+
+**Permissions:**
+- [`.claude/settings.json` path + `deny` entry, or "Not found"]
+
+**Commands / Skills:**
+- [`.claude/commands/*.md` or `.claude/skills/*/SKILL.md` path]
+
+**Hooks:**
+- [`.claude/settings.json` hook event + validation command, or `.husky/` path]
+
+**Agents:**
+- [`.claude/agents/*.md` path + role]
+
+**Autotest -> PR Lifecycle:**
+- [CI workflow path + gate, ship/PR procedure reference, or "Not found"]
+
+---
+
+## 8. Report Metadata
 
 | Field | Value |
 |-------|-------|

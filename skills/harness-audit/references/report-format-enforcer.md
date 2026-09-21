@@ -1,6 +1,6 @@
 # Harness Audit Report Format Enforcer
 
-> Enforce Markdown formatting and structural rules on the AI Harness Audit report, ensuring the 7-section structure, a complete per-piece score table, a total that matches every place it appears, a band consistent with the total, and exactly three evidence-bound next steps. Read-only with respect to the audited repository.
+> Enforce Markdown formatting and structural rules on the AI Harness Audit report, ensuring the 8-section structure, a complete per-piece score table, a total that matches every place it appears, a band consistent with the total, and exactly three evidence-bound next steps. Read-only with respect to the audited repository.
 
 ---
 
@@ -12,7 +12,7 @@ Before applying any formatting fixes, validate the report structure. If any
 check FAILS, STOP and output an error message instead of the formatted report.
 
 Required structure checks:
-1. Report must contain exactly 7 numbered sections.
+1. Report must contain exactly 8 numbered sections.
 2. Section 1 must be "Harness Scoring Breakdown" with one table row per harness
    piece (CLAUDE.md, Rules, Permissions, Commands / Skills, Hooks, Agents,
    Autotest -> PR), a **Total Score** row, a **Maturity Band** line, and the
@@ -25,10 +25,15 @@ Required structure checks:
 5. Section 4 must be "Top 3 Highest-Impact Next Steps" with exactly three
    ranked items, each naming an exact file to create or edit and the points it
    recovers.
-6. Sections 5 (Maturity Band Reading), 6 (Harness Detection Results) and 7
-   (Scan Metadata) must be present.
+6. Sections 5 (Maturity Band Reading), 6 (Harness Detection Results) and 8
+   (Report Metadata) must be present.
 7. The Total in Section 1 must match the Total in Section 2, Section 5 and the
    JSON export.
+8. Section 7 must be `## 7. Appendix: Evidence Index`, placed immediately
+   before Section 8 (Report Metadata), with one labelled group per harness
+   piece (CLAUDE.md, Rules, Permissions, Commands / Skills, Hooks, Agents,
+   Autotest -> PR Lifecycle) — evidence or an explicit "Not found", never
+   blank.
 
 If ANY check fails, output:
   VALIDATION FAILED: [which check failed]
@@ -71,18 +76,20 @@ EXCLUSION / LEAK DETECTION:
   stay generic and evidence-bound.
 
 VALIDATION CHECKLIST:
-- All 7 sections present, in order
+- All 8 sections present, in order
 - Section 1: one row per harness piece + Total + Maturity Band + band legend
 - Section 2 states "Total Score: [total]/100 ([band])"
 - Section 3 covers every piece, ordered by points recoverable descending
 - Section 4 lists exactly three next steps, each naming an exact file
-- Sections 5, 6 and 7 present
+- Sections 5, 6, 7 and 8 present
+- Section 7 (`Appendix: Evidence Index`) sits immediately before Section 8,
+  with a group (evidence or "Not found") for every one of the 7 harness pieces
 - Per-piece scores sum to the Total; no piece over its maximum
 - Band label matches the total's range
 - No secret values (all redacted)
 - No leaked generator instructions or fabricated identifiers
 - Report starts with the "# AI Harness Audit Report" title
-- Report ends with "7. Scan Metadata" followed by the metadata block
+- Report ends with "8. Report Metadata" followed by the metadata block
 
 If formatting issues are found, fix them in-place and note what was corrected.
 

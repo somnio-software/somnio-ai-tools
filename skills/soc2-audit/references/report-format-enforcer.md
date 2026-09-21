@@ -14,7 +14,9 @@ check FAILS, STOP and output an error message instead of the formatted report.
 Required structure checks:
 1. Report must contain exactly 19 numbered sections.
 2. Section 1 must be "SOC 2 Readiness Scorecard" with 10 scored family lines
-   (A-J) + Overall Score + Readiness Band + Formula.
+   (A-J) + Overall Score + Readiness Band. NO Weight column and NO Formula
+   line — both live only in the unnumbered "Appendix: Scoring Methodology"
+   (see check 11 and check 12).
 3. Section 2 must be "Executive Summary" with the Overall Readiness Score.
 4. Sections 3-12 must each contain a "Score:" line with [Score]/100 ([Band]).
 5. Sections 3-12 must each contain a "Score Breakdown:" with Base 0 and Final.
@@ -27,6 +29,13 @@ Required structure checks:
 9. Section 14 (CUECs) and Section 15 (Evidence Artifacts & Trust Center
    Deliverables) must be present.
 10. Scores in Section 1 must match the scores in their detail sections (3-12).
+11. Section 1's scorecard must NEVER render a Weight column or per-row weight
+    value — Control Family, Criteria, and Score only. If a Weight column is
+    present, strip it.
+12. An unnumbered "Appendix: Scoring Methodology" block must be present,
+    positioned after Section 18 (Appendix: Evidence Index) and before Section
+    19 (Report Metadata), and it must carry the weighted formula, the
+    rounding rule, and the readiness bands.
 
 If ANY check fails, output:
   VALIDATION FAILED: [which check failed]
@@ -63,17 +72,20 @@ EXCLUSION / LEAK DETECTION:
 
 VALIDATION CHECKLIST:
 - All 19 sections present, in order
-- Section 1: 10 scored family lines + Overall + Band + Formula
+- Section 1: 10 scored family lines + Overall + Band, and NO Weight column
 - Sections 3-12: Score + Score Breakdown + Controls Assessed (Status + Lane) +
   Gaps + Recommendations, ordered by score ascending
 - Section 13 gaps table has all required columns incl. Owner/Lane + Priority
 - Sections 14 (CUECs) and 15 (Deliverables) present
+- Appendix: Scoring Methodology present between Sections 18 and 19, with the
+  weighted formula, rounding rule, and readiness bands, and no weight value
+  appears anywhere else in the report
 - Scores in Section 1 match their detail sections
 - Band labels match score ranges
 - No secret values (all redacted)
 - No leaked generator instructions or fabricated identifiers
 - Report starts with "SOC 2 Readiness Audit Report" title
-- Report ends with "19. Scan Metadata" section
+- Report ends with "19. Report Metadata" section
 
 If formatting issues are found, fix them in-place and note what was corrected.
 

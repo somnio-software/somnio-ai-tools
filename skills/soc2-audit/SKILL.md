@@ -300,7 +300,7 @@ content.
 - Remediation Roadmap (prioritized top actions, phased)
 - Project Detection Results
 - Appendix: Evidence Index
-- Scan Metadata
+- Report Metadata
 
 **Scoring Requirement**: Every scored section MUST include: Score line with
 [Score]/100 ([Band]) format, Score Breakdown (Base 0, evidence additions,
@@ -315,8 +315,10 @@ rules, then save the final Markdown report.
 Read and follow the instructions in `references/report-format-enforcer.md`
 
 **Validation**: Read the generated report and validate ALL structural checks
-from the format enforcer rule: exactly 19 sections, Section 1 has 10 scored
-family lines with weights + Overall + Formula + Band, the 10 scored detail
+from the format enforcer rule: exactly 19 numbered sections, Section 1 has 10
+scored family lines (NO Weight column) + Overall + Band, an unnumbered
+"Appendix: Scoring Methodology" block (weighted formula, rounding rule,
+readiness bands) between Section 18 and Section 19, the 10 scored detail
 sections have Score lines, sections are ordered by score ascending, band labels
 match ranges, the gaps table has the required columns (including owner/lane),
 the CUEC and Deliverables sections are present, no secret values appear, and
