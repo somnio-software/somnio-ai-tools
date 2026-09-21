@@ -5,7 +5,26 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## Unreleased
+## [3.0.0] - 2026-09-21
+
+This is a major release because the shape of what several skills produce changed.
+Nothing about the CLI's commands or flags changed — if you only run audits and read
+the Markdown report, upgrading needs no action. Each item is detailed in its section
+below.
+
+### Breaking changes
+
+- **`flutter-best-practices` overall score moved from `/10` to `/100`.** Anything
+  parsing or thresholding that number must be updated.
+- **`dora-metrics` no longer writes a `.json` into `--out-dir`.** The JSON is still
+  printed to stdout, which remains the supported interface; only the saved file is
+  gone.
+- **`security-audit` no longer writes the dated
+  `<YYYY-MM-DD>-<project>-security-audit.json` export.** `reports/.history/last_scores.json`
+  is unaffected — it is trend state, not a report.
+- **The six `*-best-practices` and six `*-health-audit` skills share one report
+  skeleton now.** Section names, order and numbering changed; anything matching on
+  the old headings will miss.
 
 ### Removed
 
