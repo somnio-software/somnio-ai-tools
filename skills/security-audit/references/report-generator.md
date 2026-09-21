@@ -273,11 +273,11 @@ Executive Summary (Section 2):
 - Must include Top Findings and Priority Recommendations
 
 FORMATTING RULES:
-- USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
-- NO BOLD MARKERS: No **text** or __text__
-- NO CODE FENCES: No ```code``` blocks
-- NO TABLES: Use bullet points instead
-- SECTION HEADERS: Use "X. Section Name" format
+- USE MARKDOWN SYNTAX: Use ## headings, **bold**, `backtick` paths
+- USE BOLD: Bold field labels and key values (**Score:**, **Overall**)
+- USE CODE BLOCKS: Backticks for file paths and inline code
+- USE TABLES: Markdown pipe tables wherever the template renders one
+- SECTION HEADERS: Use "## X. Section Name"; subsections use "### Name"
 - BULLET POINTS: Use "- " for all lists
 - NUMBERED LISTS: Use "1. ", "2. " format
 - SEVERITY: Always format as "[SEVERITY]: [Finding]"
@@ -302,8 +302,10 @@ Before finalizing the report, verify:
 - Report is ready for Google Docs copy-paste
 - No duplicate score displays (old At-a-Glance Scorecard and Score Index are gone)
 
-Format: Markdown-formatted report (use proper Markdown syntax,
-syntax, no # headings, no bold markers, no fenced code blocks).
+Format: Markdown-formatted report — ## headings, **bold** field
+labels and pipe tables, exactly as assets/report-template.md renders
+them. That template and references/report-format-enforcer.md are
+authoritative on formatting; this file must not contradict them.
 
 JSON EXPORT (mandatory):
 In addition to the text report, produce a machine-readable JSON file.

@@ -297,12 +297,12 @@ agent renders this exact table into the report; it must not invent or
 alter these numbers.
 
 FORMATTING RULES:
-- USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
-- NO BOLD MARKERS: No **text** or __text__
-- NO CODE FENCES: No ```code``` blocks
-- NO TABLES: Use bullet points instead
-- SECTION HEADERS: Use "X. Section Name" format
-- SUBSECTION HEADERS: Use "Description:", "Score:", etc.
+- USE MARKDOWN SYNTAX: Use ## headings, **bold**, `backtick` paths
+- USE BOLD: Bold field labels and key values (**Score:**, **Overall**)
+- USE CODE BLOCKS: Backticks for file paths and inline code
+- USE TABLES: Markdown pipe tables wherever the template renders one
+- SECTION HEADERS: Use "## X. Section Name"; subsections use "### Name"
+- FIELD LABELS: Bold them — "**Description:**", "**Score:**", etc.
 - BULLET POINTS: Use "- " for all lists
 - NUMBERED LISTS: Use "1. ", "2. " format
 - SCORES: Always format as "[Score]/100 ([Label])"
@@ -311,7 +311,8 @@ FORMATTING RULES:
 MULTI-APP HANDLING:
 For multi-app repositories:
 - Include app-specific metrics in Counts & Metrics
-- Report per-app coverage in Additional Metrics
+- Report per-app coverage in the Testing section's Coverage Breakdown
+  (never in Additional Metrics — see the coverage rule under section 12)
 - Include app-specific evidence in Evidence sections
 - Mention app names in descriptions where relevant
 - Report cross-app consistency in Key Findings
@@ -333,5 +334,7 @@ Before finalizing the report, verify:
 ✓ No Weight column in the Section 2 scorecard table; weights appear
   only in the Appendix: Scoring Methodology
 
-Format: Markdown-formatted report (use proper Markdown syntax,
-syntax, no # headings, no bold markers, no fenced code blocks).
+Format: Markdown-formatted report — ## headings, **bold** field
+labels and pipe tables, exactly as assets/report-template.md renders
+them. That template and references/report-format-enforcer.md are
+authoritative on formatting; this file must not contradict them.

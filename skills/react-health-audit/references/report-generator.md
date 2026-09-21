@@ -192,7 +192,7 @@ Appendix: Scoring Methodology, never in the scorecard):
 Description: [One-sentence description of the state of the harness]
 Score: [Score]/100 ([Label])
 Maturity: [sin harness | harness básico | harness sólido | paved path]
-Coverage:
+Harness Coverage:
 - CLAUDE.md: [Status] — [Points]/13
 - Rules: [Status] — [Points]/9
 - Permissions: [Status] — [Points]/13
@@ -271,12 +271,12 @@ Row labels must match the scorecard row labels verbatim. Rounding rule
 and scoring bands as stated above.
 
 FORMATTING RULES:
-- USE MARKDOWN SYNTAX: Use # headers, **bold**, `backtick` paths
-- NO BOLD MARKERS: No **text** or __text__
-- NO CODE FENCES: No ```code``` blocks
-- NO TABLES: Use bullet points instead
-- SECTION HEADERS: Use "X. Section Name" format
-- SUBSECTION HEADERS: Use "Description:", "Score:", etc.
+- USE MARKDOWN SYNTAX: Use ## headings, **bold**, `backtick` paths
+- USE BOLD: Bold field labels and key values (**Score:**, **Overall**)
+- USE CODE BLOCKS: Backticks for file paths and inline code
+- USE TABLES: Markdown pipe tables wherever the template renders one
+- SECTION HEADERS: Use "## X. Section Name"; subsections use "### Name"
+- FIELD LABELS: Bold them — "**Description:**", "**Score:**", etc.
 - BULLET POINTS: Use "- " for all lists
 - NUMBERED LISTS: Use "1. ", "2. " format
 - SCORES: Always format as "[Score]/100 ([Label])"
@@ -291,5 +291,7 @@ For monorepo repositories (nx, turborepo, lerna):
 - Mention app names in descriptions where relevant
 - Report cross-app consistency in Key Findings
 
-Format: Markdown-formatted report (use proper Markdown syntax,
-syntax, no # headings, no bold markers, no fenced code blocks).
+Format: Markdown-formatted report — ## headings, **bold** field
+labels and pipe tables, exactly as assets/report-template.md renders
+them. That template and references/report-format-enforcer.md are
+authoritative on formatting; this file must not contradict them.
