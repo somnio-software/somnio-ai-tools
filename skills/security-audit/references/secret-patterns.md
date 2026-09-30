@@ -8,14 +8,30 @@ Goal: Search source code for dangerous secret usage patterns. This is
 a MANDATORY check that must appear in the artifact even if no issues
 are found.
 
-PROJECT DETECTION (execute first):
-- Read reports/.artifacts/security-audit/step_01_security_tool_installer.md for
-  PROJECT_DETECTION_RESULTS (format: type@path|type@path...)
-- If multiple projects: for each type@path, cd to path and run
-  secret pattern scan for that project; concatenate all results
-- If single project: run from project root
-- Scan targets per type: Flutter (*.dart), NestJS/Node (*.ts,*.js),
-  Go (*.go), Rust (*.rs), Python (*.py), .NET (*.cs)
+SCAN SCOPE (execute first):
+- Step 1 (tool-installer) wrote the scope to
+  `reports/.artifacts/security-audit/scope/`: one file list per language
+  in PROJECT_DETECTION_RESULTS, built from `git ls-files` by extension
+  (tracked files only; dependencies, build outputs and generated code
+  excluded), plus `summary.txt` and the `scan.sh` helper.
+- If `scope/scan.sh` is missing, re-run the detection block in
+  `references/tool-installer.md` from the repository root first.
+- Run every block below from the repository root, and start each one with
+  `. reports/.artifacts/security-audit/scope/scan.sh` (shell functions do
+  not survive between separate commands). Do not cd into project paths and
+  do not pass directories to grep: the lists already cover every project.
+- Secret patterns read the `<lang>.src` lists: test files are excluded by
+  path (Gitleaks, step 4, still covers them). A language that was not
+  detected prints "not applicable: 0 files in scope" — that is not a clean
+  result, it is no result.
+- `scan [-v DROP_REGEX] <list> <label> <pattern>` prints up to 20 matches
+  and always ends with `[<label>] N match(es) across M files`. Copy those
+  summary lines into the artifact as the evidence for each count.
+
+Record the scope first:
+```bash
+cat reports/.artifacts/security-audit/scope/summary.txt
+```
 
 SOURCE CODE SECRET PATTERNS (CRITICAL - MANDATORY CHECK):
 
@@ -23,162 +39,123 @@ For Flutter/Dart projects, scan *.dart files:
 
 1. Client-side secret key usage (HIGH severity):
    ```bash
+   . reports/.artifacts/security-audit/scope/scan.sh
    # Bearer token patterns with secret keys
-   grep -rn "Bearer.*secret\|Bearer.*_secret\|secretKey\|secret_key" \
-     lib/ packages/ --include="*.dart" 2>/dev/null || echo "No Bearer secret patterns found"
+   scan dart.src "Bearer secret (Dart)" "Bearer.*secret\|Bearer.*_secret\|secretKey\|secret_key"
 
    # Stripe secret keys used in client code
-   grep -rn "sk_live_\|sk_test_\|stripeSecret\|stripe_secret\|stripe.*[Ss]ecret" \
-     lib/ packages/ --include="*.dart" 2>/dev/null || echo "No Stripe secret patterns found"
+   scan dart.src "Stripe secret (Dart)" "sk_live_\|sk_test_\|stripeSecret\|stripe_secret\|stripe.*[Ss]ecret"
 
    # API secret/private keys in HTTP headers or Authorization
-   grep -rn "Authorization.*[Ss]ecret\|x-api-key\|private.key\|api_secret" \
-     lib/ packages/ --include="*.dart" 2>/dev/null || echo "No API secret header patterns found"
+   scan dart.src "API secret header (Dart)" "Authorization.*[Ss]ecret\|x-api-key\|private.key\|api_secret"
    ```
 
 2. Hardcoded credentials (MEDIUM severity):
    ```bash
+   . reports/.artifacts/security-audit/scope/scan.sh
    # Password patterns in source (excluding test/mock files)
-   grep -rn "password\s*[:=]\s*['\"][^'\"]\+" lib/ packages/ \
-     --include="*.dart" 2>/dev/null | grep -v "test\|mock\|fake\|example\|sample" \
-     | head -20 || echo "No hardcoded password patterns found"
+   scan -v "mock\|fake\|example\|sample" dart.src "Hardcoded password (Dart)" \
+     "password\s*[:=]\s*['\"][^'\"]\+"
 
    # AWS/GCP/Azure credential patterns
-   grep -rn "AKIA\|aws_secret\|gcp_credentials\|azure_secret\|service_account" \
-     lib/ packages/ --include="*.dart" 2>/dev/null | head -20 \
-     || echo "No cloud credential patterns found"
+   scan dart.src "Cloud credential (Dart)" "AKIA\|aws_secret\|gcp_credentials\|azure_secret\|service_account"
    ```
 
-For NestJS/Node.js projects, scan *.ts files:
+For NestJS/Node.js projects, scan *.ts/*.js files:
 
 1. Hardcoded secrets in source code (HIGH severity):
    ```bash
+   . reports/.artifacts/security-audit/scope/scan.sh
    # Direct process.env usage (should use ConfigService in NestJS)
-   grep -rn "process\.env\." src/ apps/ libs/ --include="*.ts" 2>/dev/null \
-     | grep -v "node_modules\|dist\|test\|spec\|\.d\.ts" \
-     | head -30 || echo "No direct process.env usage found"
+   SCAN_MAX=30 scan js.src "Direct process.env" "process\.env\."
 
    # Hardcoded JWT secrets
-   grep -rn "secret.*[:=].*['\"][^'\"]\{8,\}" src/ apps/ libs/ \
-     --include="*.ts" 2>/dev/null | grep -v "node_modules\|dist\|test\|spec" \
-     | head -20 || echo "No hardcoded secret patterns found"
+   scan js.src "Hardcoded secret (JS/TS)" "secret.*[:=].*['\"][^'\"]\{8,\}"
 
    # Database connection strings with credentials
-   grep -rn "postgres://\|mysql://\|mongodb://\|redis://" src/ apps/ libs/ \
-     --include="*.ts" 2>/dev/null | grep -v "node_modules\|dist\|test\|spec\|\.env" \
-     | head -20 || echo "No hardcoded DB connection strings found"
+   scan -v "\.env" js.src "DB connection string (JS/TS)" "postgres://\|mysql://\|mongodb://\|redis://"
 
    # API keys and tokens in source
-   grep -rn "Bearer.*['\"][A-Za-z0-9]\{20,\}\|api_key.*[:=].*['\"]" \
-     src/ apps/ libs/ --include="*.ts" 2>/dev/null \
-     | grep -v "node_modules\|dist\|test\|spec" \
-     | head -20 || echo "No API key patterns found"
+   scan js.src "API key (JS/TS)" "Bearer.*['\"][A-Za-z0-9]\{20,\}\|api_key.*[:=].*['\"]"
    ```
 
 2. Cloud credential patterns (MEDIUM severity):
    ```bash
+   . reports/.artifacts/security-audit/scope/scan.sh
    # AWS/GCP/Azure credentials
-   grep -rn "AKIA\|aws_secret\|gcp_credentials\|azure_secret\|service.account" \
-     src/ apps/ libs/ --include="*.ts" 2>/dev/null \
-     | grep -v "node_modules\|dist\|test\|spec" \
-     | head -20 || echo "No cloud credential patterns found"
+   scan js.src "Cloud credential (JS/TS)" "AKIA\|aws_secret\|gcp_credentials\|azure_secret\|service.account"
 
    # Stripe/payment secret keys
-   grep -rn "sk_live_\|sk_test_\|stripe.*[Ss]ecret\|payment.*secret" \
-     src/ apps/ libs/ --include="*.ts" 2>/dev/null \
-     | grep -v "node_modules\|dist\|test\|spec" \
-     | head -20 || echo "No payment secret patterns found"
+   scan js.src "Payment secret (JS/TS)" "sk_live_\|sk_test_\|stripe.*[Ss]ecret\|payment.*secret"
    ```
 
 For Go projects, scan *.go files:
 
 1. Hardcoded secrets (HIGH severity):
    ```bash
-   grep -rn "password.*=.*\"\|secret.*=.*\"\|apiKey.*=.*\"" \
-     --include="*.go" . 2>/dev/null | grep -v "test\|_test\.go\|vendor" \
-     | head -20 || echo "No hardcoded secret patterns found"
+   . reports/.artifacts/security-audit/scope/scan.sh
+   scan go.src "Hardcoded secret (Go)" "password.*=.*\"\|secret.*=.*\"\|apiKey.*=.*\""
 
-   grep -rn "AKIA\|aws_secret\|Bearer.*['\"]" \
-     --include="*.go" . 2>/dev/null | grep -v "test\|_test\.go\|vendor" \
-     | head -20 || echo "No cloud credential patterns found"
+   scan go.src "Cloud credential (Go)" "AKIA\|aws_secret\|Bearer.*['\"]"
    ```
 
 For Python projects, scan *.py files:
 
 1. Hardcoded secrets (HIGH severity):
    ```bash
-   grep -rn "SECRET_KEY.*=.*['\"].\+['\"]" \
-     --include="*.py" . 2>/dev/null | grep -v "test\|\.pyc\|venv\|example" \
-     | head -20 || echo "No hardcoded secret patterns found"
+   . reports/.artifacts/security-audit/scope/scan.sh
+   scan -v "example" py.src "SECRET_KEY (Python)" "SECRET_KEY.*=.*['\"].\+['\"]"
 
-   grep -rn "password.*=.*['\"].\+['\"]" \
-     --include="*.py" . 2>/dev/null | grep -v "test\|\.pyc\|venv\|example\|mock" \
-     | head -20 || echo "No hardcoded password patterns found"
+   scan -v "example\|mock" py.src "Hardcoded password (Python)" "password.*=.*['\"].\+['\"]"
    ```
 
 For Kotlin projects, scan *.kt files:
 
 1. Hardcoded secrets (HIGH severity):
    ```bash
-   grep -rn "BuildConfig\.\w*[Ss]ecret\|System\.getenv\|getString.*[Ss]ecret" \
-     --include="*.kt" . 2>/dev/null | grep -v "test\|Test\|Mock" \
-     | head -20 || echo "No Kotlin secret patterns found"
+   . reports/.artifacts/security-audit/scope/scan.sh
+   scan -v "Mock" kt.src "Secret access (Kotlin)" "BuildConfig\.\w*[Ss]ecret\|System\.getenv\|getString.*[Ss]ecret"
 
-   grep -rn "SharedPreferences\|getSharedPreferences.*putString" \
-     --include="*.kt" . 2>/dev/null | grep -v "test\|Test" \
-     | head -15 || echo "No Kotlin preferences patterns found"
+   SCAN_MAX=15 scan kt.src "SharedPreferences (Kotlin)" "SharedPreferences\|getSharedPreferences.*putString"
 
-   grep -rn "AKIA\|aws_secret\|gcp_credentials\|api[Kk]ey.*=" \
-     --include="*.kt" . 2>/dev/null | grep -v "test\|Test" \
-     | head -20 || echo "No cloud credential patterns found"
+   scan kt.src "Cloud credential (Kotlin)" "AKIA\|aws_secret\|gcp_credentials\|api[Kk]ey.*="
    ```
 
 For Swift projects, scan *.swift files:
 
 1. Hardcoded secrets (HIGH severity):
    ```bash
-   grep -rn "UserDefaults.*set\|apiKey\|api_key\|secretKey\|secret" \
-     --include="*.swift" . 2>/dev/null | grep -v "test\|Test\|Mock" \
-     | head -20 || echo "No Swift secret patterns found"
+   . reports/.artifacts/security-audit/scope/scan.sh
+   scan -v "Mock" swift.src "Secret usage (Swift)" "UserDefaults.*set\|apiKey\|api_key\|secretKey\|secret"
 
-   grep -rn "Bundle\.main\.path\|Info\.plist.*secret\|Keychain" \
-     --include="*.swift" . 2>/dev/null | grep -v "test\|Test" \
-     | head -15 || echo "No Swift keychain/plist patterns found"
+   SCAN_MAX=15 scan swift.src "Keychain/plist (Swift)" "Bundle\.main\.path\|Info\.plist.*secret\|Keychain"
 
-   grep -rn "AKIA\|Bearer.*[\"'][A-Za-z0-9]\{20,\}" \
-     --include="*.swift" . 2>/dev/null | grep -v "test\|Test" \
-     | head -20 || echo "No cloud credential patterns found"
+   scan swift.src "Cloud credential (Swift)" "AKIA\|Bearer.*[\"'][A-Za-z0-9]\{20,\}"
    ```
 
 For .NET projects, scan *.cs files:
 
 1. Hardcoded secrets (HIGH severity):
    ```bash
-   grep -rn "ConnectionStrings\|Password\s*=\|Secret\s*=\|ApiKey\|Bearer" \
-     --include="*.cs" . 2>/dev/null | grep -v "Test\|Mock\|Example\|\\/obj\/\|\\/bin\/" \
-     | head -20 || echo "No .NET secret patterns found"
+   . reports/.artifacts/security-audit/scope/scan.sh
+   scan -v "Mock\|Example" cs.src "Secret usage (.NET)" "ConnectionStrings\|Password\s*=\|Secret\s*=\|ApiKey\|Bearer"
 
-   grep -rn "Configuration\[\"\|IConfiguration\|GetSection.*Secret" \
-     --include="*.cs" . 2>/dev/null | grep -v "Test\|Mock\|Example" \
-     | head -15 || echo "No .NET Configuration patterns found"
+   SCAN_MAX=15 scan -v "Mock\|Example" cs.src "Configuration (.NET)" "Configuration\[\"\|IConfiguration\|GetSection.*Secret"
 
-   grep -rn "KeyVault\|Azure\.Identity\|DefaultAzureCredential" \
-     --include="*.cs" . 2>/dev/null | grep -v "Test\|Mock" \
-     | head -10 || echo "No Key Vault patterns found"
+   SCAN_MAX=10 scan -v "Mock" cs.src "Key Vault (.NET)" "KeyVault\|Azure\.Identity\|DefaultAzureCredential"
 
-   grep -rn "AKIA\|aws_secret\|gcp_credentials\|azure_secret" \
-     --include="*.cs" . 2>/dev/null | grep -v "Test\|Mock\|Example" \
-     | head -20 || echo "No cloud credential patterns found"
+   scan -v "Mock\|Example" cs.src "Cloud credential (.NET)" "AKIA\|aws_secret\|gcp_credentials\|azure_secret"
    ```
 
-For Generic/Rust projects, apply a broad scan:
+For Generic/Rust projects, apply a broad scan over every language list
+that step 1 produced (a generic project gets all of them):
 
 1. Generic secret patterns (HIGH severity):
    ```bash
-   grep -rn "AKIA\|sk_live_\|sk_test_\|password\s*[:=]" \
-     --include="*.rs" --include="*.rb" --include="*.java" --include="*.kt" \
-     --include="*.cs" . 2>/dev/null | grep -v "test\|spec\|mock\|example\|target\|vendor" \
-     | head -30 || echo "No secret patterns found"
+   . reports/.artifacts/security-audit/scope/scan.sh
+   for l in rs java kt cs; do
+     SCAN_MAX=30 scan -v "mock\|example" "$l.src" "Generic secret ($l)" "AKIA\|sk_live_\|sk_test_\|password\s*[:=]"
+   done
    ```
 
 3. For each finding report: file path, line number, the pattern
@@ -193,6 +170,11 @@ Save the full analysis output to: reports/.artifacts/security-audit/step_03_secu
 Run before finishing: mkdir -p reports/.artifacts/security-audit
 
 Output format:
+- **Scope:** the directories and file count per language from
+  `scope/summary.txt` (plus any `UNSCANNED` lines), first in the artifact.
+  "No hardcoded secret patterns detected" is only valid next to a non-zero
+  scope; if a detected language has 0 files in scope, say "no files
+  scanned" instead.
 - Detected project type and scan targets
 - SOURCE CODE SECRET PATTERNS results (MANDATORY section)
 - Findings grouped by severity (HIGH, MEDIUM, LOW)

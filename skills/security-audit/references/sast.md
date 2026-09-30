@@ -8,111 +8,107 @@ Goal: Scan source code for common OWASP vulnerability patterns. Run
 per detected project type. Findings are LOW/MEDIUM severity for
 Consolidated Findings; do not affect main section scores.
 
-PROJECT DETECTION (execute first):
-- Read reports/.artifacts/security-audit/step_01_security_tool_installer.md for
-  PROJECT_DETECTION_RESULTS (type@path|type@path...)
-- If multiple projects: for each type@path, cd to path and run
-  SAST patterns for that language; concatenate results
-- If single project: run from project root
-Same type-order as security_audit:
-- pubspec.yaml -> Flutter/Dart
-- package.json -> Node.js/NestJS
-- go.mod -> Go
-- Cargo.toml -> Rust
-- pyproject.toml -> Python
-- build.gradle/build.gradle.kts -> Kotlin
-- pom.xml -> Java
-- Package.swift/Podfile -> Swift
-- *.sln / *.csproj -> .NET
+SCAN SCOPE (execute first):
+- Step 1 (tool-installer) wrote the scope to
+  `reports/.artifacts/security-audit/scope/`: one file list per language
+  in PROJECT_DETECTION_RESULTS, built from `git ls-files` by extension
+  (tracked files only; dependencies, build outputs and generated code
+  excluded), plus `summary.txt` and the `scan.sh` helper.
+- If `scope/scan.sh` is missing, re-run the detection block in
+  `references/tool-installer.md` from the repository root first.
+- Run every block below from the repository root, and start each one with
+  `. reports/.artifacts/security-audit/scope/scan.sh` (shell functions do
+  not survive between separate commands). Do not cd into project paths and
+  do not pass directories to grep: the lists already cover every project,
+  so a nested project is scanned once, not twice.
+- SAST reads the `<lang>.src` lists (tests excluded). A language that was
+  not detected prints "not applicable: 0 files in scope" — that is not a
+  clean result, it is no result.
+- `scan [-v DROP_REGEX] <list> <label> <pattern>` prints up to 20 matches
+  and always ends with `[<label>] N match(es) across M files`. Copy those
+  summary lines into the artifact as the evidence for each count.
+
+Record the scope first:
+```bash
+cat reports/.artifacts/security-audit/scope/summary.txt
+```
 
 SAST PATTERNS BY LANGUAGE:
 
 SQL Injection (concatenation with user input):
 ```bash
+. reports/.artifacts/security-audit/scope/scan.sh
 # JavaScript/TypeScript: string concat in query
-grep -rn "\.query\s*(\s*['\"].*\+.*\|.*\+.*['\"]" --include="*.js" \
-  --include="*.ts" src/ lib/ apps/ 2>/dev/null | grep -v node_modules | head -20 \
-  || echo "No SQL concat patterns (JS/TS) found"
+scan js.src "SQL concat (JS/TS)" "\.query\s*(\s*['\"].*\+.*\|.*\+.*['\"]"
 
 # Python: string format / % in execute
-grep -rn "execute\s*(\s*['\"].*%\|\.format\s*(" --include="*.py" src/ app/ 2>/dev/null \
-  | head -20 || echo "No SQL concat patterns (Python) found"
+scan py.src "SQL concat (Python)" "execute\s*(\s*['\"].*%\|\.format\s*("
 
 # C#: string concat in SqlCommand/Execute
-grep -rn "SqlCommand.*\+ \|ExecuteNonQuery.*\+ \|string\.Format.*SELECT\|string\.Format.*INSERT" \
-  --include="*.cs" . 2>/dev/null | head -20 || echo "No SQL concat patterns (C#) found"
+scan cs.src "SQL concat (C#)" "SqlCommand.*\+ \|ExecuteNonQuery.*\+ \|string\.Format.*SELECT\|string\.Format.*INSERT"
 
 # Go: Sprintf / concatenation in Query/Exec
-grep -rn "Query\s*(\s*.*fmt\.Sprintf\|Exec\s*(\s*.*fmt\.Sprintf\|db\.Query.*\+" \
-  --include="*.go" . 2>/dev/null | head -20 || echo "No SQL concat patterns (Go) found"
+scan go.src "SQL concat (Go)" "Query\s*(\s*.*fmt\.Sprintf\|Exec\s*(\s*.*fmt\.Sprintf\|db\.Query.*\+"
 
 # Java/Kotlin: Statement with concat
-grep -rn "Statement\s*\|executeQuery\s*(\s*.*+" --include="*.java" \
-  --include="*.kt" . 2>/dev/null | head -20 || echo "No SQL concat patterns (Java/Kotlin) found"
+scan java.src "SQL concat (Java)" "Statement\s*\|executeQuery\s*(\s*.*+"
+scan kt.src "SQL concat (Kotlin)" "Statement\s*\|executeQuery\s*(\s*.*+"
 ```
 
 XSS (innerHTML, document.write, dangerouslySetInnerHTML):
 ```bash
+. reports/.artifacts/security-audit/scope/scan.sh
 # JavaScript/TypeScript/React
-grep -rn "innerHTML\s*=\|document\.write\s*(\|dangerouslySetInnerHTML" \
-  --include="*.js" --include="*.jsx" --include="*.ts" --include="*.tsx" \
-  src/ lib/ apps/ 2>/dev/null | grep -v node_modules | head -20 \
-  || echo "No XSS patterns (JS) found"
+scan js.src "XSS (JS/TS)" "innerHTML\s*=\|document\.write\s*(\|dangerouslySetInnerHTML"
 
 # Dart: innerHtml, HtmlEscape bypass
-grep -rn "innerHtml\s*=\|HtmlEscape\.bypass\|allowInterop.*innerHTML" \
-  --include="*.dart" lib/ packages/ 2>/dev/null | head -20 \
-  || echo "No XSS patterns (Dart) found"
+scan dart.src "XSS (Dart)" "innerHtml\s*=\|HtmlEscape\.bypass\|allowInterop.*innerHTML"
 ```
 
 Path Traversal (Path.Combine with user input, unchecked paths):
 ```bash
+. reports/.artifacts/security-audit/scope/scan.sh
 # C# / .NET
-grep -rn "Path\.Combine\s*(\s*.*Request\|File\.ReadAllText\s*(\s*.*Request\|Path\.GetFullPath.*input" \
-  --include="*.cs" . 2>/dev/null | head -20 || echo "No path traversal patterns (C#) found"
+scan cs.src "Path traversal (C#)" "Path\.Combine\s*(\s*.*Request\|File\.ReadAllText\s*(\s*.*Request\|Path\.GetFullPath.*input"
 
 # Node.js: path.join with req.params, req.query
-grep -rn "path\.join\s*(\s*.*req\.\|fs\.readFile.*req\.\|readFileSync.*req\.\|require.*req\." \
-  --include="*.js" --include="*.ts" src/ 2>/dev/null | grep -v node_modules | head -20 \
-  || echo "No path traversal patterns (Node) found"
+scan js.src "Path traversal (Node)" "path\.join\s*(\s*.*req\.\|fs\.readFile.*req\.\|readFileSync.*req\.\|require.*req\."
 
 # Python: open() with user input
-grep -rn "open\s*(\s*.*request\.\|open\s*(\s*.*input\s*(" \
-  --include="*.py" src/ app/ 2>/dev/null | head -20 \
-  || echo "No path traversal patterns (Python) found"
+scan py.src "Path traversal (Python)" "open\s*(\s*.*request\.\|open\s*(\s*.*input\s*("
 
 # Go: filepath.Join with user input
-grep -rn "filepath\.Join.*r\.URL\|ioutil\.ReadFile.*r\.\|os\.Open.*r\." \
-  --include="*.go" . 2>/dev/null | head -20 || echo "No path traversal patterns (Go) found"
+scan go.src "Path traversal (Go)" "filepath\.Join.*r\.URL\|ioutil\.ReadFile.*r\.\|os\.Open.*r\."
 ```
 
 Eval / Code Injection:
 ```bash
-grep -rn "eval\s*(\|new Function\s*(\|exec\s*(\s*.*+\|Runtime\.getRuntime\|Process\.start.*shell" \
-  --include="*.js" --include="*.ts" --include="*.py" --include="*.java" \
-  --include="*.kt" src/ lib/ apps/ . 2>/dev/null \
-  | grep -v node_modules | head -15 || echo "No eval/exec patterns found"
+. reports/.artifacts/security-audit/scope/scan.sh
+EVAL_RE="eval\s*(\|new Function\s*(\|exec\s*(\s*.*+\|Runtime\.getRuntime\|Process\.start.*shell"
+for l in js py java kt; do
+  SCAN_MAX=15 scan "$l.src" "Eval/exec ($l)" "$EVAL_RE"
+done
 ```
 
 Firebase Auth Abuse Protection (App Check) — only run if the project uses
-Firebase Auth (`firebase_auth` in `pubspec.yaml` for Flutter, or
-`firebase-admin`/`firebase-functions` for Node/TypeScript):
+Firebase Auth (`firebase_auth` in any tracked `pubspec.yaml` for Flutter,
+or `firebase-admin`/`firebase-functions` for Node/TypeScript):
 
 ```bash
-# Flutter/Dart client: phone sign-in without the App Check package
-grep -q "firebase_auth" pubspec.yaml 2>/dev/null && {
-  grep -rn "signInWithPhoneNumber\|verifyPhoneNumber" --include="*.dart" lib/ 2>/dev/null | head -10 \
-    || echo "No phone sign-in usage found"
-  grep -rn "firebase_app_check\|FirebaseAppCheck" pubspec.yaml lib/ --include="*.dart" 2>/dev/null \
-    || echo "No firebase_app_check dependency or FirebaseAppCheck.instance.activate() found"
-}
+. reports/.artifacts/security-audit/scope/scan.sh
+# Flutter/Dart client: phone sign-in without the App Check package.
+# Every tracked pubspec counts, so apps/*/pubspec.yaml in a monorepo does too.
+PUBSPECS=$(git ls-files '*pubspec.yaml' 2>/dev/null || find . -name pubspec.yaml -not -path '*/.*')
+if [ -n "$PUBSPECS" ] && echo "$PUBSPECS" | tr '\n' '\0' | xargs -0 grep -l "firebase_auth" 2>/dev/null; then
+  SCAN_MAX=10 scan dart.src "Phone sign-in (Dart)" "signInWithPhoneNumber\|verifyPhoneNumber"
+  echo "$PUBSPECS" | tr '\n' '\0' | xargs -0 grep -Hn "firebase_app_check" 2>/dev/null \
+    || echo "No firebase_app_check dependency in any pubspec.yaml"
+  scan dart.src "App Check activation (Dart)" "FirebaseAppCheck"
+fi
 
 # Node.js/TypeScript backend (e.g. Firebase Functions): Auth verification without App Check enforcement
-grep -rl "firebase-admin/auth\|verifyIdToken" --include="*.ts" --include="*.js" . 2>/dev/null \
-  | grep -v node_modules | head -5
-grep -rn "getAppCheck\|appCheck()\|X-Firebase-AppCheck\|enforceAppCheck" \
-  --include="*.ts" --include="*.js" . 2>/dev/null | grep -v node_modules \
-  || echo "No App Check verification (getAppCheck/verifyToken, enforceAppCheck) found"
+SCAN_MAX=5 scan js.src "Firebase Auth verification (Node)" "firebase-admin/auth\|verifyIdToken"
+scan js.src "App Check verification (Node)" "getAppCheck\|appCheck()\|X-Firebase-AppCheck\|enforceAppCheck"
 ```
 
 If Firebase Auth is in use (especially phone sign-in) and no App Check
@@ -202,8 +198,14 @@ to App Check against SMS pumping."
 
 OUTPUT FORMAT (mandatory):
 
-For each project type detected, report:
-1. Language and scan scope
+Start the artifact with a Scope line, then report per language:
+0. **Scope:** the directories and file count per language from
+   `scope/summary.txt`, e.g. `Scope: js - 254 src files - app/dashboard
+   (115), components/dashboard (30), lib (28), ... (git ls-files)`, plus
+   any `UNSCANNED` lines. A zero-findings result is only valid next to
+   a non-zero scope: if a detected language has 0 files in scope, say
+   "no files scanned" instead of "no findings".
+1. Language and the `scan` summary lines for it
 2. SQL injection: count and sample file:line
 3. XSS: count and sample file:line
 4. Path traversal: count and sample file:line

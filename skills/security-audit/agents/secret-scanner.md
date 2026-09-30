@@ -24,7 +24,7 @@ description: |
   <example>
   Context: A NestJS developer wants to verify services use ConfigService instead of direct process.env access.
   user: "Are we using process.env directly in our NestJS services instead of ConfigService?"
-  assistant: "I will scan *.ts files in src/ for direct process.env usage outside of configuration modules, which is both a code quality and security concern in NestJS projects."
+  assistant: "I will scan every tracked *.ts/*.js source file for direct process.env usage outside of configuration modules, which is both a code quality and security concern in NestJS projects."
   <commentary>
   Direct process.env usage in NestJS services is a technology-specific secret pattern that the scanner detects.
   </commentary>
@@ -56,10 +56,10 @@ You are an expert security secret scanning specialist combining two capabilities
 
 ## Analysis Process
 
-1. **Read Preflight Artifact**: Read `reports/.artifacts/security-audit/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Determine scan file extensions and directories based on project type.
+1. **Read Preflight Artifact**: Read `reports/.artifacts/security-audit/step_01_security_tool_installer.md` for PROJECT_DETECTION_RESULTS. Then run `cat reports/.artifacts/security-audit/scope/summary.txt` and source `reports/.artifacts/security-audit/scope/scan.sh`: step 1 already resolved which tracked files each language covers (from `git ls-files` by extension, not from fixed directories). Never pass a fixed directory list such as `lib/ packages/` or `src/ apps/ libs/` to grep.
 2. **Run Source Code Secret Scans**: Execute technology-specific grep commands to detect secret patterns. For each project type:
-   - **Flutter/Dart**: Scan `*.dart` files in `lib/` and `packages/` for Bearer secrets, Stripe keys, API secrets, hardcoded passwords, and cloud credentials.
-   - **NestJS/Node.js**: Scan `*.ts` files in `src/`, `apps/`, `libs/` for process.env direct usage, hardcoded JWT secrets, database connection strings, API keys/tokens, and cloud credentials.
+   - **Flutter/Dart**: Scan the in-scope `*.dart` files for Bearer secrets, Stripe keys, API secrets, hardcoded passwords, and cloud credentials.
+   - **NestJS/Node.js**: Scan the in-scope `*.ts`/`*.js` files for process.env direct usage, hardcoded JWT secrets, database connection strings, API keys/tokens, and cloud credentials.
    - **Go**: Scan `*.go` files for hardcoded passwords, secrets, API keys, and cloud credentials.
    - **Python**: Scan `*.py` files for SECRET_KEY assignments, hardcoded passwords, and cloud credentials.
    - **Kotlin/Swift**: Scan for BuildConfig secrets, SharedPreferences/UserDefaults secrets, keychain patterns, and cloud credentials.
@@ -100,7 +100,8 @@ Save your secret pattern analysis to `reports/.artifacts/security-audit/step_03_
 Create the directory first: `mkdir -p reports/.artifacts/security-audit`
 
 ### Secret Patterns Artifact Structure:
-- **Detected Project Type and Scan Targets**: Technology, file extensions, directories scanned
+- **Scope** (first line, mandatory): directories and file count per language, copied from `scope/summary.txt`, plus any `UNSCANNED` lines. A clean result is only valid next to a non-zero scope.
+- **Detected Project Type and Scan Targets**: Technology and file extensions
 - **SOURCE CODE SECRET PATTERNS** (MANDATORY section, even if empty)
 - **Findings by Severity**: HIGH, MEDIUM, LOW with file path, line number, and pattern
 - **Summary Count**: Findings per severity level
@@ -118,4 +119,4 @@ Create the directory first: `mkdir -p reports/.artifacts/security-audit`
 - **Gitleaks not installed**: This is common. Report NOT_INSTALLED as INFO with clear installation instructions. Do not skip the source code pattern scan.
 - **Large repositories**: Pipe all grep outputs through `| head -N` to avoid context overflow. Note if output was truncated.
 - **False positives**: Strings like "password" in variable names (e.g., `passwordField`) may trigger pattern matches. Use context to assess whether the match is an actual hardcoded secret or a variable name.
-- **No source files matching scan type**: If the detected project type has no matching source files (e.g., empty src/), report "No source files found for scanning."
+- **No source files matching scan type**: If the detected project type has no matching source files (0 files in scope), report "No source files found for scanning (0 files in scope)" — never a clean result.

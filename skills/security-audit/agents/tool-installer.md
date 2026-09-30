@@ -56,9 +56,10 @@ The artifact must contain:
 - Detected project type(s) and technology
 - Source file extensions to scan
 - Package manager detected
+- SOURCE SCOPE — the contents of `reports/.artifacts/security-audit/scope/summary.txt` (per-language file counts and directories, from `git ls-files` by extension). The detection block also writes the per-language file lists and `scan.sh` into that `scope/` directory; the secret-scanner and sast-analyzer depend on them.
 
 ## Critical Rules
 
 - This step is MANDATORY. If detection fails for any reason, write the artifact with `PROJECT_DETECTION_RESULTS=generic@.` so the audit can continue.
 - Never write an empty artifact. Even a failed detection must produce a valid artifact with fallback values.
-- Do not analyze source code, scan for secrets, or check dependencies — those are handled by downstream agents.
+- Do not analyze source code, scan for secrets, or check dependencies — those are handled by downstream agents. Listing the in-scope files is not analysis: it is part of this step.
