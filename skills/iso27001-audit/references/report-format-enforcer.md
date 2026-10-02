@@ -88,7 +88,7 @@ VALIDATION CHECKLIST:
 - No secret values (all redacted)
 - No leaked generator instructions or fabricated identifiers
 - Report starts with the "ISO/IEC 27001:2022 Readiness Report" title
-- Report ends with "20. Scan Metadata" followed by the metadata block
+- Report ends with "20. Report Metadata" followed by the metadata block
 
 If formatting issues are found, fix them in-place and note what was corrected.
 

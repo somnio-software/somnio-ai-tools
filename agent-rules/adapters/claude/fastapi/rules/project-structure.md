@@ -1,5 +1,9 @@
-### FastAPI project structure — domain-package layout, APIRouter modularization, and thin route handlers that delegate to a service layer. Layers on the python stack for language-level structure.
-> Applies to: `**/*.py`
+---
+description: "FastAPI project structure — domain-package layout, APIRouter modularization, and thin route handlers that delegate to a service layer. Layers on the python stack for language-level structure."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Create one `APIRouter` per domain/resource; register every router in `main.py` with `app.include_router(...)`. Never mount routes directly on `app` outside of `main.py`. [bigger-apps](https://fastapi.tiangolo.com/tutorial/bigger-applications/)

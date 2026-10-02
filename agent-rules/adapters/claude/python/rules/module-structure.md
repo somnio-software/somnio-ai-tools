@@ -1,5 +1,9 @@
-### Python module structure — src/ layout, __init__/__all__ exports, layered/clean architecture, dependency inversion (ABC/Protocol, single composition root), no circular imports, absolute imports, pyproject.toml packaging (PEP 517/518/621, no setup.py), structured logging (structlog, no import-time config in libraries).
-> Applies to: `**/*.py`
+---
+description: "Python module structure — src/ layout, __init__/__all__ exports, layered/clean architecture, dependency inversion (ABC/Protocol, single composition root), no circular imports, absolute imports, pyproject.toml packaging (PEP 517/518/621, no setup.py), structured logging (structlog, no import-time config in libraries)."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Place all importable source under `src/<package_name>/`; never at the repo root. (Source: https://packaging.python.org/en/latest/discussions/src-layout-vs-flat-layout/)

@@ -1,15 +1,22 @@
 # Agent Rules
 
-Coding standards for NestJS, Flutter, and React that are automatically applied by AI coding agents.
+Coding standards for Dart, Django, FastAPI, Flask, Flutter, Cloud Functions, NestJS, Python, React, and TypeScript that are automatically applied by AI coding agents.
 
 ## Architecture
 
 ```
 agent-rules/
 ├── rules/              # Source of truth (edit here)
-│   ├── flutter/        # 5 rules
+│   ├── dart/           # 5 rules
+│   ├── django/         # 7 rules
+│   ├── fastapi/        # 6 rules
+│   ├── flask/          # 7 rules
+│   ├── flutter/        # 7 rules
+│   ├── functions/      # 2 rules
 │   ├── nestjs/         # 9 rules
-│   └── react/          # 6 rules
+│   ├── python/         # 8 rules
+│   ├── react/          # 6 rules
+│   └── typescript/     # 1 rule
 ├── adapters/           # Generated outputs (do not edit)
 │   ├── antigravity/    # Individual .md files (body only)
 │   ├── claude/         # Single consolidated CLAUDE.md
@@ -25,7 +32,7 @@ agent-rules/
 
 1. Rules are written as `.md` files in `rules/` with YAML frontmatter (`description`, `globs`, `alwaysApply`)
 2. `scripts/generate.py` transforms them into the format each agent tool expects
-3. Each adapter gets the same 20 rules in a different packaging:
+3. Each adapter gets the same 58 rules in a different packaging:
    - **Cursor**: individual `.mdc` files with frontmatter for auto-apply by glob pattern
    - **Claude/Copilot/Windsurf**: all rules concatenated into a single file
    - **Codex**: condensed version with code blocks stripped (token optimization)

@@ -4,25 +4,25 @@
 
 ## 1. SOC 2 Readiness Scorecard
 
-| Control Family | Criteria | Weight | Score |
-|----------------|----------|--------|-------|
-| A. Governance & Program | CC1.x/CC3.x/CC5.x | 8% | [Score]/100 ([Band]) |
-| B. Human Resources Security | CC1.4 | 4% | [Score]/100 ([Band]) |
-| C. Identity & Access Management | CC6.1-6.3, CC6.6 | 18% | [Score]/100 ([Band]) |
-| D. Data Protection & Confidentiality | CC6.1/6.7, C1.1-1.2 | 16% | [Score]/100 ([Band]) |
-| E. Secure Development & Change Management | CC7.1, CC8.1 | 16% | [Score]/100 ([Band]) |
-| F. Infrastructure & Network Security | CC6.6, CC7.2 | 14% | [Score]/100 ([Band]) |
-| G. Vulnerability Management & Assurance | CC7.1 | 8% | [Score]/100 ([Band]) |
-| H. Incident Management, BCP/DR | CC7.3-7.5, CC9.1 | 8% | [Score]/100 ([Band]) |
-| I. Vendor / Third-Party Management | CC9.2 | 4% | [Score]/100 ([Band]) |
-| J. AI Governance | CC1.x, CC4.x | 4% | [Score]/100 ([Band]) |
-| **Overall Readiness Score** | — | 100% | **[Score]/100 ([Band])** |
+| Control Family | Criteria | Score |
+|----------------|----------|-------|
+| A. Governance & Program | CC1.x/CC3.x/CC5.x | [Score]/100 ([Band]) |
+| B. Human Resources Security | CC1.4 | [Score]/100 ([Band]) |
+| C. Identity & Access Management | CC6.1-6.3, CC6.6 | [Score]/100 ([Band]) |
+| D. Data Protection & Confidentiality | CC6.1/6.7, C1.1-1.2 | [Score]/100 ([Band]) |
+| E. Secure Development & Change Management | CC7.1, CC8.1 | [Score]/100 ([Band]) |
+| F. Infrastructure & Network Security | CC6.6, CC7.2 | [Score]/100 ([Band]) |
+| G. Vulnerability Management & Assurance | CC7.1 | [Score]/100 ([Band]) |
+| H. Incident Management, BCP/DR | CC7.3-7.5, CC9.1 | [Score]/100 ([Band]) |
+| I. Vendor / Third-Party Management | CC9.2 | [Score]/100 ([Band]) |
+| J. AI Governance | CC1.x, CC4.x | [Score]/100 ([Band]) |
+| **Overall Readiness Score** | — | **[Score]/100 ([Band])** |
 
 **Readiness Band:** [Not Ready / Partially Ready / Largely Ready / Audit-Ready]
 
-**Formula:** Overall = round(A*0.08 + B*0.04 + C*0.18 + D*0.16 + E*0.16 + F*0.14 + G*0.08 + H*0.08 + I*0.04 + J*0.04)
-
 > **Bands:** Not Ready (0-40) · Partially Ready (41-70) · Largely Ready (71-85) · Audit-Ready (86-100)
+
+_Family weights are not shown here — see the closing "Appendix: Scoring Methodology" for the weighted formula._
 
 ---
 
@@ -166,7 +166,37 @@ Deliverables the organization must author/publish (not scored):
 
 ---
 
-## 19. Scan Metadata
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 1.00 — the authoritative source is this skill's
+`references/scoring.md`; this table is a read-only summary of what was applied):
+
+| Control Family | Weight |
+|----------------|--------|
+| A. Governance & Program | 0.08 |
+| B. Human Resources Security | 0.04 |
+| C. Identity & Access Management | 0.18 |
+| D. Data Protection & Confidentiality | 0.16 |
+| E. Secure Development & Change Management | 0.16 |
+| F. Infrastructure & Network Security | 0.14 |
+| G. Vulnerability Management & Assurance | 0.08 |
+| H. Incident Management, BCP/DR | 0.08 |
+| I. Vendor / Third-Party Management | 0.04 |
+| J. AI Governance | 0.04 |
+| **Total** | **1.00** |
+
+**Formula:** Overall = round(A\*0.08 + B\*0.04 + C\*0.18 + D\*0.16 + E\*0.16 + F\*0.14 + G\*0.08 + H\*0.08 + I\*0.04 + J\*0.04)
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Readiness bands:** Not Ready (0-40) · Partially Ready (41-70) · Largely Ready (71-85) · Audit-Ready (86-100)
+
+This appendix is the **only** report-facing surface where family weights may appear anywhere in
+the report.
+
+---
+
+## 19. Report Metadata
 
 | Field | Value |
 |-------|-------|

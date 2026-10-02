@@ -121,7 +121,7 @@ rules, then save the final Markdown report.
 Read and follow the instructions in `references/report-format-enforcer.md`
 
 **Validation**: Read the generated report and validate ALL structural checks
-from the format enforcer rule: exactly 7 sections, Section 1 has one row per
+from the format enforcer rule: exactly 8 sections, Section 1 has one row per
 harness piece + Total + Maturity Band + legend, the per-piece scores sum to the
 Total, the Total matches Sections 2 and 5 and the JSON export, the band label
 matches the total's range, Section 3 is ordered by points recoverable
@@ -227,16 +227,25 @@ The report file name is always:
 `<YYYY-MM-DD>-<project>-harness-audit.json` — the JSON export, same name, `.json` extension.
 
 - `<YYYY-MM-DD>` — the date of this run.
-- `<project>` — the project name slugified to kebab-case: lowercase, with
-  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
-  repeated `-` collapsed. Defaults to the current directory name.
+- `<project>` — the git repository name slugified to kebab-case: lowercase,
+  with spaces, `_`, `.` and `/` turned into `-`, every other character dropped,
+  and repeated `-` collapsed. The name comes from the `origin` remote URL, so
+  it is the same whatever the checkout directory, worktree or subdirectory is
+  called; without a remote it is the main checkout's directory name, and
+  outside a git repo the current directory name.
 - The trailing segment is this skill's name and never changes.
 
 Derive it once, before writing anything:
 
 ```bash
 mkdir -p reports
-REPORT="reports/$(date +%F)-$(basename "$PWD" \
+REPO="$(git remote get-url origin 2>/dev/null | sed -E 's#/+$##; s#.*[/:]##; s#\.git$##')"
+if [ -z "$REPO" ]; then
+  COMMON="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+  [ -n "$COMMON" ] && REPO="$(basename "${COMMON%/.git}" .git)"
+fi
+[ -n "$REPO" ] || REPO="$(basename "$PWD")"
+REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
   | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
   | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-harness-audit.md"
 ```

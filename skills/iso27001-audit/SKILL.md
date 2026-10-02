@@ -338,7 +338,7 @@ report content. A report without computed scores is INVALID.
 - ISMS Clause Coverage (clauses 4-10)
 - Project Detection Results
 - Appendix: Evidence Index
-- Scan Metadata
+- Report Metadata
 
 **Scoring Requirement**: Every scored category section MUST include: a Score
 line with [Score]/100 ([Band]) format, a Score Breakdown (base,
@@ -467,16 +467,25 @@ The report file name is always:
 `<YYYY-MM-DD>-<project>-iso27001-audit.json` — the JSON export, same name, `.json` extension.
 
 - `<YYYY-MM-DD>` — the date of this run.
-- `<project>` — the project name slugified to kebab-case: lowercase, with
-  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
-  repeated `-` collapsed. Defaults to the current directory name.
+- `<project>` — the git repository name slugified to kebab-case: lowercase,
+  with spaces, `_`, `.` and `/` turned into `-`, every other character dropped,
+  and repeated `-` collapsed. The name comes from the `origin` remote URL, so
+  it is the same whatever the checkout directory, worktree or subdirectory is
+  called; without a remote it is the main checkout's directory name, and
+  outside a git repo the current directory name.
 - The trailing segment is this skill's name and never changes.
 
 Derive it once, before writing anything:
 
 ```bash
 mkdir -p reports
-REPORT="reports/$(date +%F)-$(basename "$PWD" \
+REPO="$(git remote get-url origin 2>/dev/null | sed -E 's#/+$##; s#.*[/:]##; s#\.git$##')"
+if [ -z "$REPO" ]; then
+  COMMON="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+  [ -n "$COMMON" ] && REPO="$(basename "${COMMON%/.git}" .git)"
+fi
+[ -n "$REPO" ] || REPO="$(basename "$PWD")"
+REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
   | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
   | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-iso27001-audit.md"
 ```

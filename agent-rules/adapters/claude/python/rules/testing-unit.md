@@ -1,5 +1,9 @@
-### pytest unit-testing conventions — plain assert, test_*.py discovery, fixture scoping, parametrize, mocker/autospec, Hypothesis. Applies to all Python test files.
-> Applies to: `**/*.py`
+---
+description: "pytest unit-testing conventions — plain assert, test_*.py discovery, fixture scoping, parametrize, mocker/autospec, Hypothesis. Applies to all Python test files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Use plain `assert` statements; never use `unittest.TestCase` assertion methods inside pytest tests. (https://docs.pytest.org/en/stable/how-to/assert.html)

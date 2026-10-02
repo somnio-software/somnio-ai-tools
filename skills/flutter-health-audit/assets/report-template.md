@@ -1,5 +1,10 @@
 # Flutter Project Health Audit Report
 
+**Project:** [PROJECT_NAME]
+**Date:** [AUDIT_DATE]
+**Auditor:** AI-Assisted Analysis
+**Framework:** [Flutter/Dart — single app/monorepo]
+
 > **Exclusions:** Never recommend adding new languages/translations, CODEOWNERS/SECURITY.md files, or platform-specific Android/iOS build workflows.
 
 ---
@@ -48,7 +53,12 @@
 | AI Harness & Adoption | [Score]/100 | [Label] |
 | **Overall** | **[Score]/100** | **[Label]** |
 
+> **Test Coverage:** [X]% (lines) — full breakdown in the Testing section.
+> Fallback when no coverage tool is detected: `Not measured (no coverage tool detected/configured)`
+
 > **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+[One-sentence interpretation of the Overall Score.]
 
 ---
 
@@ -194,14 +204,16 @@
 
 **Score:** [Score]/100 ([Label])
 
-**Code Coverage:** [X]% (overall: lib + packages)
-> For monorepo: `App [name]: [X]%, App [name2]: [Y]%`
+**Code Coverage:** [X]% (lines)
+> Multi-dimension stacks (JS/TS): `[X]% lines / [Y]% branches / [Z]% functions`
+> Monorepo / multi-app: `App [name]: [X]%, App [name2]: [Y]%`
+> No coverage tool: `Not measured (no coverage tool detected/configured)`
 
 **Coverage Breakdown:**
-- `[ProjectName]/lib`: [X]%
-- `packages/[package_name]`: [X]%
-- `packages/[package_name]`: [X]%
-- [Continue for each package]
+- `[module/package/app]`: [X]% (lines[, [Y]% branches, [Z]% functions — where extracted])
+- [Continue per module/package/app]
+- [Single-package projects: "N/A — single package, see Code Coverage above"]
+- [No data: "(no coverage data — artifact missing or no coverage tool configured)"]
 
 ### Key Findings
 - [Finding 1]
@@ -341,7 +353,7 @@
 
 **Maturity:** [sin harness | harness básico | harness sólido | paved path]
 
-### Coverage
+### Harness Coverage
 | Dimension | Status | Points |
 |---|---|---|
 | CLAUDE.md | [Status] | [Points]/13 |
@@ -385,12 +397,6 @@
 - **Supported platforms:** [Platform list]
 - **Number of feature folders:** [Count] ([App breakdown if multi-app])
 - **Packages count:** [Count]
-- **Coverage %:** [Percentage or status] (per app if multi-app)
-- **Coverage breakdown by component:**
-  - `[ProjectName]/lib`: X%
-  - `packages/[package_name]`: X%
-  - [Continue for each package]
-- **Overall aggregated coverage %:** [Total percentage combining all apps and packages]
 - **State management detected:** [Pattern]
 - **Force-upgrade/maintenance mode:** [Status]
 - **Spell-check scope:** [Scope]
@@ -398,26 +404,7 @@
 
 ---
 
-## 13. Quality Index
-
-| Section | Score | Label |
-|---------|-------|-------|
-| Tech Stack | [Score]/100 | [Label] |
-| Architecture | [Score]/100 | [Label] |
-| State Management | [Score]/100 | [Label] |
-| Repositories & Data Layer | [Score]/100 | [Label] |
-| Testing | [Score]/100 | [Label] |
-| Code Quality | [Score]/100 | [Label] |
-| Documentation & Operations | [Score]/100 | [Label] |
-| CI/CD | [Score]/100 | [Label] |
-| AI Harness & Adoption | [Score]/100 | [Label] |
-| **Overall** | **[Score]/100** | **[Label]** |
-
-[One-sentence interpretation of the overall score]
-
----
-
-## 14. Risks & Opportunities
+## 13. Risks & Opportunities
 
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
@@ -430,7 +417,7 @@
 
 ---
 
-## 15. Recommendations
+## 14. Recommendations
 
 1. **[Priority Level]:** [Recommendation 1]
 2. **[Priority Level]:** [Recommendation 2]
@@ -445,7 +432,7 @@
 
 ---
 
-## 16. Appendix: Evidence Index
+## 15. Appendix: Evidence Index
 
 **Tech Stack:**
 - [File path or config reference]
@@ -482,6 +469,30 @@
 **AI Harness & Adoption:**
 - [File path or config reference]
 - [Continue as needed]
+
+---
+
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 1.00 — the authoritative source is this skill's
+`references/report-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Tech Stack | 0.18 |
+| Architecture | 0.18 |
+| State Management | 0.18 |
+| Repositories & Data Layer | 0.10 |
+| Testing | 0.10 |
+| Code Quality (Linter & Warnings) | 0.10 |
+| Documentation & Operations | 0.03 |
+| CI/CD (Configs Found in Repo) | 0.03 |
+| AI Harness & Adoption | 0.10 |
+| **Total** | **1.00** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
 
 ---
 

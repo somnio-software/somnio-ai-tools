@@ -198,7 +198,7 @@ without computed scores is INVALID.
 - Remediation Priority Matrix
 - Project Detection Results
 - Appendix: Evidence Index
-- Scan Metadata
+- Report Metadata
 
 **Scoring Requirement**: Every scored section MUST include: Score line
 with [Score]/100 ([Label]) format, Score Breakdown (Base, deductions/additions,
@@ -289,7 +289,7 @@ The orchestrator reads this SKILL.md for scope context, then fans out to analysi
 | `agents/secret-scanner.md` | cheap | `references/secret-patterns.md` (step 3) + `references/gitleaks.md` (step 4) | `reports/.artifacts/security-audit/step_03_security_secret_patterns.md`, `reports/.artifacts/security-audit/step_04_security_gitleaks.md` |
 | `agents/sast-analyzer.md` | cheap | `references/sast.md` (step 8) | `reports/.artifacts/security-audit/step_08_security_sast.md` |
 | `agents/dependency-analyzer.md` | mid | `references/dependency-audit.md` (step 5) + `references/dependency-age.md` (step 6) + `references/trivy.md` (step 7) | `reports/.artifacts/security-audit/step_05_security_dependency_audit.md`, `reports/.artifacts/security-audit/step_06_security_dependency_age.md`, `reports/.artifacts/security-audit/step_07_security_trivy.md` |
-| `agents/report-writer.md` | frontier | `references/report-generator.md` (step 9) + `references/report-format-enforcer.md` (step 10) + `assets/report-template.md` | `reports/<YYYY-MM-DD>-<project>-security-audit.md`, `reports/<YYYY-MM-DD>-<project>-security-audit.json`, `reports/.history/last_scores.json` |
+| `agents/report-writer.md` | frontier | `references/report-generator.md` (step 9) + `references/report-format-enforcer.md` (step 10) + `assets/report-template.md` | `reports/<YYYY-MM-DD>-<project>-security-audit.md`, `reports/.history/last_scores.json` |
 
 **Model tiers** are provider-neutral symbolic names. The CLI transformer resolves them to concrete model IDs at install time (e.g. for Claude: cheap→haiku, mid→sonnet, frontier→opus).
 
@@ -301,19 +301,26 @@ The report file name is always:
 <YYYY-MM-DD>-<project>-security-audit.md
 ```
 
-`<YYYY-MM-DD>-<project>-security-audit.json` — the JSON export, same name, `.json` extension.
-
 - `<YYYY-MM-DD>` — the date of this run.
-- `<project>` — the project name slugified to kebab-case: lowercase, with
-  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
-  repeated `-` collapsed. Defaults to the current directory name.
+- `<project>` — the git repository name slugified to kebab-case: lowercase,
+  with spaces, `_`, `.` and `/` turned into `-`, every other character dropped,
+  and repeated `-` collapsed. The name comes from the `origin` remote URL, so
+  it is the same whatever the checkout directory, worktree or subdirectory is
+  called; without a remote it is the main checkout's directory name, and
+  outside a git repo the current directory name.
 - The trailing segment is this skill's name and never changes.
 
 Derive it once, before writing anything:
 
 ```bash
 mkdir -p reports
-REPORT="reports/$(date +%F)-$(basename "$PWD" \
+REPO="$(git remote get-url origin 2>/dev/null | sed -E 's#/+$##; s#.*[/:]##; s#\.git$##')"
+if [ -z "$REPO" ]; then
+  COMMON="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+  [ -n "$COMMON" ] && REPO="$(basename "${COMMON%/.git}" .git)"
+fi
+[ -n "$REPO" ] || REPO="$(basename "$PWD")"
+REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
   | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
   | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-security-audit.md"
 ```
@@ -321,7 +328,7 @@ REPORT="reports/$(date +%F)-$(basename "$PWD" \
 Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-security-audit.md`, it
 means that resolved path.
 
-The JSON export uses the same base name with a `.json` extension. `reports/.history/last_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
+`reports/.history/last_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
 
 **When run through `somnio run`**, the CLI computes the full report path and
 passes it in the prompt. Use the path it gives you verbatim — do not recompute

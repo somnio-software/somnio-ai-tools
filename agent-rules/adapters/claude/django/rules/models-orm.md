@@ -1,5 +1,9 @@
-### Django models and ORM optimization — select_related/prefetch_related for N+1 defense, bulk operations, DB-level evaluation, queryset limits, Meta indexes and constraints, and profiling. Applies to all Python files.
-> Applies to: `**/*.py`
+---
+description: "Django models and ORM optimization — select_related/prefetch_related for N+1 defense, bulk operations, DB-level evaluation, queryset limits, Meta indexes and constraints, and profiling. Applies to all Python files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. **`select_related` for FK/one-to-one, `prefetch_related` for reverse FK/M2M.** Every queryset that accesses a related object must use the appropriate prefetch method; access without it in a loop is forbidden. ([ORM optimization](https://docs.djangoproject.com/en/stable/topics/db/optimization/))

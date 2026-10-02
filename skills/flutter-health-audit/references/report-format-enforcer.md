@@ -20,10 +20,35 @@ NEVER include recommendations for:
   decisions, not technical requirements)
 
 ----------------------------------------------------------------------
+HEADER
+----------------------------------------------------------------------
+
+The header MUST carry BOTH blocks, in this order: the project-metadata
+block (`**Project:**` / `**Date:**` / `**Auditor:**` / `**Framework:**`)
+AND the Exclusions blockquote — do not drop either one.
+
+```markdown
+# Flutter Project Health Audit Report
+
+**Project:** [PROJECT_NAME]
+**Date:** [AUDIT_DATE]
+**Auditor:** AI-Assisted Analysis
+**Framework:** [Flutter/Dart — single app/monorepo]
+
+> **Exclusions:** Never recommend adding new languages/translations, CODEOWNERS/SECURITY.md files, or platform-specific Android/iOS build workflows.
+
+---
+```
+
+----------------------------------------------------------------------
 MANDATORY REPORT STRUCTURE
 ----------------------------------------------------------------------
 
-The report MUST contain exactly these 16 sections in this order:
+The report MUST contain exactly these 15 numbered sections, in this
+order, followed by 2 trailing unnumbered blocks. There is no "Quality
+Index" section — it was a byte-for-byte duplicate of the Section 2
+scorecard and has been deleted; its one non-duplicate line (a trailing
+interpretation sentence) now lives at the end of Section 2:
 
 1. Executive Summary
 2. At-a-Glance Scorecard
@@ -37,10 +62,11 @@ The report MUST contain exactly these 16 sections in this order:
 10. CI/CD (Configs Found in Repo)
 11. AI Harness & Adoption
 12. Additional Metrics
-13. Quality Index
-14. Risks & Opportunities
-15. Recommendations
-16. Appendix: Evidence Index
+13. Risks & Opportunities
+14. Recommendations
+15. Appendix: Evidence Index
+Appendix: Scoring Methodology (UNNUMBERED)
+Report Metadata (UNNUMBERED)
 
 ----------------------------------------------------------------------
 SECTION FORMAT REQUIREMENTS
@@ -136,11 +162,25 @@ Priority Recommendations:
 - AI Harness & Adoption: [Score]/100 ([Label])
 - Overall: [Score]/100 ([Label])
 
+REQUIRED — no Weight column in this table (weights live only in the
+Appendix: Scoring Methodology). Immediately below the scorecard, in
+this exact order:
+> **Test Coverage:** [X]% (lines) — full breakdown in the Testing section.
+> Fallback when no coverage tool is detected: `Not measured (no coverage tool detected/configured)`
+
+> **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+[One-sentence interpretation of the Overall Score.]
+
+The "Test Coverage" label is mandatory and must never be shortened to
+a bare "Coverage" — that word is the AI Harness rubric heading
+("Harness Coverage") in Section 11.
+
 11. AI Harness & Adoption:
 Description: [One-sentence description of the harness analysis].
 Score: [Score]/100 ([Label])
 Maturity: [sin harness | harness básico | harness sólido | paved path]
-Coverage:
+Harness Coverage:
 - CLAUDE.md: [Status] — [Points]/13
 - Rules: [Status] — [Points]/9
 - Permissions: [Status] — [Points]/13
@@ -172,47 +212,67 @@ Counts & Metrics:
 - Supported platforms: [Platform list]
 - Number of feature folders: [Count] ([App breakdown if multi-app])
 - Packages count: [Count]
-- Coverage %: [Percentage or status] (per app if multi-app)
-- Coverage breakdown by component:
-  [ProjectName]/lib: X%
-  packages/[package_name]: X%
-  [Continue for each component]
-- Overall aggregated coverage %: [Total percentage combining all
-  apps and packages]
 - State management detected: [Pattern]
 - Force-upgrade/maintenance mode: [Status]
 - Spell-check scope: [Scope]
 - Public API docs enforcement: [Status]
 
-13. Quality Index:
-Section Summary with Scores:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- State Management: [Score]/100 ([Label])
-- Repositories & Data Layer: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality: [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD: [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-Overall Score: [Score]/100 ([Label])
-[One-sentence interpretation]
+REQUIRED — NO coverage percentage anywhere in this section (no
+"Coverage %:", "Coverage breakdown by component:", or "Overall
+aggregated coverage %:" bullets). That data lives only in the Section 2
+Test Coverage line and the Section 7 Code Coverage / Coverage
+Breakdown fields.
 
-14. Risks & Opportunities:
+13. Risks & Opportunities:
 - [Risk/Opportunity 1]
 - [Risk/Opportunity 2]
 - [Continue as needed]
 
-15. Recommendations:
+14. Recommendations:
 1. [Priority Level]: [Recommendation 1]
 2. [Priority Level]: [Recommendation 2]
 3. [Continue as needed]
 
-16. Appendix: Evidence Index:
+15. Appendix: Evidence Index:
 File Paths and Configs by Area:
 [Area Name]:
 - [File path or config reference]
 - [Continue as needed]
+
+Appendix: Scoring Methodology (UNNUMBERED — required, must appear
+after Section 15 and before Report Metadata):
+
+```markdown
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 1.00 — the authoritative source is
+`references/report-generator.md`; this table is a read-only summary of
+what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Tech Stack | [Weight] |
+| Architecture | [Weight] |
+| State Management | [Weight] |
+| Repositories & Data Layer | [Weight] |
+| Testing | [Weight] |
+| Code Quality (Linter & Warnings) | [Weight] |
+| Documentation & Operations | [Weight] |
+| CI/CD (Configs Found in Repo) | [Weight] |
+| AI Harness & Adoption | [Weight] |
+| **Total** | **1.00** |
+
+Weights are defined in `references/report-generator.md` — that file is
+the single source of truth; do not restate the numbers here. Fill in
+each row's `[Weight]` value by reading it from there.
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+```
+
+This appendix is the ONLY place in the report where weights may appear.
+The Section 2 scorecard table NEVER carries a Weight column.
 
 ----------------------------------------------------------------------
 FORMATTING RULES
@@ -248,7 +308,9 @@ MULTI-APP HANDLING
 
 For multi-app repositories:
 1. Include app-specific metrics in Counts & Metrics
-2. Report per-app coverage in Additional Metrics
+2. Report per-app coverage in Section 7's Coverage Breakdown, never in
+   Additional Metrics (Additional Metrics carries no coverage data —
+   see Section 12 above)
 3. Include app-specific evidence in Evidence sections
 4. Mention app names in descriptions where relevant
 5. Report cross-app consistency in Key Findings
@@ -258,7 +320,22 @@ VALIDATION CHECKLIST
 ----------------------------------------------------------------------
 
 Before finalizing the report, verify:
-✓ All 16 sections are present
+✓ All 15 numbered sections are present, in order, with no "Quality
+  Index" section
+✓ The header carries both the project-metadata block and the
+  Exclusions blockquote
+✓ The `> **Test Coverage:**` line (with its fallback second line)
+  appears directly under the Section 2 scorecard table
+✓ Section 7 (Testing) has the canonical `Code Coverage:` and `Coverage
+  Breakdown:` fields between Score and Key Findings
+✓ Section 11 (AI Harness & Adoption) uses `Harness Coverage:`, never a
+  bare `Coverage:`
+✓ NO coverage percentage is restated in Counts & Metrics or Additional
+  Metrics anywhere in the report
+✓ The `## Appendix: Scoring Methodology` block is present, after
+  Section 15 and before `## Report Metadata`
+✓ Weights appear ONLY in the Appendix: Scoring Methodology — never as a
+  column in the Section 2 scorecard table
 ✓ All sections follow the required format
 ✓ All scores are integers with proper labels
 ✓ All evidence references actual files

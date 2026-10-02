@@ -39,6 +39,17 @@
     - Always use: "path/to/file.py:line_number"
     - Example: "src/users/users_service.py:42 - Missing type annotation"
 
+6.  **CLOSING APPENDIX**:
+    - The report MUST close with an unnumbered `## Appendix: Scoring Methodology` block, placed
+      between the Evidence Index section and `## Report Metadata`.
+    - Its `| Section | Weight |` rows must match this skill's own Score Breakdown rows and sum to
+      100%.
+
+7.  **WEIGHTS APPEAR IN ONE PLACE ONLY**:
+    - Weights appear ONLY in the closing `## Appendix: Scoring Methodology` block and in
+      `references/best-practices-generator.md`.
+    - Weights must NEVER appear as a column in the `## 2. Score Breakdown` table.
+
 ## EXAMPLE OUTPUT FORMAT
 
 TESTING QUALITY

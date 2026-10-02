@@ -39,15 +39,25 @@
     - Weak: 0-69
 
 5.  **SPECIAL SECTIONS**:
-    - Section 6 (Testing) MUST include "Code Coverage:" line after Score
+    - Section 2 (At-a-Glance Scorecard) MUST be followed by the
+      `> **Test Coverage:**` blockquote (with its no-tool fallback line
+      inside the same blockquote), then the `> **Scoring:**` legend,
+      then a one-sentence interpretation of the Overall Score. No
+      Weight column on the scorecard table itself.
+    - Section 6 (Testing) MUST include the `**Code Coverage:**` and
+      `**Coverage Breakdown:**` fields between Score and Key Findings
     - Section 11 (AI Harness & Adoption) uses the richer shape: Description,
-      Score, Maturity, Coverage table (or bullet list), Key Findings,
-      Evidence, Risks, Actions to Raise the Score (each with a `[+N]`
-      delta and a `→ dimension D, X/Y → Y/Y` trace), Counts & Metrics
-    - Section 12 (Additional Metrics) uses flat bullet list format
-    - Section 13 (Quality Index) repeats all scores then overall
+      Score, Maturity, `### Harness Coverage` table (not a bare
+      `### Coverage` — that word is the Section 2 scorecard label),
+      Key Findings, Evidence, Risks, Actions to Raise the Score (each
+      with a `[+N]` delta and a `→ dimension D, X/Y → Y/Y` trace),
+      Counts & Metrics
+    - Section 12 (Additional Metrics) uses flat bullet list format;
+      it must NOT restate any coverage percentage
+    - There is no "Quality Index" section. Never emit one.
 
-6.  **TOTAL SECTIONS**: Report MUST have exactly 16 sections:
+6.  **TOTAL SECTIONS**: Report MUST have exactly 15 numbered sections,
+    followed by two unnumbered blocks:
     1. Executive Summary
     2. At-a-Glance Scorecard
     3. Tech Stack
@@ -60,24 +70,18 @@
     10. CI/CD (Configs Found in Repo)
     11. AI Harness & Adoption
     12. Additional Metrics
-    13. Quality Index
-    14. Risks & Opportunities
-    15. Recommendations
-    16. Appendix: Evidence Index
+    13. Risks & Opportunities
+    14. Recommendations
+    15. Appendix: Evidence Index
+    - `## Appendix: Scoring Methodology` (unnumbered)
+    - `## Report Metadata` (unnumbered)
 
 ## WEIGHTED SCORE CALCULATION
 
-Overall Score = round(
-  Tech Stack × 0.18 +
-  Architecture × 0.18 +
-  State Management × 0.135 +
-  Testing × 0.135 +
-  Code Quality × 0.135 +
-  Performance × 0.075 +
-  Documentation × 0.03 +
-  CI/CD × 0.03 +
-  AI Harness & Adoption × 0.10
-)
+Weights are defined in `references/report-generator.md` — that file is
+the single source of truth; do not restate the numbers here.
+
+Overall Score = round( Σ (section_score × weight) )
 
 ROUNDING RULE: Use standard mathematical rounding (0.5 rounds up).
 Do NOT apply subjective adjustments.
@@ -85,7 +89,24 @@ Do NOT apply subjective adjustments.
 ## VALIDATION CHECKLIST
 
 Before finalizing the report, verify:
-- All 16 sections are present
+- Exactly 15 numbered `## N.` sections are present, 1 through 15, no
+  gaps or duplicates, and no "Quality Index" heading anywhere
+- The header carries both the project-metadata block (Project / Date /
+  Auditor / Framework) AND the Exclusions blockquote
+- The `> **Test Coverage:**` line appears directly under the
+  At-a-Glance Scorecard table, with its no-coverage-tool fallback as a
+  second line inside the same blockquote
+- The Testing section carries the canonical `**Code Coverage:**` and
+  `**Coverage Breakdown:**` fields between Score and Key Findings
+- The AI Harness & Adoption section uses `### Harness Coverage`, never
+  a bare `### Coverage`
+- No coverage percentage is restated in Counts & Metrics or Additional
+  Metrics anywhere in the report — coverage appears exactly twice: the
+  Section 2 Test Coverage line and the Section 6 Testing fields
+- The `## Appendix: Scoring Methodology` block is present, before
+  `## Report Metadata`, with weights summing to 1.00
+- Weights appear ONLY in the Appendix: Scoring Methodology — never as a
+  column in the At-a-Glance Scorecard table or anywhere else
 - All sections follow the required format
 - All scores are integers with proper labels
 - All evidence references actual files

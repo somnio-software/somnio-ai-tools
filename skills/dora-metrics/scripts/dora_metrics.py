@@ -53,6 +53,7 @@ import requests
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import troubleshooting  # noqa: E402  (sibling module, loaded by path so the script stays runnable from anywhere)
+import practice_guidance  # noqa: E402  (sibling module, same reason)
 
 API_ROOT = "https://api.github.com"
 
@@ -400,6 +401,63 @@ ISSUE_CODES = (
 NO_GUIDANCE_CODES = ("github_api_error",)
 
 
+# --- Practice guidance -------------------------------------------------------
+# A separate, fixed catalog from the issue model above: issues are about
+# whether THIS run could measure something; this catalog is about engineering
+# practice in general and is never about this run's numbers. Every code here
+# is attached to every result, unfiltered — nothing here is chosen, reordered
+# or omitted based on what was measured (see references/practice-guidance.md,
+# which is the single source of truth for the prose and stays in sync with
+# this tuple by hand, same convention as ISSUE_CODES/troubleshooting.md).
+PRACTICE_GUIDANCE_CODES = (
+    "trunk_based_development",
+    "small_prs",
+    "automate_release_tagging",
+    "fast_ci_feedback",
+    "feature_flags_over_long_branches",
+    "decouple_deploy_from_release_event",
+    "automate_the_deploy_pipeline",
+    "reduce_batch_size",
+)
+
+# code -> the report heading its dimension renders under. Order here is the
+# order dimensions render in, independent of PRACTICE_GUIDANCE_CODES' order.
+PRACTICE_GUIDANCE_DIMENSIONS = (
+    ("lead_time", "Lowering Lead Time for Changes"),
+    ("deployment_frequency", "Raising Deployment Frequency"),
+)
+
+
+def build_practice_guidance(catalog: dict) -> list:
+    """Builds the fixed practice-guidance catalog attached to every result:
+    every code in PRACTICE_GUIDANCE_CODES, in order, regardless of anything
+    measured — never filtered, reordered, or picked based on a repo's numbers.
+    A code missing from `catalog` (the file wasn't found, or was edited
+    without keeping it in sync with this tuple) is left out here rather than
+    invented; the renderer says explicitly when the catalog came back empty."""
+    entries = []
+    for code in PRACTICE_GUIDANCE_CODES:
+        entry = catalog.get(code)
+        if not entry:
+            continue
+        entries.append({
+            "code": code,
+            "title": entry.get("title", ""),
+            "dimension": entry.get("dimension"),
+            "what": entry.get("what", ""),
+            "why": entry.get("why", ""),
+            "how_to_adopt": entry.get("how_to_adopt", ""),
+        })
+    return entries
+
+
+def attach_practice_guidance(result: dict, catalog: dict) -> None:
+    """Attaches the whole catalog to the result once per run (never per
+    repo — the same list regardless of how many repos or projects are in
+    `result`)."""
+    result["practice_guidance"] = build_practice_guidance(catalog)
+
+
 def make_issue(code: str, impact: str, message: str, evidence: dict = None) -> dict:
     """Builds one issue. `guidance` is filled in later by hydrate_issues, never
     here — the script must never carry remediation prose of its own."""
@@ -572,6 +630,59 @@ def _render_issue_groups(issues: list, lines: list) -> None:
         lines.append("")
 
 
+PRACTICE_GUIDANCE_LABELS = (("what", "What"), ("why", "Why it helps this metric"), ("how_to_adopt", "How to adopt it"))
+
+
+def _render_practice_entry(entry: dict, lines: list) -> None:
+    """One catalog entry, shaped like `_render_issue`'s bullet + nested
+    guidance so both guidance styles in this report read the same way. Renders
+    the human-readable `title` when the catalog has one; falls back to the
+    raw `code` so an entry authored without a title line still renders
+    visibly instead of crashing."""
+    heading = entry.get("title") or entry["code"]
+    lines.append(f"- **{heading}**")
+    for key, label in PRACTICE_GUIDANCE_LABELS:
+        text = (entry.get(key) or "").strip()
+        if not text:
+            continue
+        _render_guidance_body(label, text, lines)
+
+
+def _render_practice_guidance(catalog_entries, lines: list) -> None:
+    """Renders the fixed practice-guidance catalog once, after every project
+    section. Same entries on every run regardless of what was measured — a
+    reference appendix, not commentary on this run's numbers (see
+    references/practice-guidance.md). A catalog that came back empty (missing
+    or unparseable file) says so explicitly rather than omitting the section
+    or inventing entries."""
+    lines.append("# How to improve these metrics")
+    lines.append("")
+    lines.append(
+        "The following is a fixed catalog of engineering practices — the same "
+        "entries every run, not an assessment of the numbers above."
+    )
+    lines.append("")
+    if not catalog_entries:
+        lines.append(
+            "_(no practice guidance available — expected catalog at "
+            "references/practice-guidance.md)_"
+        )
+        lines.append("")
+        return
+    by_dimension = {}
+    for entry in catalog_entries:
+        by_dimension.setdefault(entry.get("dimension"), []).append(entry)
+    for dimension, heading in PRACTICE_GUIDANCE_DIMENSIONS:
+        group = by_dimension.get(dimension)
+        if not group:
+            continue
+        lines.append(f"## {heading}")
+        lines.append("")
+        for entry in group:
+            _render_practice_entry(entry, lines)
+        lines.append("")
+
+
 def format_human_summary(result: dict, window_days: int) -> str:
     """Renders the fetched data as a readable Markdown report — the same
     numbers printed to stdout, plus, for every problem found, the steps to fix
@@ -604,6 +715,8 @@ def format_human_summary(result: dict, window_days: int) -> str:
                 lines.append("- **Median Lead Time**: no data in the window")
             lines.append("")
             _render_issue_groups(r.get("issues", []), lines)
+
+    _render_practice_guidance(result.get("practice_guidance"), lines)
     return "\n".join(lines).rstrip() + "\n"
 
 
@@ -782,8 +895,8 @@ def write_output(result: dict, window_days: int, out_dir: str, now: datetime) ->
         slugs = repo_file_slugs(result)
         bases = []
 
-        # One pair of files per repo: a repo is the unit that gets measured
-        # (never combined with its siblings), so it is also the unit that gets
+        # One file per repo: a repo is the unit that gets measured (never
+        # combined with its siblings), so it is also the unit that gets
         # saved and shared.
         for project in result["projects"]:
             for repo in project["repos"]:
@@ -791,8 +904,6 @@ def write_output(result: dict, window_days: int, out_dir: str, now: datetime) ->
                     out_dir, f"{date}-{slugs[repo['repo']]}-{REPORT_TYPE}"
                 )
                 per_repo = single_repo_result(result, project, repo)
-                with open(f"{base}.json", "w") as f:
-                    f.write(json.dumps(per_repo, indent=2, ensure_ascii=False))
                 with open(f"{base}.md", "w") as f:
                     f.write(format_human_summary(per_repo, window_days))
                 bases.append(base)
@@ -802,15 +913,12 @@ def write_output(result: dict, window_days: int, out_dir: str, now: datetime) ->
             # file behind stating what happened, instead of a stderr line that
             # scrolls away.
             base = os.path.join(out_dir, f"{date}-{NO_REPOS_SLUG}-{REPORT_TYPE}")
-            with open(f"{base}.json", "w") as f:
-                f.write(output_json)
             with open(f"{base}.md", "w") as f:
                 f.write(summary)
             bases.append(base)
 
         print("Output saved to:")
         for base in bases:
-            print(f"  {base}.json")
             print(f"  {base}.md")
         print()
     print(summary)
@@ -836,6 +944,10 @@ def main():
         sys.exit(1)
 
     guidance = troubleshooting.load_guidance(troubleshooting.default_path())
+    # Loaded once per run, not once per repo: the catalog is fixed and attached
+    # to the result as-is (attach_practice_guidance), never filtered by what
+    # gets measured below.
+    practice_catalog = practice_guidance.load_guidance(practice_guidance.default_path())
     now = datetime.now(timezone.utc)
 
     with open(args.config, "r") as f:
@@ -849,6 +961,7 @@ def main():
         # No hard exit: the report itself carries the problem and its steps.
         result = no_credential_result(now, window_days, tag_pattern)
         hydrate_issues(result, guidance)
+        attach_practice_guidance(result, practice_catalog)
         write_output(result, window_days, args.out_dir, now)
         sys.exit(1)
 
@@ -873,6 +986,7 @@ def main():
 
     result = build_result(gh_session(token), projects, tag_pattern, window_days, now)
     hydrate_issues(result, guidance)
+    attach_practice_guidance(result, practice_catalog)
     write_output(result, window_days, args.out_dir, now)
 
     # Non-zero when something couldn't be measured at all, so CI notices. A

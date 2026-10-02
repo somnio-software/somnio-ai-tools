@@ -1,5 +1,9 @@
-### DRF views/viewsets/routers and serializers — thin views, CBV-vs-FBV defaults, explicit fields, input/output separation, per-action scoping. Applies to all Python files in Django+DRF projects.
-> Applies to: `**/*.py`
+---
+description: "DRF views/viewsets/routers and serializers — thin views, CBV-vs-FBV defaults, explicit fields, input/output separation, per-action scoping. Applies to all Python files in Django+DRF projects."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. **Thin views** — view methods parse the request, call a service/selector, and serialize the result. No business logic, filtering, or aggregation inside the view body. (source: [DRF viewsets](https://www.django-rest-framework.org/api-guide/viewsets/))

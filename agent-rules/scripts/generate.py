@@ -2,8 +2,9 @@
 """
 Generates tool-specific adapter files from the canonical source in rules/.
 
-All outputs are grouped per stack (flutter, nestjs, react, python, fastapi,
-django, flask) so consumers install only what they need.
+All outputs are grouped per stack (dart, django, fastapi, flask, flutter,
+functions, nestjs, python, react, typescript) so consumers install only what
+they need.
 
 Usage:
   python3 scripts/generate.py                    # regenerate all adapters
@@ -13,8 +14,8 @@ Usage:
 
 Source of truth: rules/<stack>/*.md
 Generated outputs (all inside adapters/):
-  adapters/claude/<stack>/CLAUDE.md                 # minimal, uses @imports
-  adapters/claude/<stack>/rules/*.md                # condensed rules
+  adapters/claude/<stack>/CLAUDE.md                 # minimal rule map (no @imports)
+  adapters/claude/<stack>/rules/*.md                # condensed, `paths:` frontmatter
   adapters/cursor/rules/<stack>/*.mdc               # cursor mdc per rule
   adapters/antigravity/rules/<stack>/*.md           # antigravity md per rule
   adapters/windsurf/<stack>/.windsurfrules          # single file per stack
@@ -25,6 +26,7 @@ Generated outputs (all inside adapters/):
 from __future__ import annotations
 
 import argparse
+import json
 import re
 import shutil
 from pathlib import Path
@@ -254,6 +256,59 @@ def _rule_header(rule: dict) -> str:
     return "\n".join(lines)
 
 
+def _yaml_str(value: str) -> str:
+    """Render a scalar as a quoted YAML string.
+
+    This is the form the Claude Code docs use for every `paths:` entry
+    (https://code.claude.com/docs/en/memory — "Path-specific rules"):
+
+        paths:
+          - "src/**/*.{ts,tsx}"
+
+    Quoting is not cosmetic here. A glob starting with `*` (e.g. `**/*.dart`)
+    or `{` is a reserved YAML indicator and cannot appear unquoted at the start
+    of a value — bare, it is read as an alias and the rule silently never
+    loads. A description containing `: ` reads as a nested mapping for the same
+    reason. `parse_frontmatter` above is a naive line splitter and never
+    noticed, but the `paths:` emitted here is parsed for real.
+
+    YAML-list support for `paths:` landed in Claude Code v2.1.84; the older
+    single-line quoted form (`paths: "**/*.cs"`) did not work, which is what
+    anthropics/claude-code#17204 reported. JSON string syntax is a subset of
+    YAML's double-quoted style, so json.dumps gives correct escaping for free.
+    """
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _claude_frontmatter(rule: dict) -> str:
+    """Render YAML frontmatter for a Claude Code rule file.
+
+    Claude Code lazy-loads a rule only when it has a `paths:` key whose value is
+    a YAML *array* — the rule then enters context just for files that match,
+    instead of at session start. The prose form emitted by `_rule_header`
+    (a `### description` heading plus a `> Applies to:` note) carries the same
+    information but Claude Code cannot act on it, so every installed rule was
+    always-loaded. Cursor's `globs:` key is converted here rather than passed
+    through: Claude Code ignores it and loads the rule eagerly.
+
+    Only the Claude adapter uses this. The single-file adapters (windsurf,
+    copilot, codex) concatenate rules into one document where per-rule
+    frontmatter would be meaningless, so they keep `_rule_header`.
+    """
+    meta = rule["meta"]
+    lines = ["---"]
+    if meta.get("description"):
+        lines.append(f"description: {_yaml_str(meta['description'])}")
+    globs = meta.get("globs", "")
+    patterns = [g.strip() for g in globs.split(",") if g.strip()]
+    if patterns:
+        lines.append("paths:")
+        lines.extend(f"  - {_yaml_str(pattern)}" for pattern in patterns)
+    lines.append("---")
+    lines.append("")
+    return "\n".join(lines) + "\n"
+
+
 def render_stack_bundle(
     rules: list[dict], header: str, *, condense_content: bool
 ) -> str:
@@ -304,7 +359,12 @@ def clean_adapter(adapter_name: str) -> None:
 
 
 def generate_claude(groups: dict[str, list[dict]]) -> None:
-    """Claude: modular .claude/rules/<stack>/*.md + minimal CLAUDE.md with @imports.
+    """Claude: modular .claude/rules/<stack>/*.md + a minimal CLAUDE.md rule map.
+
+    Each rule file carries `paths:` frontmatter so Claude Code loads it only
+    when a matching file is read. The CLAUDE.md fragment therefore lists the
+    rules rather than `@import`ing them — an import would pull every body into
+    every session and undo the lazy loading.
 
     Output per stack:
       adapters/claude/<stack>/CLAUDE.md
@@ -318,10 +378,9 @@ def generate_claude(groups: dict[str, list[dict]]) -> None:
         # Condensed rule files
         for rule in rules:
             condensed_body = condense(rule["body"])
-            intro = _rule_header(rule)
-            # Keep the per-rule intro at the top of the file so the description/globs
-            # stay visible when Claude loads the rule on demand.
-            content = (intro + condensed_body).strip() + "\n"
+            # Frontmatter, not prose: `paths:` is what makes Claude Code load
+            # the rule on demand instead of at session start.
+            content = _claude_frontmatter(rule) + condensed_body.strip() + "\n"
             out_path = (
                 ROOT
                 / "adapters"
@@ -332,15 +391,26 @@ def generate_claude(groups: dict[str, list[dict]]) -> None:
             )
             write_file(out_path, content)
 
-        # Minimal CLAUDE.md fragment with @imports for this stack.
+        # Minimal CLAUDE.md fragment: a rule MAP, not @imports.
+        # An `@path` line inlines the whole rule body into every session, which
+        # defeats the `paths:` frontmatter each rule now carries — the rules
+        # load themselves when a matching file is read. These lines are plain
+        # pointers so the reader knows the rules exist and where they live.
         # No AUTO-GEN header — fragments are concatenated at install time and
         # the somnio block markers already mark the file as auto-managed.
         lines = [
             f"## {stack_title} Rules",
             "",
+            f"Loaded on demand from `.claude/rules/{stack}/` when you open a "
+            "matching file — see each rule's `paths:` frontmatter.",
+            "",
         ]
         for rule in rules:
-            lines.append(f"@.claude/rules/{stack}/{rule['filename']}.md")
+            description = rule["meta"].get("description", "")
+            summary = description.split("—")[0].strip() or rule["filename"]
+            lines.append(
+                f"- `.claude/rules/{stack}/{rule['filename']}.md` — {summary}"
+            )
         lines.append("")
 
         write_file(

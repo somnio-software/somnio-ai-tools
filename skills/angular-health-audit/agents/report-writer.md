@@ -1,12 +1,12 @@
 ---
 name: report-writer
 description: |
-  Use this agent to synthesize all Angular health audit artifacts into the single user-facing report. The report-writer reads all step artifacts plus assets/report-template.md, computes the 9 weighted section scores and weighted overall score per references/report-generator.md and references/report-format-enforcer.md, enforces the mandatory 16-section structure, writes reports/<YYYY-MM-DD>-<project>-angular-health-audit.md, and appends the metadata block. The report-writer NEVER re-reads raw source files — it operates exclusively on the compact artifacts produced by analysis agents.
+  Use this agent to synthesize all Angular health audit artifacts into the single user-facing report. The report-writer reads all step artifacts plus assets/report-template.md, computes the 9 weighted section scores and weighted overall score using the weights defined in references/report-generator.md (the single source of truth for those numbers) per references/report-generator.md and references/report-format-enforcer.md, enforces the mandatory 15-section structure plus the trailing Appendix: Scoring Methodology and Report Metadata blocks, writes reports/<YYYY-MM-DD>-<project>-angular-health-audit.md, and appends the metadata block. The report-writer NEVER re-reads raw source files — it operates exclusively on the compact artifacts produced by analysis agents.
 
   <example>
   Context: The orchestrator has confirmed all analysis artifacts exist and dispatches the report-writer.
   user: "Generate the final Angular health audit report."
-  assistant: "I will read all step artifacts (step_00 through step_08), the report template, and the format enforcer, then compute 9 section scores using the weighted formula (Tech Stack 0.18, Architecture 0.18, State Management 0.135, Testing 0.135, Code Quality 0.135, Performance 0.075, Documentation 0.03, CI/CD 0.03, AI Harness & Adoption 0.10), enforce the 16-section mandatory structure, and write the final report to reports/<YYYY-MM-DD>-<project>-angular-health-audit.md."
+  assistant: "I will read all step artifacts (step_00 through step_08), the report template, and the format enforcer, then compute 9 section scores using the weighted formula whose weights I read from references/report-generator.md (the single source of truth — I do not restate the numbers from memory), render them into the Appendix: Scoring Methodology block, enforce the 15-section mandatory structure, and write the final report to reports/<YYYY-MM-DD>-<project>-angular-health-audit.md."
   <commentary>
   Cross-section score reconciliation holding all artifacts simultaneously, narrative synthesis, and prioritized action plans — this is frontier-tier work that concentrates premium inference on the single artifact the user reads.
   </commentary>
@@ -33,7 +33,7 @@ description: |
   <example>
   Context: The weighted overall score needs to be verified against the formula.
   user: "How is the overall score calculated?"
-  assistant: "I will compute: overall_score = round(Tech Stack x 0.18 + Architecture x 0.18 + State Management x 0.135 + Testing x 0.135 + Code Quality x 0.135 + Performance x 0.075 + Documentation x 0.03 + CI/CD x 0.03 + AI Harness & Adoption x 0.10). I will verify the result is an integer and apply the label: 85-100=Strong, 70-84=Fair, 0-69=Weak."
+  assistant: "I will compute: overall_score = round(Σ section_score × its weight), using the weights defined in references/report-generator.md — I never restate or improvise those numbers. I will verify the result is an integer and apply the label: 85-100=Strong, 70-84=Fair, 0-69=Weak."
   <commentary>
   Weighted score computation with cross-section reconciliation is the core frontier-tier synthesis task.
   </commentary>
@@ -66,21 +66,15 @@ Read and follow ALL instructions in `references/report-generator.md`. That file 
 
 Read and follow ALL format requirements in `references/report-format-enforcer.md`. That file is the single source of truth for format rules, the weighted score formula, and the validation checklist.
 
-## Scoring Formula (from references/report-format-enforcer.md)
+## Scoring Formula (weights from references/report-generator.md)
 
-Overall Score = round(
-  Tech Stack x 0.18 +
-  Architecture x 0.18 +
-  State Management x 0.135 +
-  Testing x 0.135 +
-  Code Quality x 0.135 +
-  Performance x 0.075 +
-  Documentation & Operations x 0.03 +
-  CI/CD x 0.03 +
-  AI Harness & Adoption x 0.10
-)
+The section weights are defined ONLY in `references/report-generator.md` — that file is the single source of truth for this skill. Read them from there; do not restate or hardcode them here or anywhere else.
+
+Overall Score = round( Σ (section score × its weight, read from references/report-generator.md) )
 
 Use standard mathematical rounding (0.5 rounds up). Do NOT apply subjective adjustments.
+
+You still need to know that these weights exist and must be rendered as a table in the `## Appendix: Scoring Methodology` block (see Output below) — read them from `references/report-generator.md` at generation time for that purpose.
 
 ## Performance Section
 
@@ -104,7 +98,15 @@ Create the directory first:
 mkdir -p reports
 ```
 
-The report MUST contain exactly 16 sections in the mandatory order defined in references/report-generator.md.
+The report MUST contain exactly 15 numbered sections, in the mandatory order defined in references/report-generator.md, followed by the two trailing UNNUMBERED blocks `## Appendix: Scoring Methodology` and `## Report Metadata`. There is no "Quality Index" section — do not emit one.
+
+Emit the canonical Testing coverage fields and scorecard line exactly as `assets/report-template.md` and `references/report-generator.md` define them:
+- Section 2 (At-a-Glance Scorecard): the `> **Test Coverage:**` line (with its fallback sub-line) directly under the scorecard table.
+- Section 6 (Testing): the `**Code Coverage:**` and `**Coverage Breakdown:**` fields between `**Score:**` and `### Key Findings`.
+- Section 11 (AI Harness & Adoption): `### Harness Coverage`, never a bare `### Coverage`.
+- Never restate a coverage percentage in Counts & Metrics or in Additional Metrics (Section 12).
+
+Render the `## Appendix: Scoring Methodology` block (unnumbered, between Section 15 and `## Report Metadata`) as a `| Section | Weight |` table using the weights read from `references/report-generator.md` and this skill's own scorecard row labels, plus the rounding rule and scoring bands. This appendix is the only report-facing surface where weights may appear — never add a Weight column to the Section 2 scorecard table.
 
 ## Metadata Block (MANDATORY — append at the very end)
 
@@ -115,18 +117,20 @@ To resolve the source and version:
 
 Append this block at the very end of the report:
 
-```
----
-Generated by: [plugin name or "Somnio CLI"] v[version]
-Skill: angular-health-audit
-Date: [YYYY-MM-DD]
-Somnio AI Tools: https://github.com/somnio-software/somnio-ai-tools
----
+```markdown
+## Report Metadata
+
+| Field | Value |
+|-------|-------|
+| Generated by | [plugin name or "Somnio CLI"] v[version] |
+| Skill | angular-health-audit |
+| Date | [YYYY-MM-DD] |
+| Somnio AI Tools | https://github.com/somnio-software/somnio-ai-tools |
 ```
 
 ## Constraints
 
 - NEVER read any file in `src/`, `src/app/`, or any application source directory.
 - NEVER invent findings — every claim must trace to an artifact.
-- NEVER change the scoring weights from those defined in references/report-format-enforcer.md.
+- NEVER change the scoring weights from those defined in references/report-generator.md — that file, not this agent, is the single source of truth for the numbers.
 - NEVER omit the metadata block.

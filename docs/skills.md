@@ -600,7 +600,7 @@ Add project Omega to DORA metrics, single repo acme/omega-api, prod branch devel
 
 **Requires:** a GitHub credential with read access to the relevant orgs — the `GITHUB_TOKEN` env var, or `gh auth token` if the GitHub CLI is already logged in locally.
 
-**Output:** Deployment Frequency and median Lead Time per repo for the requested window (14 days by default), plus process-gap warnings (e.g. merged PRs with no release yet, a release with no prior release to measure against). Optionally saved to `./reports/`, one pair of files per repo: `<YYYY-MM-DD>-<repo>-dora-metrics.json` (portable data) and `<YYYY-MM-DD>-<repo>-dora-metrics.md`.
+**Output:** Deployment Frequency and median Lead Time per repo for the requested window (14 days by default), plus process-gap warnings (e.g. merged PRs with no release yet, a release with no prior release to measure against). Optionally saved to `./reports/`, one Markdown file per repo: `<YYYY-MM-DD>-<repo>-dora-metrics.md`. The portable JSON is printed to stdout rather than saved.
 
 ---
 

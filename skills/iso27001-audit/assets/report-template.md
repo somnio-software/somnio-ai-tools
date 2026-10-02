@@ -173,7 +173,7 @@
 
 ---
 
-## 20. Scan Metadata
+## 20. Report Metadata
 
 | Field | Value |
 |-------|-------|

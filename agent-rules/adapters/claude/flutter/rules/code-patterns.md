@@ -1,5 +1,10 @@
-### Dart and Flutter implementation patterns — null safety, async/await, const constructors, pattern matching, routing, serialization, logging, code generation.
-> Applies to: `mobile/lib/**/*.dart, mobile/packages/*/lib/**/*.dart`
+---
+description: "Dart and Flutter implementation patterns — null safety, async/await, const constructors, pattern matching, routing, serialization, logging, code generation."
+paths:
+  - "mobile/lib/**/*.dart"
+  - "mobile/packages/*/lib/**/*.dart"
+---
+
 # Dart & Flutter Code Patterns
 
 ## Dart Best Practices

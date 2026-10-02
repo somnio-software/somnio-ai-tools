@@ -1,5 +1,9 @@
-### Python code style — PEP 8 enforced via Ruff as CI gate; line length 88 (CONTESTED); naming conventions; 3-group sorted absolute imports; docstrings (PEP 257 + Google sections via Ruff D + convention=google, CONTESTED). Applies to all .py files.
-> Applies to: `**/*.py`
+---
+description: "Python code style — PEP 8 enforced via Ruff as CI gate; line length 88 (CONTESTED); naming conventions; 3-group sorted absolute imports; docstrings (PEP 257 + Google sections via Ruff D + convention=google, CONTESTED). Applies to all .py files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Ruff is the sole lint/format/import-sort gate; CI must run `ruff check` and `ruff format --check` and fail on any violation. (Source: https://docs.astral.sh/ruff/)

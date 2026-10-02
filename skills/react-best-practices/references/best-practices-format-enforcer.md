@@ -39,6 +39,14 @@
     - Always use: "path/to/file.tsx:line_number"
     - Example: "src/features/auth/LoginForm.tsx:42 - Missing prop interface"
 
+6.  **CLOSING APPENDIX**:
+    - The report MUST close with an unnumbered `## Appendix: Scoring Methodology` block, placed
+      between the Evidence Index section and `## Report Metadata`.
+    - Its `| Section | Weight |` rows MUST match this skill's own Score Breakdown rows and MUST
+      sum to 100%.
+    - Weights appear ONLY in that appendix and in `references/best-practices-generator.md` —
+      they must NEVER appear as a column in the `## 2. Score Breakdown` table.
+
 ## EXAMPLE OUTPUT FORMAT
 
 TESTING QUALITY

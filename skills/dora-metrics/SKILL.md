@@ -57,15 +57,15 @@ Formal definitions of each metric (attribute, population, exact calculation):
 
 - Human-readable console summary, per project and per repo: deployment
   frequency, median lead time, and edge-case warnings.
-- Optionally, if saving the result is requested, files in the folder given by
-  `--out-dir`: **one pair per repo**, a portable JSON
-  (`YYYY-MM-DD-<repo>-dora-metrics.json`) and a Markdown report with the same
-  summary (`YYYY-MM-DD-<repo>-dora-metrics.md`) — easy to open and read on its
-  own, without re-parsing the JSON.
+- Optionally, if saving the result is requested, a file in the folder given by
+  `--out-dir`: **one per repo**, a Markdown report
+  (`YYYY-MM-DD-<repo>-dora-metrics.md`) with the same
+  summary — easy to open and read on its
+  own.
 
   A repo is the unit that gets measured (never combined with its siblings), so
-  it is also the unit that gets saved: a multi-repo project produces one pair of
-  files per repo, each holding only that repo's numbers. `<repo>` is the repo
+  it is also the unit that gets saved: a multi-repo project produces one
+  file per repo, each holding only that repo's numbers. `<repo>` is the repo
   name slugified to kebab-case — `example-org/example-frontend` becomes
   `example-frontend` — and only falls back to the org-qualified
   `example-org-example-frontend` when two repos in the same run share a name.
@@ -146,9 +146,8 @@ python3 scripts/dora_metrics.py --project "Example Project" --out-dir reports
 Available flags:
 - `--config`: path to the config (default: `config/projects.json`).
 - `--project`: exact project name (default: runs all projects in the config).
-- `--out-dir`: if passed, in addition to printing to stdout it saves one pair
-  of files per repo there — `YYYY-MM-DD-<repo>-dora-metrics.json` (portable
-  data) and `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable
+- `--out-dir`: if passed, in addition to printing to stdout it saves one
+  file per repo there — `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable
   file). Note this selects **where** to save, while `--project` selects **what**
   to measure; the file name comes from the repo, not from the project.
 - `--branch <branch>`: one-off override of `prod_branch` for this run
@@ -223,8 +222,22 @@ step guarantees) are:
 - A repo the script could not measure at all comes back with `measured: false`
   and no metric fields. Report it as such, with its problems — never omit the
   repo or substitute a zero.
-- If the files were saved, say where they ended up (both the `.json` and the
-  `.md` for every repo), in addition to reporting the values.
+- If the file was saved, say where it ended up (the `.md` for every repo), in addition to reporting the values.
+- The result also carries a fixed, root-level `practice_guidance` catalog —
+  engineering practices that move Lead Time for Changes or Deployment
+  Frequency in general, never a judgment of this run's numbers
+  (`references/practice-guidance.md` is the source of truth; the script
+  attaches the whole catalog unfiltered, the same entries on every run). The
+  `report-writer` renders it as a **mandatory "How to improve these
+  metrics"** section, **once per report — never once per repo** — placed
+  after the last project section, grouped by `dimension`, each entry
+  verbatim from the JSON. This section appears even on a run where nothing
+  could be measured, because it is not about this run's data. It never
+  selects, filters, reorders, or omits an entry based on what was measured,
+  and never adds practice advice of its own; if `practice_guidance` is
+  missing or empty, it still renders the heading with an explicit line
+  saying no guidance was available and naming
+  `references/practice-guidance.md`, never inventing entries.
 
 ---
 

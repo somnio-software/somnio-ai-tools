@@ -825,7 +825,7 @@ report-writer can lift it with minimal transformation:
                                         here: "60/100 (capped — see below)"
 **Maturity:** [sin harness | harness básico | harness sólido | paved path]
 
-### Coverage
+### Harness Coverage
 | Dimension | Status | Points |
 |---|---|---|
 | CLAUDE.md | Present — 142 lines, build/test commands documented | 13/13 |
@@ -1022,7 +1022,7 @@ Before writing the artifact, verify:
 - [ ] The action list is sorted by points descending, every entry has a
       `[+N]` and a `→ dimension D, X/Y → Y/Y` — except that the
       versioning action goes first when the cap is active (rule 9)
-- [ ] Every point gap in the Coverage table is accounted for by exactly
+- [ ] Every point gap in the Harness Coverage table is accounted for by exactly
       one action (Σ deltas = 100 − UNCAPPED sum)
 - [ ] The artifact was written to the exact path the invoker specified, and nowhere else
 - [ ] Total tool calls ≤ 8

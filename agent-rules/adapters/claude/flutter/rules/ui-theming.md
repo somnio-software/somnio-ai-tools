@@ -1,5 +1,11 @@
-### Flutter UI theming, Material 3, ThemeData, ColorScheme, ThemeExtension, WidgetStateProperty, fonts, and accessibility.
-> Applies to: `mobile/lib/**/view/**/*.dart, mobile/lib/**/widgets/**/*.dart, mobile/packages/app_ui/lib/**/*.dart`
+---
+description: "Flutter UI theming, Material 3, ThemeData, ColorScheme, ThemeExtension, WidgetStateProperty, fonts, and accessibility."
+paths:
+  - "mobile/lib/**/view/**/*.dart"
+  - "mobile/lib/**/widgets/**/*.dart"
+  - "mobile/packages/app_ui/lib/**/*.dart"
+---
+
 # Flutter UI Theming & Styling
 
 ## Visual Design & Theming

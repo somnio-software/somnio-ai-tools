@@ -1,5 +1,9 @@
-### Python function design — single responsibility, early returns, pure functions, side-effect isolation, dataclasses, keyword-only args. Applies to all .py files.
-> Applies to: `**/*.py`
+---
+description: "Python function design — single responsibility, early returns, pure functions, side-effect isolation, dataclasses, keyword-only args. Applies to all .py files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Each function has a single, clearly named responsibility — it either queries state or changes state, not both. (https://peps.python.org/pep-0020/)

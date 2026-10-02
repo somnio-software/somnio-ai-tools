@@ -1,12 +1,16 @@
 # Flutter Best Practices Check Report
 
+**Project:** [PROJECT_NAME]
+**Date:** [AUDIT_DATE]
+**Auditor:** AI-Assisted Analysis
+
 ---
 
-## Executive Summary
+## 1. Executive Summary
 
 **Description:** [Brief overview of the codebase health based on micro-standards]
 
-**Overall Score:** [Score]/10 ([Label])
+**Overall Score:** [XX]/100 ([Label])
 
 **Top Strengths:**
 - [Strength 1]
@@ -20,11 +24,24 @@
 
 ---
 
-## Section 1. Testing Best Practices
+## 2. Score Breakdown
+
+| Section | Score | Label |
+|---------|-------|-------|
+| Testing Quality | [XX]/100 | [Label] |
+| Architecture Compliance | [XX]/100 | [Label] |
+| Code Standards | [XX]/100 | [Label] |
+| **Weighted Overall** | **[XX]/100** | **[Label]** |
+
+> **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+---
+
+## 3. Testing Quality
 
 **Description:** Evaluation of test quality, naming, structure, and assertion practices.
 
-**Score:** [Score]/10 ([Label])
+**Score:** [XX]/100 ([Label])
 
 ### Key Findings
 - [Bullet point 1]
@@ -43,11 +60,11 @@
 
 ---
 
-## Section 2. Architecture Compliance
+## 4. Architecture Compliance
 
 **Description:** Evaluation of strict adherence to Layered Architecture and Separation of Concerns.
 
-**Score:** [Score]/10 ([Label])
+**Score:** [XX]/100 ([Label])
 
 ### Key Findings
 - [Bullet point 1]
@@ -66,11 +83,11 @@
 
 ---
 
-## Section 3. Code Standards & Models
+## 5. Code Standards
 
 **Description:** Evaluation of JSON models, immutability, and general coding best practices.
 
-**Score:** [Score]/10 ([Label])
+**Score:** [XX]/100 ([Label])
 
 ### Key Findings
 - [Bullet point 1]
@@ -89,11 +106,45 @@
 
 ---
 
-## Prioritized Action Plan
+## 6. Prioritized Recommendations
 
 1. **[High Priority]:** [Actionable Step 1]
 2. **[Medium Priority]:** [Actionable Step 2]
 3. **[Low Priority]:** [Actionable Step 3]
+
+---
+
+## 7. Evidence Index
+
+**Test Files Analyzed:**
+- `[path/to/file_test.dart]`
+- `[path/to/file_test.dart]`
+
+**Architecture / Layer Files Analyzed:**
+- `[path/to/file.dart]`
+- `[path/to/file.dart]`
+
+**Model & Code Standards Files Analyzed:**
+- `[path/to/model.dart]`
+- `[path/to/model.dart]`
+
+---
+
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 100% — the authoritative source is this skill's
+`references/best-practices-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Testing Quality | 30% |
+| Architecture Compliance | 40% |
+| Code Standards | 30% |
+| **Total** | **100%** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
 
 ---
 
@@ -105,5 +156,3 @@
 | Skill | flutter-best-practices |
 | Date | [YYYY-MM-DD] |
 | Somnio AI Tools | https://github.com/somnio-software/somnio-ai-tools |
-
-> **Scoring:** Strong (9–10) · Fair (7–8) · Weak (0–6)

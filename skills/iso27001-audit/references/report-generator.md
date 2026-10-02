@@ -37,7 +37,7 @@ MANDATORY REPORT STRUCTURE (see assets/report-template.md):
 17. ISMS Clause Coverage (clauses 4-10)
 18. Project Detection Results
 19. Appendix: Evidence Index
-20. Scan Metadata
+20. Report Metadata
 
 DYNAMIC ORDERING INSTRUCTION:
 After reading the scores from step_13, sort the 11 scored category sections by

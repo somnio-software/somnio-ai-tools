@@ -1,5 +1,9 @@
-### Django-specific testing with pytest-django — db marking, transaction isolation, factory_boy factories, signal muting, and service-layer test focus. Applies to all test files matching the pytest discovery pattern.
-> Applies to: `**/test_*.py`
+---
+description: "Django-specific testing with pytest-django — db marking, transaction isolation, factory_boy factories, signal muting, and service-layer test focus. Applies to all test files matching the pytest discovery pattern."
+paths:
+  - "**/test_*.py"
+---
+
 # Django Testing Standards
 
 Framework-specific guidance for testing Django applications with pytest-django and factory_boy. For generic pytest patterns, fixture design, coverage discipline, and unit-vs-integration strategy, see `python/testing-unit.md` and `python/testing-integration.md`.

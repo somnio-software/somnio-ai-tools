@@ -1,5 +1,9 @@
-### Python data-validation conventions — pydantic models at input boundaries, field validators/constraints, no unvalidated dict, typed response models, pydantic-settings BaseSettings for 12-factor configuration. Applies to all .py files.
-> Applies to: `**/*.py`
+---
+description: "Python data-validation conventions — pydantic models at input boundaries, field validators/constraints, no unvalidated dict, typed response models, pydantic-settings BaseSettings for 12-factor configuration. Applies to all .py files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Parse every external input (HTTP body, env var, queue message, file, external API response) through a `pydantic.BaseModel` at the boundary before passing it inward. Source: [https://docs.pydantic.dev/latest/api/pydantic_settings/](https://docs.pydantic.dev/latest/api/pydantic_settings/)

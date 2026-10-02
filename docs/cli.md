@@ -105,7 +105,7 @@ somnio run fh --project-name hoopis    # Override the name in the report file
 | `--skip-validation` | | Skip project type check |
 | `--no-preflight` | | Skip pre-flight and send all steps to AI |
 | `--step-timeout` | | Per-step timeout in minutes (default: 30) |
-| `--project-name` | | Project name used in the report file name (default: the current directory name) |
+| `--project-name` | | Project name used in the report file name (default: the git repository name) |
 
 #### Report file name
 
@@ -118,15 +118,18 @@ reports/<YYYY-MM-DD>-<project>-<audit>.md
 ```
 reports/2026-09-14-hoopis-backend-flutter-health-audit.md
 reports/2026-09-14-hoopis-backend-security-audit.md
-reports/2026-09-14-hoopis-backend-security-audit.json
 ```
 
 - `<YYYY-MM-DD>` — the date of the run, first so the directory listing sorts
   chronologically on its own.
-- `<project>` — the current directory name, slugified to kebab-case (lowercase;
+- `<project>` — the git repository name, slugified to kebab-case (lowercase;
   spaces, `_`, `.` and `/` become `-`; anything else dropped; repeated `-`
-  collapsed). Override it with `--project-name` when the checkout directory is
-  not named after the project.
+  collapsed). It is read from the `origin` remote URL
+  (`git@github.com:somnio/hoopis-backend.git` → `hoopis-backend`), so it does
+  not depend on what the checkout directory is called, and it is the same from
+  a linked worktree or a monorepo subdirectory. Without an `origin` remote it
+  is the main checkout's directory name; outside a git repo, the current
+  directory name. `--project-name` overrides it.
 - `<audit>` — the skill name, unchanged (`security-audit`,
   `nestjs-health-audit`, `flutter-best-practices`).
 

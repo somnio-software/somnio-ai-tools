@@ -1,5 +1,9 @@
-### Flask error handler registration in the factory, explicit HTTP status codes, and JSON API error responses with Werkzeug HTTPException.
-> Applies to: `**/*.py`
+---
+description: "Flask error handler registration in the factory, explicit HTTP status codes, and JSON API error responses with Werkzeug HTTPException."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Register all error handlers inside `create_app` using `@app.errorhandler` or `app.register_error_handler`; never register them at module scope or outside the factory. ([errorhandling](https://flask.palletsprojects.com/en/stable/errorhandling/))

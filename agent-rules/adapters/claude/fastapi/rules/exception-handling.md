@@ -1,5 +1,9 @@
-### FastAPI exception handling — raise HTTPException, centralized app exception handlers, overriding Starlette HTTPException, and translating domain errors to HTTP at the boundary. Layers on the python stack's error-handling rules.
-> Applies to: `**/*.py`
+---
+description: "FastAPI exception handling — raise HTTPException, centralized app exception handlers, overriding Starlette HTTPException, and translating domain errors to HTTP at the boundary. Layers on the python stack's error-handling rules."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Always `raise HTTPException(status_code=..., detail=...)` — never assign it to a variable and return it.

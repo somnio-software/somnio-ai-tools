@@ -48,7 +48,8 @@ class RulesInstaller {
 
   /// Installs [stacks] of [rule] at [targetPath].
   ///
-  /// Supported stacks: flutter, nestjs, react, python, fastapi, django, flask.
+  /// Supported stacks: dart, django, fastapi, flask, flutter, functions,
+  /// nestjs, python, react, typescript.
   /// [targetPath] should already be resolved (no `{home}` placeholders).
   RulesInstallResult install(
     AgentRule rule,

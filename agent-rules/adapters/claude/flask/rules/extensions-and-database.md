@@ -1,5 +1,9 @@
-### Flask extension initialization via init_app and Flask-SQLAlchemy session, context, and migration patterns. Applies to all Python files in Flask projects.
-> Applies to: `**/*.py`
+---
+description: "Flask extension initialization via init_app and Flask-SQLAlchemy session, context, and migration patterns. Applies to all Python files in Flask projects."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Declare every extension at module scope without passing an app: `db = SQLAlchemy()`. Never pass the app to the constructor inside or outside the factory. ([appfactories] https://flask.palletsprojects.com/en/stable/patterns/appfactories/ · [flask-sqlalchemy] https://flask-sqlalchemy.palletsprojects.com/en/stable/quickstart/)

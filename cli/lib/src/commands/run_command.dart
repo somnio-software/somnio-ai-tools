@@ -18,6 +18,7 @@ import '../runner/rule_names.dart';
 import '../runner/run_config.dart';
 import '../runner/step_executor.dart';
 import '../utils/command_helpers.dart';
+import '../utils/repo_name.dart';
 import '../utils/report_naming.dart';
 import '../utils/step_timeout_parser.dart';
 import '../utils/usage_summary.dart';
@@ -60,7 +61,7 @@ class RunCommand extends Command<int> {
     argParser.addOption(
       'project-name',
       help: 'Project name used in the report file name '
-          '(default: the current directory name).',
+          '(default: the git repository name, from the origin remote).',
     );
   }
 
@@ -78,7 +79,7 @@ class RunCommand extends Command<int> {
       'via pre-flight, then delegates analysis steps to an AI CLI.\n'
       '\n'
       'Artifacts are saved to ./reports/.artifacts/{audit}/ and the final\n'
-      'report to ./reports/YYYY-MM-DD-{project}-{audit}.md.';
+      'report to ./reports/YYYY-MM-DD-{repo}-{audit}.md.';
 
   @override
   String get invocation => 'somnio run <code>';
@@ -181,7 +182,7 @@ class RunCommand extends Command<int> {
     final techPrefix = bundle.techPrefix;
     final cwd = Directory.current.path;
     final projectName =
-        argResults!['project-name'] as String? ?? p.basename(cwd);
+        argResults!['project-name'] as String? ?? await resolveRepoName(cwd);
 
     // 2. Validate project type
     final skipValidation = argResults!['skip-validation'] as bool;

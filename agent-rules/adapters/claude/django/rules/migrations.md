@@ -1,5 +1,9 @@
-### Django migrations — schema vs data migrations, RunPython historical-model access, reversibility, cross-app dependencies, and commit discipline.
-> Applies to: `**/migrations/*.py`
+---
+description: "Django migrations — schema vs data migrations, RunPython historical-model access, reversibility, cross-app dependencies, and commit discipline."
+paths:
+  - "**/migrations/*.py"
+---
+
 ## Rules
 
 1. Commit migrations alongside the model change that generated them — never in a separate commit. ([migrations](https://docs.djangoproject.com/en/stable/topics/migrations/))

@@ -1,5 +1,9 @@
-### Repository pattern for NestJS with parameterized methods, soft deletes, and query organization.
-> Applies to: `src/**/*.repository.ts`
+---
+description: "Repository pattern for NestJS with parameterized methods, soft deletes, and query organization."
+paths:
+  - "src/**/*.repository.ts"
+---
+
 # NestJS Repository Patterns
 
 How to implement the repository pattern with parameterized methods, query organization, soft deletes, and proper abstraction.

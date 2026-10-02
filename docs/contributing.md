@@ -123,6 +123,15 @@ If `skills/react-*` already exists, it runs in **auto-detect mode** — scans ex
 
 4. Optionally add a report template in `assets/report-template.md`.
 
+   For a **health-audit** skill this is not optional and not freeform: copy the skeleton from
+   [`report-template-canonical.md`](report-template-canonical.md), which is the source of truth
+   for the shared 15-section structure, and see `docs/examples/` for two filled-in samples.
+   `cli/test/src/content/report_template_drift_test.dart` fails the build if a health-audit
+   template diverges from it. For a **best-practices** skill, copy the skeleton from
+   [`best-practices-template-canonical.md`](best-practices-template-canonical.md) instead, which
+   is the source of truth for that family's Score Breakdown / per-section / Scoring Methodology
+   shape.
+
 5. Register in `cli/lib/src/content/skill_registry.dart`:
 
    ```dart

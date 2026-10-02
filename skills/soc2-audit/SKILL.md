@@ -300,7 +300,7 @@ content.
 - Remediation Roadmap (prioritized top actions, phased)
 - Project Detection Results
 - Appendix: Evidence Index
-- Scan Metadata
+- Report Metadata
 
 **Scoring Requirement**: Every scored section MUST include: Score line with
 [Score]/100 ([Band]) format, Score Breakdown (Base 0, evidence additions,
@@ -315,8 +315,10 @@ rules, then save the final Markdown report.
 Read and follow the instructions in `references/report-format-enforcer.md`
 
 **Validation**: Read the generated report and validate ALL structural checks
-from the format enforcer rule: exactly 19 sections, Section 1 has 10 scored
-family lines with weights + Overall + Formula + Band, the 10 scored detail
+from the format enforcer rule: exactly 19 numbered sections, Section 1 has 10
+scored family lines (NO Weight column) + Overall + Band, an unnumbered
+"Appendix: Scoring Methodology" block (weighted formula, rounding rule,
+readiness bands) between Section 18 and Section 19, the 10 scored detail
 sections have Score lines, sections are ordered by score ascending, band labels
 match ranges, the gaps table has the required columns (including owner/lane),
 the CUEC and Deliverables sections are present, no secret values appear, and
@@ -412,16 +414,25 @@ The report file name is always:
 `<YYYY-MM-DD>-<project>-soc2-audit.json` — the JSON export, same name, `.json` extension.
 
 - `<YYYY-MM-DD>` — the date of this run.
-- `<project>` — the project name slugified to kebab-case: lowercase, with
-  spaces, `_`, `.` and `/` turned into `-`, every other character dropped, and
-  repeated `-` collapsed. Defaults to the current directory name.
+- `<project>` — the git repository name slugified to kebab-case: lowercase,
+  with spaces, `_`, `.` and `/` turned into `-`, every other character dropped,
+  and repeated `-` collapsed. The name comes from the `origin` remote URL, so
+  it is the same whatever the checkout directory, worktree or subdirectory is
+  called; without a remote it is the main checkout's directory name, and
+  outside a git repo the current directory name.
 - The trailing segment is this skill's name and never changes.
 
 Derive it once, before writing anything:
 
 ```bash
 mkdir -p reports
-REPORT="reports/$(date +%F)-$(basename "$PWD" \
+REPO="$(git remote get-url origin 2>/dev/null | sed -E 's#/+$##; s#.*[/:]##; s#\.git$##')"
+if [ -z "$REPO" ]; then
+  COMMON="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+  [ -n "$COMMON" ] && REPO="$(basename "${COMMON%/.git}" .git)"
+fi
+[ -n "$REPO" ] || REPO="$(basename "$PWD")"
+REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
   | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
   | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-soc2-audit.md"
 ```

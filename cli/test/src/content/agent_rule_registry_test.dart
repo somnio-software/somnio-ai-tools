@@ -36,6 +36,7 @@ void main() {
       expect(
         AgentRuleRegistry.stacks,
         [
+          'dart',
           'django',
           'dotnet',
           'fastapi',

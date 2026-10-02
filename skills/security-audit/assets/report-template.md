@@ -141,7 +141,7 @@
 
 ---
 
-## 12. Scan Metadata
+## 12. Report Metadata
 
 | Field | Value |
 |-------|-------|

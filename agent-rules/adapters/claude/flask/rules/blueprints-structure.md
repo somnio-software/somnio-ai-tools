@@ -1,5 +1,9 @@
-### Organizing Flask apps into feature blueprints with namespaced endpoints and blueprint-local templates and static files. Use when structuring routes into modules, building URL names, or registering blueprints in the factory.
-> Applies to: `**/*.py`
+---
+description: "Organizing Flask apps into feature blueprints with namespaced endpoints and blueprint-local templates and static files. Use when structuring routes into modules, building URL names, or registering blueprints in the factory."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Every cohesive feature that owns a set of routes must be implemented as a `Blueprint` registered inside `create_app` with an explicit `url_prefix`. ([blueprints])

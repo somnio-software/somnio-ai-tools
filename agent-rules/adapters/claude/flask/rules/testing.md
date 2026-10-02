@@ -1,5 +1,9 @@
-### Testing Flask apps with conftest factory fixtures, test_client and test_cli_runner, TESTING mode, and context pushing.
-> Applies to: `**/*.py`
+---
+description: "Testing Flask apps with conftest factory fixtures, test_client and test_cli_runner, TESTING mode, and context pushing."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. The `app` fixture in `tests/conftest.py` must call `create_app(...)` with `TESTING=True`, `yield` the app, and include teardown. ([testing] https://flask.palletsprojects.com/en/stable/testing/)

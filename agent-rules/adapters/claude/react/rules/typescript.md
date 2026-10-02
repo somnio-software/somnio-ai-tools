@@ -1,5 +1,10 @@
-### TypeScript integration patterns for React including component typing, generics, and type utilities.
-> Applies to: `src/**/*.tsx, src/**/*.ts`
+---
+description: "TypeScript integration patterns for React including component typing, generics, and type utilities."
+paths:
+  - "src/**/*.tsx"
+  - "src/**/*.ts"
+---
+
 # React TypeScript Integration
 
 How to write type-safe React components, hooks, and utilities using TypeScript best practices.

@@ -28,9 +28,9 @@ class RulesCommand extends Command<int> {
 
   @override
   String get description =>
-      'Install agent coding standards (Django / FastAPI / Flask / Flutter / '
-      'Functions / NestJS / Python / React / TypeScript) per agent and per '
-      'stack.';
+      'Install agent coding standards (Dart / Django / FastAPI / Flask / '
+      'Flutter / Functions / NestJS / Python / React / TypeScript) per agent '
+      'and per stack.';
 }
 
 // ── Install subcommand ────────────────────────────────────────────────────────

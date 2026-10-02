@@ -36,7 +36,7 @@ Agent rules live in `agent-rules/rules/` and are compiled into agent-specific ad
 
 ### Edit an existing rule
 
-1. Edit the file in `agent-rules/rules/<stack>/` (one of: django, fastapi, flask, flutter, functions, nestjs, python, react, typescript).
+1. Edit the file in `agent-rules/rules/<stack>/` (one of: dart, django, fastapi, flask, flutter, functions, nestjs, python, react, typescript).
 2. Regenerate all adapters:
    ```bash
    cd agent-rules
@@ -86,8 +86,8 @@ Include at least one Good and one Bad example with code. Headings must be exactl
    {
      "nestjs": [{"file_path", "meta", "body", "filename"}, ...],
      "react": [{"file_path", "meta", "body", "filename"}, ...],
-     # ... one entry per subfolder of rules/: django, fastapi, flask,
-     # flutter, functions, nestjs, python, react, typescript
+     # ... one entry per subfolder of rules/: dart, django, fastapi,
+     # flask, flutter, functions, nestjs, python, react, typescript
    }
    ```
 

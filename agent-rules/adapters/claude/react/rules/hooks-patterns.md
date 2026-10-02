@@ -1,5 +1,10 @@
-### React hooks patterns including useState, useEffect, useReducer, and custom hook guidelines.
-> Applies to: `src/**/*.tsx, src/**/*.ts`
+---
+description: "React hooks patterns including useState, useEffect, useReducer, and custom hook guidelines."
+paths:
+  - "src/**/*.tsx"
+  - "src/**/*.ts"
+---
+
 # React Hooks Patterns
 
 How to use React hooks correctly and write maintainable custom hooks following the Rules of Hooks.

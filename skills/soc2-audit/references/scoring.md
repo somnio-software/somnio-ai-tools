@@ -36,6 +36,14 @@ FAMILY WEIGHTS (sum = 1.00; platform-auditable families weighted highest):
 - I. Vendor / Third-Party Management: 0.04
 - J. AI Governance: 0.04
 
+REPORT RENDERING (authoritative — see assets/report-template.md):
+- The Section 1 scorecard NEVER renders a Weight column or per-row weight
+  values. It shows only Control Family, Criteria, and Score.
+- These weights (and the rounding rule and readiness bands below) are rendered
+  exactly once, in the closing unnumbered `## Appendix: Scoring Methodology`
+  block. That appendix is the only report-facing surface where a weight may
+  appear.
+
 READINESS BANDS (map from a 0-100 score):
 - 0-40 = Not Ready
 - 41-70 = Partially Ready

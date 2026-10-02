@@ -1,5 +1,9 @@
-### Python integration testing — DB/fixture teardown & isolation; unique test data; registered markers (--strict-markers); branch coverage (--cov-branch) + fail_under gate; coverage != quality (flag untested branches/error paths).
-> Applies to: `**/*.py`
+---
+description: "Python integration testing — DB/fixture teardown & isolation; unique test data; registered markers (--strict-markers); branch coverage (--cov-branch) + fail_under gate; coverage != quality (flag untested branches/error paths)."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Every DB-touching fixture must use `yield`-based teardown (rollback or delete) so cleanup runs even when the test fails. Source: https://docs.pytest.org/en/stable/how-to/fixtures.html

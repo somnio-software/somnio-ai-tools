@@ -114,13 +114,21 @@ then map to a grade:
 ## Phase 4 — Report Output
 
 Write the report to `./reports/<YYYY-MM-DD>-<project>-quick-check.md`, where
-`<YYYY-MM-DD>` is today's date and `<project>` is the current directory name
-slugified to kebab-case (lowercase; spaces, `_`, `.` and `/` become `-`; any
-other character dropped; repeated `-` collapsed). Derive it once first:
+`<YYYY-MM-DD>` is today's date and `<project>` is the git repository name
+(from the `origin` remote URL; without a remote, the main checkout's directory
+name; outside a git repo, the current directory name) slugified to kebab-case
+(lowercase; spaces, `_`, `.` and `/` become `-`; any other character dropped;
+repeated `-` collapsed). Derive it once first:
 
 ```bash
 mkdir -p reports
-REPORT="reports/$(date +%F)-$(basename "$PWD" \
+REPO="$(git remote get-url origin 2>/dev/null | sed -E 's#/+$##; s#.*[/:]##; s#\.git$##')"
+if [ -z "$REPO" ]; then
+  COMMON="$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
+  [ -n "$COMMON" ] && REPO="$(basename "${COMMON%/.git}" .git)"
+fi
+[ -n "$REPO" ] || REPO="$(basename "$PWD")"
+REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
   | tr '[:upper:]' '[:lower:]' | tr ' _./' '-' \
   | sed -E 's/[^a-z0-9-]//g; s/-+/-/g; s/^-|-$//g')-quick-check.md"
 ```

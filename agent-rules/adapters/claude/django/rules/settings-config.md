@@ -1,5 +1,9 @@
-### Django settings configuration — DEBUG flag, secrets from env, ALLOWED_HOSTS, settings split by environment, static/media roots, persistent connections, deployment checklist. Applies to settings files.
-> Applies to: `**/settings/*.py`
+---
+description: "Django settings configuration — DEBUG flag, secrets from env, ALLOWED_HOSTS, settings split by environment, static/media roots, persistent connections, deployment checklist. Applies to settings files."
+paths:
+  - "**/settings/*.py"
+---
+
 # Django Settings & Configuration
 
 Framework-specific configuration rules for Django settings files. Generic secret-loading patterns (e.g. pydantic-settings BaseSettings) are covered in `python/data-validation.md` — reference that file when adding schema-validated env parsing on top of `django-environ`.

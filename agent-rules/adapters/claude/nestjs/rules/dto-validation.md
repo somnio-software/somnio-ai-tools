@@ -1,5 +1,9 @@
-### DTO structure with clear request/response naming, validation, transformation, and meaningful Swagger documentation.
-> Applies to: `src/**/*.dto.ts`
+---
+description: "DTO structure with clear request/response naming, validation, transformation, and meaningful Swagger documentation."
+paths:
+  - "src/**/*.dto.ts"
+---
+
 # NestJS DTO Validation Standards
 
 How to create robust, well-documented DTOs with clear naming conventions, proper validation, and meaningful documentation.

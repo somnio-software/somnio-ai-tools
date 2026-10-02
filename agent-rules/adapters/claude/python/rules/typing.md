@@ -1,5 +1,9 @@
-### Python type hints everywhere — modern generics (list[int]/dict[str,int]/X | None, Python 3.10+), Protocol structural typing, pyright/basedpyright strict mode, py.typed marker (PEP 561). Applies to all .py files.
-> Applies to: `**/*.py`
+---
+description: "Python type hints everywhere — modern generics (list[int]/dict[str,int]/X | None, Python 3.10+), Protocol structural typing, pyright/basedpyright strict mode, py.typed marker (PEP 561). Applies to all .py files."
+paths:
+  - "**/*.py"
+---
+
 ## Rules
 
 1. Annotate every function parameter and return type. No unannotated public
