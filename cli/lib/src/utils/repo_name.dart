@@ -28,7 +28,7 @@ typedef GitRunner = Future<String?> Function(
 ///    a repo with no `origin`. Works from linked worktrees and subdirectories.
 /// 3. The basename of [cwd] — when [cwd] is not inside a git repository.
 Future<String> resolveRepoName(String cwd, {GitRunner? git}) async {
-  final run = git ?? _runGit;
+  final run = git ?? processGitRunner();
 
   final remote = await run(['remote', 'get-url', 'origin'], cwd);
   final fromRemote = remote == null ? null : repoNameFromRemoteUrl(remote);
@@ -45,14 +45,24 @@ Future<String> resolveRepoName(String cwd, {GitRunner? git}) async {
   return p.basename(cwd);
 }
 
-Future<String?> _runGit(List<String> args, String workingDirectory) async {
-  try {
-    final result =
-        await Process.run('git', args, workingDirectory: workingDirectory);
-    if (result.exitCode != 0) return null;
-    final out = (result.stdout as String).trim();
-    return out.isEmpty ? null : out;
-  } on ProcessException {
-    return null;
-  }
-}
+/// Returns a [GitRunner] that shells out to the `git` executable.
+///
+/// When [environment] is given it replaces the parent environment entirely,
+/// so callers can drop variables such as `GIT_DIR` that a git hook exports.
+GitRunner processGitRunner({Map<String, String>? environment}) =>
+    (args, workingDirectory) async {
+      try {
+        final result = await Process.run(
+          'git',
+          args,
+          workingDirectory: workingDirectory,
+          environment: environment,
+          includeParentEnvironment: environment == null,
+        );
+        if (result.exitCode != 0) return null;
+        final out = (result.stdout as String).trim();
+        return out.isEmpty ? null : out;
+      } on ProcessException {
+        return null;
+      }
+    };

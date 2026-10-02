@@ -58,10 +58,26 @@ void main() {
     setUp(() => tmp = Directory.systemTemp.createTempSync('repo_name_test'));
     tearDown(() => tmp.deleteSync(recursive: true));
 
+    // Git hooks export GIT_DIR, GIT_INDEX_FILE and friends. Inherited, they
+    // point every call below at the repository running the hook — a pre-push
+    // would `git init` the real repo and flip it to `core.bare = true`.
+    final env = Map.of(Platform.environment)
+      ..removeWhere((key, _) => key.startsWith('GIT_'));
+
+    Future<ProcessResult> runGit(List<String> args, String dir) => Process.run(
+          'git',
+          args,
+          workingDirectory: dir,
+          environment: env,
+          includeParentEnvironment: false,
+        );
+
     Future<void> git(List<String> args, String dir) async {
-      final result = await Process.run('git', args, workingDirectory: dir);
+      final result = await runGit(args, dir);
       expect(result.exitCode, 0, reason: '${result.stderr}');
     }
+
+    final isolatedGit = processGitRunner(environment: env);
 
     test('reads the origin remote', () async {
       final repo = p.join(tmp.path, 'checkout-dir');
@@ -71,7 +87,10 @@ void main() {
         ['remote', 'add', 'origin', 'git@github.com:org/hoopis-backend.git'],
         repo,
       );
-      expect(await resolveRepoName(repo), 'hoopis-backend');
+      expect(
+        await resolveRepoName(repo, git: isolatedGit),
+        'hoopis-backend',
+      );
     });
 
     test('uses the checkout directory when there is no origin', () async {
@@ -79,7 +98,10 @@ void main() {
       final sub = p.join(repo, 'packages', 'api');
       Directory(sub).createSync(recursive: true);
       await git(['init', '-q'], repo);
-      expect(await resolveRepoName(sub), 'hoopis-backend');
+      expect(
+        await resolveRepoName(sub, git: isolatedGit),
+        'hoopis-backend',
+      );
     });
 
     test('uses the directory name outside a git repo', () async {
@@ -88,13 +110,9 @@ void main() {
       // assert when git agrees there is no repository.
       final dir = p.join(tmp.path, 'plain-dir');
       Directory(dir).createSync();
-      final probe = await Process.run(
-        'git',
-        ['rev-parse', '--git-dir'],
-        workingDirectory: dir,
-      );
+      final probe = await runGit(['rev-parse', '--git-dir'], dir);
       if (probe.exitCode == 0) return;
-      expect(await resolveRepoName(dir), 'plain-dir');
+      expect(await resolveRepoName(dir, git: isolatedGit), 'plain-dir');
     });
   });
 }
