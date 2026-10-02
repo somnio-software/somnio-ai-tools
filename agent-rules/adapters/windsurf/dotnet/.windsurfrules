@@ -18,8 +18,6 @@ Both are idiomatic in ASP.NET Core 8. Pick based on the shape of the surface, no
 
 Do not mix the two styles for the same resource (e.g., `UsersController` for reads and a parallel minimal `/users` group for writes) - pick one per resource area.
 
-#### Good - Minimal API group per resource
-
 ```csharp
 public static class OrderEndpoints
 {
@@ -76,23 +74,6 @@ public static class OrderEndpoints
 }
 ```
 
-#### Bad - Business logic inline in the endpoint, no versioning, no typed results
-
-```csharp
-app.MapPost("/orders", async (CreateOrderRequest request, AppDbContext db) =>
-{
-    // Validation, mapping, and persistence all inline - untestable, unversioned
-    if (string.IsNullOrEmpty(request.CustomerId))
-        return Results.BadRequest("CustomerId required");
-
-    var order = new Order { CustomerId = request.CustomerId, Total = request.Items.Sum(i => i.Price * i.Qty) };
-    db.Orders.Add(order);
-    await db.SaveChangesAsync();
-
-    return Results.Ok(order); // Should be 201 Created with a Location header
-});
-```
-
 ## Route Conventions
 
 Use attribute routing with plural, resource-based nouns. Version the route prefix. Nest child resources under their parent when the child cannot exist independently.
@@ -136,8 +117,6 @@ Map verbs to intent and return the status code that matches what actually happen
 | `PATCH` | Partial update | `200 OK` or `204 No Content` |
 | `DELETE` | Remove | `204 No Content` |
 
-#### Good - Controllers with `ActionResult<T>`
-
 ```csharp
 [HttpPost]
 public async Task<ActionResult<CustomerResponse>> Create(
@@ -163,24 +142,6 @@ public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationT
 {
     await _customerService.DeleteAsync(id, cancellationToken);
     return NoContent();
-}
-```
-
-#### Bad - Everything returns 200, no `Location` header on create
-
-```csharp
-[HttpPost]
-public async Task<IActionResult> Create(CreateCustomerRequest request)
-{
-    var created = await _customerService.CreateAsync(request);
-    return Ok(created); // Should be 201 Created with Location
-}
-
-[HttpDelete("{id}")]
-public async Task<IActionResult> Delete(string id)
-{
-    await _customerService.DeleteAsync(id);
-    return Ok(); // Should be 204 No Content
 }
 ```
 
@@ -222,19 +183,6 @@ public class ProductsController : ControllerBase
 }
 ```
 
-#### Bad - Version baked into a custom header parsed by hand, no fallback
-
-```csharp
-[HttpGet("{id}")]
-public IActionResult GetById(string id)
-{
-    var version = Request.Headers["X-Api-Version"].FirstOrDefault() ?? "1";
-    // Manual branching per version scattered through the method body
-    if (version == "2") { /* ... */ }
-    return Ok();
-}
-```
-
 ## `[ApiController]` Benefits
 
 Always decorate API controllers with `[ApiController]`. It automatically:
@@ -254,26 +202,6 @@ public class InvoicesController : ControllerBase
         // if CreateInvoiceRequest fails Data Annotation validation.
         var invoice = await _invoiceService.CreateAsync(request);
         return CreatedAtAction(nameof(GetById), new { id = invoice.Id }, invoice);
-    }
-}
-```
-
-#### Bad - Missing `[ApiController]`, manual validation boilerplate repeated everywhere
-
-```csharp
-[Route("api/invoices")]
-public class InvoicesController : Controller // Plain Controller, not ControllerBase + [ApiController]
-{
-    [HttpPost]
-    public async Task<IActionResult> Create(CreateInvoiceRequest request)
-    {
-        if (!ModelState.IsValid) // Repeated in every action across every controller
-        {
-            return BadRequest(ModelState);
-        }
-
-        var invoice = await _invoiceService.CreateAsync(request);
-        return Ok(invoice);
     }
 }
 ```
@@ -312,23 +240,6 @@ group.MapGet("/public-summary", GetPublicSummary)
     .AllowAnonymous();
 ```
 
-#### Bad - Authorization logic reimplemented inside the handler
-
-```csharp
-[HttpDelete("{id}")]
-public async Task<IActionResult> Delete(Guid id)
-{
-    var role = User.FindFirst(ClaimTypes.Role)?.Value;
-    if (role != "Admin") // Reimplements what [Authorize(Roles = "Admin")] already does, easy to get wrong
-    {
-        return Forbid();
-    }
-
-    await _accountService.DeleteAsync(id);
-    return NoContent();
-}
-```
-
 ## Thin Controllers / Endpoint Handlers
 
 Controllers and endpoint delegates should orchestrate, not implement. Delegate to a service, MediatR handler, or application-layer class. This keeps HTTP concerns (status codes, routing) separate from business rules, and makes the business logic unit-testable without spinning up ASP.NET Core.
@@ -353,28 +264,6 @@ public class ShipmentsController : ControllerBase
 }
 ```
 
-#### Bad - Business rules, persistence, and even email sending inline in the controller
-
-```csharp
-[HttpPost("{id}/dispatch")]
-public async Task<IActionResult> Dispatch(Guid id)
-{
-    var shipment = await _db.Shipments.FindAsync(id);
-    if (shipment is null) return NotFound();
-
-    if (shipment.Status != ShipmentStatus.Ready)
-        return BadRequest("Shipment is not ready to dispatch");
-
-    shipment.Status = ShipmentStatus.Dispatched;
-    shipment.DispatchedAt = DateTime.UtcNow;
-    await _db.SaveChangesAsync();
-
-    await _emailSender.SendAsync(shipment.CustomerEmail, "Your order has shipped"); // Business logic in the controller
-
-    return Ok(shipment);
-}
-```
-
 ## Async All the Way
 
 Every action/handler that does I/O must be `async` and awaited end-to-end. Never block on a `Task` with `.Result` or `.Wait()` - it deadlocks under load and wastes thread pool threads.
@@ -388,22 +277,9 @@ public async Task<ActionResult<OrderResponse>> GetById(Guid id, CancellationToke
 }
 ```
 
-#### Bad - Synchronous blocking on async work
-
-```csharp
-[HttpGet("{id}")]
-public ActionResult<OrderResponse> GetById(Guid id)
-{
-    var order = _orderService.GetByIdAsync(id).Result; // Blocks a thread pool thread, risks deadlock
-    return order is null ? NotFound() : Ok(order);
-}
-```
-
 ## OpenAPI / Swagger Annotations
 
 Document responses explicitly so generated clients and Swagger UI reflect reality, not just the happy path.
-
-#### Good - Controllers
 
 ```csharp
 [HttpGet("{id:guid}")]
@@ -416,8 +292,6 @@ public async Task<ActionResult<OrderResponse>> GetById(Guid id, CancellationToke
 }
 ```
 
-#### Good - Minimal APIs
-
 ```csharp
 group.MapGet("/{id:guid}", GetById)
     .WithName("GetOrderById")
@@ -425,17 +299,6 @@ group.MapGet("/{id:guid}", GetById)
     .Produces<OrderResponse>(StatusCodes.Status200OK)
     .Produces(StatusCodes.Status404NotFound)
     .WithOpenApi();
-```
-
-#### Bad - No response type metadata, generated clients assume every call returns `200`
-
-```csharp
-[HttpGet("{id}")]
-public async Task<IActionResult> GetById(Guid id)
-{
-    var order = await _orderService.GetByIdAsync(id);
-    return order is null ? NotFound() : Ok(order);
-}
 ```
 
 ## Rules
@@ -761,23 +624,6 @@ public record CustomerResponse(
     DateTimeOffset CreatedAt);
 ```
 
-#### Bad - Mutable class DTO, and the EF Core entity itself used as a response
-
-```csharp
-public class CustomerDto // Mutable, no value equality, easy to leave properties half-set
-{
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-}
-
-[HttpGet("{id}")]
-public async Task<ActionResult<Customer>> GetById(Guid id) // Returns the EF Core entity directly
-{
-    return await _db.Customers.FindAsync(id); // Leaks PasswordHash, internal FKs, nav properties
-}
-```
-
 ## Separate Create / Update / Response DTOs
 
 Never share one DTO across create, update, and read. Each operation has a different required/optional shape, and collapsing them either forces nullable fields that aren't really optional, or lets clients set fields (like `Id`, `CreatedAt`) they should never control.
@@ -803,25 +649,6 @@ public record ProductResponse(
     DateTimeOffset? LastRestockedAt);
 ```
 
-#### Bad - One DTO reused everywhere
-
-```csharp
-public record ProductDto(
-    Guid? Id,          // Nullable only because "create" doesn't have one yet
-    string Name,
-    string Sku,
-    decimal Price,
-    int StockOnHand,
-    DateTimeOffset? CreatedAt); // Client could set this on create if bound carelessly
-
-[HttpPost]
-public async Task<ActionResult<ProductDto>> Create(ProductDto dto) // Accepts Id/CreatedAt from the client
-{
-    var product = new Product { Id = dto.Id ?? Guid.NewGuid(), Name = dto.Name, CreatedAt = dto.CreatedAt ?? DateTimeOffset.UtcNow };
-    // ...
-}
-```
-
 ## Validation: Data Annotations vs FluentValidation
 
 Use **Data Annotations** for simple, per-property, non-conditional rules - they're integrated with `[ApiController]` and require no extra wiring. Use **FluentValidation** (`AbstractValidator<T>`) once rules become conditional, cross-field, asynchronous (e.g., uniqueness checks), or need to be unit tested independently of the model.
@@ -836,24 +663,6 @@ public record CreateUserRequest(
 ```
 
 With `[ApiController]` on the controller, an invalid `CreateUserRequest` automatically produces a `400 Bad Request` with a `ValidationProblemDetails` body - no manual checks needed.
-
-#### Bad - Manual validation duplicating what Data Annotations already give you for free
-
-```csharp
-public record CreateUserRequest(string FullName, string Email, string Password);
-
-[HttpPost]
-public async Task<IActionResult> Create(CreateUserRequest request)
-{
-    if (string.IsNullOrWhiteSpace(request.FullName))
-        return BadRequest("FullName is required");
-    if (string.IsNullOrWhiteSpace(request.Email) || !request.Email.Contains('@'))
-        return BadRequest("Email is invalid");
-    if (string.IsNullOrWhiteSpace(request.Password) || request.Password.Length < 8)
-        return BadRequest("Password too short");
-    // Reimplements [Required]/[EmailAddress]/[MinLength] by hand, inconsistent error shape
-}
-```
 
 ### FluentValidation - complex/conditional rules
 
@@ -970,28 +779,9 @@ group.MapPost("/", Create)
     .AddEndpointFilter<ValidationFilter<CreateOrderRequest>>();
 ```
 
-#### Bad - Validation logic embedded in the service, untestable in isolation
-
-```csharp
-public class OrderService
-{
-    public async Task<Order> CreateAsync(CreateOrderRequest request)
-    {
-        // Validation mixed into business logic - can't unit test the rules
-        // without also mocking every dependency the service needs.
-        if (request.Items.Count == 0) throw new Exception("no items");
-        if (request.Items.Any(i => i.Quantity <= 0)) throw new Exception("bad quantity");
-
-        // ... persistence logic
-    }
-}
-```
-
 ## Mapping Between Entities and DTOs
 
 Prefer **explicit manual mapping** for small-to-medium APIs - it's easy to read, easy to debug, and the compiler catches missing members when a DTO or entity changes shape. Reach for AutoMapper or Mapster only when the number of mappings is large enough that hand-writing them is a genuine maintenance burden, and the team accepts the debugging/readability trade-off.
-
-#### Good - Explicit mapping method
 
 ```csharp
 public static class CustomerMappings
@@ -1038,16 +828,6 @@ public class CustomerProfile : Profile
 }
 ```
 
-#### Bad - Reflection-based "magic" mapping with silent property name mismatches
-
-```csharp
-public CustomerResponse ToResponse(Customer customer)
-{
-    var json = JsonSerializer.Serialize(customer);
-    return JsonSerializer.Deserialize<CustomerResponse>(json)!; // Silently drops/mismatches fields, expensive, hides bugs
-}
-```
-
 ## Excluding Sensitive Fields from Response DTOs
 
 A response DTO's shape is a deliberate allowlist, not "the entity minus whatever I remembered to remove." Never include password hashes, security stamps, refresh tokens, or other internal-only fields.
@@ -1064,22 +844,6 @@ public static UserResponse ToResponse(this User user) =>
     new(user.Id, user.Email, user.DisplayName, user.CreatedAt);
 ```
 
-#### Bad - Serializing the entity, or a DTO that mirrors it 1:1
-
-```csharp
-public record UserResponse(
-    Guid Id,
-    string Email,
-    string DisplayName,
-    string PasswordHash,   // Never send this to a client
-    string SecurityStamp,  // Never send this to a client
-    string? RefreshToken); // Never send this to a client
-
-[HttpGet("{id}")]
-public async Task<ActionResult<User>> GetById(Guid id) =>
-    await _db.Users.FindAsync(id); // Entity serialized as-is includes every sensitive column
-```
-
 ## Nullable Annotations Should Match Business Meaning
 
 Enable nullable reference types project-wide (`<Nullable>enable</Nullable>`) and use nullability on DTO properties to communicate whether a field is genuinely optional - not just to satisfy the compiler.
@@ -1093,16 +857,6 @@ public record CreateEmployeeRequest(
     DateOnly? TerminationDate, // Optional - most employees don't have one yet
     string Email,              // Required
     string? ManagerEmail);     // Optional - not everyone has a manager
-```
-
-#### Bad - Everything nullable "just in case", or required fields marked optional
-
-```csharp
-public record CreateEmployeeRequest(
-    string? FirstName,   // Required in practice, but typed as optional - forces null checks everywhere downstream
-    string? LastName,
-    string? Email,
-    DateOnly? HireDate);  // Hire date is always known at creation time - should not be nullable
 ```
 
 ## Rules
@@ -1206,30 +960,6 @@ public class OrderService : IOrderService
 }
 ```
 
-#### Bad - Generic exceptions with magic strings, no way to map to a status code centrally
-
-```csharp
-public async Task<Order> GetByIdAsync(Guid id)
-{
-    var order = await _repository.FindAsync(id);
-    if (order is null)
-    {
-        throw new Exception("Order not found"); // Generic Exception - handler can't tell this apart from a bug
-    }
-    return order;
-}
-
-public async Task CancelAsync(Guid id)
-{
-    var order = await GetByIdAsync(id);
-    if (order.Status == OrderStatus.Shipped)
-    {
-        throw new InvalidOperationException("Cannot cancel, already shipped"); // Ambiguous: is this a bug or a business rule?
-    }
-    // ...
-}
-```
-
 ## Centralized Handling via `IExceptionHandler`
 
 ASP.NET Core 8 introduced `IExceptionHandler` specifically so exception-to-response mapping lives in one testable class instead of ad-hoc middleware.
@@ -1321,38 +1051,6 @@ if (app.Environment.IsDevelopment())
 }
 ```
 
-#### Bad - Try/catch repeated in every controller with an inconsistent shape
-
-```csharp
-[HttpGet("{id}")]
-public async Task<IActionResult> GetById(Guid id)
-{
-    try
-    {
-        var order = await _orderService.GetByIdAsync(id);
-        return Ok(order);
-    }
-    catch (Exception ex) // Catches everything, including real bugs, treats them all as "not found"
-    {
-        return NotFound(new { error = ex.Message }); // Ad-hoc shape, different from every other controller
-    }
-}
-
-[HttpPost]
-public async Task<IActionResult> Create(CreateOrderRequest request)
-{
-    try
-    {
-        var order = await _orderService.CreateAsync(request);
-        return Ok(order);
-    }
-    catch (Exception ex)
-    {
-        return BadRequest(ex.Message); // A different shape again - clients can't parse errors uniformly
-    }
-}
-```
-
 ## RFC 7807 `ProblemDetails` as the Standard Shape
 
 Always respond with `ProblemDetails` (or `ValidationProblemDetails` for field-level errors), never a bespoke error object. `[ApiController]` already returns `ValidationProblemDetails` for model-binding failures; `AddProblemDetails()` extends that same shape to every other error path (404s, unhandled exceptions, etc.).
@@ -1434,30 +1132,6 @@ public async Task<IActionResult> Withdraw(Guid id, WithdrawRequest request, Canc
 }
 ```
 
-#### Bad - Using exceptions for routine, expected control flow
-
-```csharp
-public async Task<Transaction> WithdrawAsync(Guid accountId, decimal amount)
-{
-    var account = await _repository.FindAsync(accountId);
-
-    try
-    {
-        if (account.Balance < amount)
-        {
-            throw new Exception("insufficient balance"); // Thrown on every declined withdrawal - a normal, frequent case
-        }
-        return await _repository.WithdrawAsync(accountId, amount);
-    }
-    catch (Exception ex)
-    {
-        // Exceptions used to signal an entirely expected business outcome,
-        // paying the cost of stack unwinding for something that happens routinely.
-        throw new InvalidOperationException("Withdrawal failed: " + ex.Message);
-    }
-}
-```
-
 ## Structured Logging at the Boundary
 
 Log with `ILogger<T>` using structured (named) parameters, and log each error exactly once - at the boundary (the exception handler or middleware), not again at every layer it passes through.
@@ -1487,40 +1161,6 @@ public async Task<Order> GetByIdAsync(Guid id, CancellationToken cancellationTok
 }
 ```
 
-#### Bad - Log-and-rethrow at every layer, producing duplicate log entries for one failure
-
-```csharp
-public async Task<Order> GetByIdAsync(Guid id)
-{
-    try
-    {
-        var order = await _repository.FindAsync(id);
-        if (order is null) throw new NotFoundException(nameof(Order), id);
-        return order;
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error in GetByIdAsync"); // Logged here...
-        throw;
-    }
-}
-
-// Controller
-[HttpGet("{id}")]
-public async Task<IActionResult> GetById(Guid id)
-{
-    try
-    {
-        return Ok(await _orderService.GetByIdAsync(id));
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error in GetById endpoint"); // ...and logged again here - same exception, two log entries
-        return StatusCode(500);
-    }
-}
-```
-
 ## Hiding Internal Details in Production
 
 Never let stack traces, connection strings, or raw exception messages reach a client outside Development.
@@ -1544,23 +1184,6 @@ Detail = _environment.IsDevelopment() || statusCode < 500
     : "An unexpected error occurred. Please try again later.", // 5xx: never leak internals
 ```
 
-#### Bad - Same verbose response in every environment
-
-```csharp
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        var feature = context.Features.Get<IExceptionHandlerFeature>();
-        await context.Response.WriteAsJsonAsync(new
-        {
-            message = feature?.Error.Message,
-            stackTrace = feature?.Error.StackTrace, // Leaked in every environment, including Production
-        });
-    });
-});
-```
-
 ## Validate Before Mutating
 
 Check existence and business rules before performing a write, and fail with the specific domain exception - don't let an EF Core `DbUpdateException` or a null-reference bubble up as an unhandled 500.
@@ -1579,18 +1202,6 @@ public async Task UpdateAsync(Guid id, UpdateInvoiceRequest request, Cancellatio
     invoice.Amount = request.Amount;
     invoice.DueDate = request.DueDate;
     await _repository.SaveChangesAsync(cancellationToken);
-}
-```
-
-#### Bad - No existence/state check, lets the database throw
-
-```csharp
-public async Task UpdateAsync(Guid id, UpdateInvoiceRequest request)
-{
-    var invoice = await _repository.FindAsync(id); // Could be null
-    invoice.Amount = request.Amount;                // NullReferenceException -> unhandled 500
-    invoice.DueDate = request.DueDate;
-    await _repository.SaveChangesAsync();           // Or a DbUpdateException if a concurrency check fails
 }
 ```
 
@@ -1913,8 +1524,6 @@ Not every project needs a repository abstraction. `DbContext` and `DbSet<T>` are
 - Multiple services share the same non-trivial queries and duplicating them is worse than an abstraction
 - There's a genuine chance of swapping or wrapping the persistence provider (e.g., adding a cache layer in front of reads)
 
-#### Good — small API, `DbContext` injected directly
-
 ```csharp
 public class ProductsController(AppDbContext dbContext) : ControllerBase
 {
@@ -1932,28 +1541,9 @@ public class ProductsController(AppDbContext dbContext) : ControllerBase
 }
 ```
 
-#### Bad — repository abstraction with no consumers benefiting from it
-
-```csharp
-// A generic pass-through that adds a layer of indirection without adding value
-public interface IProductRepository
-{
-    Task<Product?> GetByIdAsync(Guid id);
-}
-
-public class ProductRepository(AppDbContext dbContext) : IProductRepository
-{
-    public Task<Product?> GetByIdAsync(Guid id)
-        => dbContext.Products.FirstOrDefaultAsync(p => p.Id == id);
-    // One method, one caller, never mocked, never swapped. Pure ceremony.
-}
-```
-
 ## Avoid Generic Repository Interfaces
 
 `IRepository<T>` looks appealing because it's reusable, but it tends to either leak `IQueryable<T>` (defeating the point of the abstraction) or force awkward generic method names (`FindAll`, `FindOne`, `Find(Expression<Func<T, bool>>)`) that don't say what the query actually does.
-
-#### Good — specific repository, intention-revealing methods
 
 ```csharp
 public interface IOrderRepository
@@ -2002,29 +1592,6 @@ public class OrderRepository(AppDbContext dbContext) : IOrderRepository
 }
 ```
 
-#### Bad — generic repository leaking `IQueryable` and vague method names
-
-```csharp
-public interface IRepository<T> where T : class
-{
-    IQueryable<T> FindAll(); // Leaks EF's IQueryable outside the data layer
-    Task<T?> FindOne(Expression<Func<T, bool>> predicate); // Any predicate — no intent, no reuse
-}
-
-public class Repository<T>(AppDbContext dbContext) : IRepository<T> where T : class
-{
-    public IQueryable<T> FindAll() => dbContext.Set<T>(); // Caller now writes LINQ against a "repository"
-
-    public Task<T?> FindOne(Expression<Func<T, bool>> predicate)
-        => dbContext.Set<T>().FirstOrDefaultAsync(predicate);
-}
-
-// Consumer ends up writing raw query logic anyway, defeating the abstraction:
-var activeOrders = orderRepository.FindAll()
-    .Where(o => o.CustomerId == userId && o.Status != OrderStatus.Completed)
-    .ToList(); // synchronous enumeration of an IQueryable — also blocks a thread
-```
-
 ## `AsNoTracking()` for Read-Only Queries
 
 EF Core tracks entities by default so it can detect changes for `SaveChangesAsync()`. That tracking has a real cost (snapshotting, change detection) and is wasted work for queries that only read data.
@@ -2057,8 +1624,6 @@ public async Task UpdateStatusAsync(Guid orderId, OrderStatus status, Cancellati
 
 Lazy loading and per-item queries in a loop generate one query per row. Use eager loading or projection instead.
 
-#### Good — eager loading with `Include`/`ThenInclude`
-
 ```csharp
 public Task<Order?> GetWithDetailsAsync(Guid id, CancellationToken cancellationToken)
     => dbContext.Orders
@@ -2069,8 +1634,6 @@ public Task<Order?> GetWithDetailsAsync(Guid id, CancellationToken cancellationT
         .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 ```
 
-#### Good — projection avoids loading full entities entirely
-
 ```csharp
 public Task<List<OrderLineResponse>> GetLineSummariesAsync(Guid orderId, CancellationToken cancellationToken)
     => dbContext.OrderLines
@@ -2078,25 +1641,6 @@ public Task<List<OrderLineResponse>> GetLineSummariesAsync(Guid orderId, Cancell
         .Where(l => l.OrderId == orderId)
         .Select(l => new OrderLineResponse(l.ProductId, l.Product.Name, l.Quantity, l.UnitPrice))
         .ToListAsync(cancellationToken);
-```
-
-#### Bad — N+1: one query for orders, then one query per order for its lines
-
-```csharp
-public async Task<List<OrderResponse>> GetOrdersWithLineCountAsync(CancellationToken cancellationToken)
-{
-    var orders = await dbContext.Orders.ToListAsync(cancellationToken);
-    var result = new List<OrderResponse>();
-
-    foreach (var order in orders)
-    {
-        // Executes a separate round trip to the database for every single order
-        var lineCount = await dbContext.OrderLines.CountAsync(l => l.OrderId == order.Id, cancellationToken);
-        result.Add(new OrderResponse(order.Id, lineCount));
-    }
-
-    return result;
-}
 ```
 
 ## Unit of Work: `SaveChangesAsync()` Once Per Business Operation
@@ -2252,34 +1796,6 @@ services.AddSingleton<IClock, SystemClock>();
 services.AddTransient<IPasswordHasher, Pbkdf2PasswordHasher>();
 ```
 
-#### Bad — captive dependency
-
-```csharp
-services.AddSingleton<IOrderService, OrderService>(); // Registered as singleton...
-
-public class OrderService(AppDbContext dbContext) : IOrderService // ...but depends on scoped AppDbContext
-{
-    // The DbContext instance captured at first resolution is reused for the app's
-    // entire lifetime instead of once per request. Concurrent requests now share
-    // a single DbContext, which is not thread-safe and will throw or corrupt state.
-}
-```
-
-A **captive dependency** happens when a longer-lived service (singleton) holds a reference to a shorter-lived one (scoped or transient) captured at construction time. The captured instance then outlives its intended scope. The .NET DI container will throw an `InvalidOperationException` at startup if validation is enabled (`ValidateScopes = true`, on by default in `CreateBuilder` for Development), but it's still worth understanding why: always match a service's lifetime to its shortest-lived dependency, or resolve the dependency per-use via `IServiceScopeFactory` instead of injecting it directly.
-
-```csharp
-// If a singleton genuinely needs a scoped dependency, create a scope per use
-public class BackgroundOrderProcessor(IServiceScopeFactory scopeFactory) : IOrderProcessor
-{
-    public async Task ProcessAsync(Guid orderId, CancellationToken cancellationToken)
-    {
-        using var scope = scopeFactory.CreateScope();
-        var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
-        await orderService.ProcessAsync(orderId, cancellationToken);
-    }
-}
-```
-
 ## Splitting Orchestration Into Named Steps
 
 A long monolithic method that validates, mutates, and notifies in one block is hard to read and hard to test in isolation. Split it into small private helpers called from one orchestration method.
@@ -2405,16 +1921,12 @@ public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationTo
 
 For larger applications with many use cases, some teams organize the service layer as MediatR request/response handlers instead of interface-based service classes. This is optional — plain service classes work fine and MediatR should not be adopted just for its own sake.
 
-#### Good — plain service class (the default, no extra dependency)
-
 ```csharp
 public interface IOrderService
 {
     Task<Order> CreateOrderAsync(CreateOrderRequest request, CancellationToken cancellationToken);
 }
 ```
-
-#### Good — MediatR handler (opt in for large apps that benefit from decoupled request/response pipelines)
 
 ```csharp
 public record CreateOrderCommand(Guid CustomerId, IReadOnlyList<OrderItemRequest> Items) : IRequest<Order>;
@@ -2586,8 +2098,6 @@ A module should be open for extension but closed for modification — adding new
 
 The most common OCP violation in application code is a `switch` or `if/else if` chain over an `enum`/type discriminator that contains real business logic. Every new case requires editing an existing, already-shipped method — and if the same discriminator is switched over in more than one place, every new case means editing *all* of them.
 
-#### Good — one strategy per case, resolved through DI
-
 ```csharp
 public interface IDiscountStrategy
 {
@@ -2631,36 +2141,9 @@ services.AddSingleton<IDiscountStrategy, WholesaleDiscountStrategy>();
 services.AddSingleton<DiscountCalculator>();
 ```
 
-#### Bad — a switch that must be edited every time a new order type is added
-
-```csharp
-public class DiscountCalculator
-{
-    public decimal Calculate(Order order)
-    {
-        switch (order.Type)
-        {
-            case OrderType.Retail:
-                return order.Subtotal >= 100m ? order.Subtotal * 0.05m : 0m;
-            case OrderType.Wholesale:
-                return order.Subtotal * 0.15m;
-            // Every new OrderType requires editing this already-shipped, already-tested
-            // method — and if OrderType is also switched over in ShippingCalculator and
-            // InvoiceFormatter, all three need the same edit.
-            default:
-                return 0m;
-        }
-    }
-}
-```
-
-Not every `switch` is an OCP violation — mapping an enum to a display string, or a simple one-to-one property translation, is fine as a `switch` expression (see `csharp.md`). The signal to watch for is business *logic* (calculations, branching side effects) inside the switch, duplicated across multiple files for the same discriminator.
-
 ## Liskov Substitution Principle (LSP)
 
 A subtype must be usable anywhere its base type or interface is expected, without the caller needing to know which concrete type it got. If calling a method through the base contract can throw for some subtypes but not others, the contract is being violated, not fulfilled.
-
-#### Good — the interface is split so a read-only implementation only implements what it actually supports
 
 ```csharp
 public interface IReadRepository<T>
@@ -2700,41 +2183,9 @@ public class OrderRepository(AppDbContext dbContext) : IRepository<Order>
 }
 ```
 
-#### Bad — a fat interface forces an implementation to fake support it doesn't have
-
-```csharp
-public interface IRepository<T>
-{
-    Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task AddAsync(T entity, CancellationToken cancellationToken);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
-}
-
-// A read-only view is forced to implement Delete because the interface promises it —
-// any caller programming against IRepository<Order> can call Delete and get a runtime
-// crash instead of a compile-time signal that this operation isn't supported.
-public class ArchivedOrderReadRepository(AppDbContext dbContext) : IRepository<Order>
-{
-    public Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-        => dbContext.ArchivedOrders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken)!;
-
-    public Task AddAsync(Order entity, CancellationToken cancellationToken)
-        => throw new NotSupportedException("Archived orders are read-only.");
-
-    public Task DeleteAsync(Guid id, CancellationToken cancellationToken)
-        => throw new NotSupportedException("Archived orders are read-only.");
-    // This type is not substitutable for IRepository<Order> — code that works
-    // correctly against OrderRepository breaks at runtime against this one.
-}
-```
-
-LSP is also violated more subtly, without an outright exception: an override with a **narrower precondition** (rejecting inputs the base type accepts — e.g. a `WireTransferProcessor : PaymentProcessor` whose override throws for any `amount < 500m` when the base `ChargeAsync` accepts any positive amount) or a **widened side effect** the caller wouldn't expect from the base contract. If a subtype genuinely can't support the base contract's full input range, it should not inherit from (or implement) that contract — model the constraint as a distinct type instead of a runtime surprise.
-
 ## Interface Segregation Principle (ISP)
 
 Clients should depend only on the members they actually use. A fat interface forces every implementer — including test doubles — to provide (or fake) members that are irrelevant to most callers.
-
-#### Good — split by client need
 
 ```csharp
 public interface IUserReader
@@ -2761,43 +2212,9 @@ public class UserProfileController(IUserReader userReader) : ControllerBase
 }
 ```
 
-#### Bad — one fat interface every caller and every test double must fully implement
-
-```csharp
-public interface IUserService
-{
-    Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task<IReadOnlyList<User>> SearchAsync(string query, CancellationToken cancellationToken);
-    Task<User> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken);
-    Task UpdateAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
-    Task SendWelcomeEmailAsync(Guid userId, CancellationToken cancellationToken);
-    Task<bool> VerifyPasswordAsync(Guid userId, string password, CancellationToken cancellationToken);
-    Task LockAccountAsync(Guid userId, CancellationToken cancellationToken);
-    Task<IReadOnlyList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken);
-}
-
-// A controller that only reads a profile is still coupled to all nine members —
-// and any unit test needs a mock/stub implementing every single one, even the
-// eight it never calls.
-public class UserProfileController(IUserService userService) : ControllerBase
-{
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<User>> GetById(Guid id, CancellationToken cancellationToken)
-    {
-        var user = await userService.GetByIdAsync(id, cancellationToken);
-        return user is null ? NotFound() : Ok(user);
-    }
-}
-```
-
-A strong ISP violation signal, tying back to LSP: if multiple implementations of an interface throw `NotImplementedException`/`NotSupportedException` for a subset of members, the interface is asking for more than any single implementer can honestly provide, and should be split.
-
 ## Dependency Inversion Principle (DIP)
 
 High-level modules (business logic) should not depend on low-level modules (concrete infrastructure); both should depend on abstractions. In practice: constructor-inject interfaces, never `new` up a concrete collaborator inside a class that has business logic.
-
-#### Good — the abstraction is injected, the concrete type is registered in DI
 
 ```csharp
 public interface IEmailSender
@@ -2826,28 +2243,6 @@ public class OrderNotificationService(IEmailSender emailSender) : IOrderNotifica
 services.AddScoped<IEmailSender, SmtpEmailSender>();
 services.AddScoped<IOrderNotificationService, OrderNotificationService>();
 ```
-
-#### Bad — a concrete, side-effecting collaborator is instantiated inline
-
-```csharp
-public class OrderNotificationService
-{
-    public async Task NotifyOrderConfirmedAsync(Order order)
-    {
-        // Instantiates a concrete SmtpClient directly inside business logic. This class
-        // cannot be unit tested without actually sending an email, cannot be reused with
-        // a different email provider, and hardcodes infrastructure config inline.
-        using var client = new SmtpClient("smtp.internal.somniosoftware.com", 587);
-        using var message = new MailMessage("noreply@somniosoftware.com", order.CustomerEmail,
-            "Order confirmed", $"Order {order.Id} is confirmed.");
-        await client.SendMailAsync(message);
-    }
-}
-```
-
-The clearest static-analysis signal for a DIP violation is `new ConcreteClassName()` appearing inside a class where an interface for that exact concern (`IPaymentGateway`, `IEmailSender`, `IOrderRepository`) already exists elsewhere in the codebase but isn't being used at this call site — e.g. a `RefundService(IOrderRepository orderRepository)` that reaches for `new StripePaymentGateway(...)` instead of accepting `IPaymentGateway` through the constructor, even though `IPaymentGateway` is already the standard abstraction used everywhere else. The abstraction exists — the class is simply choosing to bypass it.
-
-Not every `new` is a DIP violation: instantiating simple value objects, DTOs, records, or framework-provided collection types (`new List<T>()`, `new OrderResponse(...)`, `new StringBuilder()`) has no side effects and no swappable behavior to abstract — only flag `new` of a class that behaves like a collaborator or service.
 
 ## Cyclomatic Complexity
 
@@ -3035,8 +2430,6 @@ public class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 ### Resetting Database State: Respawn and Transaction Rollback
 
 Reset the database to a known state between tests using either Respawn (deletes all data from all tables, respecting foreign-key order, and re-seeds nothing) or a per-test transaction that is rolled back instead of committed. Never let one test's data bleed into the next.
-
-#### Good — Respawn, reset after every test in the collection
 
 ```csharp
 [CollectionDefinition("Database collection")]

@@ -18,10 +18,6 @@ Both are idiomatic in ASP.NET Core 8. Pick based on the shape of the surface, no
 
 Do not mix the two styles for the same resource (e.g., `UsersController` for reads and a parallel minimal `/users` group for writes) - pick one per resource area.
 
-#### Good - Minimal API group per resource
-
-#### Bad - Business logic inline in the endpoint, no versioning, no typed results
-
 ## Route Conventions
 
 Use attribute routing with plural, resource-based nouns. Version the route prefix. Nest child resources under their parent when the child cannot exist independently.
@@ -38,15 +34,9 @@ Map verbs to intent and return the status code that matches what actually happen
 | `PATCH` | Partial update | `200 OK` or `204 No Content` |
 | `DELETE` | Remove | `204 No Content` |
 
-#### Good - Controllers with `ActionResult<T>`
-
-#### Bad - Everything returns 200, no `Location` header on create
-
 ## API Versioning
 
 Use `Asp.Versioning.Http` (and `Asp.Versioning.Mvc` for controllers) rather than hand-rolled header parsing.
-
-#### Bad - Version baked into a custom header parsed by hand, no fallback
 
 ## `[ApiController]` Benefits
 
@@ -55,37 +45,23 @@ Always decorate API controllers with `[ApiController]`. It automatically:
 - Infers binding sources (`[FromBody]`, `[FromRoute]`, `[FromQuery]`) from parameter shape
 - Requires attribute routing (no convention-based routing fallback, which keeps routes explicit)
 
-#### Bad - Missing `[ApiController]`, manual validation boilerplate repeated everywhere
-
 ## Authorization
 
 Declare authorization at the route/controller level, not by checking claims manually inside handlers.
 
 Minimal API equivalent:
 
-#### Bad - Authorization logic reimplemented inside the handler
-
 ## Thin Controllers / Endpoint Handlers
 
 Controllers and endpoint delegates should orchestrate, not implement. Delegate to a service, MediatR handler, or application-layer class. This keeps HTTP concerns (status codes, routing) separate from business rules, and makes the business logic unit-testable without spinning up ASP.NET Core.
-
-#### Bad - Business rules, persistence, and even email sending inline in the controller
 
 ## Async All the Way
 
 Every action/handler that does I/O must be `async` and awaited end-to-end. Never block on a `Task` with `.Result` or `.Wait()` - it deadlocks under load and wastes thread pool threads.
 
-#### Bad - Synchronous blocking on async work
-
 ## OpenAPI / Swagger Annotations
 
 Document responses explicitly so generated clients and Swagger UI reflect reality, not just the happy path.
-
-#### Good - Controllers
-
-#### Good - Minimal APIs
-
-#### Bad - No response type metadata, generated clients assume every call returns `200`
 
 ## Rules
 
@@ -192,13 +168,9 @@ How to shape request/response contracts and validate them in an ASP.NET Core 8 W
 
 Use C# `record` types for DTOs. Records give you value-based equality, concise positional syntax, and immutability by default - exactly what a request/response contract should be. Never reuse an EF Core entity as a DTO.
 
-#### Bad - Mutable class DTO, and the EF Core entity itself used as a response
-
 ## Separate Create / Update / Response DTOs
 
 Never share one DTO across create, update, and read. Each operation has a different required/optional shape, and collapsing them either forces nullable fields that aren't really optional, or lets clients set fields (like `Id`, `CreatedAt`) they should never control.
-
-#### Bad - One DTO reused everywhere
 
 ## Validation: Data Annotations vs FluentValidation
 
@@ -207,8 +179,6 @@ Use **Data Annotations** for simple, per-property, non-conditional rules - they'
 ### Data Annotations - simple cases
 
 With `[ApiController]` on the controller, an invalid `CreateUserRequest` automatically produces a `400 Bad Request` with a `ValidationProblemDetails` body - no manual checks needed.
-
-#### Bad - Manual validation duplicating what Data Annotations already give you for free
 
 ### FluentValidation - complex/conditional rules
 
@@ -220,29 +190,19 @@ For MediatR pipelines, validate as a pipeline behavior so every command/query is
 
 For minimal APIs, validate with an endpoint filter instead of hand-checking inside every handler:
 
-#### Bad - Validation logic embedded in the service, untestable in isolation
-
 ## Mapping Between Entities and DTOs
 
 Prefer **explicit manual mapping** for small-to-medium APIs - it's easy to read, easy to debug, and the compiler catches missing members when a DTO or entity changes shape. Reach for AutoMapper or Mapster only when the number of mappings is large enough that hand-writing them is a genuine maintenance burden, and the team accepts the debugging/readability trade-off.
 
-#### Good - Explicit mapping method
-
 #### Acceptable - AutoMapper for large, uniform mapping surfaces
-
-#### Bad - Reflection-based "magic" mapping with silent property name mismatches
 
 ## Excluding Sensitive Fields from Response DTOs
 
 A response DTO's shape is a deliberate allowlist, not "the entity minus whatever I remembered to remove." Never include password hashes, security stamps, refresh tokens, or other internal-only fields.
 
-#### Bad - Serializing the entity, or a DTO that mirrors it 1:1
-
 ## Nullable Annotations Should Match Business Meaning
 
 Enable nullable reference types project-wide (`<Nullable>enable</Nullable>`) and use nullability on DTO properties to communicate whether a field is genuinely optional - not just to satisfy the compiler.
-
-#### Bad - Everything nullable "just in case", or required fields marked optional
 
 ## Rules
 
@@ -286,15 +246,11 @@ Define a small hierarchy of exceptions that represent business-meaningful failur
 
 Throw them from services with real context, not generic messages:
 
-#### Bad - Generic exceptions with magic strings, no way to map to a status code centrally
-
 ## Centralized Handling via `IExceptionHandler`
 
 ASP.NET Core 8 introduced `IExceptionHandler` specifically so exception-to-response mapping lives in one testable class instead of ad-hoc middleware.
 
 Register it and enable `ProblemDetails` globally:
-
-#### Bad - Try/catch repeated in every controller with an inconsistent shape
 
 ## RFC 7807 `ProblemDetails` as the Standard Shape
 
@@ -308,25 +264,17 @@ Reserve exceptions for truly exceptional, unexpected conditions. For **expected*
 
 The endpoint then maps the `Result` to the appropriate status code explicitly, still funneling through the same `ProblemDetails` shape:
 
-#### Bad - Using exceptions for routine, expected control flow
-
 ## Structured Logging at the Boundary
 
 Log with `ILogger<T>` using structured (named) parameters, and log each error exactly once - at the boundary (the exception handler or middleware), not again at every layer it passes through.
-
-#### Bad - Log-and-rethrow at every layer, producing duplicate log entries for one failure
 
 ## Hiding Internal Details in Production
 
 Never let stack traces, connection strings, or raw exception messages reach a client outside Development.
 
-#### Bad - Same verbose response in every environment
-
 ## Validate Before Mutating
 
 Check existence and business rules before performing a write, and fail with the specific domain exception - don't let an EF Core `DbUpdateException` or a null-reference bubble up as an unhandled 500.
-
-#### Bad - No existence/state check, lets the database throw
 
 ## Rules
 
@@ -440,17 +388,9 @@ Not every project needs a repository abstraction. `DbContext` and `DbSet<T>` are
 - Multiple services share the same non-trivial queries and duplicating them is worse than an abstraction
 - There's a genuine chance of swapping or wrapping the persistence provider (e.g., adding a cache layer in front of reads)
 
-#### Good — small API, `DbContext` injected directly
-
-#### Bad — repository abstraction with no consumers benefiting from it
-
 ## Avoid Generic Repository Interfaces
 
 `IRepository<T>` looks appealing because it's reusable, but it tends to either leak `IQueryable<T>` (defeating the point of the abstraction) or force awkward generic method names (`FindAll`, `FindOne`, `Find(Expression<Func<T, bool>>)`) that don't say what the query actually does.
-
-#### Good — specific repository, intention-revealing methods
-
-#### Bad — generic repository leaking `IQueryable` and vague method names
 
 ## `AsNoTracking()` for Read-Only Queries
 
@@ -459,12 +399,6 @@ EF Core tracks entities by default so it can detect changes for `SaveChangesAsyn
 ## Avoiding N+1 Queries
 
 Lazy loading and per-item queries in a loop generate one query per row. Use eager loading or projection instead.
-
-#### Good — eager loading with `Include`/`ThenInclude`
-
-#### Good — projection avoids loading full entities entirely
-
-#### Bad — N+1: one query for orders, then one query per order for its lines
 
 ## Unit of Work: `SaveChangesAsync()` Once Per Business Operation
 
@@ -519,10 +453,6 @@ Use constructor injection (primary constructors in C# 12 keep this concise) for 
 - **`AddSingleton`** — one instance for the app's lifetime. Use for stateless, thread-safe services: caches, configuration wrappers, clients that are safe to share (e.g., a properly configured `HttpClient` via `IHttpClientFactory`).
 - **`AddTransient`** — a new instance every time it's requested. Use for lightweight, stateless helpers with no meaningful per-request identity.
 
-#### Bad — captive dependency
-
-A **captive dependency** happens when a longer-lived service (singleton) holds a reference to a shorter-lived one (scoped or transient) captured at construction time. The captured instance then outlives its intended scope. The .NET DI container will throw an `InvalidOperationException` at startup if validation is enabled (`ValidateScopes = true`, on by default in `CreateBuilder` for Development), but it's still worth understanding why: always match a service's lifetime to its shortest-lived dependency, or resolve the dependency per-use via `IServiceScopeFactory` instead of injecting it directly.
-
 ## Splitting Orchestration Into Named Steps
 
 A long monolithic method that validates, mutates, and notifies in one block is hard to read and hard to test in isolation. Split it into small private helpers called from one orchestration method.
@@ -540,10 +470,6 @@ Use `async`/`await` consistently for I/O-bound work. A common piece of outdated 
 ## MediatR as an Optional Organizational Pattern
 
 For larger applications with many use cases, some teams organize the service layer as MediatR request/response handlers instead of interface-based service classes. This is optional — plain service classes work fine and MediatR should not be adopted just for its own sake.
-
-#### Good — plain service class (the default, no extra dependency)
-
-#### Good — MediatR handler (opt in for large apps that benefit from decoupled request/response pipelines)
 
 Reach for MediatR when the number of use cases is large enough that a request/response pipeline (with shared behaviors like validation or logging via `IPipelineBehavior<,>`) pays for itself. Don't introduce it for a handful of endpoints — it adds indirection (command classes, handler classes, DI registration for each) that a plain service class avoids.
 
@@ -602,43 +528,17 @@ A module should be open for extension but closed for modification — adding new
 
 The most common OCP violation in application code is a `switch` or `if/else if` chain over an `enum`/type discriminator that contains real business logic. Every new case requires editing an existing, already-shipped method — and if the same discriminator is switched over in more than one place, every new case means editing *all* of them.
 
-#### Good — one strategy per case, resolved through DI
-
-#### Bad — a switch that must be edited every time a new order type is added
-
-Not every `switch` is an OCP violation — mapping an enum to a display string, or a simple one-to-one property translation, is fine as a `switch` expression (see `csharp.md`). The signal to watch for is business *logic* (calculations, branching side effects) inside the switch, duplicated across multiple files for the same discriminator.
-
 ## Liskov Substitution Principle (LSP)
 
 A subtype must be usable anywhere its base type or interface is expected, without the caller needing to know which concrete type it got. If calling a method through the base contract can throw for some subtypes but not others, the contract is being violated, not fulfilled.
-
-#### Good — the interface is split so a read-only implementation only implements what it actually supports
-
-#### Bad — a fat interface forces an implementation to fake support it doesn't have
-
-LSP is also violated more subtly, without an outright exception: an override with a **narrower precondition** (rejecting inputs the base type accepts — e.g. a `WireTransferProcessor : PaymentProcessor` whose override throws for any `amount < 500m` when the base `ChargeAsync` accepts any positive amount) or a **widened side effect** the caller wouldn't expect from the base contract. If a subtype genuinely can't support the base contract's full input range, it should not inherit from (or implement) that contract — model the constraint as a distinct type instead of a runtime surprise.
 
 ## Interface Segregation Principle (ISP)
 
 Clients should depend only on the members they actually use. A fat interface forces every implementer — including test doubles — to provide (or fake) members that are irrelevant to most callers.
 
-#### Good — split by client need
-
-#### Bad — one fat interface every caller and every test double must fully implement
-
-A strong ISP violation signal, tying back to LSP: if multiple implementations of an interface throw `NotImplementedException`/`NotSupportedException` for a subset of members, the interface is asking for more than any single implementer can honestly provide, and should be split.
-
 ## Dependency Inversion Principle (DIP)
 
 High-level modules (business logic) should not depend on low-level modules (concrete infrastructure); both should depend on abstractions. In practice: constructor-inject interfaces, never `new` up a concrete collaborator inside a class that has business logic.
-
-#### Good — the abstraction is injected, the concrete type is registered in DI
-
-#### Bad — a concrete, side-effecting collaborator is instantiated inline
-
-The clearest static-analysis signal for a DIP violation is `new ConcreteClassName()` appearing inside a class where an interface for that exact concern (`IPaymentGateway`, `IEmailSender`, `IOrderRepository`) already exists elsewhere in the codebase but isn't being used at this call site — e.g. a `RefundService(IOrderRepository orderRepository)` that reaches for `new StripePaymentGateway(...)` instead of accepting `IPaymentGateway` through the constructor, even though `IPaymentGateway` is already the standard abstraction used everywhere else. The abstraction exists — the class is simply choosing to bypass it.
-
-Not every `new` is a DIP violation: instantiating simple value objects, DTOs, records, or framework-provided collection types (`new List<T>()`, `new OrderResponse(...)`, `new StringBuilder()`) has no side effects and no swappable behavior to abstract — only flag `new` of a class that behaves like a collaborator or service.
 
 ## Cyclomatic Complexity
 
@@ -721,8 +621,6 @@ Use `Testcontainers.PostgreSql` (or the equivalent for your engine) to run tests
 ### Resetting Database State: Respawn and Transaction Rollback
 
 Reset the database to a known state between tests using either Respawn (deletes all data from all tables, respecting foreign-key order, and re-seeds nothing) or a per-test transaction that is rolled back instead of committed. Never let one test's data bleed into the next.
-
-#### Good — Respawn, reset after every test in the collection
 
 ### Testing Through HttpClient, Not Internal Implementation
 

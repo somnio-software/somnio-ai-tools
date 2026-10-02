@@ -1,5 +1,11 @@
-### Route, verb, and endpoint conventions for ASP.NET Core Web APIs - controllers and minimal APIs - covering versioning, status codes, auth, and thin handlers.
-> Applies to: `src/**/*Controller.cs, src/**/Endpoints/*.cs, src/**/*.Api/**/*.cs`
+---
+description: "Route, verb, and endpoint conventions for ASP.NET Core Web APIs - controllers and minimal APIs - covering versioning, status codes, auth, and thin handlers."
+paths:
+  - "src/**/*Controller.cs"
+  - "src/**/Endpoints/*.cs"
+  - "src/**/*.Api/**/*.cs"
+---
+
 # ASP.NET Core Controller & Endpoint Patterns
 
 How to structure HTTP entry points in an ASP.NET Core 8 Web API - whether using MVC controllers or minimal API endpoint groups - so routing, versioning, status codes, and authorization stay consistent across the codebase.
@@ -12,8 +18,6 @@ Both are idiomatic in ASP.NET Core 8. Pick based on the shape of the surface, no
 - **Prefer minimal APIs** for small, focused services, for internal/BFF-style APIs with few endpoints, or when startup performance and a lower-ceremony style matter. Group related endpoints with `MapGroup` instead of one giant `Program.cs`.
 
 Do not mix the two styles for the same resource (e.g., `UsersController` for reads and a parallel minimal `/users` group for writes) - pick one per resource area.
-
-#### Good - Minimal API group per resource
 
 ```csharp
 public static class OrderEndpoints
@@ -71,23 +75,6 @@ public static class OrderEndpoints
 }
 ```
 
-#### Bad - Business logic inline in the endpoint, no versioning, no typed results
-
-```csharp
-app.MapPost("/orders", async (CreateOrderRequest request, AppDbContext db) =>
-{
-    // Validation, mapping, and persistence all inline - untestable, unversioned
-    if (string.IsNullOrEmpty(request.CustomerId))
-        return Results.BadRequest("CustomerId required");
-
-    var order = new Order { CustomerId = request.CustomerId, Total = request.Items.Sum(i => i.Price * i.Qty) };
-    db.Orders.Add(order);
-    await db.SaveChangesAsync();
-
-    return Results.Ok(order); // Should be 201 Created with a Location header
-});
-```
-
 ## Route Conventions
 
 Use attribute routing with plural, resource-based nouns. Version the route prefix. Nest child resources under their parent when the child cannot exist independently.
@@ -131,8 +118,6 @@ Map verbs to intent and return the status code that matches what actually happen
 | `PATCH` | Partial update | `200 OK` or `204 No Content` |
 | `DELETE` | Remove | `204 No Content` |
 
-#### Good - Controllers with `ActionResult<T>`
-
 ```csharp
 [HttpPost]
 public async Task<ActionResult<CustomerResponse>> Create(
@@ -158,24 +143,6 @@ public async Task<IActionResult> Delete(Guid id, CancellationToken cancellationT
 {
     await _customerService.DeleteAsync(id, cancellationToken);
     return NoContent();
-}
-```
-
-#### Bad - Everything returns 200, no `Location` header on create
-
-```csharp
-[HttpPost]
-public async Task<IActionResult> Create(CreateCustomerRequest request)
-{
-    var created = await _customerService.CreateAsync(request);
-    return Ok(created); // Should be 201 Created with Location
-}
-
-[HttpDelete("{id}")]
-public async Task<IActionResult> Delete(string id)
-{
-    await _customerService.DeleteAsync(id);
-    return Ok(); // Should be 204 No Content
 }
 ```
 
@@ -217,19 +184,6 @@ public class ProductsController : ControllerBase
 }
 ```
 
-#### Bad - Version baked into a custom header parsed by hand, no fallback
-
-```csharp
-[HttpGet("{id}")]
-public IActionResult GetById(string id)
-{
-    var version = Request.Headers["X-Api-Version"].FirstOrDefault() ?? "1";
-    // Manual branching per version scattered through the method body
-    if (version == "2") { /* ... */ }
-    return Ok();
-}
-```
-
 ## `[ApiController]` Benefits
 
 Always decorate API controllers with `[ApiController]`. It automatically:
@@ -249,26 +203,6 @@ public class InvoicesController : ControllerBase
         // if CreateInvoiceRequest fails Data Annotation validation.
         var invoice = await _invoiceService.CreateAsync(request);
         return CreatedAtAction(nameof(GetById), new { id = invoice.Id }, invoice);
-    }
-}
-```
-
-#### Bad - Missing `[ApiController]`, manual validation boilerplate repeated everywhere
-
-```csharp
-[Route("api/invoices")]
-public class InvoicesController : Controller // Plain Controller, not ControllerBase + [ApiController]
-{
-    [HttpPost]
-    public async Task<IActionResult> Create(CreateInvoiceRequest request)
-    {
-        if (!ModelState.IsValid) // Repeated in every action across every controller
-        {
-            return BadRequest(ModelState);
-        }
-
-        var invoice = await _invoiceService.CreateAsync(request);
-        return Ok(invoice);
     }
 }
 ```
@@ -307,23 +241,6 @@ group.MapGet("/public-summary", GetPublicSummary)
     .AllowAnonymous();
 ```
 
-#### Bad - Authorization logic reimplemented inside the handler
-
-```csharp
-[HttpDelete("{id}")]
-public async Task<IActionResult> Delete(Guid id)
-{
-    var role = User.FindFirst(ClaimTypes.Role)?.Value;
-    if (role != "Admin") // Reimplements what [Authorize(Roles = "Admin")] already does, easy to get wrong
-    {
-        return Forbid();
-    }
-
-    await _accountService.DeleteAsync(id);
-    return NoContent();
-}
-```
-
 ## Thin Controllers / Endpoint Handlers
 
 Controllers and endpoint delegates should orchestrate, not implement. Delegate to a service, MediatR handler, or application-layer class. This keeps HTTP concerns (status codes, routing) separate from business rules, and makes the business logic unit-testable without spinning up ASP.NET Core.
@@ -348,28 +265,6 @@ public class ShipmentsController : ControllerBase
 }
 ```
 
-#### Bad - Business rules, persistence, and even email sending inline in the controller
-
-```csharp
-[HttpPost("{id}/dispatch")]
-public async Task<IActionResult> Dispatch(Guid id)
-{
-    var shipment = await _db.Shipments.FindAsync(id);
-    if (shipment is null) return NotFound();
-
-    if (shipment.Status != ShipmentStatus.Ready)
-        return BadRequest("Shipment is not ready to dispatch");
-
-    shipment.Status = ShipmentStatus.Dispatched;
-    shipment.DispatchedAt = DateTime.UtcNow;
-    await _db.SaveChangesAsync();
-
-    await _emailSender.SendAsync(shipment.CustomerEmail, "Your order has shipped"); // Business logic in the controller
-
-    return Ok(shipment);
-}
-```
-
 ## Async All the Way
 
 Every action/handler that does I/O must be `async` and awaited end-to-end. Never block on a `Task` with `.Result` or `.Wait()` - it deadlocks under load and wastes thread pool threads.
@@ -383,22 +278,9 @@ public async Task<ActionResult<OrderResponse>> GetById(Guid id, CancellationToke
 }
 ```
 
-#### Bad - Synchronous blocking on async work
-
-```csharp
-[HttpGet("{id}")]
-public ActionResult<OrderResponse> GetById(Guid id)
-{
-    var order = _orderService.GetByIdAsync(id).Result; // Blocks a thread pool thread, risks deadlock
-    return order is null ? NotFound() : Ok(order);
-}
-```
-
 ## OpenAPI / Swagger Annotations
 
 Document responses explicitly so generated clients and Swagger UI reflect reality, not just the happy path.
-
-#### Good - Controllers
 
 ```csharp
 [HttpGet("{id:guid}")]
@@ -411,8 +293,6 @@ public async Task<ActionResult<OrderResponse>> GetById(Guid id, CancellationToke
 }
 ```
 
-#### Good - Minimal APIs
-
 ```csharp
 group.MapGet("/{id:guid}", GetById)
     .WithName("GetOrderById")
@@ -420,17 +300,6 @@ group.MapGet("/{id:guid}", GetById)
     .Produces<OrderResponse>(StatusCodes.Status200OK)
     .Produces(StatusCodes.Status404NotFound)
     .WithOpenApi();
-```
-
-#### Bad - No response type metadata, generated clients assume every call returns `200`
-
-```csharp
-[HttpGet("{id}")]
-public async Task<IActionResult> GetById(Guid id)
-{
-    var order = await _orderService.GetByIdAsync(id);
-    return order is null ? NotFound() : Ok(order);
-}
 ```
 
 ## Rules

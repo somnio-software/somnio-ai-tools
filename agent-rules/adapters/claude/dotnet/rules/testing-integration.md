@@ -1,5 +1,9 @@
-### ASP.NET Core integration testing — WebApplicationFactory, CustomWebApplicationFactory, Testcontainers over EF Core InMemory, Respawn/transaction-rollback state resets, HttpClient-based assertions, collection fixtures. Applies to all C# integration test files.
-> Applies to: `**/*IntegrationTests.cs`
+---
+description: "ASP.NET Core integration testing — WebApplicationFactory, CustomWebApplicationFactory, Testcontainers over EF Core InMemory, Respawn/transaction-rollback state resets, HttpClient-based assertions, collection fixtures. Applies to all C# integration test files."
+paths:
+  - "**/*IntegrationTests.cs"
+---
+
 # ASP.NET Core Integration Testing Conventions
 
 How to write integration tests that exercise the real ASP.NET Core pipeline end-to-end: `WebApplicationFactory` for in-memory hosting, `Testcontainers` for a real database instead of the EF Core InMemory provider, disciplined state resets between tests, and assertions made through `HttpClient` rather than internal services.
@@ -103,8 +107,6 @@ public class PostgresApiFactory : WebApplicationFactory<Program>, IAsyncLifetime
 ### Resetting Database State: Respawn and Transaction Rollback
 
 Reset the database to a known state between tests using either Respawn (deletes all data from all tables, respecting foreign-key order, and re-seeds nothing) or a per-test transaction that is rolled back instead of committed. Never let one test's data bleed into the next.
-
-#### Good — Respawn, reset after every test in the collection
 
 ```csharp
 [CollectionDefinition("Database collection")]

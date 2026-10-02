@@ -1,5 +1,9 @@
-### Application/service layer patterns for ASP.NET Core Web APIs including DI lifetimes, orchestration, and validation.
-> Applies to: `**/*Service*.cs`
+---
+description: "Application/service layer patterns for ASP.NET Core Web APIs including DI lifetimes, orchestration, and validation."
+paths:
+  - "**/*Service*.cs"
+---
+
 # .NET Service Patterns
 
 How to structure the application/service layer in an ASP.NET Core Web API so business logic is testable, controllers stay thin, and dependency injection lifetimes don't create subtle bugs.
@@ -49,34 +53,6 @@ services.AddSingleton<IClock, SystemClock>();
 
 // Transient: cheap, stateless, no shared mutable state
 services.AddTransient<IPasswordHasher, Pbkdf2PasswordHasher>();
-```
-
-#### Bad — captive dependency
-
-```csharp
-services.AddSingleton<IOrderService, OrderService>(); // Registered as singleton...
-
-public class OrderService(AppDbContext dbContext) : IOrderService // ...but depends on scoped AppDbContext
-{
-    // The DbContext instance captured at first resolution is reused for the app's
-    // entire lifetime instead of once per request. Concurrent requests now share
-    // a single DbContext, which is not thread-safe and will throw or corrupt state.
-}
-```
-
-A **captive dependency** happens when a longer-lived service (singleton) holds a reference to a shorter-lived one (scoped or transient) captured at construction time. The captured instance then outlives its intended scope. The .NET DI container will throw an `InvalidOperationException` at startup if validation is enabled (`ValidateScopes = true`, on by default in `CreateBuilder` for Development), but it's still worth understanding why: always match a service's lifetime to its shortest-lived dependency, or resolve the dependency per-use via `IServiceScopeFactory` instead of injecting it directly.
-
-```csharp
-// If a singleton genuinely needs a scoped dependency, create a scope per use
-public class BackgroundOrderProcessor(IServiceScopeFactory scopeFactory) : IOrderProcessor
-{
-    public async Task ProcessAsync(Guid orderId, CancellationToken cancellationToken)
-    {
-        using var scope = scopeFactory.CreateScope();
-        var orderService = scope.ServiceProvider.GetRequiredService<IOrderService>();
-        await orderService.ProcessAsync(orderId, cancellationToken);
-    }
-}
 ```
 
 ## Splitting Orchestration Into Named Steps
@@ -204,16 +180,12 @@ public async Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationTo
 
 For larger applications with many use cases, some teams organize the service layer as MediatR request/response handlers instead of interface-based service classes. This is optional — plain service classes work fine and MediatR should not be adopted just for its own sake.
 
-#### Good — plain service class (the default, no extra dependency)
-
 ```csharp
 public interface IOrderService
 {
     Task<Order> CreateOrderAsync(CreateOrderRequest request, CancellationToken cancellationToken);
 }
 ```
-
-#### Good — MediatR handler (opt in for large apps that benefit from decoupled request/response pipelines)
 
 ```csharp
 public record CreateOrderCommand(Guid CustomerId, IReadOnlyList<OrderItemRequest> Items) : IRequest<Order>;

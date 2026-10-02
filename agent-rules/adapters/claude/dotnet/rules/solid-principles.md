@@ -1,5 +1,9 @@
-### SOLID principles (SRP, OCP, LSP, ISP, DIP) applied to ASP.NET Core / C# services, plus cyclomatic complexity as a measurable proxy for SRP/OCP violations.
-> Applies to: `**/*.cs`
+---
+description: "SOLID principles (SRP, OCP, LSP, ISP, DIP) applied to ASP.NET Core / C# services, plus cyclomatic complexity as a measurable proxy for SRP/OCP violations."
+paths:
+  - "**/*.cs"
+---
+
 # SOLID Principles for .NET / C#
 
 The five SOLID principles are less a checklist than a shared vocabulary for describing *why* a design is hard to change. In an ASP.NET Core codebase they show up concretely: a service constructor with too many dependencies, a `switch` that has to be edited every sprint, an override that throws `NotSupportedException`, an interface no single caller fully uses, or a `new SmtpClient()` buried inside business logic. Each violation has a detectable shape, and each has a standard fix. This file works through all five principles with realistic C# 12 / .NET 8 examples, then covers cyclomatic complexity — the metric that most directly correlates with SRP and OCP violations and can be measured without adding any new tooling to the project.
@@ -71,8 +75,6 @@ A module should be open for extension but closed for modification — adding new
 
 The most common OCP violation in application code is a `switch` or `if/else if` chain over an `enum`/type discriminator that contains real business logic. Every new case requires editing an existing, already-shipped method — and if the same discriminator is switched over in more than one place, every new case means editing *all* of them.
 
-#### Good — one strategy per case, resolved through DI
-
 ```csharp
 public interface IDiscountStrategy
 {
@@ -116,36 +118,9 @@ services.AddSingleton<IDiscountStrategy, WholesaleDiscountStrategy>();
 services.AddSingleton<DiscountCalculator>();
 ```
 
-#### Bad — a switch that must be edited every time a new order type is added
-
-```csharp
-public class DiscountCalculator
-{
-    public decimal Calculate(Order order)
-    {
-        switch (order.Type)
-        {
-            case OrderType.Retail:
-                return order.Subtotal >= 100m ? order.Subtotal * 0.05m : 0m;
-            case OrderType.Wholesale:
-                return order.Subtotal * 0.15m;
-            // Every new OrderType requires editing this already-shipped, already-tested
-            // method — and if OrderType is also switched over in ShippingCalculator and
-            // InvoiceFormatter, all three need the same edit.
-            default:
-                return 0m;
-        }
-    }
-}
-```
-
-Not every `switch` is an OCP violation — mapping an enum to a display string, or a simple one-to-one property translation, is fine as a `switch` expression (see `csharp.md`). The signal to watch for is business *logic* (calculations, branching side effects) inside the switch, duplicated across multiple files for the same discriminator.
-
 ## Liskov Substitution Principle (LSP)
 
 A subtype must be usable anywhere its base type or interface is expected, without the caller needing to know which concrete type it got. If calling a method through the base contract can throw for some subtypes but not others, the contract is being violated, not fulfilled.
-
-#### Good — the interface is split so a read-only implementation only implements what it actually supports
 
 ```csharp
 public interface IReadRepository<T>
@@ -185,41 +160,9 @@ public class OrderRepository(AppDbContext dbContext) : IRepository<Order>
 }
 ```
 
-#### Bad — a fat interface forces an implementation to fake support it doesn't have
-
-```csharp
-public interface IRepository<T>
-{
-    Task<T?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task AddAsync(T entity, CancellationToken cancellationToken);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
-}
-
-// A read-only view is forced to implement Delete because the interface promises it —
-// any caller programming against IRepository<Order> can call Delete and get a runtime
-// crash instead of a compile-time signal that this operation isn't supported.
-public class ArchivedOrderReadRepository(AppDbContext dbContext) : IRepository<Order>
-{
-    public Task<Order?> GetByIdAsync(Guid id, CancellationToken cancellationToken)
-        => dbContext.ArchivedOrders.FirstOrDefaultAsync(o => o.Id == id, cancellationToken)!;
-
-    public Task AddAsync(Order entity, CancellationToken cancellationToken)
-        => throw new NotSupportedException("Archived orders are read-only.");
-
-    public Task DeleteAsync(Guid id, CancellationToken cancellationToken)
-        => throw new NotSupportedException("Archived orders are read-only.");
-    // This type is not substitutable for IRepository<Order> — code that works
-    // correctly against OrderRepository breaks at runtime against this one.
-}
-```
-
-LSP is also violated more subtly, without an outright exception: an override with a **narrower precondition** (rejecting inputs the base type accepts — e.g. a `WireTransferProcessor : PaymentProcessor` whose override throws for any `amount < 500m` when the base `ChargeAsync` accepts any positive amount) or a **widened side effect** the caller wouldn't expect from the base contract. If a subtype genuinely can't support the base contract's full input range, it should not inherit from (or implement) that contract — model the constraint as a distinct type instead of a runtime surprise.
-
 ## Interface Segregation Principle (ISP)
 
 Clients should depend only on the members they actually use. A fat interface forces every implementer — including test doubles — to provide (or fake) members that are irrelevant to most callers.
-
-#### Good — split by client need
 
 ```csharp
 public interface IUserReader
@@ -246,43 +189,9 @@ public class UserProfileController(IUserReader userReader) : ControllerBase
 }
 ```
 
-#### Bad — one fat interface every caller and every test double must fully implement
-
-```csharp
-public interface IUserService
-{
-    Task<User?> GetByIdAsync(Guid id, CancellationToken cancellationToken);
-    Task<IReadOnlyList<User>> SearchAsync(string query, CancellationToken cancellationToken);
-    Task<User> CreateAsync(CreateUserRequest request, CancellationToken cancellationToken);
-    Task UpdateAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken);
-    Task DeleteAsync(Guid id, CancellationToken cancellationToken);
-    Task SendWelcomeEmailAsync(Guid userId, CancellationToken cancellationToken);
-    Task<bool> VerifyPasswordAsync(Guid userId, string password, CancellationToken cancellationToken);
-    Task LockAccountAsync(Guid userId, CancellationToken cancellationToken);
-    Task<IReadOnlyList<string>> GetRolesAsync(Guid userId, CancellationToken cancellationToken);
-}
-
-// A controller that only reads a profile is still coupled to all nine members —
-// and any unit test needs a mock/stub implementing every single one, even the
-// eight it never calls.
-public class UserProfileController(IUserService userService) : ControllerBase
-{
-    [HttpGet("{id:guid}")]
-    public async Task<ActionResult<User>> GetById(Guid id, CancellationToken cancellationToken)
-    {
-        var user = await userService.GetByIdAsync(id, cancellationToken);
-        return user is null ? NotFound() : Ok(user);
-    }
-}
-```
-
-A strong ISP violation signal, tying back to LSP: if multiple implementations of an interface throw `NotImplementedException`/`NotSupportedException` for a subset of members, the interface is asking for more than any single implementer can honestly provide, and should be split.
-
 ## Dependency Inversion Principle (DIP)
 
 High-level modules (business logic) should not depend on low-level modules (concrete infrastructure); both should depend on abstractions. In practice: constructor-inject interfaces, never `new` up a concrete collaborator inside a class that has business logic.
-
-#### Good — the abstraction is injected, the concrete type is registered in DI
 
 ```csharp
 public interface IEmailSender
@@ -311,28 +220,6 @@ public class OrderNotificationService(IEmailSender emailSender) : IOrderNotifica
 services.AddScoped<IEmailSender, SmtpEmailSender>();
 services.AddScoped<IOrderNotificationService, OrderNotificationService>();
 ```
-
-#### Bad — a concrete, side-effecting collaborator is instantiated inline
-
-```csharp
-public class OrderNotificationService
-{
-    public async Task NotifyOrderConfirmedAsync(Order order)
-    {
-        // Instantiates a concrete SmtpClient directly inside business logic. This class
-        // cannot be unit tested without actually sending an email, cannot be reused with
-        // a different email provider, and hardcodes infrastructure config inline.
-        using var client = new SmtpClient("smtp.internal.somniosoftware.com", 587);
-        using var message = new MailMessage("noreply@somniosoftware.com", order.CustomerEmail,
-            "Order confirmed", $"Order {order.Id} is confirmed.");
-        await client.SendMailAsync(message);
-    }
-}
-```
-
-The clearest static-analysis signal for a DIP violation is `new ConcreteClassName()` appearing inside a class where an interface for that exact concern (`IPaymentGateway`, `IEmailSender`, `IOrderRepository`) already exists elsewhere in the codebase but isn't being used at this call site — e.g. a `RefundService(IOrderRepository orderRepository)` that reaches for `new StripePaymentGateway(...)` instead of accepting `IPaymentGateway` through the constructor, even though `IPaymentGateway` is already the standard abstraction used everywhere else. The abstraction exists — the class is simply choosing to bypass it.
-
-Not every `new` is a DIP violation: instantiating simple value objects, DTOs, records, or framework-provided collection types (`new List<T>()`, `new OrderResponse(...)`, `new StringBuilder()`) has no side effects and no swappable behavior to abstract — only flag `new` of a class that behaves like a collaborator or service.
 
 ## Cyclomatic Complexity
 

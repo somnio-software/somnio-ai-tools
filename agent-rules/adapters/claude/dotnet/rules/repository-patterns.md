@@ -1,5 +1,9 @@
-### Repository pattern over EF Core, async query patterns, pagination, and Unit of Work for ASP.NET Core Web APIs.
-> Applies to: `**/*Repository*.cs`
+---
+description: "Repository pattern over EF Core, async query patterns, pagination, and Unit of Work for ASP.NET Core Web APIs."
+paths:
+  - "**/*Repository*.cs"
+---
+
 # .NET Repository Patterns
 
 How to build a data access layer over EF Core 8 that stays testable, avoids N+1 queries, and keeps transaction boundaries at the right level.
@@ -19,8 +23,6 @@ Not every project needs a repository abstraction. `DbContext` and `DbSet<T>` are
 - Multiple services share the same non-trivial queries and duplicating them is worse than an abstraction
 - There's a genuine chance of swapping or wrapping the persistence provider (e.g., adding a cache layer in front of reads)
 
-#### Good — small API, `DbContext` injected directly
-
 ```csharp
 public class ProductsController(AppDbContext dbContext) : ControllerBase
 {
@@ -38,28 +40,9 @@ public class ProductsController(AppDbContext dbContext) : ControllerBase
 }
 ```
 
-#### Bad — repository abstraction with no consumers benefiting from it
-
-```csharp
-// A generic pass-through that adds a layer of indirection without adding value
-public interface IProductRepository
-{
-    Task<Product?> GetByIdAsync(Guid id);
-}
-
-public class ProductRepository(AppDbContext dbContext) : IProductRepository
-{
-    public Task<Product?> GetByIdAsync(Guid id)
-        => dbContext.Products.FirstOrDefaultAsync(p => p.Id == id);
-    // One method, one caller, never mocked, never swapped. Pure ceremony.
-}
-```
-
 ## Avoid Generic Repository Interfaces
 
 `IRepository<T>` looks appealing because it's reusable, but it tends to either leak `IQueryable<T>` (defeating the point of the abstraction) or force awkward generic method names (`FindAll`, `FindOne`, `Find(Expression<Func<T, bool>>)`) that don't say what the query actually does.
-
-#### Good — specific repository, intention-revealing methods
 
 ```csharp
 public interface IOrderRepository
@@ -108,29 +91,6 @@ public class OrderRepository(AppDbContext dbContext) : IOrderRepository
 }
 ```
 
-#### Bad — generic repository leaking `IQueryable` and vague method names
-
-```csharp
-public interface IRepository<T> where T : class
-{
-    IQueryable<T> FindAll(); // Leaks EF's IQueryable outside the data layer
-    Task<T?> FindOne(Expression<Func<T, bool>> predicate); // Any predicate — no intent, no reuse
-}
-
-public class Repository<T>(AppDbContext dbContext) : IRepository<T> where T : class
-{
-    public IQueryable<T> FindAll() => dbContext.Set<T>(); // Caller now writes LINQ against a "repository"
-
-    public Task<T?> FindOne(Expression<Func<T, bool>> predicate)
-        => dbContext.Set<T>().FirstOrDefaultAsync(predicate);
-}
-
-// Consumer ends up writing raw query logic anyway, defeating the abstraction:
-var activeOrders = orderRepository.FindAll()
-    .Where(o => o.CustomerId == userId && o.Status != OrderStatus.Completed)
-    .ToList(); // synchronous enumeration of an IQueryable — also blocks a thread
-```
-
 ## `AsNoTracking()` for Read-Only Queries
 
 EF Core tracks entities by default so it can detect changes for `SaveChangesAsync()`. That tracking has a real cost (snapshotting, change detection) and is wasted work for queries that only read data.
@@ -163,8 +123,6 @@ public async Task UpdateStatusAsync(Guid orderId, OrderStatus status, Cancellati
 
 Lazy loading and per-item queries in a loop generate one query per row. Use eager loading or projection instead.
 
-#### Good — eager loading with `Include`/`ThenInclude`
-
 ```csharp
 public Task<Order?> GetWithDetailsAsync(Guid id, CancellationToken cancellationToken)
     => dbContext.Orders
@@ -175,8 +133,6 @@ public Task<Order?> GetWithDetailsAsync(Guid id, CancellationToken cancellationT
         .FirstOrDefaultAsync(o => o.Id == id, cancellationToken);
 ```
 
-#### Good — projection avoids loading full entities entirely
-
 ```csharp
 public Task<List<OrderLineResponse>> GetLineSummariesAsync(Guid orderId, CancellationToken cancellationToken)
     => dbContext.OrderLines
@@ -184,25 +140,6 @@ public Task<List<OrderLineResponse>> GetLineSummariesAsync(Guid orderId, Cancell
         .Where(l => l.OrderId == orderId)
         .Select(l => new OrderLineResponse(l.ProductId, l.Product.Name, l.Quantity, l.UnitPrice))
         .ToListAsync(cancellationToken);
-```
-
-#### Bad — N+1: one query for orders, then one query per order for its lines
-
-```csharp
-public async Task<List<OrderResponse>> GetOrdersWithLineCountAsync(CancellationToken cancellationToken)
-{
-    var orders = await dbContext.Orders.ToListAsync(cancellationToken);
-    var result = new List<OrderResponse>();
-
-    foreach (var order in orders)
-    {
-        // Executes a separate round trip to the database for every single order
-        var lineCount = await dbContext.OrderLines.CountAsync(l => l.OrderId == order.Id, cancellationToken);
-        result.Add(new OrderResponse(order.Id, lineCount));
-    }
-
-    return result;
-}
 ```
 
 ## Unit of Work: `SaveChangesAsync()` Once Per Business Operation

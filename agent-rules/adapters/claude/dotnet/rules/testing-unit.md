@@ -1,5 +1,9 @@
-### xUnit unit-testing conventions — Fact/Theory, AAA structure, FluentAssertions, Moq/NSubstitute mocking discipline, test isolation, correct async testing. Applies to all C# unit test files.
-> Applies to: `**/*Tests.cs`
+---
+description: "xUnit unit-testing conventions — Fact/Theory, AAA structure, FluentAssertions, Moq/NSubstitute mocking discipline, test isolation, correct async testing. Applies to all C# unit test files."
+paths:
+  - "**/*Tests.cs"
+---
+
 # xUnit Unit Testing Conventions
 
 How to write focused, deterministic unit tests with xUnit: naming that documents behavior, Arrange-Act-Assert structure, expressive assertions with FluentAssertions, disciplined mocking of true external dependencies, and correct handling of async code and shared fixtures.

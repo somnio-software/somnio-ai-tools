@@ -1,5 +1,11 @@
-### Centralized error handling for ASP.NET Core Web APIs - IExceptionHandler, ProblemDetails, domain exceptions, and structured logging.
-> Applies to: `src/**/*Exception*.cs, src/**/*ExceptionHandler*.cs, src/**/Middleware/*.cs`
+---
+description: "Centralized error handling for ASP.NET Core Web APIs - IExceptionHandler, ProblemDetails, domain exceptions, and structured logging."
+paths:
+  - "src/**/*Exception*.cs"
+  - "src/**/*ExceptionHandler*.cs"
+  - "src/**/Middleware/*.cs"
+---
+
 # ASP.NET Core Error Handling Standards
 
 How to implement consistent, centralized error handling in an ASP.NET Core 8 Web API using `IExceptionHandler`, RFC 7807 `ProblemDetails`, and domain exceptions - instead of scattered try/catch blocks with inconsistent responses.
@@ -72,30 +78,6 @@ public class OrderService : IOrderService
         order.Status = OrderStatus.Cancelled;
         await _repository.SaveChangesAsync(cancellationToken);
     }
-}
-```
-
-#### Bad - Generic exceptions with magic strings, no way to map to a status code centrally
-
-```csharp
-public async Task<Order> GetByIdAsync(Guid id)
-{
-    var order = await _repository.FindAsync(id);
-    if (order is null)
-    {
-        throw new Exception("Order not found"); // Generic Exception - handler can't tell this apart from a bug
-    }
-    return order;
-}
-
-public async Task CancelAsync(Guid id)
-{
-    var order = await GetByIdAsync(id);
-    if (order.Status == OrderStatus.Shipped)
-    {
-        throw new InvalidOperationException("Cannot cancel, already shipped"); // Ambiguous: is this a bug or a business rule?
-    }
-    // ...
 }
 ```
 
@@ -190,38 +172,6 @@ if (app.Environment.IsDevelopment())
 }
 ```
 
-#### Bad - Try/catch repeated in every controller with an inconsistent shape
-
-```csharp
-[HttpGet("{id}")]
-public async Task<IActionResult> GetById(Guid id)
-{
-    try
-    {
-        var order = await _orderService.GetByIdAsync(id);
-        return Ok(order);
-    }
-    catch (Exception ex) // Catches everything, including real bugs, treats them all as "not found"
-    {
-        return NotFound(new { error = ex.Message }); // Ad-hoc shape, different from every other controller
-    }
-}
-
-[HttpPost]
-public async Task<IActionResult> Create(CreateOrderRequest request)
-{
-    try
-    {
-        var order = await _orderService.CreateAsync(request);
-        return Ok(order);
-    }
-    catch (Exception ex)
-    {
-        return BadRequest(ex.Message); // A different shape again - clients can't parse errors uniformly
-    }
-}
-```
-
 ## RFC 7807 `ProblemDetails` as the Standard Shape
 
 Always respond with `ProblemDetails` (or `ValidationProblemDetails` for field-level errors), never a bespoke error object. `[ApiController]` already returns `ValidationProblemDetails` for model-binding failures; `AddProblemDetails()` extends that same shape to every other error path (404s, unhandled exceptions, etc.).
@@ -303,30 +253,6 @@ public async Task<IActionResult> Withdraw(Guid id, WithdrawRequest request, Canc
 }
 ```
 
-#### Bad - Using exceptions for routine, expected control flow
-
-```csharp
-public async Task<Transaction> WithdrawAsync(Guid accountId, decimal amount)
-{
-    var account = await _repository.FindAsync(accountId);
-
-    try
-    {
-        if (account.Balance < amount)
-        {
-            throw new Exception("insufficient balance"); // Thrown on every declined withdrawal - a normal, frequent case
-        }
-        return await _repository.WithdrawAsync(accountId, amount);
-    }
-    catch (Exception ex)
-    {
-        // Exceptions used to signal an entirely expected business outcome,
-        // paying the cost of stack unwinding for something that happens routinely.
-        throw new InvalidOperationException("Withdrawal failed: " + ex.Message);
-    }
-}
-```
-
 ## Structured Logging at the Boundary
 
 Log with `ILogger<T>` using structured (named) parameters, and log each error exactly once - at the boundary (the exception handler or middleware), not again at every layer it passes through.
@@ -356,40 +282,6 @@ public async Task<Order> GetByIdAsync(Guid id, CancellationToken cancellationTok
 }
 ```
 
-#### Bad - Log-and-rethrow at every layer, producing duplicate log entries for one failure
-
-```csharp
-public async Task<Order> GetByIdAsync(Guid id)
-{
-    try
-    {
-        var order = await _repository.FindAsync(id);
-        if (order is null) throw new NotFoundException(nameof(Order), id);
-        return order;
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error in GetByIdAsync"); // Logged here...
-        throw;
-    }
-}
-
-// Controller
-[HttpGet("{id}")]
-public async Task<IActionResult> GetById(Guid id)
-{
-    try
-    {
-        return Ok(await _orderService.GetByIdAsync(id));
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error in GetById endpoint"); // ...and logged again here - same exception, two log entries
-        return StatusCode(500);
-    }
-}
-```
-
 ## Hiding Internal Details in Production
 
 Never let stack traces, connection strings, or raw exception messages reach a client outside Development.
@@ -413,23 +305,6 @@ Detail = _environment.IsDevelopment() || statusCode < 500
     : "An unexpected error occurred. Please try again later.", // 5xx: never leak internals
 ```
 
-#### Bad - Same verbose response in every environment
-
-```csharp
-app.UseExceptionHandler(errorApp =>
-{
-    errorApp.Run(async context =>
-    {
-        var feature = context.Features.Get<IExceptionHandlerFeature>();
-        await context.Response.WriteAsJsonAsync(new
-        {
-            message = feature?.Error.Message,
-            stackTrace = feature?.Error.StackTrace, // Leaked in every environment, including Production
-        });
-    });
-});
-```
-
 ## Validate Before Mutating
 
 Check existence and business rules before performing a write, and fail with the specific domain exception - don't let an EF Core `DbUpdateException` or a null-reference bubble up as an unhandled 500.
@@ -448,18 +323,6 @@ public async Task UpdateAsync(Guid id, UpdateInvoiceRequest request, Cancellatio
     invoice.Amount = request.Amount;
     invoice.DueDate = request.DueDate;
     await _repository.SaveChangesAsync(cancellationToken);
-}
-```
-
-#### Bad - No existence/state check, lets the database throw
-
-```csharp
-public async Task UpdateAsync(Guid id, UpdateInvoiceRequest request)
-{
-    var invoice = await _repository.FindAsync(id); // Could be null
-    invoice.Amount = request.Amount;                // NullReferenceException -> unhandled 500
-    invoice.DueDate = request.DueDate;
-    await _repository.SaveChangesAsync();           // Or a DbUpdateException if a concurrency check fails
 }
 ```
 

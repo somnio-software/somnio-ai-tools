@@ -1,5 +1,9 @@
-### Project/solution layering, dependency direction, and DI registration organization for ASP.NET Core Web API solutions.
-> Applies to: `**/*.cs`
+---
+description: "Project/solution layering, dependency direction, and DI registration organization for ASP.NET Core Web API solutions."
+paths:
+  - "**/*.cs"
+---
+
 # .NET Module Structure
 
 How to organize an ASP.NET Core Web API solution into layers with a clear dependency direction, consistent folder conventions, and composable dependency-injection registration.

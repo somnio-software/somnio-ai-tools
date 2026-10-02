@@ -1,5 +1,9 @@
-### General C# / .NET 8 language conventions — naming, nullable reference types, records vs classes, pattern matching, LINQ discipline, required members, primary constructors, file-scoped namespaces, async void avoidance. Applies to all C# files.
-> Applies to: `**/*.cs`
+---
+description: "General C# / .NET 8 language conventions — naming, nullable reference types, records vs classes, pattern matching, LINQ discipline, required members, primary constructors, file-scoped namespaces, async void avoidance. Applies to all C# files."
+paths:
+  - "**/*.cs"
+---
+
 # C# / .NET 8 Best Practices
 
 General-purpose C# 12 / .NET 8 conventions covering naming, nullability, data-modeling choices (records vs classes), pattern matching, LINQ discipline, modern boilerplate reduction (`required`, primary constructors), namespace style, and safe async usage. These apply across API projects, class libraries, and console tools alike.
