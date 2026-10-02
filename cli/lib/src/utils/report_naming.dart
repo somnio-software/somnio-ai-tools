@@ -1,6 +1,10 @@
 /// Pure, testable helpers that build the canonical report file name shared by
 /// every audit skill: `YYYY-MM-DD-<project-slug>-<report-type>.md`.
 ///
+/// The project segment is the git repository name (see `repo_name.dart`), so
+/// the same repo yields the same name whatever its checkout directory is
+/// called, from a linked worktree, or from a monorepo subdirectory.
+///
 /// The date comes first so `ls reports/` sorts chronologically on its own, and
 /// the project slug makes reports from different projects distinguishable once
 /// they are collected into a shared folder.
@@ -40,6 +44,47 @@ String projectSlug(String raw) {
       .replaceAll(RegExp('-+'), '-')
       .replaceAll(RegExp(r'^-+|-+$'), '');
   return slug.isEmpty ? kFallbackProjectSlug : slug;
+}
+
+/// Extracts the repository name from a git remote URL.
+///
+/// Handles the scp-like SSH form (`git@github.com:org/repo.git`), URL forms
+/// (`https://`, `ssh://`, `git://`, `file://`) and plain paths, with or without
+/// a trailing `.git` or `/`. Returns `null` when no name can be extracted.
+///
+/// Examples:
+/// - `git@github.com:somnio/hoopis-backend.git` -> `hoopis-backend`
+/// - `https://github.com/somnio/hoopis-backend` -> `hoopis-backend`
+String? repoNameFromRemoteUrl(String url) {
+  final trimmed = url.trim().replaceAll(RegExp(r'[/\\]+$'), '');
+  final lastSegment = trimmed.split(RegExp(r'[/\\:]')).last;
+  final name = lastSegment.endsWith('.git')
+      ? lastSegment.substring(0, lastSegment.length - 4)
+      : lastSegment;
+  return name.isEmpty ? null : name;
+}
+
+/// Extracts the repository name from the output of
+/// `git rev-parse --path-format=absolute --git-common-dir`.
+///
+/// The common dir is shared by every worktree, so this yields the main
+/// checkout's name even from a linked worktree: `/src/hoopis-backend/.git`
+/// -> `hoopis-backend`. A bare repository (`/srv/hoopis-backend.git`) loses
+/// its `.git` suffix. Returns `null` when no name can be extracted.
+String? repoNameFromGitCommonDir(String commonDir) {
+  final segments = commonDir
+      .trim()
+      .split(RegExp(r'[/\\]+'))
+      .where((s) => s.isNotEmpty)
+      .toList();
+  if (segments.isEmpty) return null;
+  final last = segments.last;
+  if (last == '.git') {
+    return segments.length > 1 ? segments[segments.length - 2] : null;
+  }
+  final name =
+      last.endsWith('.git') ? last.substring(0, last.length - 4) : last;
+  return name.isEmpty ? null : name;
 }
 
 /// Formats [date] as `YYYY-MM-DD` using its local calendar fields.

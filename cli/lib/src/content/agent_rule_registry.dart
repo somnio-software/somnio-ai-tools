@@ -15,6 +15,7 @@ class AgentRuleRegistry {
   static const List<String> stacks = [
     'dart',
     'django',
+    'dotnet',
     'fastapi',
     'flask',
     'flutter',

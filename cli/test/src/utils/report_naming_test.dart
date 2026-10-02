@@ -60,6 +60,71 @@ void main() {
     });
   });
 
+  group('repoNameFromRemoteUrl', () {
+    test('parses the scp-like SSH form', () {
+      expect(
+        repoNameFromRemoteUrl('git@github.com:somnio/hoopis-backend.git'),
+        'hoopis-backend',
+      );
+    });
+
+    test('parses HTTPS with and without .git', () {
+      expect(
+        repoNameFromRemoteUrl('https://github.com/somnio/hoopis-backend.git'),
+        'hoopis-backend',
+      );
+      expect(
+        repoNameFromRemoteUrl('https://github.com/somnio/hoopis-backend'),
+        'hoopis-backend',
+      );
+    });
+
+    test('parses ssh:// URLs with a port', () {
+      expect(
+        repoNameFromRemoteUrl('ssh://git@host:2222/somnio/hoopis-backend.git'),
+        'hoopis-backend',
+      );
+    });
+
+    test('ignores trailing slashes and whitespace', () {
+      expect(
+        repoNameFromRemoteUrl('https://github.com/somnio/hoopis-backend/\n'),
+        'hoopis-backend',
+      );
+    });
+
+    test('parses a local path remote', () {
+      expect(repoNameFromRemoteUrl('/srv/git/hoopis-backend.git'),
+          'hoopis-backend');
+    });
+
+    test('returns null when nothing can be extracted', () {
+      expect(repoNameFromRemoteUrl(''), isNull);
+      expect(repoNameFromRemoteUrl('https://github.com/.git'), isNull);
+    });
+  });
+
+  group('repoNameFromGitCommonDir', () {
+    test('uses the directory holding .git', () {
+      expect(
+        repoNameFromGitCommonDir('/src/hoopis-backend/.git'),
+        'hoopis-backend',
+      );
+    });
+
+    test('strips .git from a bare repository', () {
+      expect(
+        repoNameFromGitCommonDir('/srv/hoopis-backend.git'),
+        'hoopis-backend',
+      );
+    });
+
+    test('returns null when nothing can be extracted', () {
+      expect(repoNameFromGitCommonDir(''), isNull);
+      expect(repoNameFromGitCommonDir('/.git'), isNull);
+    });
+  });
+
   group('isoDate', () {
     test('formats as YYYY-MM-DD', () {
       expect(isoDate(DateTime(2026, 9, 14)), '2026-09-14');

@@ -312,30 +312,43 @@ class _RulesInstallCommand extends Command<int> {
   /// latest content derived from the canonical rules in `agent-rules/rules/`.
   Future<int> _generateAdapters(String repoRoot) async {
     final progress = _logger.progress('Generating adapter files');
-    try {
-      final result = await Process.run(
-        'python3',
-        ['scripts/generate.py'],
-        workingDirectory: p.join(repoRoot, 'agent-rules'),
-      );
-      if (result.exitCode == 0) {
-        progress.complete('Adapter files generated');
-        return ExitCode.success.code;
-      } else {
-        progress.fail('Failed to generate adapter files');
-        final stderr = (result.stderr as String).trim();
-        if (stderr.isNotEmpty) _logger.err(stderr);
-        return ExitCode.software.code;
+
+    // Try common Python launcher names in order. On Windows, `python3` and
+    // `python` are sometimes broken "App execution alias" stubs that spawn
+    // successfully but immediately fail with a Store-install prompt instead
+    // of a ProcessException, so a non-zero exit code is also treated as a
+    // miss and the next candidate is tried.
+    const candidates = ['python3', 'python', 'py'];
+    String? lastStderr;
+
+    for (final binary in candidates) {
+      try {
+        final result = await Process.run(
+          binary,
+          ['scripts/generate.py'],
+          workingDirectory: p.join(repoRoot, 'agent-rules'),
+        );
+        if (result.exitCode == 0) {
+          progress.complete('Adapter files generated');
+          return ExitCode.success.code;
+        }
+        lastStderr = (result.stderr as String).trim();
+      } on ProcessException {
+        // Binary not found at all — try the next candidate.
+        continue;
       }
-    } on ProcessException catch (e) {
-      progress.fail('Could not run generate script');
-      _logger.err(
-        'Python 3 is required to generate adapter files. '
-        'Install it from https://www.python.org\n'
-        '  Details: $e',
-      );
-      return ExitCode.software.code;
     }
+
+    progress.fail('Failed to generate adapter files');
+    _logger.err(
+      'Python 3 is required to generate adapter files '
+      '(tried: ${candidates.join(", ")}).\n'
+      'Install it from https://www.python.org, or on Windows, disable the '
+      'broken "App execution alias" stub at Settings > Apps > Advanced app '
+      'settings > App execution aliases.',
+    );
+    if (lastStderr != null && lastStderr.isNotEmpty) _logger.err(lastStderr);
+    return ExitCode.software.code;
   }
 
   /// Detects which supported agents are available on the machine.

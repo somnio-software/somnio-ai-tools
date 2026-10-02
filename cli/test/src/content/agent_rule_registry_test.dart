@@ -38,6 +38,7 @@ void main() {
         [
           'dart',
           'django',
+          'dotnet',
           'fastapi',
           'flask',
           'flutter',

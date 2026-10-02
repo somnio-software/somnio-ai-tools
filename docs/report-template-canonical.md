@@ -1,7 +1,7 @@
 # Canonical Health-Audit Report Template
 
-**Status:** authoritative reference · **Applies to:** the six `skills/<stack>-health-audit/`
-bundles (`flutter`, `react`, `angular`, `angularjs`, `python`, `nestjs`) · **Consumed by:** nobody.
+**Status:** authoritative reference · **Applies to:** the seven `skills/<stack>-health-audit/`
+bundles (`flutter`, `react`, `angular`, `angularjs`, `python`, `nestjs`, `dotnet`) · **Consumed by:** nobody.
 This file is **not** read by the CLI, the runner, or any `references/*.md` rule. It is the single
 written source of truth a skill author copies from when hand-editing a skill's
 `assets/report-template.md`. Analogous in spirit to `agent-rules/rules/<stack>/*.md` being the
@@ -43,9 +43,9 @@ canonical source for adapters.
 ```
 
 Numbering is **relative, not absolute**. Skills without slot B (react/angular/angularjs) don't
-compress the count, because they gain a Performance section that flutter/python/nestjs don't have —
+compress the count, because they gain a Performance section that flutter/python/nestjs/dotnet don't have —
 every skill lands on exactly **15** numbered sections, but *which* numbered slot Testing/Code
-Quality/Performance sit in differs. What must be identical across all six is the **order and the
+Quality/Performance sit in differs. What must be identical across all seven is the **order and the
 set** of sections, never the absolute numbers.
 
 Every scored section keeps the same 7-field body shape it has today (verified against
@@ -64,11 +64,12 @@ Which skill uses which slot, and where each lands after Quality Index is removed
 | flutter | State Management | Repositories & Data Layer | 7 | 8 | — | 15 |
 | python | API Design | Data Layer | 7 | 8 | — | 15 |
 | nestjs | API Design | Data Layer | 7 | 8 | — | 15 |
+| dotnet | API Design | Data Layer | 7 | 8 | — | 15 |
 | react | State Management | — (no slot B) | 6 | 7 | 8 | 15 |
 | angular | State Management | — (no slot B) | 6 | 7 | 8 | 15 |
 | angularjs | State Management | — (no slot B) | 6 | 7 | 8 | 15 |
 
-flutter/python/nestjs have both slots and no Performance section (weight family **A**).
+flutter/python/nestjs/dotnet have both slots and no Performance section (weight family **A**).
 react/angular/angularjs have only slot A, no slot B, and a Performance section (weight family
 **B** — see [§9](#9-appendix-scoring-methodology)). Both groups still total 15 numbered sections;
 the Performance section fills the numbering gap left by the missing slot B.
@@ -108,6 +109,7 @@ Rules:
   | angularjs | `[AngularJS 1.x]` |
   | python | `[FastAPI/Django/Flask]` |
   | nestjs | `[NestJS/Node.js]` |
+  | dotnet | `[.NET/ASP.NET Core — Web API/Blazor/Worker Service/Class Library]` |
 
 - Exclusions text:
   - **flutter, python, nestjs already have one** — keep the existing line **verbatim**, unchanged.
@@ -115,6 +117,8 @@ Rules:
     `> **Exclusions:** Never recommend adding new languages/translations, CODEOWNERS/SECURITY.md files, or platform-specific Android/iOS build workflows.`
     (python's and nestjs's existing exclusion lines were not re-read for this document — copy
     whatever each of those two templates already renders, verbatim; do not invent their wording.)
+  - **dotnet** renders the same line as nestjs, verbatim:
+    `> **Exclusions:** Never recommend CODEOWNERS/SECURITY.md files or deployment-specific workflows.`
   - **react, angular, angularjs have none today** — add exactly:
     `> **Exclusions:** Never recommend adding new languages/translations, CODEOWNERS/SECURITY.md files, or deployment-specific workflows.`
 
@@ -282,7 +286,7 @@ New, unnumbered block. Insert between `## 15. Appendix: Evidence Index` and `## 
 This appendix is the **only** report-facing surface where weights may appear anywhere in the
 report. Use your own skill's weight family — **never cross-apply the two families.**
 
-### Weight family A — flutter, python, nestjs (no Performance section)
+### Weight family A — flutter, python, nestjs, dotnet (no Performance section)
 
 | Section | Weight |
 |---------|--------|
@@ -349,14 +353,14 @@ prose to match the table, not the other way around.
 | C3 | Renumbering demands a full literal `Section N` prose sweep across `references/report-generator.md`, `references/report-format-enforcer.md` and `references/harness-analysis.md` | A missed literal reference makes the rubric validate the wrong section, silently |
 | C4 | Do not touch `harness-analysis.md`'s internal `Section 6` (or similar) references | Those point at sections of that document's own 10-dimension rubric, not at report sections. Only renumber a reference if it unambiguously points at a numbered section of the generated report |
 | C5 | Weight family A and family B stay separate; never cross-apply | They are different formulas for a reason (presence of a Performance section); cross-applying changes every score the skill produces |
-| C6 | Nothing in Dart validates a **generated report** | `cli/test/src/content/report_template_drift_test.dart` validates the six **templates**, but no code parses a produced report. For the report itself, the format-enforcer pass (`references/report-format-enforcer.md`) is still the only safety net, so its instructions must be exactly right |
+| C6 | Nothing in Dart validates a **generated report** | `cli/test/src/content/report_template_drift_test.dart` validates the seven **templates**, but no code parses a produced report. For the report itself, the format-enforcer pass (`references/report-format-enforcer.md`) is still the only safety net, so its instructions must be exactly right |
 
 
 ---
 
 ## 12. Automated check — the templates are not hand-verified any more
 
-`cli/test/src/content/report_template_drift_test.dart` reads all six
+`cli/test/src/content/report_template_drift_test.dart` reads all seven
 `skills/<stack>-health-audit/assets/report-template.md` files and fails the build on
 divergence. It enforces the invariants in this document: the 15-section numbering, the canonical
 section-name sequence (tolerating only the documented stack-variable slots), the two trailing

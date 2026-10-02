@@ -233,7 +233,7 @@ here. Keep that exact filename.
 
 Output: Save report to
 \`./reports/<YYYY-MM-DD>-<project-slug>-${tech}-health-audit.md\`
-(date of the run, then the project directory name slugified to kebab-case)
+(date of the run, then the git repository name slugified to kebab-case)
 ''';
 
   String _sampleReferenceTemplate(String tech, String techTitle) => '''
@@ -825,7 +825,7 @@ here. Keep that exact filename.
 
 Output: Save report to
 \`./reports/<YYYY-MM-DD>-<project-slug>-${tech}-best-practices.md\`
-(date of the run, then the project directory name slugified to kebab-case)
+(date of the run, then the git repository name slugified to kebab-case)
 ''';
 
   /// A freshly scaffolded best-practices template must already conform to the

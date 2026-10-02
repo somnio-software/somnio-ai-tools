@@ -5,6 +5,31 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.0] - 2026-10-02
+
+### Added
+
+- **.NET Health Audit Skill**: New `dotnet-health-audit` skill (`somnio-dh` / `dh`) that performs a comprehensive .NET / ASP.NET Core Project Health Audit across 17 steps. Analyzes tech stack (SDK/TargetFramework currency, official Microsoft support-lifecycle status computed from release-cadence rules rather than a hardcoded date table, NuGet dependency vulnerabilities/outdated packages via `dotnet list package --vulnerable/--outdated`), architecture (Vertical Slice/Onion/Clean Architecture/N-Layer/Flat pattern detection, SOLID principle compliance, and real cyclomatic complexity measured via a forced-on Roslyn analyzer build that modifies no files), API design, data layer, testing, code quality, CI/CD, documentation, and AI harness & adoption. Produces its report in the unified health-audit format shared with the other six `*-health-audit` skills (15 numbered sections plus the Scoring Methodology appendix and Report Metadata table, weight family A), saved to `reports/<YYYY-MM-DD>-<project>-dotnet-health-audit.md`. Support lifecycle and dependency security are reported inside Tech Stack, and SOLID and cyclomatic complexity inside Architecture, rather than as extra sections.
+- **.NET Best Practices Skill**: New `dotnet-best-practices` skill (`somnio-dp` / `dp`) that runs a micro-level .NET / ASP.NET Core code quality audit across 7 steps, including a dedicated SOLID Compliance dimension. Validates code against `agent-rules/rules/dotnet/*.md` standards for testing, architecture compliance, SOLID principles, code standards, DTO validation, and error handling. Produces a detailed violations report with a prioritized action plan in the unified best-practices format shared with the other six `*-best-practices` skills (`/100` scale, Scoring Methodology appendix, Report Metadata table), saved to `reports/<YYYY-MM-DD>-<project>-dotnet-best-practices.md`.
+- **.NET agent rules stack**: Added a new `dotnet` stack with 10 canonical rule files (`controller-patterns`, `dto-validation`, `error-handling`, `module-structure`, `repository-patterns`, `service-patterns`, `testing-unit`, `testing-integration`, `csharp`, `solid-principles`) to `AgentRuleRegistry.stacks`, enabling `somnio rules install --stacks dotnet` alongside the existing stacks.
+
+### Fixed
+
+- **Windows npm-shim argument corruption**: `somnio run` invoked AI CLIs installed via npm (e.g. `claude`) through their Windows `.cmd`/`.ps1` shim, whose batch-style argument forwarding is line-oriented and silently truncated/corrupted multi-line prompts. `StepExecutor` now resolves the real bundled executable behind the shim (`node_modules/<npmPackage>/bin/<binary>.exe`, via a new `PlatformUtils.resolveWindowsNpmExecutable`) and invokes it directly, falling back to the previous behavior only when the real executable can't be located. This affects every skill run via `somnio run` on Windows, not just the new .NET skills.
+- **`somnio rules install` Python resolution**: `_generateAdapters` now tries `python3`, `python`, and `py` in order instead of only `python3`, which fails on Windows machines where `python3` is a broken "App execution alias" Store stub even though a working Python install exists under a different launcher name.
+- **The real-git `repo_name_test` cases no longer touch the repository that runs them.** They inherited `GIT_DIR` and the other `GIT_*` variables a git hook exports, so under the `pre-push` hook their `git init` and `git remote add` ran against the pushing repository instead of the temp directory, set `core.bare = true` on it and left the main checkout unusable (`fatal: this operation must be run in a work tree`) until it was reset by hand with `git config core.bare false`. The tests now drop every `GIT_*` variable through a new `processGitRunner({environment})` in `cli/lib/src/utils/repo_name.dart`, which `resolveRepoName` also uses by default, so the real process path stays covered.
+
+### Changed
+
+- **Two hardcoded registry-derived test expectations updated**: `agent_rule_registry_test.dart`'s canonical stack list now includes `dotnet`, and `skill_registry_test.dart`'s technology-list assertion (already loosened to `containsAll` in 2.13.0) now also covers the new `.NET` entry.
+- **The report-format drift tests now cover the .NET skills**: `report_template_drift_test.dart` checks `dotnet-health-audit` as a seventh health audit in weight family A, and `best_practices_template_drift_test.dart` checks `dotnet-best-practices` as a seventh best-practices skill with its own section list and weights. `plan_parser_integration_test.dart` also gains step-count expectations for both skills, and `dotnet-health-audit` joins the skills whose `harness-analysis` step must resolve `model: mid`. `docs/report-template-canonical.md` and `docs/best-practices-template-canonical.md` list the .NET values.
+
+## [3.0.1] - 2026-10-02
+
+### Changed
+
+- **The project segment of every report file name is now the git repository name.** It used to be the current directory name, so the same repo produced different file names depending on what the checkout folder was called, whether the audit ran from a linked worktree (named after the branch), or from a monorepo subdirectory (`packages/api` → `api`). It is now read from the `origin` remote URL (`git@github.com:somnio/hoopis-backend.git` → `hoopis-backend`). Without an `origin` remote it falls back to the main checkout's directory, via `git rev-parse --git-common-dir`, so worktrees and subdirectories still resolve to the repo; outside a git repo it is the current directory name, as before. `--project-name` still overrides it. Applies to `somnio run` (new `resolveRepoName` in `cli/lib/src/utils/repo_name.dart`) and to the shell snippet every audit skill and `/quick-check` use when they run outside the CLI, so both paths produce the same name. The `<YYYY-MM-DD>-<project>-<audit>.md` shape is unchanged.
+
 ## [3.0.0] - 2026-09-21
 
 This is a major release because the shape of what several skills produce changed.
