@@ -5,6 +5,13 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1] - 2026-10-02
+
+### Fixed
+
+- **`security-audit` source scans no longer report "0 findings" for files they never scanned.** The SAST and secret scans in `references/sast.md`, `references/secret-patterns.md` and the agents that restate them grepped fixed directories only (`src/ lib/ apps/` for TS/JS, `src/ app/` for Python, `lib/ packages/` for Dart, and `lib/` plus the root `pubspec.yaml` for Firebase App Check), so repos with any other layout — a Next.js app router, a Flutter monorepo with `apps/*/lib` and no root `pubspec.yaml` — were silently skipped. `references/tool-installer.md` (step 1 / Wave 0) now builds the source scope once from `git ls-files` per detected language (falling back to `find` outside git), excluding dependencies, build outputs, generated code and tests, and writes `reports/.artifacts/security-audit/scope/` with a `scan.sh` helper. Every scan block sources it and ends with `[label] N match(es) across M files` or `not applicable: 0 files in scope`, both artifacts open with a **Scope** line (including `UNSCANNED` tracked code), and App Check detection reads every tracked `pubspec.yaml`. The scan patterns themselves are unchanged.
+- **JS secret scans no longer drop every `sk_test_` hit.** They piped through `grep -v "test|spec"`, which filters on the whole match line; tests are now excluded by path instead.
+
 ## [3.1.0] - 2026-10-02
 
 ### Added
