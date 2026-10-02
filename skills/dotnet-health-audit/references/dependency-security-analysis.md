@@ -12,7 +12,7 @@ health input for the Tech Stack score.
 Stack** section of the final report (alongside SDK version and
 TargetFramework findings from `version-alignment.md`/`config-analysis.md`)
 — it is NOT a new standalone report section. The report structure remains
-the current 8 scored dimensions / 15 sections defined in
+the current 9 scored dimensions / 15 numbered sections defined in
 `references/report-generator.md`. For a deeper security review beyond
 dependency scanning (secrets, auth, injection, transport security, etc.),
 recommend the user run the standalone Security Audit (`/somnio:security-audit`)

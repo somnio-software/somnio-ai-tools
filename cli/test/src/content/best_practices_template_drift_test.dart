@@ -1,10 +1,10 @@
-// Guards the six `skills/<stack>-best-practices/assets/report-template.md`
+// Guards the seven `skills/<stack>-best-practices/assets/report-template.md`
 // files against re-diverging from the unified skeleton they were just moved
-// onto (flutter, react, angular, angularjs, python, nestjs). Unlike the
-// health-audit family (see `report_template_drift_test.dart`), these six
+// onto (flutter, react, angular, angularjs, python, nestjs, dotnet). Unlike
+// the health-audit family (see `report_template_drift_test.dart`), these seven
 // templates legitimately have a different number of scored sections per
 // stack — each stack runs a different set of analysis references — so this
-// test tolerates that variability and asserts only what every one of the six
+// test tolerates that variability and asserts only what every one of the seven
 // genuinely shares: the section skeleton around the stack-variable middle,
 // the `/100` scale, the scoring legend, the absence of a Weight column in
 // the Score Breakdown table, and that each skill's own appendix weights
@@ -18,7 +18,15 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:test/test.dart';
 
-const _stacks = ['flutter', 'react', 'angular', 'angularjs', 'python', 'nestjs'];
+const _stacks = [
+  'flutter',
+  'react',
+  'angular',
+  'angularjs',
+  'python',
+  'nestjs',
+  'dotnet',
+];
 
 /// Expected total numbered-section count per stack, read from the real
 /// templates (verified against the current files before writing this test).
@@ -29,6 +37,7 @@ const _expectedSectionCount = <String, int>{
   'angularjs': 10,
   'python': 11,
   'nestjs': 9,
+  'dotnet': 10,
 };
 
 /// Expected titles of the stack-variable scored sections, in order, between
@@ -73,6 +82,14 @@ const _expectedScoredSections = <String, List<String>>{
   'nestjs': [
     'Testing Quality',
     'Architecture Compliance',
+    'Code Standards',
+    'DTO Validation',
+    'Error Handling',
+  ],
+  'dotnet': [
+    'Testing Quality',
+    'Architecture Compliance',
+    'SOLID Compliance',
     'Code Standards',
     'DTO Validation',
     'Error Handling',
@@ -128,9 +145,17 @@ const _expectedWeights = <String, Map<String, double>>{
     'DTO Validation': 15,
     'Error Handling': 20,
   },
+  'dotnet': {
+    'Testing Quality': 18,
+    'Architecture Compliance': 20,
+    'SOLID Compliance': 20,
+    'Code Standards': 14,
+    'DTO Validation': 12,
+    'Error Handling': 16,
+  },
 };
 
-/// The scorecard's scoring-legend blockquote, byte-identical across all six
+/// The scorecard's scoring-legend blockquote, byte-identical across all seven
 /// — including the en dash (U+2013) and middle dot (U+00B7). Same literal
 /// as `report_template_drift_test.dart`'s `_scoringLegend`.
 const _scoringLegend =

@@ -6,7 +6,7 @@ description: |
   <example>
   Context: An orchestrator dispatches the docs-analyzer as part of Wave 4 of a .NET health audit.
   user: "Run a .NET health audit on this project."
-  assistant: "I will review README setup instructions, check GenerateDocumentationFile/XML doc comment coverage, verify Swagger UI is configured, and check for documented environment/configuration requirements. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_08_documentation_analysis.md."
+  assistant: "I will review README setup instructions, check GenerateDocumentationFile/XML doc comment coverage, verify Swagger UI is configured, and check for documented environment/configuration requirements. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_11_documentation_analysis.md."
   <commentary>
   Documentation presence/quality checking is a mechanical read-and-checklist task — cheap tier is appropriate.
   </commentary>

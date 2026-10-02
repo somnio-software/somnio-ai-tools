@@ -6,7 +6,7 @@ description: |
   <example>
   Context: An orchestrator dispatches the data-layer-analyzer as part of Wave 3 of a .NET health audit.
   user: "Run a .NET health audit on this project."
-  assistant: "I will detect the ORM (EF Core/Dapper), DbContext and entity configuration organization, repository pattern usage, AsNoTracking/Include usage for N+1 prevention, migration setup, and transaction handling. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_07_data_layer_analysis.md."
+  assistant: "I will detect the ORM (EF Core/Dapper), DbContext and entity configuration organization, repository pattern usage, AsNoTracking/Include usage for N+1 prevention, migration setup, and transaction handling. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_09_data_layer_analysis.md."
   <commentary>
   Detecting N+1 query risk and judging data-layer organization quality requires code reasoning, not just presence checks — mid tier.
   </commentary>

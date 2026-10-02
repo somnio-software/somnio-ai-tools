@@ -1,7 +1,7 @@
-// Guards the six `skills/<stack>-health-audit/assets/report-template.md`
+// Guards the seven `skills/<stack>-health-audit/assets/report-template.md`
 // files against re-diverging from `docs/report-template-canonical.md`
 // (the contract shipped in commit 1470462). Every invariant here is a
-// property those six near-identical, hand-maintained files must share;
+// property those seven near-identical, hand-maintained files must share;
 // a stack-specific field list, wording or evidence bullet is left alone.
 //
 // These templates are NOT read by the CLI at runtime (see the canonical
@@ -15,7 +15,7 @@ import 'package:test/test.dart';
 
 /// Skills using weight family A: no Performance section, has a slot-B
 /// section (Repositories & Data Layer / Data Layer).
-const _groupA = ['flutter', 'python', 'nestjs'];
+const _groupA = ['flutter', 'python', 'nestjs', 'dotnet'];
 
 /// Skills using weight family B: no slot-B section, has a Performance
 /// section instead.
@@ -24,7 +24,7 @@ const _groupB = ['react', 'angular', 'angularjs'];
 const _allStacks = [..._groupA, ..._groupB];
 
 /// Sections 9..15 (Documentation & Operations through Appendix: Evidence
-/// Index) must be byte-identical across all six templates.
+/// Index) must be byte-identical across all seven templates.
 const _canonicalTail = [
   'Documentation & Operations',
   'CI/CD (Configs Found in Repo)',
@@ -35,13 +35,13 @@ const _canonicalTail = [
   'Appendix: Evidence Index',
 ];
 
-/// The scorecard's scoring-legend blockquote, byte-identical across all six
+/// The scorecard's scoring-legend blockquote, byte-identical across all seven
 /// — including the en dash (U+2013) and middle dot (U+00B7).
 const _scoringLegend =
     '> **Scoring:** Strong (85–100) · Fair (70–84) · '
     'Weak (0–69)';
 
-/// Weight family A (flutter, python, nestjs) — the exact multiset of
+/// Weight family A (flutter, python, nestjs, dotnet) — the exact multiset of
 /// per-section weights, order-independent.
 const _groupAWeights = <double>[0.18, 0.18, 0.18, 0.10, 0.10, 0.10, 0.03, 0.03, 0.10];
 
@@ -230,7 +230,7 @@ void main() {
         }
       });
 
-      test('sections 9..15 are byte-identical across all six skills', () {
+      test('sections 9..15 are byte-identical across all seven skills', () {
         for (final stack in _allStacks) {
           final titles = headings[stack]!.map((h) => h.title).toList();
           final tail = titles.sublist(8, 15);

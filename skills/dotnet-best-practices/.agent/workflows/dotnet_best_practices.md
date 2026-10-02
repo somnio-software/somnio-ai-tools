@@ -46,10 +46,6 @@ STEP 6 COMPLETED: [log result] # model: cheap
 ## Wave 3: Report Generation (Sequential - Requires ALL previous results) # model: frontier
 
 Read `dotnet-best-practices/references/best-practices-format-enforcer.md` and follow ALL instructions in the prompt field
-STEP 7 COMPLETED: [log result] # model: frontier
-
 Read `dotnet-best-practices/references/best-practices-generator.md` and follow ALL instructions in the prompt field
-STEP 8 COMPLETED: [log result] # model: frontier
-
-Save the final Markdown report to `./reports/dotnet-best-practices-report.md`
-STEP 9 COMPLETED: Report exported # model: frontier
+Save the final Markdown report to `reports/<YYYY-MM-DD>-<project>-dotnet-best-practices.md` (resolve the path as `SKILL.md` "Report File Name" describes)
+STEP 7 COMPLETED: [log result] # model: frontier

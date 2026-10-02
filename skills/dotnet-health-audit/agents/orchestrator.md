@@ -6,7 +6,7 @@ description: |
   <example>
   Context: A user triggers a .NET health audit from within a Claude session.
   user: "Run a .NET health audit on this project."
-  assistant: "I will orchestrate the .NET health audit across 5 waves. First I will dispatch env-setup-agent (Wave 0, sequential). If the GATE passes, I will dispatch repo-analyzer, config-analyzer, and support-lifecycle-analyzer in parallel (Wave 1), then cicd-analyzer, testing-analyzer, code-quality-analyzer, and dependency-security-analyzer in parallel (Wave 2), then api-design-analyzer, data-layer-analyzer, and solid-compliance-analyzer in parallel (Wave 3), then docs-analyzer (Wave 4), and finally hand all artifacts to report-writer-agent (Wave 5)."
+  assistant: "I will orchestrate the .NET health audit across 5 waves. First I will dispatch env-setup-agent (Wave 0, sequential). If the GATE passes, I will dispatch repo-analyzer, config-analyzer, and support-lifecycle-analyzer in parallel (Wave 1), then cicd-analyzer, testing-analyzer, code-quality-analyzer, dependency-security-analyzer, and harness-analyzer in parallel (Wave 2), then api-design-analyzer, data-layer-analyzer, and solid-compliance-analyzer in parallel (Wave 3), then docs-analyzer (Wave 4), and finally hand all artifacts to report-writer-agent (Wave 5)."
   <commentary>
   The orchestrator's role is routing and wave dispatch — it must never read source files or write the report itself. Mid tier is needed to reason about gate conditions and skip decisions.
   </commentary>
@@ -78,8 +78,11 @@ Dispatch simultaneously:
 - **`agents/testing-analyzer.md`** → expects `reports/.artifacts/dotnet-health-audit/step_05_testing_analysis.md`
 - **`agents/code-quality-analyzer.md`** → expects `reports/.artifacts/dotnet-health-audit/step_06_code_quality.md`
 - **`agents/dependency-security-analyzer.md`** → expects `reports/.artifacts/dotnet-health-audit/step_07_dependency_security_analysis.md`
+- **`agents/harness-analyzer.md`** → expects `reports/.artifacts/dotnet-health-audit/step_12_harness_analysis.md`
 
-After all four complete, verify all artifacts exist. Apply the retry-once-then-skip-with-log policy for any missing artifact.
+The harness analysis depends on no prior artifact, so it joins this wave.
+
+After all five complete, verify all artifacts exist. Apply the retry-once-then-skip-with-log policy for any missing artifact.
 
 ---
 
@@ -120,8 +123,9 @@ Pass the following artifact manifest to the report-writer:
 - `reports/.artifacts/dotnet-health-audit/step_09_data_layer_analysis.md`
 - `reports/.artifacts/dotnet-health-audit/step_10_solid_compliance_analysis.md`
 - `reports/.artifacts/dotnet-health-audit/step_11_documentation_analysis.md`
+- `reports/.artifacts/dotnet-health-audit/step_12_harness_analysis.md`
 
-Note any skipped artifacts in your dispatch message so the report-writer can mark those sections as incomplete. Remind the report-writer that Step 3 and Step 7 findings feed into Tech Stack, and Step 10 findings feed into Architecture — no new report sections exist for them.
+Note any skipped artifacts in your dispatch message so the report-writer can mark those sections as incomplete. Remind the report-writer that Step 3 and Step 7 findings feed into Tech Stack, and Step 10 findings feed into Architecture — no new report sections exist for them. Step 12 findings feed the AI Harness & Adoption section.
 
 ---
 

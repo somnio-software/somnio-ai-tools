@@ -304,6 +304,27 @@
 
 ---
 
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 100% — the authoritative source is this skill's
+`references/best-practices-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Testing Quality | 18% |
+| Architecture Compliance | 20% |
+| SOLID Compliance | 20% |
+| Code Standards | 14% |
+| DTO Validation | 12% |
+| Error Handling | 16% |
+| **Total** | **100%** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+---
+
 ## Report Metadata
 
 | Field | Value |

@@ -56,6 +56,7 @@ Apply the same retry-once-then-skip-with-log policy.
 Only dispatch after confirming all available artifacts are present.
 
 Dispatch: **`agents/report-writer.md`**
+— writes `reports/<YYYY-MM-DD>-<project>-dotnet-best-practices.md` (path resolved as `SKILL.md` "Report File Name" describes)
 
 Pass the following artifact manifest:
 - `reports/.artifacts/dotnet-best-practices/step_01_testing_quality.md`

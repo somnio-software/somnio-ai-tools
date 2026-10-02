@@ -3,7 +3,8 @@ description: >-
   Execute a comprehensive .NET Project Health Audit. Analyzes tech stack
   (including .NET support lifecycle and dependency vulnerabilities),
   architecture (including SOLID compliance and cyclomatic complexity), API
-  design, data layer, testing, code quality, CI/CD, and documentation.
+  design, data layer, testing, code quality, CI/CD, documentation, and AI
+  harness & adoption.
   Produces a Google Docs-ready report with section scores and weighted
   overall score.
 ---
@@ -67,6 +68,9 @@ STEP 6 COMPLETED: [log result] # model: mid
 Read `dotnet-health-audit/references/dependency-security-analysis.md` and follow ALL instructions in the prompt field
 STEP 7 COMPLETED: [log result] # model: mid
 
+Read `dotnet-health-audit/references/harness-analysis.md` and follow ALL instructions in the prompt field
+STEP 12 COMPLETED: [log result] # model: mid
+
 ## Wave 3: Domain Analysis (Parallelizable)
 
 These steps are independent and can be executed in parallel if supported:
@@ -85,15 +89,10 @@ STEP 10 COMPLETED: [log result] # model: mid
 Read `dotnet-health-audit/references/documentation-analysis.md` and follow ALL instructions in the prompt field
 STEP 11 COMPLETED: [log result] # model: cheap
 
-## Wave 5: Report Format Enforcement (Sequential) # model: frontier
+## Wave 5: Report (Sequential - Requires ALL previous results) # model: frontier
 
-Read `dotnet-health-audit/references/report-format-enforcer.md` and follow ALL instructions in the prompt field
-STEP 12 COMPLETED: [log result] # model: frontier
-
-## Wave 6: Report (Sequential - Requires ALL previous results) # model: frontier
-
-Read `dotnet-health-audit/references/report-generator.md` and follow ALL instructions in the prompt field
+Read `dotnet-health-audit/agents/report-writer-agent.md` and follow ALL instructions.
 STEP 13 COMPLETED: [log result] # model: frontier
 
-Save the final Markdown report to `./reports/dotnet_audit.md`
+Save the final Markdown report to `./reports/<YYYY-MM-DD>-<project>-dotnet-health-audit.md`
 STEP 14 COMPLETED: Report exported # model: frontier

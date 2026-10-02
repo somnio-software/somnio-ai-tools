@@ -6,7 +6,7 @@ description: |
   <example>
   Context: An orchestrator dispatches the testing-analyzer as part of Wave 2 of a .NET health audit.
   user: "Run a .NET health audit on this project."
-  assistant: "I will locate all *.Tests/*.UnitTests/*.IntegrationTests projects, identify xUnit/NUnit/MSTest usage, detect Moq/NSubstitute and FluentAssertions, and classify tests as unit vs integration. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_04_testing_analysis.md, incorporating the Code Coverage % from Wave 0."
+  assistant: "I will locate all *.Tests/*.UnitTests/*.IntegrationTests projects, identify xUnit/NUnit/MSTest usage, detect Moq/NSubstitute and FluentAssertions, and classify tests as unit vs integration. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_05_testing_analysis.md, incorporating the Code Coverage % from Wave 0."
   <commentary>
   Judging test quality and classification (not just presence) requires reasoning about test structure — mid tier is appropriate.
   </commentary>

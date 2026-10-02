@@ -6,7 +6,7 @@ description: |
   <example>
   Context: An orchestrator dispatches the code-quality-analyzer as part of Wave 2 of a .NET health audit.
   user: "Run a .NET health audit on this project."
-  assistant: "I will check for Microsoft.CodeAnalysis.NetAnalyzers/StyleCop.Analyzers, TreatWarningsAsErrors, .editorconfig severity rules, nullable compliance signals, and grep for .Result/.Wait() sync-over-async deadlock risks. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_05_code_quality.md."
+  assistant: "I will check for Microsoft.CodeAnalysis.NetAnalyzers/StyleCop.Analyzers, TreatWarningsAsErrors, .editorconfig severity rules, nullable compliance signals, and grep for .Result/.Wait() sync-over-async deadlock risks. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_06_code_quality.md."
   <commentary>
   Judging analyzer configuration depth and flagging genuine deadlock-risk anti-patterns requires reasoning, not just presence checks — mid tier.
   </commentary>

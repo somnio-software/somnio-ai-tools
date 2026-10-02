@@ -6,7 +6,7 @@ description: |
   <example>
   Context: An orchestrator dispatches the cicd-analyzer as part of Wave 2 of a .NET health audit.
   user: "Run a .NET health audit on this project."
-  assistant: "I will read the CI pipeline definition, verify it runs dotnet restore/build/test with coverage collection, check for setup-dotnet SDK pinning and NuGet caching, and inspect the Dockerfile for a proper multi-stage SDK/runtime build. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_03_cicd_analysis.md."
+  assistant: "I will read the CI pipeline definition, verify it runs dotnet restore/build/test with coverage collection, check for setup-dotnet SDK pinning and NuGet caching, and inspect the Dockerfile for a proper multi-stage SDK/runtime build. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_04_cicd_analysis.md."
   <commentary>
   CI/CD compliance requires judging whether pipeline steps and gates are adequate, not just detecting presence — mid tier is appropriate.
   </commentary>

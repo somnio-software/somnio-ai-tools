@@ -6,7 +6,7 @@ description: |
   <example>
   Context: An orchestrator dispatches the api-design-analyzer as part of Wave 3 of a .NET health audit.
   user: "Run a .NET health audit on this project."
-  assistant: "I will detect whether the API uses Controllers or Minimal APIs, verify HTTP verb usage and RESTful URL naming, check for Asp.Versioning usage, DTO validation coverage, and Swagger/Swashbuckle configuration. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_06_api_design_analysis.md."
+  assistant: "I will detect whether the API uses Controllers or Minimal APIs, verify HTTP verb usage and RESTful URL naming, check for Asp.Versioning usage, DTO validation coverage, and Swagger/Swashbuckle configuration. Findings will be saved to reports/.artifacts/dotnet-health-audit/step_08_api_design_analysis.md."
   <commentary>
   Judging API design quality (versioning consistency, RESTful conventions, validation coverage) requires reasoning about production-readiness — mid tier.
   </commentary>

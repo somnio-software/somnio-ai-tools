@@ -1,11 +1,11 @@
 # Canonical Best-Practices Report Template
 
-**Status:** authoritative reference · **Applies to:** the six `skills/<stack>-best-practices/`
-bundles (`flutter`, `react`, `angular`, `angularjs`, `python`, `nestjs`) · **Consumed by:** nobody.
+**Status:** authoritative reference · **Applies to:** the seven `skills/<stack>-best-practices/`
+bundles (`flutter`, `react`, `angular`, `angularjs`, `python`, `nestjs`, `dotnet`) · **Consumed by:** nobody.
 This file is **not** read by the CLI, the runner, or any `references/*.md` rule. It is the single
 written source of truth a skill author copies from when hand-editing a skill's
-`assets/report-template.md`. It plays the same role for the six `*-best-practices` skills that
-[`report-template-canonical.md`](report-template-canonical.md) plays for the six
+`assets/report-template.md`. It plays the same role for the seven `*-best-practices` skills that
+[`report-template-canonical.md`](report-template-canonical.md) plays for the seven
 `*-health-audit` skills — read that file first if you haven't; this one mirrors its shape.
 
 The two families are **not interchangeable**: best-practices reports are micro-level code-quality
@@ -34,12 +34,12 @@ best-practices template — the two skeletons are documented separately on purpo
 
 Numbering is **relative, not absolute**. The number of scored sections is stack-variable (see
 [§2](#2-stack-variable-table)), so "Prioritized Recommendations" and "Evidence Index" land at
-different absolute numbers per skill — what must be identical across all six is the **shape**:
+different absolute numbers per skill — what must be identical across all seven is the **shape**:
 title → metadata → `## 1. Executive Summary` → `## 2. Score Breakdown` → one `## N. <Name>` per
 analysis rule, in the same order the rules run → `Prioritized Recommendations` →
 `Evidence Index` → the two unnumbered trailing blocks.
 
-Every scored section's body follows this shape (verified against all six templates — see
+Every scored section's body follows this shape (verified against all seven templates — see
 [§4](#4-per-block-rules)):
 
 ```
@@ -64,6 +64,7 @@ Read from each skill's `assets/report-template.md` and `references/` directory �
 |---|---|---|---|
 | flutter | Testing Quality, Architecture Compliance, Code Standards | 3 | 5 |
 | nestjs | Testing Quality, Architecture Compliance, Code Standards, DTO Validation, Error Handling | 5 | 7 |
+| dotnet | Testing Quality, Architecture Compliance, SOLID Compliance, Code Standards, DTO Validation, Error Handling | 6 | 8 |
 | react | Testing Quality, Component Architecture, Hooks Patterns, State Management, Performance, TypeScript Standards | 6 | 8 |
 | angular | Testing Quality, Component Architecture, Lifecycle & DI Patterns, Services & State Management, Change Detection & Performance, TypeScript Standards | 6 | 8 |
 | angularjs | Testing Quality, Component Architecture, Scope & Binding Patterns, State Management, Performance, JavaScript Standards | 6 | 8 |
@@ -89,8 +90,8 @@ constraint in [§6](#6-hard-constraints) about never adding a fourth.
 
 Rules:
 
-- Keep each skill's existing H1 title text verbatim — the six templates do not agree on
-  "Check Report" vs. "Audit Report" (flutter uses "Check Report"; the other five use
+- Keep each skill's existing H1 title text verbatim — the seven templates do not agree on
+  "Check Report" vs. "Audit Report" (flutter uses "Check Report"; the other six use
   "Audit Report") and that inconsistency is pre-existing, not something to normalize here.
 - There is no Exclusions blockquote in this family (that's a health-audit-only block) and no
   `**Framework:**` field.
@@ -146,10 +147,10 @@ Rules:
 2. [Continue as needed]
 ```
 
-- flutter's field order is `**Description:**` then `**Score:**`; the other five put
+- flutter's field order is `**Description:**` then `**Score:**`; the other six put
   `**Score:**` first, then `**Description:**`. This is a pre-existing inconsistency across the
-  six templates — read the skill's own current template for its field order before editing it,
-  do not silently reorder it to match the other five.
+  seven templates — read the skill's own current template for its field order before editing it,
+  do not silently reorder it to match the other six.
 - The bolded structured sub-fields between `Description` and `### Key Findings` (e.g. react's
   `**RTL Query Analysis:**` / `**Async Testing:**` / `**Custom Hook Testing:**`, or flutter's
   absence of any) are entirely stack- and section-specific. They exist because a section with a
@@ -161,10 +162,10 @@ Rules:
 
 ### 4.3 Prioritized Recommendations
 
-flutter uses a flat numbered list (`1. **[High Priority]:** ...`). The other five skills use four
+flutter uses a flat numbered list (`1. **[High Priority]:** ...`). The other six skills use four
 priority sub-headings: `### 🔴 Critical (Must Fix Immediately)`, `### 🟠 High Priority`,
 `### 🟡 Medium Priority`, `### 🟢 Low Priority (Nice to Have)`. Both shapes are correct as
-currently rendered — this is a real, pre-existing split between flutter and the other five, not
+currently rendered — this is a real, pre-existing split between flutter and the other six, not
 a drift to fix.
 
 ### 4.4 Evidence Index
@@ -183,7 +184,7 @@ scored sections actually cite.
 ```
 
 En dash (U+2013) inside each range (`85–100`, `70–84`), middle dot (U+00B7) as the separator
-between bands. All six templates render this identically today, including angularjs's — unlike
+between bands. All seven templates render this identically today, including angularjs's — unlike
 the health-audit family, there was no ASCII-hyphen legend to fix in this family's angularjs
 template. The scale is `/100` in the Score Breakdown, in every per-section `**Score:**` line, and
 in the Appendix bands — never `/10` anywhere in a `/100` template.
@@ -227,6 +228,7 @@ Weights, by skill (each sums to 100 — verified by hand, not taken on an agent'
 |---|---|
 | flutter | Testing Quality 30 / Architecture Compliance 40 / Code Standards 30 |
 | nestjs | Testing Quality 20 / Architecture Compliance 25 / Code Standards 20 / DTO Validation 15 / Error Handling 20 |
+| dotnet | Testing Quality 18 / Architecture Compliance 20 / SOLID Compliance 20 / Code Standards 14 / DTO Validation 12 / Error Handling 16 |
 | react | Testing Quality 20 / Component Architecture 25 / Hooks Patterns 15 / State Management 15 / Performance 15 / TypeScript Standards 10 |
 | angular | Testing Quality 20 / Component Architecture 25 / Lifecycle & DI Patterns 15 / Services & State Management 15 / Change Detection & Performance 15 / TypeScript Standards 10 |
 | angularjs | Testing Quality 20 / Component Architecture 25 / Scope & Binding Patterns 15 / State Management 15 / Performance 15 / JavaScript Standards 10 |
@@ -257,10 +259,10 @@ Trailing unnumbered `| Field | Value |` table:
 | Somnio AI Tools | https://github.com/somnio-software/somnio-ai-tools |
 ```
 
-Five of the six additionally render a trailing `| Standards Source | ... |` row, and they do not
+Five of the seven additionally render a trailing `| Standards Source | ... |` row, and they do not
 agree on its value: react, angular and angularjs point it at
 `https://github.com/somnio-software/somnio-ai-tools`, while python and nestjs point it at
-`https://github.com/somnio-software/cursor-rules`. **flutter is the only skill with no
+`https://github.com/somnio-software/cursor-rules`. **flutter and dotnet are the only skills with no
 `Standards Source` row.** This is stack-variable as currently rendered — leave each skill's
 existing row set alone.
 
@@ -307,23 +309,23 @@ enforcer automatically — those stay on the author.
 
 | # | Constraint | Why |
 |---|---|---|
-| C1 | Never rename, move or delete `references/best-practices-generator.md` or `references/best-practices-format-enforcer.md` in any of the six skills | `cli/lib/src/runner/rule_names.dart:31,35` (`kBestPracticesGeneratorRuleName = 'best-practices-generator'`, `kBestPracticesFormatEnforcerRuleName = 'best-practices-format-enforcer'`) string-matches those exact rule names — which the plan parser derives from the filename — to dispatch report generation. Renaming either file silently disables report generation: no crash, no warning |
-| C2 | Do not add, remove or rename any file under any skill's `references/` directory | `cli/test/src/runner/plan_parser_integration_test.dart` hardcodes per-skill `stepCount`/`firstRule`/`lastRule`. As read, it covers four of the six skills directly — `flutter-best-practices` (stepCount 4), `nestjs-best-practices` (6), `python-best-practices` (8), `react-best-practices` (7); `angular-best-practices` and `angularjs-best-practices` are not in that test file's expectations map today. The constraint still applies to all six: the file count in `references/` drives the plan parser's step count for every skill, tested or not |
+| C1 | Never rename, move or delete `references/best-practices-generator.md` or `references/best-practices-format-enforcer.md` in any of the seven skills | `cli/lib/src/runner/rule_names.dart:31,35` (`kBestPracticesGeneratorRuleName = 'best-practices-generator'`, `kBestPracticesFormatEnforcerRuleName = 'best-practices-format-enforcer'`) string-matches those exact rule names — which the plan parser derives from the filename — to dispatch report generation. Renaming either file silently disables report generation: no crash, no warning |
+| C2 | Do not add, remove or rename any file under any skill's `references/` directory | `cli/test/src/runner/plan_parser_integration_test.dart` hardcodes per-skill `stepCount`/`firstRule`/`lastRule`. As read, it covers five of the seven skills directly — `flutter-best-practices` (stepCount 4), `nestjs-best-practices` (6), `python-best-practices` (8), `react-best-practices` (7), `dotnet-best-practices` (7); `angular-best-practices` and `angularjs-best-practices` are not in that test file's expectations map today. The constraint still applies to all seven: the file count in `references/` drives the plan parser's step count for every skill, tested or not |
 | C3 | Never add a scored section to `flutter-best-practices` | It has exactly three analysis references (`testing-quality.md`, `architecture-compliance.md`, `code-standards.md`, per [§2](#2-stack-variable-table)). A scored section with no analyzer behind it is a section the model fills by invention, not evidence |
 | C4 | `angularjs-best-practices/references/typescript-standards.md` documents JavaScript standards, and `hooks-patterns.md` documents `$scope` patterns — the filenames are misleading, the content is correct. Never rename these files (that's C2) and never "correct" their content to match the filename | The Score Breakdown row these two references back is already named correctly (`JavaScript Standards`, `Scope & Binding Patterns`) — only the `references/` filenames are misnomers, inherited from being copied off the react/angular file set. Renaming would violate C2; rewriting the content to match the wrong filename would delete correct analysis instructions |
-| C5 | Each skill keeps its own weights ([§6](#6-appendix-scoring-methodology)); never cross-apply between skills | They are six independent formulas over six independent rubrics — cross-applying silently changes every score a skill produces |
+| C5 | Each skill keeps its own weights ([§6](#6-appendix-scoring-methodology)); never cross-apply between skills | They are seven independent formulas over seven independent rubrics — cross-applying silently changes every score a skill produces |
 | C6 | Weights appear only in the `## Appendix: Scoring Methodology` block and in `references/best-practices-generator.md` — never as a column in the `## 2. Score Breakdown` table | A Weight column in the scorecard duplicates the appendix and risks drifting out of sync with it; the enforcer for each skill (e.g. `skills/flutter-best-practices/references/best-practices-format-enforcer.md`, rule 8, "WEIGHTS APPEAR IN ONE PLACE ONLY") already states this as the single-source-of-truth rule for that skill |
 
 ---
 
 ## 9. Automated check
 
-`cli/test/src/content/best_practices_template_drift_test.dart` reads all six
-`skills/<stack>-best-practices/assets/report-template.md` files **and all six
+`cli/test/src/content/best_practices_template_drift_test.dart` reads all seven
+`skills/<stack>-best-practices/assets/report-template.md` files **and all seven
 `references/best-practices-generator.md` files** and fails the build on
 divergence — the counterpart, for this family, of `report_template_drift_test.dart` for the
 health-audit family. It tolerates the stack-variable middle (the differing scored-section count
-and names per skill) and asserts what every one of the six genuinely shares: the section
+and names per skill) and asserts what every one of the seven genuinely shares: the section
 skeleton, the `/100` scale, the scoring legend, the absence of a Weight column in the Score
 Breakdown table, and that each skill's own Appendix weights match its own Score Breakdown row
 labels and sum to 100. Invariants 10-12 additionally hold the generator to the

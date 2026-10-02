@@ -62,6 +62,22 @@ void main() {
       lastRule: 'best-practices-generator',
       mandatoryRules: [],
     ),
+    // 17 steps: .NET adds support-lifecycle, dependency-security and
+    // solid-compliance analyses on top of the shared health-audit pipeline.
+    // version-alignment is not MANDATORY here: it only stops the run when
+    // `dotnet restore` fails, so the plan line carries no MANDATORY tag.
+    'dotnet-health-audit': _SkillExpectation(
+      stepCount: 17,
+      firstRule: 'tool-installer',
+      lastRule: 'report-generator',
+      mandatoryRules: [],
+    ),
+    'dotnet-best-practices': _SkillExpectation(
+      stepCount: 7,
+      firstRule: 'testing-quality',
+      lastRule: 'best-practices-generator',
+      mandatoryRules: [],
+    ),
     'security-audit': _SkillExpectation(
       stepCount: 9,
       firstRule: 'tool-installer',
@@ -198,6 +214,7 @@ void main() {
 
 /// Skills that ship the AI Harness & Adoption rubric (spec.md §4).
 const _harnessAuditSkills = {
+  'dotnet-health-audit',
   'flutter-health-audit',
   'nestjs-health-audit',
   'python-health-audit',

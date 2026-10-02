@@ -3,7 +3,9 @@
 **Project:** [PROJECT_NAME]
 **Date:** [AUDIT_DATE]
 **Auditor:** AI-Assisted Analysis
-**Project Type:** [Web API/Blazor/Worker Service/Class Library]
+**Framework:** [.NET/ASP.NET Core — Web API/Blazor/Worker Service/Class Library]
+
+> **Exclusions:** Never recommend CODEOWNERS/SECURITY.md files or deployment-specific workflows.
 
 ---
 
@@ -39,12 +41,18 @@
 | API Design | [XX]/100 | [Label] |
 | Data Layer | [XX]/100 | [Label] |
 | Testing | [XX]/100 | [Label] |
-| Code Quality (Analyzers & Warnings) | [XX]/100 | [Label] |
+| Code Quality (Linter & Warnings) | [XX]/100 | [Label] |
 | Documentation & Operations | [XX]/100 | [Label] |
 | CI/CD (Configs Found in Repo) | [XX]/100 | [Label] |
+| AI Harness & Adoption | [XX]/100 | [Label] |
 | **Overall** | **[XX]/100** | **[Label]** |
 
+> **Test Coverage:** [X]% (lines) — full breakdown in the Testing section.
+> Fallback when no coverage tool is detected: `Not measured (no coverage tool detected/configured)`
+
 > **Scoring:** Strong (85–100) · Fair (70–84) · Weak (0–69)
+
+[One-sentence interpretation of the Overall Score.]
 
 ---
 
@@ -171,7 +179,16 @@
 
 **Score:** [XX]/100 ([Label])
 
-**Code Coverage:** [XX]% lines / [XX]% branches
+**Code Coverage:** [X]% (lines)
+> Multi-dimension stacks (JS/TS): `[X]% lines / [Y]% branches / [Z]% functions`
+> Monorepo / multi-app: `App [name]: [X]%, App [name2]: [Y]%`
+> No coverage tool: `Not measured (no coverage tool detected/configured)`
+
+**Coverage Breakdown:**
+- `[module/package/app]`: [X]% (lines[, [Y]% branches, [Z]% functions — where extracted])
+- [Continue per module/package/app]
+- [Single-package projects: "N/A — single package, see Code Coverage above"]
+- [No data: "(no coverage data — artifact missing or no coverage tool configured)"]
 
 ### Key Findings
 - [Finding 1]
@@ -196,9 +213,9 @@
 
 ---
 
-## 8. Code Quality (Analyzers & Warnings)
+## 8. Code Quality (Linter & Warnings)
 
-**Description:** [One-sentence description of the code quality analysis].
+**Description:** [One-sentence description of the code quality analysis — Roslyn analyzers, `TreatWarningsAsErrors`, `.editorconfig` severities, nullable compliance, and sync-over-async patterns].
 
 **Score:** [XX]/100 ([Label])
 
@@ -283,39 +300,77 @@
 
 ---
 
-## 11. Additional Metrics
+## 11. AI Harness & Adoption
 
-- **.NET SDK version:** [Version] (global.json pin: [Version or "none"])
-- **TargetFramework(s):** [net8.0/etc.]
-- **.NET support status:** [In support (LTS/STS)/Out of support since [month year]/Supported via OS lifecycle]
-- **Recommended LTS upgrade target:** [e.g. net8.0]
-- **Project type:** [Web API/Blazor/Worker Service/Class Library]
-- **Architecture pattern:** [Vertical Slice/Onion/Clean Architecture/N-Layer/Flat]
-- **API style:** [Controllers/Minimal APIs/Hybrid]
-- **Database ORM:** [Entity Framework Core/Dapper/none]
-- **Test framework:** [xUnit/NUnit/MSTest]
-- **Package manager:** NuGet ([Central Package Management: Yes/No])
-- **Nullable reference types:** [Enabled/Disabled/Partial]
-- **Vulnerable packages:** [Count] (Critical: N, High: N)
-- **SOLID violations:** [Count] · **Cyclomatic complexity hits (CA1502):** [Count]
+**Description:** [One-sentence description of the AI harness state].
+
+**Score:** [XX]/100 ([Label])
+
+**Maturity:** [sin harness | harness básico | harness sólido | paved path]
+
+### Harness Coverage
+| Dimension | Status | Points |
+|---|---|---|
+| CLAUDE.md | [Status] | [Score]/13 |
+| Rules | [Status] | [Score]/9 |
+| Permissions | [Status] | [Score]/13 |
+| Hooks | [Status] | [Score]/14 |
+| Pre-push git hook | [Status] | [Score]/11 |
+| Agents | [Status] | [Score]/11 |
+| Commands / Skills | [Status] | [Score]/9 |
+| Advanced orchestration | [Status] | [Score]/5 |
+| Lifecycle | [Status] | [Score]/3 |
+| Harness versioning | [Status] | [Score]/12 |
+| **Total** | | **[Score]/100** |
+
+### Key Findings
+- [Finding 1]
+- [Finding 2]
+- [Continue as needed]
+
+### Evidence
+- [File path or configuration reference]
+- [Continue as needed]
+
+### Risks
+- [Risk item 1]
+- [Continue as needed]
+
+### Actions to Raise the Score
+1. **[+N] [Action 1].** [Concrete how-to] → dimension D, X/Y → Y/Y.
+2. **[+N] [Action 2].** [Concrete how-to] → dimension D, X/Y → Y/Y.
+- [Continue as needed, sorted by points recovered descending]
+
+### Counts & Metrics
+- [Metric name]: [Value]
+- [Continue as needed]
 
 ---
 
-## 12. Quality Index
+## 12. Additional Metrics
 
-| Section | Score | Label |
-|---------|-------|-------|
-| Tech Stack | [XX]/100 | [Label] |
-| Architecture | [XX]/100 | [Label] |
-| API Design | [XX]/100 | [Label] |
-| Data Layer | [XX]/100 | [Label] |
-| Testing | [XX]/100 | [Label] |
-| Code Quality | [XX]/100 | [Label] |
-| Documentation & Operations | [XX]/100 | [Label] |
-| CI/CD | [XX]/100 | [Label] |
-| **Overall** | **[XX]/100** | **[Label]** |
-
-[One-sentence interpretation of the overall score]
+- **.NET SDK version:** [Version] (global.json pin: [Version or "none"])
+- **TargetFramework(s):** [net8.0/etc, note inconsistencies]
+- **.NET support status:** [In support (LTS/STS) / Out of support since [month year] / Supported via OS lifecycle]
+- **Recommended LTS upgrade target:** [e.g. net8.0]
+- **Project type:** [Web API/Blazor/Worker Service/Class Library/Mixed]
+- **Architecture pattern:** [Vertical Slice/Onion/Clean Architecture/N-Layer/Flat/Mixed]
+- **API style:** [Controllers/Minimal APIs/Hybrid]
+- **Solution project count:** [Count]
+- **Total controllers or endpoint groups count:** [Count]
+- **Total services count:** [Count]
+- **Total DTOs count:** [Count]
+- **Database ORM:** [Entity Framework Core/Dapper/none]
+- **Test framework:** [xUnit/NUnit/MSTest/none]
+- **API versioning strategy:** [URI/Header/None]
+- **OpenAPI/Swagger enabled:** [Yes/No]
+- **Central Package Management:** [Yes/No]
+- **Nullable reference types:** [Enabled/Disabled/Partial]
+- **Authentication method:** [JWT/Cookie/Identity/none]
+- **Vulnerable packages:** [Count] (Critical: N, High: N, Moderate: N, Low: N)
+- **Outdated packages (3+ major versions behind):** [Count]
+- **SOLID violations:** [Count] (SRP: N, OCP: N, LSP: N, ISP: N, DIP: N)
+- **Cyclomatic complexity hits:** [CA1502 count] / Class coupling hits: [CA1506 count]
 
 ---
 
@@ -377,6 +432,34 @@
 **CI/CD:**
 - [File path or config reference]
 - [Continue as needed]
+
+**AI Harness & Adoption:**
+- [File path or config reference]
+- [Continue as needed]
+
+---
+
+## Appendix: Scoring Methodology
+
+**Weighted formula** (weights sum to 1.00 — the authoritative source is this skill's
+`references/report-generator.md`; this table is a read-only summary of what was applied):
+
+| Section | Weight |
+|---------|--------|
+| Tech Stack | 0.18 |
+| Architecture | 0.18 |
+| API Design | 0.18 |
+| Data Layer | 0.10 |
+| Testing | 0.10 |
+| Code Quality (Linter & Warnings) | 0.10 |
+| Documentation & Operations | 0.03 |
+| CI/CD (Configs Found in Repo) | 0.03 |
+| AI Harness & Adoption | 0.10 |
+| **Total** | **1.00** |
+
+**Rounding rule:** Standard mathematical rounding (0.5 rounds up). No subjective adjustment.
+
+**Scoring bands:** Strong (85–100) · Fair (70–84) · Weak (0–69)
 
 ---
 
