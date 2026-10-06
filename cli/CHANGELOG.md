@@ -5,6 +5,12 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.3] - 2026-10-06
+
+### Changed
+
+- **`dora-metrics` skill now supports GitHub, GitLab, and Bitbucket Cloud.** The skill previously measured Deployment Frequency and Lead Time for repos on GitHub only. It now works with GitLab and Bitbucket Cloud as well, with full feature parity: auth resolution (env var + CLI fallback for GitHub/GitLab, env var/basic-auth for Bitbucket), releases/tags as deploy markers, merged PR/MR lookup, first-commit lead time, and per-provider troubleshooting guidance. A single project can mix providers across repos — each is measured with its own credential and reported independently. Bitbucket Cloud has no Releases API, so its repos default to (and are enforced to use) tag-based deploy markers. A repo whose provider has no resolvable credential is reported as `measured: false` without blocking repos on a provider that does have one.
+
 ## [3.2.2] - 2026-10-05
 
 ### Fixed

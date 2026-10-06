@@ -30,6 +30,24 @@
       "prompt": "example-frontend doesn't publish Releases, only plain tags vX.Y.Z. Run the metrics anyway.",
       "expected_output": "Uses deploy_source=tag (via the --deploy-source override or by updating the config), does not invent non-existent releases nor fail silently.",
       "files": []
+    },
+    {
+      "id": 6,
+      "prompt": "Add a new project called Gamma. It has one repo on GitLab: platform-team/gamma-api, prod branch main.",
+      "expected_output": "Asks for the repo type if not given, builds the config entry with provider: \"gitlab\" and repo \"platform-team/gamma-api\" (not an org/repo GitHub-shaped path), shows it for confirmation before saving, and only then continues with the normal flow. Does not assume provider: \"github\" without asking, since the user explicitly said GitLab.",
+      "files": []
+    },
+    {
+      "id": 7,
+      "prompt": "Add Delta's backend as a Bitbucket repo: acme-ws/delta-backend, prod branch main, and tell me the deployment frequency.",
+      "expected_output": "Builds the config entry with provider: \"bitbucket\", and either omits deploy_source (defaults to \"tag\") or sets it explicitly to \"tag\" — never \"release\", since Bitbucket Cloud has no Releases API. If the user is not told about this and asks for \"release\" explicitly, the skill explains why Bitbucket can't use it rather than silently switching or failing. Then runs and reports Deployment Frequency only (lead time not requested, but may still be shown per the skill's 'always show both' rule).",
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Run the DORA metrics for Example Project, but I only have a GitLab token configured, not GitHub.",
+      "expected_output": "Example Project's repos are both GitHub, so with no GitHub credential resolvable the skill reports the no_credential problem for the run (or per-repo, if mixed) with the steps to fix it (export GITHUB_TOKEN or `gh auth login`) — it does not silently use the GitLab token for GitHub repos, and does not fail without explanation.",
+      "files": []
     }
   ]
 }

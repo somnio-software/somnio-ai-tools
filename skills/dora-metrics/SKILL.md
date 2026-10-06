@@ -2,15 +2,16 @@
 name: dora-metrics
 description: >
   Fetches the DORA metrics Deployment Frequency and Lead Time for Changes, per
-  project and per repo, from GitHub (API, not local git). Use this skill
-  whenever the user asks to run or update the DORA metrics, measure the
-  deployment frequency or lead time of a project (e.g. "Example Project"),
-  generate the biweekly metrics report, or asks how many deploys a project made
-  or how long a change takes to reach production.
+  project and per repo, from the provider's API (GitHub, GitLab, or Bitbucket
+  — not local git). Use this skill whenever the user asks to run or update the
+  DORA metrics, measure the deployment frequency or lead time of a project
+  (e.g. "Example Project"), generate the biweekly metrics report, or asks how
+  many deploys a project made or how long a change takes to reach production —
+  regardless of which of the three providers the project's repos live on.
   Also trigger on phrases like: "run the DORA metrics", "metrics for
   Example Project", "deployment frequency for [project]", "lead time for
   [project]", "biweekly metrics report", "how many deploys did we do this
-  sprint".
+  sprint", "add a GitLab/Bitbucket project to the DORA metrics".
 allowed-tools: Read, Write, Edit, Bash, Agent
 ---
 
@@ -32,16 +33,34 @@ the moment a metric is used to evaluate people, it stops being a good metric
 
 CI is uniform (GitHub Actions) but CD is heterogeneous (mobile/web/backend
 deploy differently), so instead of measuring the actual CD we use a uniform
-marker: a **GitHub Release with a semver tag `vX.Y.Z`** on each repo's
-production branch. All data comes from the **GitHub API** — never a local git
-clone — because lead time depends on the real first commit of each PR, and that
-is only reliable when read from the GitHub PR object (it stays correct even if
-the merge was a squash; the git log of `main` does not guarantee it).
+marker: a **Release with a semver tag `vX.Y.Z`** on each repo's production
+branch (a plain tag where the provider has no Releases API). All data comes
+from the repo's **provider API** — never a local git clone — because lead time
+depends on the real first commit of each PR/MR, and that is only reliable when
+read from the provider's PR/MR object (it stays correct even if the merge was a
+squash; the git log of `main` does not guarantee it).
+
+Each repo belongs to one of three supported providers, declared per repo in
+`config/projects.json` (`provider`, default `"github"`):
+
+| Provider | Repo identifier format | Deploy marker |
+|---|---|---|
+| `github` (default) | `org/repo` | GitHub Release, or plain tag |
+| `gitlab` | project path, e.g. `group/project` or `group/subgroup/project` | GitLab Release, or plain tag |
+| `bitbucket` | `workspace/repo_slug` | Plain tag only — Bitbucket Cloud has no Releases API |
+
+A single project — and even a single run — can mix providers across repos: a
+project's frontend can live on GitHub while its backend lives on GitLab, and
+each is measured with its own credential. Bitbucket Server/Data Center and
+GitHub Enterprise beyond `api_base` overrides are out of scope — this talks to
+GitHub.com, GitLab.com (or a self-hosted instance via `api_base`), and
+Bitbucket Cloud.
 
 Projects can be mono-repo or multi-repo. In multi-repo, each repo is measured
 and reported **independently, never combined**: if a project deploys the
-frontend and backend at different times, merging them into a single number
-would hide the very signal that calibration is meant to expose.
+frontend and backend at different times — or on different providers —
+merging them into a single number would hide the very signal that calibration
+is meant to expose.
 
 Formal definitions of each metric (attribute, population, exact calculation):
 `references/deployment-frequency.md` and `references/lead-time-for-changes.md`.
@@ -85,18 +104,26 @@ ask them directly for the missing details and add them to
 `config/projects.json` yourself:
 
 - Project name.
-- The GitHub repo(s) that make it up (`org/repo`), one or several (multi-repo).
+- The repo(s) that make it up, one or several (multi-repo), and **which
+  provider each one is on** (`github`, `gitlab`, or `bitbucket` — default
+  `github`, but confirm rather than assume when the user doesn't say). The
+  identifier format depends on the provider: `org/repo` for GitHub, a project
+  path for GitLab, `workspace/repo_slug` for Bitbucket.
 - Type of each repo (web / mobile / backend).
 - Production branch of each repo (reasonable default: `main`, but
   confirm — do not assume).
-- Optional: whether any repo uses plain tags instead of GitHub Releases
+- Optional: whether any repo uses plain tags instead of Releases
   (`deploy_source: "tag"`), or a `tag_pattern` different from the global one.
-  Default: inherits `deploy_source: "release"` and the global `tag_pattern` if
-  nothing is specified.
+  Default: inherits the global `tag_pattern`, and `deploy_source: "release"`
+  for github/gitlab — **except Bitbucket, which has no Releases API and
+  always defaults to (and in practice requires) `deploy_source: "tag"`.**
+- Optional: `api_base` for a self-hosted GitHub Enterprise or GitLab instance,
+  if the repo isn't on github.com / gitlab.com. Not supported for Bitbucket
+  (Cloud only).
 - Optional: a short note if there is anything non-obvious about the project
-  (e.g. multi-repo across different orgs, deploys decoupled between repos) —
-  goes in a `"notes"` field on the project. Not needed if there is nothing
-  particular to call out.
+  (e.g. multi-repo across different orgs, deploys decoupled between repos,
+  repos split across providers) — goes in a `"notes"` field on the project.
+  Not needed if there is nothing particular to call out.
 
 Show the resulting JSON before saving it and ask for confirmation (it is a file
 shared by the whole team). Once saved, continue with Step 2 as usual.
@@ -108,32 +135,44 @@ a skill that generates a document (where the table is a mandatory gate before
 creating something hard to undo), here it is informational: the skill only
 reads data and builds a report, so you can go straight through unless something
 stands out (a repo that shouldn't be there, an odd branch). Show it regardless,
-so whoever runs it can see at a glance what is being measured:
+so whoever runs it can see at a glance what is being measured. Include the
+**Provider** column always — it costs nothing when every repo is GitHub, and is
+the whole point when a project mixes providers:
 
-| Project | Repo | Type | Prod branch | Window |
-|---|---|---|---|---|
-| Example Project | `example-org/example-frontend` | web, mobile | main | last 14 days |
-| Example Project | `example-partner-org/example-backend` | backend | main | last 14 days |
+| Project | Repo | Provider | Type | Prod branch | Window |
+|---|---|---|---|---|---|
+| Example Project | `example-org/example-frontend` | github | web, mobile | main | last 14 days |
+| Example Project | `example-partner-org/example-backend` | github | backend | main | last 14 days |
 
 If anything in the table doesn't match what the user expected, stop and ask
 before running the script.
 
 ### Step 3 — Verify authentication
 
-The script (`scripts/dora_metrics.py`) needs a GitHub credential with read
-access to **all** the orgs of the project's repos (e.g. if it's multi-org:
-`example-org` and `example-partner-org`). Precedence order, automatic:
+The script (`scripts/dora_metrics.py`) needs a credential for **every
+provider** present in the confirmation table, each with read access to **all**
+the orgs/groups/workspaces of that provider's repos in the project (e.g. if
+GitHub is multi-org: `example-org` and `example-partner-org`). Precedence
+order per provider, automatic:
 
-1. `GITHUB_TOKEN` environment variable.
-2. `gh auth token` — if the GitHub CLI is already logged in locally, there is
-   nothing to ask for or paste.
+| Provider | 1st | 2nd |
+|---|---|---|
+| `github` | `GITHUB_TOKEN` env var | `gh auth token` (logged-in GitHub CLI) |
+| `gitlab` | `GITLAB_TOKEN` env var | `glab auth token` (logged-in GitLab CLI) |
+| `bitbucket` | `BITBUCKET_TOKEN` env var (bearer) | `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` together (no CLI fallback) |
 
-If neither is available, the script no longer stops without output: it produces
-the report anyway, containing the `no_credential` problem and the steps to fix
-it (and saves it, if `--out-dir` was passed), and exits with code 1. Report it
-like any other problem — do not ask the user to paste a token in the chat if the
-flow is Cowork; in local Claude Code, suggest `gh auth login` if they haven't
-done it.
+A run can mix providers: a repo whose provider has no resolvable credential is
+reported as `measured: false` with a `no_credential` problem (same shape as any
+other unmeasurable repo), **while every repo on a provider that does have a
+credential still measures normally.** Only when *no* provider in the table has
+a credential does the script skip measuring altogether and produce a single
+report carrying that one problem — still exits with code 1, still produces
+output (and saves it, if `--out-dir` was passed).
+
+Report missing credentials like any other problem — do not ask the user to
+paste a token in the chat if the flow is Cowork; in local Claude Code, suggest
+`gh auth login` / `glab auth login` if they haven't done it (Bitbucket has no
+CLI login to suggest — point at the env vars instead).
 
 ### Step 4 — Run the script
 
@@ -155,6 +194,9 @@ Available flags:
   tests against a branch different from the configured one.
 - `--deploy-source {release,tag}`: one-off override of `deploy_source`
   (requires `--project`). Does not modify the config.
+- `--provider {github,gitlab,bitbucket}`: one-off override of `provider`
+  (requires `--project`). Does not modify the config — applies to every repo
+  in that project, so it's only useful for a single-provider project.
 - `--window-days N`: one-off override of the window in days. Does not modify
   the config.
 
@@ -164,9 +206,10 @@ stdout (or the saved files) and report it to the user exactly as Step 5
 describes, the same as any other problem. Do not treat a non-zero exit code
 from Bash as a reason to discard the output or tell the user the run failed.
 The only case that produces no report at all is a usage error — an unknown
-`--project`, `--branch` passed without `--project`, or an invalid
-`deploy_source` — which prints an error to stderr and exits 1 before anything
-is measured.
+`--project`, `--branch`/`--deploy-source`/`--provider` passed without
+`--project`, an invalid `deploy_source` or `provider`, `deploy_source:
+"release"` on a bitbucket repo, or `api_base` on a bitbucket repo — which
+prints an error to stderr and exits 1 before anything is measured.
 
 `config/projects.json` field reference (also documented in `README.md` for a
 human opening the folder, but summarized here so this skill is self-contained
@@ -178,11 +221,13 @@ even if only `SKILL.md` itself made it into an install):
 | `window_days` | global | — (required) | Measurement window in days. |
 | `projects[].name` | project | — (required) | Name the project is looked up by (case-insensitive). |
 | `projects[].notes` | project | none | Free text: rationale or clarifications specific to that project. |
-| `repos[].repo` | repo | — (required) | GitHub `org/repo`. |
+| `repos[].repo` | repo | — (required) | Repo identifier, format depends on `provider`: `org/repo` (github), project path (gitlab), `workspace/repo_slug` (bitbucket). |
+| `repos[].provider` | repo | `"github"` | `"github"`, `"gitlab"`, or `"bitbucket"`. |
 | `repos[].type` | repo | `[]` | Informational list (web/mobile/backend), only used for display in the output. |
 | `repos[].prod_branch` | repo | — (required) | Production branch of that repo. |
-| `repos[].deploy_source` | repo | `"release"` | `"release"` = GitHub Release with a semver tag. `"tag"` = plain tag with no Release, for projects that tag but don't publish Releases. |
+| `repos[].deploy_source` | repo | `"release"` (github/gitlab), `"tag"` (bitbucket) | `"release"` = Release with a semver tag (not available on Bitbucket). `"tag"` = plain tag with no Release, for projects that tag but don't publish Releases. |
 | `repos[].tag_pattern` | repo | the global `tag_pattern` | Override if that specific repo uses a different tag format (e.g. with a build number). |
+| `repos[].api_base` | repo | the provider's public API root | Self-hosted GitHub Enterprise or GitLab instance's API root. Not supported for bitbucket (Cloud only). |
 
 ### Step 5 — Report
 
@@ -252,28 +297,53 @@ missing, it asks.
 ## Known limitations (pilot)
 
 - A repo's first historical Release: excluded from the Lead Time calculation
-  (there is no way to bound the PR population before it).
-- Uses GitHub's Search API (lower rate limits than the regular REST API); with
-  1-2 projects it shouldn't be an issue, but scaling to more projects may
-  require batching/caching.
+  (there is no way to bound the PR/MR population before it).
+- GitHub only: uses the Search API (lower rate limits than the regular REST
+  API); with 1-2 projects it shouldn't be an issue, but scaling to more
+  projects may require batching/caching. GitLab and Bitbucket don't have this
+  particular asymmetry, but Bitbucket has its own cost below.
 - Lead time will come out high on the first runs — expected during
   calibration, do not read it as performance until 3-4 clean windows.
 - `deploy_source: "tag"`: if the tag/release is created 1-2 seconds after the
-  merge (e.g. a pipeline that auto-tags), a PR can end up excluded or
+  merge (e.g. a pipeline that auto-tags), a PR/MR can end up excluded or
   misattributed to the next interval. See the detail in the docstring of
   `scripts/dora_metrics.py`. Irrelevant with real cadences (days/weeks).
-- The setup diagnosis costs 2 extra REST calls per repo (`/repos` and
-  `/branches/{branch}`), plus 2 more only when a repo produced no deploy marker
-  and the script needs evidence to explain why. These are REST, not the Search
-  API that carries the low rate limit.
+- The setup diagnosis costs 2 extra REST calls per repo (repo + branch
+  existence checks), plus 2 more only when a repo produced no deploy marker
+  and the script needs evidence to explain why. These are cheap REST calls,
+  not the rate-limited Search API (GitHub only).
+- GitLab self-hosted: `merged_after`/`merged_before` filtering on the merge
+  requests list requires GitLab >= 13.1; an older instance may need an
+  upgrade for Lead Time to measure correctly.
+- GitLab tags: the API exposes only the target commit's date, not a separate
+  "tag creation" date (GitHub distinguishes an annotated tag's own tagging
+  date from the commit's date; GitLab does not).
+- Bitbucket: no Releases API at all — every Bitbucket repo measures via plain
+  tags (`deploy_source` is forced to `"tag"`). Its pull request object also
+  has no direct "merged at" timestamp; the script uses the merge commit's date
+  when available, falling back to the PR's `updated_on` otherwise — a
+  reasonable proxy, less exact than GitHub/GitLab. Measuring Lead Time also
+  costs more API calls on Bitbucket than on GitHub/GitLab, since there is no
+  server-side "merged between these dates" filter to push the window down to
+  the provider.
+- Bitbucket Server/Data Center and GitHub Enterprise are out of scope beyond
+  the `api_base` override for GitHub Enterprise; Bitbucket is Cloud-only.
+- E2E tests (`tests/e2e/`) currently cover the GitHub path only — GitLab and
+  Bitbucket are covered by unit tests with mocked HTTP responses, not a live
+  end-to-end run.
 
 ## Important notes
 
 - This skill **only fetches and reports**. It never interprets, ranks, or
   compares people — mixing fetching with evaluation contaminates the data
   (Goodhart's Law).
-- Multi-repo: each repo is measured and reported independently, never combined.
-- Single source: the GitHub API. Never read from the cloned repo's local
-  `.git`.
+- Multi-repo: each repo is measured and reported independently, never combined
+  — including when the repos are on different providers.
+- Single source: the repo's own provider API (GitHub, GitLab, or Bitbucket).
+  Never read from the cloned repo's local `.git`.
 - If the requested project isn't in `config/projects.json`, don't invent it —
-  ask for the details and add it (Step 1), never assume repos or branches.
+  ask for the details and add it (Step 1), never assume repos, branches, or
+  provider.
+- A repo whose provider has no resolvable credential is reported as
+  `measured: false` with a `no_credential` problem — it does not block the
+  rest of the run when other repos are on a provider that does have one.

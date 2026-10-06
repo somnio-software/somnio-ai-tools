@@ -7,16 +7,22 @@
 How often a project deploys to production.
 
 ## Prod deploy marker (Step 2)
-**GitHub Release on a tag with semver format `vX.Y.Z`**, created on each repo's
-production branch (`main`). The Release timestamp = the moment of the deploy.
-A single convention across the three project types (mobile/web/backend).
+**A Release (or, where unavailable, a plain tag) with semver format
+`vX.Y.Z`**, created on each repo's production branch (`main`). The
+Release/tag timestamp = the moment of the deploy. A single convention across
+the three project types (mobile/web/backend) and across the three supported
+providers (GitHub, GitLab, Bitbucket) — each repo declares its own `provider`
+and `deploy_source` in `config/projects.json`; Bitbucket Cloud has no
+Releases API, so its repos always use a plain tag (`deploy_source: "tag"`).
 
 ## Operational definition
 Number of **prod tags** (`vX.Y.Z` on `main`) per project, within a 14-day
 window.
 
 ## Source
-GitHub — tags / Releases of the project's repos (see `../config/projects.json`).
+The configured provider's API — GitHub, GitLab, or Bitbucket — reading tags/
+Releases of the project's repos (see `../config/projects.json`). Never the
+repo's local git history.
 
 ## Aggregation level
 Per project, **reported independently per repo** (a simultaneous tag in all of

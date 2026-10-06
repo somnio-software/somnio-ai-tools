@@ -18,34 +18,53 @@ says — that is the point. Do not rename the subsection headings and do not
 remove an anchor without also removing the code from `ISSUE_CODES` in
 `scripts/dora_metrics.py`; a test asserts the two stay in sync.
 
+Every code below is shared across the three supported providers (GitHub,
+GitLab, Bitbucket) — the same script path produces the same code regardless of
+which repo it came from, so "How to check" / "Where to fix" are broken out per
+provider only where the concrete steps differ.
+
 Sections without an anchor are for human readers only and are ignored by the
 parser.
 
 ---
 
 <!-- code: no_credential -->
-## No GitHub credential found
+## No credential found for this repo's provider
 
 ### What
 
-Before any measurement, the script needs a GitHub credential and found neither a
-`GITHUB_TOKEN` environment variable nor a logged-in `gh` CLI. Nothing could be
-measured in this run — the report contains this problem and no numbers.
+Before any measurement, the script needs a credential for the repo's
+`provider` (`github`, `gitlab`, or `bitbucket`) and found none. If this is the
+*only* provider in play for the run, nothing could be measured and the report
+contains this problem and no numbers; if other providers in the same run do
+have a credential, only the repos on this provider are affected — the rest of
+the run measures normally.
 
 ### How to check
 
-Run `gh auth status` to see whether the GitHub CLI is logged in, and
-`echo $GITHUB_TOKEN` to see whether the env var is set in the shell you run the
-script from. Whichever credential you use must have **read** access to every org
-that owns one of the project's repos (a multi-org project needs access to each
-org).
+- **GitHub:** `gh auth status` (is the GitHub CLI logged in?) and
+  `echo $GITHUB_TOKEN`.
+- **GitLab:** `glab auth status` (is the GitLab CLI logged in?) and
+  `echo $GITLAB_TOKEN`.
+- **Bitbucket:** `echo $BITBUCKET_TOKEN`, or `echo $BITBUCKET_USERNAME` /
+  `echo $BITBUCKET_APP_PASSWORD` (there is no CLI fallback for Bitbucket).
+
+Whichever credential you use must have **read** access to every org/group/
+workspace that owns one of the project's repos on that provider (a multi-org
+project needs access to each one).
 
 ### Where to fix
 
-- Option 1: `export GITHUB_TOKEN=ghp_xxxx` with a token that has repo **read**
-  scope for those orgs.
-- Option 2: run `gh auth login` once (if the GitHub CLI is installed) — the
+- **GitHub** — Option 1: `export GITHUB_TOKEN=ghp_xxxx` with a token that has
+  repo **read** scope for those orgs. Option 2: run `gh auth login` once — the
   script detects it automatically via `gh auth token`, nothing to export.
+- **GitLab** — Option 1: `export GITLAB_TOKEN=glpat-xxxx` with a token that has
+  `read_api` scope for those groups/projects. Option 2: run `glab auth login`
+  once — the script detects it automatically via `glab auth token`.
+- **Bitbucket** — Option 1: `export BITBUCKET_TOKEN=xxxx` with a workspace or
+  repository access token. Option 2: `export BITBUCKET_USERNAME=...` and
+  `export BITBUCKET_APP_PASSWORD=...` (an app password, not the account
+  password) — both must be set together.
 
 ---
 
@@ -54,27 +73,32 @@ org).
 
 ### What
 
-`GET /repos/{owner}/{repo}` returned 404 or 403, so the script cannot read
-anything about this repo and skipped it. The other repos of the project were
-still measured. A 404 here does not necessarily mean the repo is gone: GitHub
-returns 404 rather than 403 for private repos a credential cannot see.
+The provider's "does this repo exist and can I see it" check returned 404 or
+403, so the script cannot read anything about this repo and skipped it. The
+other repos of the project were still measured. A 404 here does not
+necessarily mean the repo is gone: all three providers return 404 rather than
+403 for a private repo a credential cannot see.
 
 ### How to check
 
-- Confirm the `repo` value in `config/projects.json` is the current
-  `org/repo` — a renamed or transferred repo keeps redirecting in the browser
-  but the configured path may no longer be the canonical one.
-- Open the repo on GitHub with the same account that owns the credential. If you
-  cannot see it there either, it is an access problem, not a config typo.
-- For a multi-org project, check the credential covers **that** org. Access to
-  one org says nothing about the other.
+- Confirm the `repo` value in `config/projects.json` is current:
+  - **GitHub:** `org/repo`.
+  - **GitLab:** the project's full path (`group/project` or
+    `group/subgroup/project`) — a renamed group or project keeps redirecting
+    in the browser but the configured path may no longer be canonical.
+  - **Bitbucket:** `workspace/repo_slug`.
+- Open the repo on the provider's web UI with the same account that owns the
+  credential. If you cannot see it there either, it is an access problem, not
+  a config typo.
+- For a multi-org/multi-group/multi-workspace project, check the credential
+  covers **that specific one**. Access to one says nothing about another.
 
 ### Where to fix
 
 - Wrong path: correct `repos[].repo` in `config/projects.json`.
-- Missing access: re-issue the token with repo **read** scope for that org, or
-  have the org grant the account access. For a fine-grained token, the org must
-  also approve it.
+- Missing access: re-issue the credential with read scope for that org/group/
+  workspace, or have it grant the account access. For a GitHub fine-grained
+  token, the org must also approve it.
 
 ---
 
@@ -83,44 +107,56 @@ returns 404 rather than 403 for private repos a credential cannot see.
 
 ### What
 
-The GitHub API returned 401 Unauthorized. The credential exists but is not
+The provider's API returned 401 Unauthorized. The credential exists but is not
 valid — expired, revoked, or malformed. Nothing could be read for this repo.
 
 ### How to check
 
-Run `gh auth status`, or `curl -sI -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/user`
-and check for `HTTP/2 200`. A 401 there confirms the token itself, independent of
-any repo.
+- **GitHub:** `gh auth status`, or
+  `curl -sI -H "Authorization: Bearer $GITHUB_TOKEN" https://api.github.com/user`
+  and check for `HTTP/2 200`.
+- **GitLab:** `glab auth status`, or
+  `curl -sI -H "PRIVATE-TOKEN: $GITLAB_TOKEN" https://gitlab.com/api/v4/user`.
+- **Bitbucket:** `curl -sI -H "Authorization: Bearer $BITBUCKET_TOKEN" https://api.bitbucket.org/2.0/user`,
+  or the equivalent with `-u "$BITBUCKET_USERNAME:$BITBUCKET_APP_PASSWORD"`.
 
 ### Where to fix
 
-Issue a new token and `export GITHUB_TOKEN=...`, or re-run `gh auth login`.
-Classic tokens can expire silently; fine-grained tokens also expire and lose
-access when their org approval is revoked.
+Issue a new credential and export it again, or re-run the provider's CLI login
+(`gh auth login` / `glab auth login`). Classic GitHub tokens and GitLab
+personal access tokens can expire silently; fine-grained tokens also expire
+and lose access when their org approval is revoked. A Bitbucket app password
+is revoked independently of the account password — check it wasn't deleted.
 
 ---
 
 <!-- code: rate_limited -->
-## GitHub API rate limit reached
+## Provider API rate limit reached
 
 ### What
 
-GitHub returned 403 with a rate-limit message, so the run stopped reading data
-for this repo. This is not a configuration problem — it is a quota one. The
-Search API (used for merged PRs) has a much lower limit than the REST API.
+The provider's API refused the request for being over its rate limit, so the
+run stopped reading data for this repo. This is not a configuration problem —
+it is a quota one. GitHub's Search API (used for merged PRs) has a much lower
+limit than its REST API; GitLab and Bitbucket signal this with a plain 429.
 
 ### How to check
 
-Run `gh api rate_limit` and look at the `search` and `core` blocks: `remaining`
-and the `reset` timestamp.
+- **GitHub:** `gh api rate_limit` and look at the `search` and `core` blocks:
+  `remaining` and the `reset` timestamp.
+- **GitLab:** the response headers on any API call include `RateLimit-Remaining`
+  and `RateLimit-Reset`; `glab api rate_limit` surfaces them too on recent
+  `glab` versions.
+- **Bitbucket:** a 429 response includes a `Retry-After` header with the
+  number of seconds to wait.
 
 ### Where to fix
 
-- Re-run after the reset time shown by `gh api rate_limit`.
+- Re-run after the reset time the provider reports.
 - Run fewer projects per invocation with `--project`, instead of the whole
   config at once.
 - Make sure a credential is actually being used — unauthenticated requests have
-  drastically lower limits.
+  drastically lower limits on all three providers.
 
 ---
 
@@ -129,18 +165,23 @@ and the `reset` timestamp.
 
 ### What
 
-`GET /repos/{owner}/{repo}/branches/{prod_branch}` returned 404: the branch named
+The provider's "does this branch exist" check returned 404: the branch named
 in `repos[].prod_branch` is not in the repo. Deployment Frequency is unaffected
 (it counts deploy markers, which do not depend on the branch), but Lead Time
-cannot be computed, because the PR population is defined as PRs merged into that
-branch.
+cannot be computed, because the PR/MR population is defined as changes merged
+into that branch.
 
 ### How to check
 
-Open the repo's branch list on GitHub, or run
-`gh api repos/{owner}/{repo}/branches --jq '.[].name'`, and compare with the
-`prod_branch` in `config/projects.json`. Common mismatches: `master` vs `main`,
-or a repo that deploys from `production` / `release`.
+- **GitHub:** open the repo's branch list, or run
+  `gh api repos/{owner}/{repo}/branches --jq '.[].name'`.
+- **GitLab:** open the project's branch list, or run
+  `glab api projects/{id}/repository/branches --jq '.[].name'`.
+- **Bitbucket:** open the repo's branch list in the web UI, or
+  `curl -s https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/refs/branches`.
+
+Compare with the `prod_branch` in `config/projects.json`. Common mismatches:
+`master` vs `main`, or a repo that deploys from `production` / `release`.
 
 ### Where to fix
 
@@ -156,26 +197,32 @@ touching the config, use `--branch <branch>` for a one-off run.
 ### What
 
 The repo has no marker of the configured kind: no published Releases when
-`deploy_source` is `"release"`, or no tags when it is `"tag"`. With no marker
-there is nothing to count as a deploy, so Deployment Frequency is 0 and Lead
-Time has nothing to measure against — regardless of how much was actually
-deployed.
+`deploy_source` is `"release"` (GitHub/GitLab only), or no tags when it is
+`"tag"`. With no marker there is nothing to count as a deploy, so Deployment
+Frequency is 0 and Lead Time has nothing to measure against — regardless of
+how much was actually deployed.
 
 ### How to check
 
-Open the repo's Releases and Tags pages on GitHub (or
-`gh api repos/{owner}/{repo}/releases --jq '.[].tag_name'` and
-`gh api repos/{owner}/{repo}/tags --jq '.[].name'`) and check which of the two,
-if either, the repo actually uses.
+- **GitHub:** the repo's Releases and Tags pages, or
+  `gh api repos/{owner}/{repo}/releases --jq '.[].tag_name'` and
+  `gh api repos/{owner}/{repo}/tags --jq '.[].name'`.
+- **GitLab:** the project's Releases and Tags pages, or
+  `glab api projects/{id}/releases --jq '.[].tag_name'` and
+  `glab api projects/{id}/repository/tags --jq '.[].name'`.
+- **Bitbucket:** the repo's Tags page (Bitbucket Cloud has no Releases API at
+  all — `deploy_source` must be `"tag"`), or
+  `curl -s https://api.bitbucket.org/2.0/repositories/{workspace}/{repo_slug}/refs/tags`.
 
 ### Where to fix
 
-- The repo does use one of them but not the configured one: set
-  `repos[].deploy_source` in `config/projects.json` accordingly (`"release"` or
-  `"tag"`).
+- The repo does use one of them but not the configured one (GitHub/GitLab
+  only): set `repos[].deploy_source` in `config/projects.json` accordingly
+  (`"release"` or `"tag"`). On Bitbucket, `deploy_source` must be `"tag"` —
+  `"release"` is rejected before anything is measured.
 - The repo marks no deploys at all: this is an instrumentation gap. Lead Time
   and Deployment Frequency are defined against a deploy marker, so until each
-  production deploy creates a Release or a tag, this repo cannot be measured.
+  production deploy creates a Release (or tag) this repo cannot be measured.
   Adding that step to the release process is a setup choice for the repo.
 
 ---
@@ -201,9 +248,9 @@ not `release-2026-07-01`.
 
 Set `repos[].tag_pattern` in `config/projects.json` to a regex matching that
 repo's real naming, leaving the global pattern for the repos that follow it. The
-pattern is matched with `re.match`, so it is anchored at the start; anchor the
-end with `$` if you want an exact match. Example for a build-number suffix:
-`^v\d+\.\d+\.\d+\+\d+$`.
+pattern is matched with `re.match` (anchored at the start) on all three
+providers; anchor the end with `$` if you want an exact match. Example for a
+build-number suffix: `^v\d+\.\d+\.\d+\+\d+$`.
 
 ---
 
@@ -215,12 +262,14 @@ end with `$` if you want an exact match. Example for a build-number suffix:
 Nothing matched with the configured `deploy_source`, but markers matching
 `tag_pattern` **do** exist of the other kind — the repo tags without publishing
 Releases, or publishes Releases while `deploy_source` says `"tag"`. The script
-looked in the right repo for the wrong thing.
+looked in the right repo for the wrong thing. (Not applicable to Bitbucket,
+which has only one marker kind — tags.)
 
 ### How to check
 
 The report's evidence lists the matching names found on the other side. Confirm
-on GitHub that those are what the team treats as a production deploy.
+on the provider's web UI that those are what the team treats as a production
+deploy.
 
 ### Where to fix
 
@@ -231,27 +280,34 @@ use the one-off `--deploy-source {release,tag}` flag.
 ---
 
 <!-- code: matching_releases_all_draft -->
-## The matching Releases are all drafts
+## The matching Releases are all drafts (or, on GitLab, upcoming)
 
 ### What
 
 Releases whose tag matches `tag_pattern` exist, but every one of them is a
-draft. A draft Release is not published, so the script does not count it as a
-deploy — a draft means the deploy was not announced, and counting it would
-inflate Deployment Frequency with deploys that may never have happened.
+GitHub draft, or a GitLab Release whose `released_at` is still in the future
+("upcoming"). Neither is counted as a deploy — a draft means the deploy was
+not announced, and an upcoming release hasn't happened yet; counting either
+would inflate Deployment Frequency with deploys that haven't really occurred.
+(Not applicable to Bitbucket, which has no Releases API.)
 
 ### How to check
 
-Open the repo's Releases page: drafts are labelled **Draft** and are only
-visible to users with write access. `gh api repos/{owner}/{repo}/releases --jq '.[] | select(.draft) | .tag_name'`
-lists them.
+- **GitHub:** the repo's Releases page — drafts are labelled **Draft** and are
+  only visible to users with write access.
+  `gh api repos/{owner}/{repo}/releases --jq '.[] | select(.draft) | .tag_name'`
+  lists them.
+- **GitLab:** the project's Releases page — an upcoming release is labelled
+  **Upcoming Release**. Compare each matching release's `released_at` against
+  now.
 
 ### Where to fix
 
-Publish the Releases that correspond to real deploys, or adjust the release
-process so the final step publishes rather than saves a draft. If the team
-deliberately keeps drafts and marks deploys with plain tags instead, set
-`repos[].deploy_source` to `"tag"`.
+Publish the Releases that correspond to real deploys (GitHub), or wait for an
+upcoming GitLab release's `released_at` to pass, or adjust the release process
+so the final step publishes immediately rather than scheduling ahead. If the
+team deliberately keeps drafts/upcoming releases and marks deploys with plain
+tags instead, set `repos[].deploy_source` to `"tag"`.
 
 ---
 
@@ -288,14 +344,14 @@ you want to see the surrounding history.
 This deploy is the first one the script can see in the repo's history for the
 configured marker (`deploy_source`: Release or plain tag). Lead Time is measured
 against the *previous* deploy, so with no prior marker there is no lower bound
-for the PR population — the script skips Lead Time for this deploy and says so.
-The deploy still counts toward Deployment Frequency; only its Lead Time is
+for the PR/MR population — the script skips Lead Time for this deploy and says
+so. The deploy still counts toward Deployment Frequency; only its Lead Time is
 excluded.
 
 ### How to check
 
-In the repo's GitHub Releases (or tags) page, confirm this is in fact the
-earliest marker matching `tag_pattern`. If it is, this is structural and
+In the repo's Releases (or tags) page on the provider, confirm this is in fact
+the earliest marker matching `tag_pattern`. If it is, this is structural and
 expected.
 
 ### Where to fix
@@ -311,25 +367,25 @@ first".
 ---
 
 <!-- code: no_prs_in_range -->
-## No merged PRs found between two deploys
+## No merged PRs/MRs found between two deploys
 
 ### What
 
-Between this deploy and the previous one, the script found no PRs merged into
-the configured production branch, so it has nothing from which to compute Lead
-Time for this deploy. This is usually a **measurement-setup** mismatch rather
-than a real absence of changes.
+Between this deploy and the previous one, the script found no PRs/MRs merged
+into the configured production branch, so it has nothing from which to compute
+Lead Time for this deploy. This is usually a **measurement-setup** mismatch
+rather than a real absence of changes.
 
 ### How to check
 
-- In `config/projects.json`, read the repo's `prod_branch` and compare it to the
-  branch PRs actually merge into on GitHub. If PRs merge into `master`,
-  `production`, `release`, etc. but `prod_branch` says `main` (or vice versa),
-  the query looks at the wrong base and finds nothing.
-- On GitHub, open the repo's merged PRs for the interval between the two deploy
-  tags and check their **base** branch. If changes reached the branch via direct
-  pushes or fast-forward merges **without a PR**, the Search API cannot see them
-  (Lead Time is defined only over merged PRs — see
+- In `config/projects.json`, read the repo's `prod_branch` and compare it to
+  the branch PRs/MRs actually merge into on the provider. If changes merge into
+  `master`, `production`, `release`, etc. but `prod_branch` says `main` (or
+  vice versa), the query looks at the wrong base and finds nothing.
+- On the provider, open the merged PRs/MRs for the interval between the two
+  deploy tags and check their **target/base** branch. If changes reached the
+  branch via direct pushes or fast-forward merges **without a PR/MR**, the
+  script cannot see them (Lead Time is defined only over merged PRs/MRs — see
   `references/lead-time-for-changes.md`).
 
 ### Where to fix
@@ -337,39 +393,39 @@ than a real absence of changes.
 - Wrong branch: correct `repos[].prod_branch` in `config/projects.json` (or use
   `--branch <branch>` for a one-off check without editing the config). Confirm
   the change before saving — the config is shared by the team.
-- Changes landing without PRs: this is a process/instrumentation detail of the
-  repo. Routing production changes through PRs is what makes Lead Time
-  measurable; that is a setup choice for the repo, not something this guide ranks
-  or scores.
+- Changes landing without a PR/MR: this is a process/instrumentation detail of
+  the repo. Routing production changes through a PR/MR is what makes Lead Time
+  measurable; that is a setup choice for the repo, not something this guide
+  ranks or scores.
 
 ---
 
 <!-- code: pr_first_commit_unfetchable -->
-## A PR's first commit could not be fetched
+## A PR/MR's first commit could not be fetched
 
 ### What
 
-The script found the merged PR but could not read its commit list from the
-GitHub API, so it has no first-commit timestamp to start Lead Time from and
-excludes that single PR. The other PRs in the interval are unaffected.
+The script found the merged PR/MR but could not read its commit list from the
+provider's API, so it has no first-commit timestamp to start Lead Time from and
+excludes that single PR/MR. The other PRs/MRs in the interval are unaffected.
 
 ### How to check
 
-- Confirm the token can read that repo's PR commits: open the PR on GitHub with
-  the same account and check `pulls/N/commits` is visible. A token missing repo
-  read scope (or org access, for a multi-org project) can return the PR from
-  Search but fail on the commit fetch.
-- Open the PR on GitHub and check its commit history is present and not empty
+- Confirm the credential can read that repo's PR/MR commits: open the PR/MR on
+  the provider with the same account and check its commit list is visible. A
+  credential missing read scope (or org/group access, for a multi-org/group
+  project) can return the PR/MR from the list but fail on the commit fetch.
+- Open the PR/MR and check its commit history is present and not empty
   (unusual merge history — e.g. a PR whose commits were rewritten or whose head
   was force-removed — can leave no fetchable commits).
 
 ### Where to fix
 
-- Token scope/access: use a `GITHUB_TOKEN` (or `gh auth login` session) with
-  **read** access to that repo and to **all** the orgs of the project's repos.
-  See the `no_credential` entry in `references/troubleshooting.md`.
-- Genuinely empty/unusual commit history: nothing to fix in config — this PR is
-  correctly excluded because its first commit is unrecoverable.
+- Credential scope/access: use a credential with **read** access to that repo
+  and to **all** the orgs/groups/workspaces of the project's repos on that
+  provider. See the `no_credential` entry in `references/troubleshooting.md`.
+- Genuinely empty/unusual commit history: nothing to fix in config — this
+  PR/MR is correctly excluded because its first commit is unrecoverable.
 
 ---
 
@@ -388,12 +444,14 @@ instrumentation gap, not a statement about the number itself.
 that **each** production deploy in the window actually produced a marker matching
 the repo's configured `deploy_source`:
 
-- `deploy_source: "release"` — a published (non-draft) GitHub Release whose tag
-  matches `tag_pattern`.
-- `deploy_source: "tag"` — a git tag whose name matches `tag_pattern`.
+- `deploy_source: "release"` (GitHub/GitLab only) — a published GitHub Release,
+  or a GitLab Release whose `released_at` has passed, whose tag matches
+  `tag_pattern`.
+- `deploy_source: "tag"` — a git tag whose name matches `tag_pattern` (the
+  only option on Bitbucket).
 
-Cross-check the repo's Releases/tags list on GitHub against the deploys you know
-happened.
+Cross-check the repo's Releases/tags list on the provider against the deploys
+you know happened.
 
 **Where to fix.**
 
@@ -406,3 +464,25 @@ happened.
 This is purely a check on whether every deploy is *instrumented*. It does not
 comment on how often the repo deploys or whether that cadence is adequate — that
 would be interpreting performance, which is out of scope.
+
+---
+
+## Known provider-specific precision gaps
+
+> No anchor: background for a human reading a Lead Time number that looks off
+> by a few seconds or minutes, not a problem the script surfaces as an issue.
+
+- **GitLab tags:** the API exposes only the target commit's date, not a
+  separate "when was this tag created" date — unlike GitHub, which
+  distinguishes an annotated tag's own tagging date from the underlying
+  commit's date. A GitLab tag created well after its commit will read as if it
+  happened at commit time.
+- **Bitbucket PR merge time:** Bitbucket Cloud's pull request object has no
+  directly exposed "merged at" timestamp. The script uses the merge commit's
+  own commit date when available, falling back to the PR's `updated_on`
+  otherwise — a reasonable proxy, not as exact as GitHub's Search API or
+  GitLab's `merged_after`/`merged_before` filters.
+
+Neither of these is something `config/projects.json` can fix — they are limits
+of what each provider's API reports, documented here so a small discrepancy
+isn't mistaken for a bug.

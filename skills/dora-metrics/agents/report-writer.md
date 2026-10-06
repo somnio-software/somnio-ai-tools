@@ -48,7 +48,8 @@ The JSON emitted by `scripts/dora_metrics.py` to stdout. If you are handed a fil
 
 Relevant fields per repo, mirroring the shape documented in `README.md`'s "Output example":
 
-- `repo` — GitHub `org/repo`.
+- `repo` — the repo identifier (format depends on `provider`: `org/repo` for GitHub, a project path for GitLab, `workspace/repo_slug` for Bitbucket).
+- `provider` — `"github"`, `"gitlab"`, or `"bitbucket"`. Mention it in the row header whenever it isn't `"github"` — a mixed-provider project is exactly the case where this matters to the reader.
 - `prod_branch`, `deploy_source`, and the repo's `type` (web/mobile/backend), for the row header.
 - `deployment_frequency` — count of deploys in the window.
 - `lead_time_median_hours` and `lead_time_n` — median lead time and how many PRs it was computed from.
@@ -76,7 +77,7 @@ The measurement window comes from the run (default 14 days).
 Follow `assets/report-template.md` exactly. For each project:
 
 1. A section header with the project name.
-2. One row per repo showing **Deployment Frequency** and the **median Lead Time** (with its `n`), plus the repo's type and deploy source.
+2. One row per repo showing **Deployment Frequency** and the **median Lead Time** (with its `n`), plus the repo's type, deploy source, and provider (when not GitHub).
 3. The measurement window (e.g. "last 14 days").
 4. For each repo with issues, a **"Problems found and how to fix them"** list
    covering the `blocked` and `partial` ones, and a separate **"Notes"** list

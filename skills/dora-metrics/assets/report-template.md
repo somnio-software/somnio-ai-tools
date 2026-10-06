@@ -114,7 +114,10 @@ Structure notes for the report-writer (not part of the rendered reply):
 - One table row per repo. Always show BOTH metrics for every repo:
   Deployment Frequency (the count of deploys in the window) and the median
   Lead Time with its n (lead_time_median_hours + lead_time_n from the JSON).
-- Header the row with the repo's `type` and `deploy_source` from the JSON.
+- Header the row with the repo's `type` and `deploy_source` from the JSON, and
+  its `provider` whenever it isn't `"github"` — a project mixing GitHub,
+  GitLab, and Bitbucket repos (e.g. a GitLab backend alongside a GitHub
+  frontend) is exactly the case where naming the provider matters.
 - State the measurement window once (default 14 days).
 - Add a "Problems found and how to fix them" sub-list under a repo when it has
   issues with impact blocked/partial, and a "Notes" sub-list for impact none.

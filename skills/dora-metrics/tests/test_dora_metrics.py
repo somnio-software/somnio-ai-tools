@@ -305,11 +305,11 @@ class TestFormatHumanSummary(unittest.TestCase):
         self.assertIn("  - **What:** The script found no credential.", text)
 
     def test_issue_without_guidance_says_so_instead_of_inventing(self):
-        issue = dora_metrics.make_issue("github_api_error", "blocked", "a/b: GitHub API error 500")
+        issue = dora_metrics.make_issue("api_error", "blocked", "a/b: GitHub API error 500")
         text = dora_metrics.format_human_summary(
             self._result([self._repo(measured=False, issues=[issue])]), window_days=14)
         self.assertIn("a/b: GitHub API error 500", text)
-        self.assertIn("no guidance for 'github_api_error'", text)
+        self.assertIn("no guidance for 'api_error'", text)
         self.assertNotIn("**What:**", text)
 
     def test_impact_none_renders_under_notes_not_problems(self):
@@ -372,7 +372,7 @@ class TestIssueModel(unittest.TestCase):
         self.assertEqual(result["projects"][0]["repos"][0]["issues"][0]["guidance"]["what"], "w2")
 
     def test_hydrate_leaves_guidance_none_when_code_absent(self):
-        result = {"issues": [dora_metrics.make_issue("github_api_error", "blocked", "m")], "projects": []}
+        result = {"issues": [dora_metrics.make_issue("api_error", "blocked", "m")], "projects": []}
         dora_metrics.hydrate_issues(result, {})
         self.assertIsNone(result["issues"][0]["guidance"])
 
@@ -639,7 +639,7 @@ class TestPreflightRepo(unittest.TestCase):
     def test_branch_unexpected_status_is_reported_not_treated_as_success(self):
         session = FakeSession({"/branches/main": FakeResponse(500, "boom")})
         issues = dora_metrics.preflight_repo(session, "a/b", "main")
-        self.assertEqual([i["code"] for i in issues], ["github_api_error"])
+        self.assertEqual([i["code"] for i in issues], ["api_error"])
         self.assertEqual(issues[0]["impact"], "partial")
         self.assertEqual(issues[0]["evidence"]["prod_branch"], "main")
 
@@ -648,10 +648,10 @@ class TestPreflightRepo(unittest.TestCase):
         dora_metrics.preflight_repo(session, "a/b", "main")
         self.assertTrue(all("/branches/" not in url for url in session.calls))
 
-    def test_unexpected_status_is_github_api_error(self):
+    def test_unexpected_status_is_api_error(self):
         session = FakeSession({"/repos/a/b": FakeResponse(500, "boom")})
         issues = dora_metrics.preflight_repo(session, "a/b", "main")
-        self.assertEqual([i["code"] for i in issues], ["github_api_error"])
+        self.assertEqual([i["code"] for i in issues], ["api_error"])
 
 
 class TestDiagnoseMarkers(unittest.TestCase):
@@ -779,14 +779,14 @@ class TestBuildResult(unittest.TestCase):
         self.assertFalse(repo["measured"])
         self.assertEqual([i["code"] for i in repo["issues"]], ["token_unauthorized"])
 
-    def test_unrecognized_api_exception_falls_back_to_github_api_error(self):
+    def test_unrecognized_api_exception_falls_back_to_api_error(self):
         with patch.object(dora_metrics, "preflight_repo", return_value=[]), \
              patch.object(dora_metrics, "compute_repo_metrics",
                           side_effect=dora_metrics.GitHubError("GitHub API error 500 at ...")):
             result = dora_metrics.build_result(
                 session=None, projects=self.PROJECTS, tag_pattern=r"^v", window_days=14,
                 now=dt("2026-07-03T00:00:00Z"))
-        self.assertEqual([i["code"] for i in result["projects"][0]["repos"][0]["issues"]], ["github_api_error"])
+        self.assertEqual([i["code"] for i in result["projects"][0]["repos"][0]["issues"]], ["api_error"])
 
     def test_repo_name_containing_401_is_not_mistaken_for_an_auth_failure(self):
         projects = [{"name": "P", "repos": [{"repo": "org/app-401", "prod_branch": "main"}]}]
@@ -797,7 +797,7 @@ class TestBuildResult(unittest.TestCase):
             result = dora_metrics.build_result(
                 session=None, projects=projects, tag_pattern=r"^v", window_days=14,
                 now=dt("2026-07-03T00:00:00Z"))
-        self.assertEqual([i["code"] for i in result["projects"][0]["repos"][0]["issues"]], ["github_api_error"])
+        self.assertEqual([i["code"] for i in result["projects"][0]["repos"][0]["issues"]], ["api_error"])
 
     def test_repo_name_containing_404_is_not_mistaken_for_an_unreachable_repo(self):
         projects = [{"name": "P", "repos": [{"repo": "org/404-redirects", "prod_branch": "main"}]}]
@@ -808,7 +808,7 @@ class TestBuildResult(unittest.TestCase):
             result = dora_metrics.build_result(
                 session=None, projects=projects, tag_pattern=r"^v", window_days=14,
                 now=dt("2026-07-03T00:00:00Z"))
-        self.assertEqual([i["code"] for i in result["projects"][0]["repos"][0]["issues"]], ["github_api_error"])
+        self.assertEqual([i["code"] for i in result["projects"][0]["repos"][0]["issues"]], ["api_error"])
 
     def test_rate_limit_message_still_classified(self):
         projects = [{"name": "P", "repos": [{"repo": "a/b", "prod_branch": "main"}]}]
@@ -989,6 +989,495 @@ class TestWriteOutput(unittest.TestCase):
             json_files = [f for f in files if f.endswith(".json")]
             self.assertEqual(json_files, [],
                            f"Found unexpected JSON files in --out-dir: {json_files}")
+
+
+class FakeHttpResponse:
+    """Like FakeResponse, but with a JSON body and a `.links` dict — enough to
+    drive gitlab_paginate/bitbucket_paginate and the GitLab/Bitbucket parsing
+    functions without hitting the network."""
+
+    def __init__(self, status_code=200, json_data=None, text="", links=None):
+        self.status_code = status_code
+        self._json = [] if json_data is None else json_data
+        self.text = text
+        self.links = links or {}
+
+    @property
+    def ok(self):
+        return 200 <= self.status_code < 300
+
+    def json(self):
+        return self._json
+
+
+class FakeHttpSession:
+    """Routes by URL suffix, like FakeSession, but returns a FakeHttpResponse."""
+
+    def __init__(self, routes=None, default=None):
+        self.routes = routes or {}
+        self.default = default if default is not None else FakeHttpResponse(200, [])
+        self.calls = []
+
+    def get(self, url, params=None):
+        self.calls.append((url, params))
+        for suffix, resp in self.routes.items():
+            if url.endswith(suffix):
+                return resp
+        return self.default
+
+
+class TestParseIsoTs(unittest.TestCase):
+    def test_handles_z_suffix(self):
+        self.assertEqual(dora_metrics.parse_iso_ts("2026-07-01T12:00:00Z"), dt("2026-07-01T12:00:00Z"))
+
+    def test_handles_fractional_seconds_and_offset(self):
+        d = dora_metrics.parse_iso_ts("2026-07-01T12:00:00.123456+00:00")
+        self.assertEqual(d.tzinfo, timezone.utc)
+        self.assertEqual(d.replace(microsecond=0), dt("2026-07-01T12:00:00Z"))
+
+    def test_normalizes_non_utc_offset_to_utc(self):
+        self.assertEqual(dora_metrics.parse_iso_ts("2026-07-01T09:00:00-03:00"), dt("2026-07-01T12:00:00Z"))
+
+
+class TestEffectiveDeploySource(unittest.TestCase):
+    def test_github_defaults_to_release(self):
+        self.assertEqual(dora_metrics.effective_deploy_source({"repo": "a/b"}), "release")
+
+    def test_gitlab_defaults_to_release(self):
+        self.assertEqual(dora_metrics.effective_deploy_source({"repo": "a/b", "provider": "gitlab"}), "release")
+
+    def test_bitbucket_defaults_to_tag(self):
+        self.assertEqual(dora_metrics.effective_deploy_source({"repo": "a/b", "provider": "bitbucket"}), "tag")
+
+    def test_explicit_value_wins(self):
+        repo_cfg = {"repo": "a/b", "provider": "gitlab", "deploy_source": "tag"}
+        self.assertEqual(dora_metrics.effective_deploy_source(repo_cfg), "tag")
+
+
+class TestClassifyApiError(unittest.TestCase):
+    def test_401_maps_to_token_unauthorized_with_provider_label(self):
+        issue = dora_metrics.classify_api_error("gitlab", "g/p", "401 Unauthorized. ...")
+        self.assertEqual(issue["code"], "token_unauthorized")
+        self.assertIn("GitLab API", issue["message"])
+
+    def test_rate_limit_message_mentions_provider(self):
+        issue = dora_metrics.classify_api_error("bitbucket", "ws/repo", "Rate limit reached: ...")
+        self.assertEqual(issue["code"], "rate_limited")
+        self.assertIn("Bitbucket API", issue["message"])
+
+    def test_404_maps_to_repo_unreachable(self):
+        issue = dora_metrics.classify_api_error("github", "a/b", "404 Not Found at ...")
+        self.assertEqual(issue["code"], "repo_unreachable")
+
+    def test_unrecognized_message_is_api_error(self):
+        issue = dora_metrics.classify_api_error("gitlab", "g/p", "boom")
+        self.assertEqual(issue["code"], "api_error")
+
+
+class TestCredentialResolution(unittest.TestCase):
+    def test_gitlab_token_env_var_takes_precedence(self):
+        with patch.dict(os.environ, {"GITLAB_TOKEN": "glpat-xxx"}, clear=False):
+            self.assertEqual(dora_metrics.get_gitlab_token(), "glpat-xxx")
+
+    def test_gitlab_token_absent_and_no_glab_returns_none(self):
+        with patch.dict(os.environ, {}, clear=True), patch("shutil.which", return_value=None):
+            self.assertIsNone(dora_metrics.get_gitlab_token())
+
+    def test_bitbucket_bearer_token_takes_precedence(self):
+        with patch.dict(os.environ, {"BITBUCKET_TOKEN": "tok", "BITBUCKET_USERNAME": "u",
+                                      "BITBUCKET_APP_PASSWORD": "p"}, clear=True):
+            cred = dora_metrics.get_bitbucket_credential()
+        self.assertEqual(cred, {"type": "bearer", "token": "tok"})
+
+    def test_bitbucket_falls_back_to_basic_auth(self):
+        with patch.dict(os.environ, {"BITBUCKET_USERNAME": "u", "BITBUCKET_APP_PASSWORD": "p"}, clear=True):
+            cred = dora_metrics.get_bitbucket_credential()
+        self.assertEqual(cred, {"type": "basic", "username": "u", "app_password": "p"})
+
+    def test_bitbucket_requires_both_username_and_password(self):
+        with patch.dict(os.environ, {"BITBUCKET_USERNAME": "u"}, clear=True):
+            self.assertIsNone(dora_metrics.get_bitbucket_credential())
+
+
+class TestValidateProviders(unittest.TestCase):
+    def test_valid_providers_ok(self):
+        projects = [{"repos": [{"repo": "a/b", "provider": "github"},
+                                {"repo": "a/c", "provider": "gitlab"},
+                                {"repo": "a/d", "provider": "bitbucket"},
+                                {"repo": "a/e"}]}]
+        dora_metrics.validate_providers(projects)  # should not raise
+
+    def test_invalid_provider_raises(self):
+        projects = [{"repos": [{"repo": "a/b", "provider": "gitea"}]}]
+        with self.assertRaises(ValueError):
+            dora_metrics.validate_providers(projects)
+
+
+class TestValidateDeploySourcesBitbucket(unittest.TestCase):
+    def test_bitbucket_release_is_rejected(self):
+        projects = [{"repos": [{"repo": "a/b", "provider": "bitbucket", "deploy_source": "release"}]}]
+        with self.assertRaises(ValueError):
+            dora_metrics.validate_deploy_sources(projects)
+
+    def test_bitbucket_tag_or_omitted_is_ok(self):
+        projects = [{"repos": [{"repo": "a/b", "provider": "bitbucket", "deploy_source": "tag"},
+                                {"repo": "a/c", "provider": "bitbucket"}]}]
+        dora_metrics.validate_deploy_sources(projects)  # should not raise
+
+
+class TestValidateApiBase(unittest.TestCase):
+    def test_bitbucket_with_api_base_raises(self):
+        projects = [{"repos": [{"repo": "a/b", "provider": "bitbucket", "api_base": "https://example.com"}]}]
+        with self.assertRaises(ValueError):
+            dora_metrics.validate_api_base(projects)
+
+    def test_gitlab_with_api_base_ok(self):
+        projects = [{"repos": [{"repo": "a/b", "provider": "gitlab", "api_base": "https://gitlab.example.com/api/v4"}]}]
+        dora_metrics.validate_api_base(projects)  # should not raise
+
+    def test_github_without_api_base_ok(self):
+        projects = [{"repos": [{"repo": "a/b", "provider": "github"}]}]
+        dora_metrics.validate_api_base(projects)  # should not raise
+
+
+class TestValidateScopedOverridesProvider(unittest.TestCase):
+    def test_provider_without_project_raises(self):
+        args = SimpleNamespace(branch=None, project=None, deploy_source=None, provider="gitlab")
+        with self.assertRaises(ValueError):
+            dora_metrics.validate_scoped_overrides(args)
+
+    def test_provider_missing_attribute_is_tolerated(self):
+        # Mirrors how the older tests in TestValidateScopedOverrides construct
+        # args without a .provider attribute at all.
+        args = SimpleNamespace(branch=None, project=None, deploy_source=None)
+        dora_metrics.validate_scoped_overrides(args)  # should not raise
+
+    def test_provider_with_project_ok(self):
+        args = SimpleNamespace(branch=None, project="Example Project", deploy_source=None, provider="bitbucket")
+        dora_metrics.validate_scoped_overrides(args)  # should not raise
+
+
+class TestGitLabFunctions(unittest.TestCase):
+    def test_project_id_is_url_encoded(self):
+        self.assertEqual(dora_metrics.gitlab_project_id("group/sub/project"), "group%2Fsub%2Fproject")
+
+    def test_get_gitlab_tags_filters_and_parses_dates(self):
+        session = FakeHttpSession({
+            "/repository/tags": FakeHttpResponse(200, [
+                {"name": "v1.0.0", "commit": {"committed_date": "2026-07-01T12:00:00.000+00:00"}},
+                {"name": "not-a-match", "commit": {"committed_date": "2026-07-02T00:00:00Z"}},
+            ]),
+        })
+        tags = dora_metrics.get_gitlab_tags(session, "group/project", r"^v\d+\.\d+\.\d+$")
+        self.assertEqual([t["tag"] for t in tags], ["v1.0.0"])
+        self.assertEqual(tags[0]["published_at"], dora_metrics.parse_iso_ts("2026-07-01T12:00:00.000+00:00"))
+
+    def test_get_gitlab_releases_excludes_upcoming(self):
+        session = FakeHttpSession({
+            "/releases": FakeHttpResponse(200, [
+                {"tag_name": "v1.0.0", "released_at": "2026-07-01T00:00:00Z"},
+                {"tag_name": "v2.0.0", "released_at": "2099-01-01T00:00:00Z"},
+            ]),
+        })
+        releases = dora_metrics.get_gitlab_releases(session, "group/project", r"^v",
+                                                    now=dt("2026-07-03T00:00:00Z"))
+        self.assertEqual([r["tag"] for r in releases], ["v1.0.0"])
+
+    def test_get_gitlab_release_tag_names_splits_upcoming_as_draft(self):
+        session = FakeHttpSession({
+            "/releases": FakeHttpResponse(200, [
+                {"tag_name": "v1.0.0", "released_at": "2026-01-01T00:00:00Z"},
+                {"tag_name": "v9.0.0", "released_at": "2099-01-01T00:00:00Z"},
+            ]),
+        })
+        names = dora_metrics.get_gitlab_release_tag_names(session, "group/project")
+        self.assertEqual(names["published"], ["v1.0.0"])
+        self.assertEqual(names["draft"], ["v9.0.0"])
+
+    def test_get_gitlab_mr_first_commit_ts_takes_the_min(self):
+        session = FakeHttpSession({
+            "/commits": FakeHttpResponse(200, [
+                {"created_at": "2026-07-01T12:00:00.000+00:00"},
+                {"created_at": "2026-06-30T08:00:00.000+00:00"},
+            ]),
+        })
+        ts = dora_metrics.get_gitlab_mr_first_commit_ts(session, "group/project", 5)
+        self.assertEqual(ts, dora_metrics.parse_iso_ts("2026-06-30T08:00:00.000+00:00"))
+
+    def test_get_gitlab_merged_mrs_between_maps_iid_to_number(self):
+        session = FakeHttpSession({"/merge_requests": FakeHttpResponse(200, [{"iid": 7, "title": "Fix Y"}])})
+        mrs = dora_metrics.get_gitlab_merged_mrs_between(
+            session, "group/project", "main", dt("2026-06-01T00:00:00Z"), dt("2026-07-01T00:00:00Z"))
+        self.assertEqual(mrs, [{"number": 7, "title": "Fix Y"}])
+
+    def test_gitlab_paginate_classifies_401_and_429(self):
+        session = FakeHttpSession({"/x": FakeHttpResponse(401, [], text="Unauthorized")})
+        with self.assertRaises(dora_metrics.GitLabError):
+            list(dora_metrics.gitlab_paginate(session, "https://gitlab.com/api/v4/x"))
+
+        session = FakeHttpSession({"/x": FakeHttpResponse(429, [], text="too many requests")})
+        with self.assertRaises(dora_metrics.GitLabError):
+            list(dora_metrics.gitlab_paginate(session, "https://gitlab.com/api/v4/x"))
+
+
+class TestBitbucketFunctions(unittest.TestCase):
+    def test_get_bitbucket_tags_uses_top_level_date_or_target_date(self):
+        session = FakeHttpSession({
+            "/refs/tags": FakeHttpResponse(200, {"values": [
+                {"name": "v1.0.0", "date": "2026-07-01T12:00:00.000000+00:00"},
+                {"name": "v1.1.0", "target": {"date": "2026-07-02T00:00:00+00:00"}},
+                {"name": "skip-me", "date": "2026-07-03T00:00:00+00:00"},
+            ]}),
+        })
+        tags = dora_metrics.get_bitbucket_tags(session, "ws/repo", r"^v\d+\.\d+\.\d+$")
+        self.assertEqual([t["tag"] for t in tags], ["v1.0.0", "v1.1.0"])
+
+    def test_get_bitbucket_pr_first_commit_ts(self):
+        session = FakeHttpSession({
+            "/commits": FakeHttpResponse(200, {"values": [
+                {"date": "2026-06-30T08:00:00+00:00"},
+                {"date": "2026-06-30T10:00:00+00:00"},
+            ]}),
+        })
+        ts = dora_metrics.get_bitbucket_pr_first_commit_ts(session, "ws/repo", 3)
+        self.assertEqual(ts, dora_metrics.parse_iso_ts("2026-06-30T08:00:00+00:00"))
+
+    def test_bitbucket_pr_merged_at_prefers_merge_commit_date(self):
+        session = FakeHttpSession({"/commit/abc123": FakeHttpResponse(200, {"date": "2026-07-01T09:00:00+00:00"})})
+        pr_item = {"merge_commit": {"hash": "abc123"}, "updated_on": "2026-07-01T10:00:00+00:00"}
+        merged_at = dora_metrics._bitbucket_pr_merged_at(session, "ws/repo", pr_item, dora_metrics.BITBUCKET_API_ROOT)
+        self.assertEqual(merged_at, dora_metrics.parse_iso_ts("2026-07-01T09:00:00+00:00"))
+
+    def test_bitbucket_pr_merged_at_falls_back_to_updated_on(self):
+        session = FakeHttpSession({})
+        pr_item = {"updated_on": "2026-07-01T10:00:00+00:00"}
+        merged_at = dora_metrics._bitbucket_pr_merged_at(session, "ws/repo", pr_item, dora_metrics.BITBUCKET_API_ROOT)
+        self.assertEqual(merged_at, dora_metrics.parse_iso_ts("2026-07-01T10:00:00+00:00"))
+
+    def test_get_bitbucket_merged_prs_between_filters_by_window(self):
+        session = FakeHttpSession({
+            "/pullrequests": FakeHttpResponse(200, {"values": [
+                {"id": 1, "title": "in", "updated_on": "2026-06-15T00:00:00+00:00"},
+                {"id": 2, "title": "out", "updated_on": "2026-01-01T00:00:00+00:00"},
+            ]}),
+        })
+        prs = dora_metrics.get_bitbucket_merged_prs_between(
+            session, "ws/repo", "main", dt("2026-06-01T00:00:00Z"), dt("2026-07-01T00:00:00Z"))
+        self.assertEqual([p["number"] for p in prs], [1])
+
+    def test_bitbucket_paginate_classifies_401_and_429(self):
+        session = FakeHttpSession({"/x": FakeHttpResponse(401, {}, text="Unauthorized")})
+        with self.assertRaises(dora_metrics.BitbucketError):
+            list(dora_metrics.bitbucket_paginate(session, "https://api.bitbucket.org/2.0/x"))
+
+        session = FakeHttpSession({"/x": FakeHttpResponse(429, {}, text="too many requests")})
+        with self.assertRaises(dora_metrics.BitbucketError):
+            list(dora_metrics.bitbucket_paginate(session, "https://api.bitbucket.org/2.0/x"))
+
+
+class TestPreflightGitlab(unittest.TestCase):
+    def test_repo_404_is_blocked(self):
+        session = FakeHttpSession({"/projects/a%2Fb": FakeHttpResponse(404, {}, text="Not Found")})
+        issues = dora_metrics.preflight_repo(session, "a/b", "main", provider="gitlab")
+        self.assertEqual([i["code"] for i in issues], ["repo_unreachable"])
+
+    def test_repo_401_is_token_unauthorized(self):
+        session = FakeHttpSession({"/projects/a%2Fb": FakeHttpResponse(401, {}, text="Bad credentials")})
+        issues = dora_metrics.preflight_repo(session, "a/b", "main", provider="gitlab")
+        self.assertEqual([i["code"] for i in issues], ["token_unauthorized"])
+
+    def test_rate_limit_429_is_its_own_code(self):
+        session = FakeHttpSession({"/projects/a%2Fb": FakeHttpResponse(429, {}, text="too many requests")})
+        issues = dora_metrics.preflight_repo(session, "a/b", "main", provider="gitlab")
+        self.assertEqual([i["code"] for i in issues], ["rate_limited"])
+
+    def test_branch_404_is_partial(self):
+        session = FakeHttpSession({"/branches/master": FakeHttpResponse(404, {}, text="Branch Not Found")})
+        issues = dora_metrics.preflight_repo(session, "a/b", "master", provider="gitlab")
+        self.assertEqual([i["code"] for i in issues], ["branch_not_found"])
+        self.assertEqual(issues[0]["impact"], "partial")
+
+    def test_unexpected_status_is_api_error(self):
+        session = FakeHttpSession({"/projects/a%2Fb": FakeHttpResponse(500, {}, text="boom")})
+        issues = dora_metrics.preflight_repo(session, "a/b", "main", provider="gitlab")
+        self.assertEqual([i["code"] for i in issues], ["api_error"])
+
+
+class TestPreflightBitbucket(unittest.TestCase):
+    def test_repo_404_is_blocked(self):
+        session = FakeHttpSession({"/repositories/ws/repo": FakeHttpResponse(404, {}, text="Not Found")})
+        issues = dora_metrics.preflight_repo(session, "ws/repo", "main", provider="bitbucket")
+        self.assertEqual([i["code"] for i in issues], ["repo_unreachable"])
+
+    def test_rate_limit_429(self):
+        session = FakeHttpSession({"/repositories/ws/repo": FakeHttpResponse(429, {}, text="rate limited")})
+        issues = dora_metrics.preflight_repo(session, "ws/repo", "main", provider="bitbucket")
+        self.assertEqual([i["code"] for i in issues], ["rate_limited"])
+
+    def test_branch_404(self):
+        session = FakeHttpSession({"/refs/branches/develop": FakeHttpResponse(404, {}, text="not found")})
+        issues = dora_metrics.preflight_repo(session, "ws/repo", "develop", provider="bitbucket")
+        self.assertEqual([i["code"] for i in issues], ["branch_not_found"])
+
+
+class TestComputeRepoMetricsGitlab(unittest.TestCase):
+    def test_dispatches_to_gitlab_functions_and_labels_mrs(self):
+        releases = [{"tag": "v1.0.0", "published_at": dt("2026-06-20T00:00:00Z"), "url": None},
+                    {"tag": "v1.1.0", "published_at": dt("2026-07-01T00:00:00Z"), "url": None}]
+        with patch.object(dora_metrics, "get_gitlab_releases", return_value=releases) as m_rel, \
+             patch.object(dora_metrics, "get_gitlab_tags") as m_tag, \
+             patch.object(dora_metrics, "get_gitlab_merged_mrs_between",
+                          return_value=[{"number": 9, "title": "x"}]) as m_merged, \
+             patch.object(dora_metrics, "get_gitlab_mr_first_commit_ts",
+                          return_value=dt("2026-06-30T12:00:00Z")) as m_commit:
+            r = dora_metrics.compute_repo_metrics(
+                session=None, repo="g/p", branch="main", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), provider="gitlab")
+        m_rel.assert_called_once()
+        m_tag.assert_not_called()
+        m_merged.assert_called_once()
+        m_commit.assert_called_once()
+        self.assertEqual(r["lead_time_n"], 1)
+        self.assertEqual(r["lead_time_detail"][0]["pr"], 9)
+
+    def test_no_prs_message_says_mrs_not_prs(self):
+        releases = [{"tag": "v1.0.0", "published_at": dt("2026-06-20T00:00:00Z"), "url": None},
+                    {"tag": "v1.1.0", "published_at": dt("2026-07-01T00:00:00Z"), "url": None}]
+        with patch.object(dora_metrics, "get_gitlab_releases", return_value=releases), \
+             patch.object(dora_metrics, "get_gitlab_merged_mrs_between", return_value=[]):
+            r = dora_metrics.compute_repo_metrics(
+                session=None, repo="g/p", branch="main", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), provider="gitlab")
+        self.assertTrue(any("0 merged MRs" in w for w in r["warnings"]))
+
+    def test_deploy_source_tag_dispatches_to_get_gitlab_tags(self):
+        tags = [{"tag": "v1.0.0", "published_at": dt("2026-07-01T00:00:00Z"), "url": None}]
+        with patch.object(dora_metrics, "get_gitlab_tags", return_value=tags) as m_tag, \
+             patch.object(dora_metrics, "get_gitlab_releases") as m_rel:
+            dora_metrics.compute_repo_metrics(
+                session=None, repo="g/p", branch="main", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), provider="gitlab", deploy_source="tag")
+        m_tag.assert_called_once()
+        m_rel.assert_not_called()
+
+
+class TestComputeRepoMetricsBitbucket(unittest.TestCase):
+    def test_dispatches_to_bitbucket_tags_always(self):
+        tags = [{"tag": "v1.0.0", "published_at": dt("2026-06-20T00:00:00Z"), "url": None},
+                {"tag": "v1.1.0", "published_at": dt("2026-07-01T00:00:00Z"), "url": None}]
+        with patch.object(dora_metrics, "get_bitbucket_tags", return_value=tags) as m_tag, \
+             patch.object(dora_metrics, "get_bitbucket_merged_prs_between",
+                          return_value=[{"number": 4, "title": "x"}]), \
+             patch.object(dora_metrics, "get_bitbucket_pr_first_commit_ts",
+                          return_value=dt("2026-06-30T12:00:00Z")):
+            r = dora_metrics.compute_repo_metrics(
+                session=None, repo="ws/repo", branch="main", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), provider="bitbucket", deploy_source="tag")
+        m_tag.assert_called_once()
+        self.assertEqual(r["lead_time_n"], 1)
+        self.assertEqual(r["deploy_source"], "tag")
+
+
+class TestDiagnoseMarkersGitlab(unittest.TestCase):
+    def test_no_markers_at_all_uses_gitlab_label(self):
+        with patch.object(dora_metrics, "get_gitlab_release_tag_names", return_value={"published": [], "draft": []}), \
+             patch.object(dora_metrics, "get_gitlab_all_tag_names", return_value=[]):
+            issues = dora_metrics.diagnose_markers(
+                session=None, repo="g/p", tag_pattern=r"^v", deploy_source="release",
+                markers_total=0, deployment_frequency=0, latest_marker_at=None, provider="gitlab")
+        self.assertEqual([i["code"] for i in issues], ["no_markers_at_all"])
+        self.assertIn("published GitLab Releases", issues[0]["message"])
+
+
+class TestDiagnoseMarkersBitbucket(unittest.TestCase):
+    def test_bitbucket_has_no_release_fn_so_no_mismatch_check(self):
+        with patch.object(dora_metrics, "get_bitbucket_all_tag_names", return_value=["release-1"]):
+            issues = dora_metrics.diagnose_markers(
+                session=None, repo="ws/repo", tag_pattern=r"^v\d+\.\d+\.\d+$", deploy_source="tag",
+                markers_total=0, deployment_frequency=0, latest_marker_at=None, provider="bitbucket")
+        codes = [i["code"] for i in issues]
+        self.assertEqual(codes, ["no_markers_matching_pattern"])
+        self.assertNotIn("deploy_source_mismatch", codes)
+
+
+class TestCredentialSplitting(unittest.TestCase):
+    def test_providers_in_play_dedups_in_first_seen_order(self):
+        projects = [{"name": "P", "repos": [{"repo": "a/b"}, {"repo": "a/c", "provider": "gitlab"},
+                                             {"repo": "a/d", "provider": "github"}]}]
+        self.assertEqual(dora_metrics.providers_in_play(projects), ["github", "gitlab"])
+
+    def test_split_by_credential_separates_measurable_from_stubs(self):
+        projects = [{"name": "P", "repos": [
+            {"repo": "a/b", "provider": "github", "prod_branch": "main"},
+            {"repo": "a/c", "provider": "gitlab", "prod_branch": "main"},
+        ]}]
+        sessions = {"github": object(), "gitlab": None}
+        measurable, stubs = dora_metrics.split_by_credential(projects, sessions)
+        self.assertEqual([r["repo"] for r in measurable[0]["repos"]], ["a/b"])
+        self.assertEqual(len(stubs["P"]), 1)
+        self.assertEqual(stubs["P"][0]["repo"], "a/c")
+        self.assertFalse(stubs["P"][0]["measured"])
+        self.assertEqual(stubs["P"][0]["issues"][0]["code"], "no_credential")
+
+    def test_merge_stub_repos_appends_by_project_name(self):
+        result = {"projects": [{"name": "P", "repos": [{"repo": "a/b"}]}]}
+        stubs = {"P": [{"repo": "a/c"}]}
+        dora_metrics.merge_stub_repos(result, stubs)
+        self.assertEqual([r["repo"] for r in result["projects"][0]["repos"]], ["a/b", "a/c"])
+
+    def test_no_credential_repo_result_names_the_provider(self):
+        repo_cfg = {"repo": "a/c", "provider": "gitlab", "prod_branch": "main"}
+        stub = dora_metrics.no_credential_repo_result(repo_cfg)
+        self.assertIn("no GitLab credential found", stub["issues"][0]["message"])
+        self.assertFalse(stub["measured"])
+        self.assertEqual(stub["provider"], "gitlab")
+
+
+class TestNoCredentialResultMultiProvider(unittest.TestCase):
+    def test_single_provider_message_unchanged(self):
+        result = dora_metrics.no_credential_result(dt("2026-07-03T00:00:00Z"), 14, r"^v", providers=["github"])
+        self.assertEqual(result["issues"][0]["message"],
+                         "No GitHub credential found — nothing could be measured in this run.")
+
+    def test_multi_provider_message_lists_all(self):
+        result = dora_metrics.no_credential_result(dt("2026-07-03T00:00:00Z"), 14, r"^v",
+                                                    providers=["github", "gitlab"])
+        self.assertIn("GitHub", result["issues"][0]["message"])
+        self.assertIn("GitLab", result["issues"][0]["message"])
+
+
+class TestBuildResultMultiProvider(unittest.TestCase):
+    def test_dispatches_gitlab_repo_with_its_extra_session(self):
+        projects = [{"name": "P", "repos": [{"repo": "g/p", "provider": "gitlab", "prod_branch": "main"}]}]
+        gitlab_session = object()
+        metrics = {"repo": "g/p", "deployment_frequency": 1, "lead_time_median_hours": None,
+                   "lead_time_n": 0, "markers_total": 1, "latest_marker_at": "2026-07-01T00:00:00Z",
+                   "issues": [], "warnings": []}
+        with patch.object(dora_metrics, "preflight_repo", return_value=[]) as m_preflight, \
+             patch.object(dora_metrics, "compute_repo_metrics", return_value=dict(metrics)) as m_compute, \
+             patch.object(dora_metrics, "diagnose_markers", return_value=[]):
+            result = dora_metrics.build_result(
+                session=None, projects=projects, tag_pattern=r"^v", window_days=14,
+                now=dt("2026-07-03T00:00:00Z"), extra_sessions={"gitlab": gitlab_session})
+        m_preflight.assert_called_once_with(gitlab_session, "g/p", "main", provider="gitlab", api_root=None)
+        _, kwargs = m_compute.call_args
+        self.assertEqual(kwargs.get("provider"), "gitlab")
+        self.assertEqual(result["projects"][0]["repos"][0]["provider"], "gitlab")
+
+    def test_bitbucket_repo_default_deploy_source_is_tag(self):
+        projects = [{"name": "P", "repos": [{"repo": "ws/repo", "provider": "bitbucket", "prod_branch": "main"}]}]
+        bb_session = object()
+        metrics = {"repo": "ws/repo", "deployment_frequency": 0, "lead_time_median_hours": None,
+                   "lead_time_n": 0, "markers_total": 0, "latest_marker_at": None,
+                   "issues": [], "warnings": []}
+        with patch.object(dora_metrics, "preflight_repo", return_value=[]), \
+             patch.object(dora_metrics, "compute_repo_metrics", return_value=dict(metrics)) as m_compute, \
+             patch.object(dora_metrics, "diagnose_markers", return_value=[]):
+            dora_metrics.build_result(
+                session=None, projects=projects, tag_pattern=r"^v", window_days=14,
+                now=dt("2026-07-03T00:00:00Z"), extra_sessions={"bitbucket": bb_session})
+        _, kwargs = m_compute.call_args
+        self.assertEqual(kwargs.get("deploy_source"), "tag")
 
 
 if __name__ == "__main__":

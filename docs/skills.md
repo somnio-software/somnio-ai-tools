@@ -581,11 +581,11 @@ Not Flutter-specific — the domain/extension map adapts to any stack (detects `
 
 ## DORA Metrics
 
-Fetches two DORA metrics per project and per repo — **Deployment Frequency** and **Lead Time for Changes** — from the GitHub API only (never a local git clone), so lead time stays accurate regardless of merge strategy (including squash merges).
+Fetches two DORA metrics per project and per repo — **Deployment Frequency** and **Lead Time for Changes** — from the repo's provider API — **GitHub, GitLab, or Bitbucket Cloud** (never a local git clone), so lead time stays accurate regardless of merge strategy (including squash merges).
 
 > **Read-only and non-judgmental.** This skill only fetches and reports the numbers — it never ranks, scores, or compares projects or people. Interpreting the data is a separate, deliberate step left to whoever runs it: mixing measurement with evaluation is how metrics stop being useful (Goodhart's Law).
 
-Projects map to their GitHub repos in `config/projects.json` (mono-repo or multi-repo). If a project isn't in the config yet, the skill asks for its repos instead of guessing, and offers to add it.
+Projects map to their repos in `config/projects.json` (mono-repo or multi-repo), with each repo declaring its provider: `github` (default), `gitlab`, or `bitbucket`. A single project can mix providers. If a project isn't in the config yet, the skill asks for its repos and provider(s) instead of guessing, and offers to add it.
 
 **Example prompts:**
 ```
@@ -595,10 +595,18 @@ Run the DORA metrics for Example Project.
 What's the lead time for Example Project over the last 2 weeks?
 ```
 ```
-Add project Omega to DORA metrics, single repo acme/omega-api, prod branch develop.
+Add project Omega to DORA metrics, single repo acme/omega-api on GitHub, prod branch develop.
+```
+```
+Add project Gamma to DORA metrics, backend on GitLab at platform-team/gamma-api, prod main.
 ```
 
-**Requires:** a GitHub credential with read access to the relevant orgs — the `GITHUB_TOKEN` env var, or `gh auth token` if the GitHub CLI is already logged in locally.
+**Requires:** a credential for each provider in use:
+- **GitHub:** `GITHUB_TOKEN` env var, or `gh auth token` if the GitHub CLI is logged in
+- **GitLab:** `GITLAB_TOKEN` env var, or `glab auth token` if the GitLab CLI is logged in  
+- **Bitbucket:** `BITBUCKET_TOKEN` env var (bearer), or `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` together
+
+Each credential needs read access to all orgs/groups/workspaces of that provider's repos in the project. A missing credential for one provider doesn't block repos on another provider.
 
 **Output:** Deployment Frequency and median Lead Time per repo for the requested window (14 days by default), plus process-gap warnings (e.g. merged PRs with no release yet, a release with no prior release to measure against). Optionally saved to `./reports/`, one Markdown file per repo: `<YYYY-MM-DD>-<repo>-dora-metrics.md`. The portable JSON is printed to stdout rather than saved.
 

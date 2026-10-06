@@ -86,7 +86,7 @@ The CLI installs skills with its own installer (not skills.sh) and offers to rem
 | [Git Commit Format](docs/skills.md#git-commit-format) | Conventional Commits message generator |
 | [Dart Model from JSON](docs/skills.md#dart-model-from-json) | Generate Dart model classes from a JSON structure with json_annotation + equatable |
 | [Optimize Claude Config](docs/skills.md#optimize-claude-config) | Audit & optimize a repo's Claude Code config for lazy-loading rules and a lean CLAUDE.md |
-| [DORA Metrics](docs/skills.md#dora-metrics) | Deployment Frequency and Lead Time for Changes, per project and per repo, from the GitHub API |
+| [DORA Metrics](docs/skills.md#dora-metrics) | Deployment Frequency and Lead Time for Changes, per project and per repo, from GitHub, GitLab, or Bitbucket |
 
 > [Full skills catalog with examples →](docs/skills.md)
 

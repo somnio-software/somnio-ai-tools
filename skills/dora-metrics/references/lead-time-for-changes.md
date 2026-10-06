@@ -7,18 +7,21 @@
 How long a change takes from when it's committed until it reaches production.
 
 ## Operational definition
-**Median** of (prod tag timestamp − **PR's first commit** timestamp), per PR
-included in that deploy, aggregated **per project and per repo**, within a
-14-day window.
+**Median** of (prod tag timestamp − **PR/MR's first commit** timestamp), per
+PR/MR included in that deploy, aggregated **per project and per repo**, within
+a 14-day window.
 
-- **Starting point: the PR's first commit** (not the merge commit). It measures
-  the full cycle — development + wait for merge + wait for deploy — not just the
-  post-merge stretch. Expected consequence: a higher number, especially in the
-  first windows (see Known risk).
+- **Starting point: the PR/MR's first commit** (not the merge commit). It
+  measures the full cycle — development + wait for merge + wait for deploy —
+  not just the post-merge stretch. Expected consequence: a higher number,
+  especially in the first windows (see Known risk).
 
 ## Source
-GitHub — commits, PRs, and tags / Releases of the project's repos
-(see `../config/projects.json`).
+The configured provider's API — GitHub, GitLab, or Bitbucket — reading
+commits, PRs/MRs, and tags/Releases of the project's repos (see
+`../config/projects.json`). On GitHub a "PR" and on GitLab a "merge request"
+(MR) are the same thing for this metric: a reviewed, merged unit of change.
+Never the repo's local git history.
 
 ## Aggregation level
 **Per project and per repo** (not combined). Consistent with the Deployment
@@ -31,11 +34,11 @@ other.
 14 days (biweekly cadence).
 
 ## Population
-PRs merged to `main` since the previous prod tag **of that same repo** (the
-changes that went into that deploy).
+PRs/MRs merged to `main` since the previous prod tag **of that same repo**
+(the changes that went into that deploy).
 
-**PRs with no subsequent tag** (merged but not yet deployed within the window):
-they are **excluded** from this window's calculation. They enter the
+**PRs/MRs with no subsequent tag** (merged but not yet deployed within the
+window): they are **excluded** from this window's calculation. They enter the
 calculation of the window where the deploy that includes them is actually
 tagged. "Now" is not used as a proxy for the end.
 
