@@ -336,6 +336,33 @@ you want to see the surrounding history.
 
 ---
 
+<!-- code: no_merged_prs_in_window -->
+## No PRs merged into the production branch inside the window (`deploy_source: merge`)
+
+### What
+
+With `deploy_source: "merge"` every PR/MR merged into `prod_branch` is one
+deploy, so Deployment Frequency is 0 simply because nothing was merged into
+that branch inside the window. There is no tag pattern to mismatch and no
+release to publish: this is a fact about the window, not a setup problem.
+
+### How to check
+
+Open the repo's merged PRs/MRs filtered by the target branch and the window
+dates. If merges did land on that branch, confirm `prod_branch` is spelled
+exactly like the branch they target (`develop` vs `development`, `staging`
+vs `release/staging`) — `branch_not_found` would also be reported when the
+name does not exist at all.
+
+### Where to fix
+
+Nothing to fix when the branch really was quiet. If the team integrates into a
+different branch than the one that auto-deploys, point `prod_branch` at the
+branch that deploys; `--window-days N` shows the surrounding history for a
+one-off run.
+
+---
+
 <!-- code: first_marker_no_prior -->
 ## The earliest deploy has no prior marker to bound against
 

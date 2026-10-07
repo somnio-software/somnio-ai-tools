@@ -9,13 +9,41 @@
       "repos": [
         {
           "repo": "example-org/example-frontend",
-          "type": ["web", "mobile"],
+          "type": [
+            "web",
+            "mobile"
+          ],
           "prod_branch": "main"
         },
         {
           "repo": "example-partner-org/example-backend",
-          "type": ["backend"],
+          "type": [
+            "backend"
+          ],
           "prod_branch": "main"
+        }
+      ]
+    },
+    {
+      "name": "Example Merge Project",
+      "notes": "Branches that auto-deploy on every merge and publish neither releases nor tags: deploy_source \"merge\" counts each merged PR as a deploy (integration/CD cadence, not production releases). The backend lives on Azure DevOps (organization/project/repository, PAT via AZURE_DEVOPS_PAT).",
+      "repos": [
+        {
+          "repo": "example-org/example-web",
+          "type": [
+            "web"
+          ],
+          "prod_branch": "develop",
+          "deploy_source": "merge"
+        },
+        {
+          "repo": "example-organization/example-project/example-api",
+          "provider": "azure",
+          "type": [
+            "backend"
+          ],
+          "prod_branch": "staging",
+          "deploy_source": "merge"
         }
       ]
     }

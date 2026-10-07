@@ -1480,5 +1480,238 @@ class TestBuildResultMultiProvider(unittest.TestCase):
         self.assertEqual(kwargs.get("deploy_source"), "tag")
 
 
+class TestAzureDevOpsFunctions(unittest.TestCase):
+    def test_repo_parts_require_org_project_repository(self):
+        self.assertEqual(dora_metrics.azure_repo_parts("ratefast/app.rate-fast.com/RateFast.App"),
+                         ("ratefast", "app.rate-fast.com", "RateFast.App"))
+        with self.assertRaises(ValueError):
+            dora_metrics.azure_repo_parts("org/repo")
+
+    def test_repo_url_quotes_project_and_repository(self):
+        url = dora_metrics._azure_repo_url("org/My Project/My.Repo")
+        self.assertEqual(url, "https://dev.azure.com/org/My%20Project/_apis/git/repositories/My.Repo")
+
+    def test_pat_env_var_takes_precedence(self):
+        with patch.dict(os.environ, {"AZURE_DEVOPS_PAT": "pat-xxx"}, clear=True):
+            self.assertEqual(dora_metrics.get_azure_credential(), {"type": "pat", "token": "pat-xxx"})
+
+    def test_no_pat_and_no_az_cli_returns_none(self):
+        with patch.dict(os.environ, {}, clear=True), patch("shutil.which", return_value=None):
+            self.assertIsNone(dora_metrics.get_azure_credential())
+
+    def test_get_azure_tags_uses_tag_object_date_for_annotated_and_commit_date_for_lightweight(self):
+        session = FakeHttpSession({
+            "/refs": FakeHttpResponse(200, {"value": [
+                {"name": "refs/tags/v1.0.0", "objectId": "tagobj", "peeledObjectId": "c1"},
+                {"name": "refs/tags/v1.1.0", "objectId": "c2"},
+                {"name": "refs/tags/nope", "objectId": "c3"},
+            ]}),
+            "/annotatedtags/tagobj": FakeHttpResponse(200, {"taggedBy": {"date": "2026-07-01T12:00:00Z"}, "url": "u1"}),
+            "/commits/c2": FakeHttpResponse(200, {"committer": {"date": "2026-07-02T00:00:00.1234567Z"}}),
+        })
+        tags = dora_metrics.get_azure_tags(session, "org/proj/repo", r"^v\d+\.\d+\.\d+$")
+        self.assertEqual([t["tag"] for t in tags], ["v1.0.0", "v1.1.0"])
+        self.assertEqual(tags[0]["published_at"], dt("2026-07-01T12:00:00Z"))
+        self.assertEqual(tags[1]["published_at"].replace(microsecond=0), dt("2026-07-02T00:00:00Z"))
+
+    def test_get_azure_merged_prs_between_filters_by_closed_date_and_stops_when_older(self):
+        session = FakeHttpSession({
+            "/pullrequests": FakeHttpResponse(200, {"value": [
+                {"pullRequestId": 3, "title": "newest, after window", "closedDate": "2026-07-05T00:00:00Z"},
+                {"pullRequestId": 2, "title": "in window", "closedDate": "2026-06-20T10:00:00Z"},
+                {"pullRequestId": 1, "title": "older than window", "closedDate": "2026-05-01T00:00:00Z"},
+            ]}),
+        })
+        prs = dora_metrics.get_azure_merged_prs_between(
+            session, "org/proj/repo", "staging", dt("2026-06-01T00:00:00Z"), dt("2026-07-01T00:00:00Z"))
+        self.assertEqual([p["number"] for p in prs], [2])
+        self.assertEqual(prs[0]["merged_at"], dt("2026-06-20T10:00:00Z"))
+        self.assertEqual(len(session.calls), 1)  # $skip paging stops at the first page (< $top items)
+
+    def test_get_azure_pr_first_commit_ts_takes_the_min_author_date(self):
+        session = FakeHttpSession({
+            "/pullrequests/7/commits": FakeHttpResponse(200, {"value": [
+                {"author": {"date": "2026-06-30T08:00:00Z"}},
+                {"author": {"date": "2026-06-29T22:00:00Z"}},
+            ]}),
+        })
+        ts = dora_metrics.get_azure_pr_first_commit_ts(session, "org/proj/repo", 7)
+        self.assertEqual(ts, dt("2026-06-29T22:00:00Z"))
+
+    def test_azure_paginate_treats_203_as_unauthorized(self):
+        # Azure DevOps answers 203 (a sign-in page) instead of 401 to a bad PAT.
+        session = FakeHttpSession({"/x": FakeHttpResponse(203, {}, text="<html>sign in</html>")})
+        with self.assertRaises(dora_metrics.AzureDevOpsError):
+            list(dora_metrics.azure_paginate(session, "https://dev.azure.com/x"))
+
+    def test_json_strips_utf8_bom(self):
+        resp = FakeHttpResponse(200, {"value": []}, text="\ufeff{\"value\": [{\"a\": 1}]}")
+        self.assertEqual(dora_metrics._json(resp), {"value": [{"a": 1}]})
+
+
+class TestPreflightAzure(unittest.TestCase):
+    def test_repo_203_is_token_unauthorized(self):
+        session = FakeHttpSession({"/_apis/git/repositories/repo": FakeHttpResponse(203, {}, text="sign in")})
+        issues = dora_metrics.preflight_repo(session, "org/proj/repo", "main", provider="azure")
+        self.assertEqual([i["code"] for i in issues], ["token_unauthorized"])
+
+    def test_branch_missing_is_an_empty_refs_list(self):
+        session = FakeHttpSession({
+            "/_apis/git/repositories/repo": FakeHttpResponse(200, {"id": "x"}),
+            "/refs?filter=heads/develop": FakeHttpResponse(200, {"value": [], "count": 0}),
+        })
+        issues = dora_metrics.preflight_repo(session, "org/proj/repo", "develop", provider="azure")
+        self.assertEqual([i["code"] for i in issues], ["branch_not_found"])
+
+    def test_branch_present(self):
+        session = FakeHttpSession({
+            "/_apis/git/repositories/repo": FakeHttpResponse(200, {"id": "x"}),
+            "/refs?filter=heads/main": FakeHttpResponse(200, {"value": [{"name": "refs/heads/main"}], "count": 1}),
+        })
+        self.assertEqual(dora_metrics.preflight_repo(session, "org/proj/repo", "main", provider="azure"), [])
+
+
+class TestDeploySourceMerge(unittest.TestCase):
+    """deploy_source "merge": every PR merged into prod_branch in the window is
+    one deploy, dated by its merge; lead time = first commit -> merge."""
+
+    def test_github_merge_counts_prs_and_measures_each_lead_time(self):
+        merged = [{"number": 1, "title": "a", "merged_at": dt("2026-06-25T00:00:00Z")},
+                  {"number": 2, "title": "b", "merged_at": dt("2026-07-01T00:00:00Z")}]
+        first = {1: dt("2026-06-24T12:00:00Z"), 2: dt("2026-06-29T00:00:00Z")}
+        with patch.object(dora_metrics, "get_merged_prs_between", return_value=merged) as m_merged, \
+             patch.object(dora_metrics, "get_pr_first_commit_ts",
+                          side_effect=lambda s, r, n: first[n]), \
+             patch.object(dora_metrics, "get_prod_releases") as m_rel:
+            r = dora_metrics.compute_repo_metrics(
+                session=None, repo="a/b", branch="develop", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), deploy_source="merge")
+        m_rel.assert_not_called()
+        args, _ = m_merged.call_args
+        self.assertEqual(args[3], dt("2026-06-19T00:00:00Z"))  # window start
+        self.assertEqual(args[4], dt("2026-07-03T00:00:00Z"))  # now
+        self.assertEqual(r["deploy_source"], "merge")
+        self.assertEqual(r["deployment_frequency"], 2)
+        self.assertEqual([d["tag"] for d in r["deploys_in_window"]], ["PR #1", "PR #2"])
+        self.assertEqual(r["lead_time_n"], 2)
+        self.assertEqual(r["lead_time_median_hours"], 30.0)  # median of [12, 48]
+        self.assertEqual(r["markers_total"], 2)
+        self.assertEqual(r["latest_marker_at"], "2026-07-01T00:00:00Z")
+        self.assertEqual(r["issues"], [])
+
+    def test_github_merge_resolves_missing_merge_time_per_pr(self):
+        with patch.object(dora_metrics, "get_merged_prs_between", return_value=[{"number": 5, "title": "x"}]), \
+             patch.object(dora_metrics, "get_pr_merged_at", return_value=dt("2026-07-01T00:00:00Z")) as m_at, \
+             patch.object(dora_metrics, "get_pr_first_commit_ts", return_value=dt("2026-06-30T00:00:00Z")):
+            r = dora_metrics.compute_repo_metrics(
+                session=None, repo="a/b", branch="develop", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), deploy_source="merge")
+        m_at.assert_called_once()
+        self.assertEqual(r["deployment_frequency"], 1)
+        self.assertEqual(r["lead_time_median_hours"], 24.0)
+
+    def test_zero_merges_is_df_zero_lead_time_none_and_a_note(self):
+        with patch.object(dora_metrics, "get_merged_prs_between", return_value=[]):
+            r = dora_metrics.compute_repo_metrics(
+                session=None, repo="a/b", branch="develop", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), deploy_source="merge")
+        self.assertEqual(r["deployment_frequency"], 0)
+        self.assertIsNone(r["lead_time_median_hours"])
+        issues = dora_metrics.diagnose_markers(
+            session=None, repo="a/b", tag_pattern=r"^v", deploy_source="merge",
+            markers_total=0, deployment_frequency=0, latest_marker_at=None)
+        self.assertEqual([i["code"] for i in issues], ["no_merged_prs_in_window"])
+        self.assertEqual(issues[0]["impact"], "none")
+
+    def test_merge_with_deploys_makes_no_diagnostic_calls(self):
+        with patch.object(dora_metrics, "get_release_tag_names") as names, \
+             patch.object(dora_metrics, "get_all_tag_names") as tags:
+            issues = dora_metrics.diagnose_markers(
+                session=None, repo="a/b", tag_pattern=r"^v", deploy_source="merge",
+                markers_total=3, deployment_frequency=3, latest_marker_at="2026-07-01T00:00:00Z")
+        self.assertEqual(issues, [])
+        names.assert_not_called()
+        tags.assert_not_called()
+
+    def test_azure_merge_dispatches_to_azure_functions(self):
+        merged = [{"number": 905, "title": "x", "merged_at": dt("2026-07-01T00:00:00Z")}]
+        with patch.object(dora_metrics, "get_azure_merged_prs_between", return_value=merged) as m_merged, \
+             patch.object(dora_metrics, "get_azure_pr_first_commit_ts", return_value=dt("2026-06-30T12:00:00Z")), \
+             patch.object(dora_metrics, "get_azure_tags") as m_tags:
+            r = dora_metrics.compute_repo_metrics(
+                session=None, repo="org/proj/repo", branch="staging", tag_pattern=r"^v",
+                window_days=14, now=dt("2026-07-03T00:00:00Z"), provider="azure", deploy_source="merge")
+        m_merged.assert_called_once()
+        m_tags.assert_not_called()
+        self.assertEqual(r["provider"], "azure")
+        self.assertEqual(r["lead_time_detail"][0]["pr"], 905)
+        self.assertEqual(r["lead_time_detail"][0]["deploy_tag"], "PR #905")
+
+    def test_merge_is_a_valid_deploy_source_everywhere_and_release_is_not_on_azure(self):
+        dora_metrics.validate_deploy_sources([{"repos": [
+            {"repo": "a/b", "deploy_source": "merge"},
+            {"repo": "o/p/r", "provider": "azure", "deploy_source": "merge"},
+            {"repo": "o/p/r2", "provider": "azure"},  # defaults to tag
+        ]}])
+        with self.assertRaises(ValueError):
+            dora_metrics.validate_deploy_sources([{"repos": [{"repo": "o/p/r", "provider": "azure", "deploy_source": "release"}]}])
+
+    def test_azure_default_deploy_source_is_tag(self):
+        self.assertEqual(dora_metrics.effective_deploy_source({"repo": "o/p/r", "provider": "azure"}), "tag")
+
+    def test_azure_repo_identifier_is_validated_with_providers(self):
+        with self.assertRaises(ValueError):
+            dora_metrics.validate_providers([{"repos": [{"repo": "org/repo", "provider": "azure"}]}])
+        dora_metrics.validate_providers([{"repos": [{"repo": "org/proj/repo", "provider": "azure"}]}])
+
+
+class TestBuildResultAzure(unittest.TestCase):
+    def test_azure_repo_uses_its_session_and_records_the_provider(self):
+        projects = [{"name": "P", "repos": [{"repo": "o/p/r", "provider": "azure", "prod_branch": "staging",
+                                             "deploy_source": "merge"}]}]
+        az_session = object()
+        metrics = {"repo": "o/p/r", "deployment_frequency": 4, "lead_time_median_hours": 6.0,
+                   "lead_time_n": 4, "markers_total": 4, "latest_marker_at": "2026-07-01T00:00:00Z",
+                   "issues": [], "warnings": []}
+        with patch.object(dora_metrics, "preflight_repo", return_value=[]) as m_pre, \
+             patch.object(dora_metrics, "compute_repo_metrics", return_value=dict(metrics)) as m_compute, \
+             patch.object(dora_metrics, "diagnose_markers", return_value=[]):
+            result = dora_metrics.build_result(
+                session=None, projects=projects, tag_pattern=r"^v", window_days=14,
+                now=dt("2026-07-03T00:00:00Z"), extra_sessions={"azure": az_session})
+        m_pre.assert_called_once_with(az_session, "o/p/r", "staging", provider="azure", api_root=None)
+        _, kwargs = m_compute.call_args
+        self.assertEqual((kwargs["provider"], kwargs["deploy_source"]), ("azure", "merge"))
+        repo = result["projects"][0]["repos"][0]
+        self.assertEqual(repo["provider"], "azure")
+        self.assertTrue(repo["measured"])
+
+    def test_azure_error_is_classified_with_its_label(self):
+        projects = [{"name": "P", "repos": [{"repo": "o/p/r", "provider": "azure", "prod_branch": "main"}]}]
+        with patch.object(dora_metrics, "preflight_repo", return_value=[]), \
+             patch.object(dora_metrics, "compute_repo_metrics",
+                          side_effect=dora_metrics.AzureDevOpsError("401 Unauthorized. Check the PAT.")):
+            result = dora_metrics.build_result(
+                session=None, projects=projects, tag_pattern=r"^v", window_days=14,
+                now=dt("2026-07-03T00:00:00Z"), extra_sessions={"azure": object()})
+        issue = result["projects"][0]["repos"][0]["issues"][0]
+        self.assertEqual(issue["code"], "token_unauthorized")
+        self.assertIn("Azure DevOps API", issue["message"])
+
+    def test_no_credential_stub_names_azure(self):
+        stub = dora_metrics.no_credential_repo_result({"repo": "o/p/r", "provider": "azure", "prod_branch": "main"})
+        self.assertIn("no Azure DevOps credential found", stub["issues"][0]["message"])
+        self.assertEqual(stub["deploy_source"], "tag")
+
+    def test_summary_mentions_the_provider_and_merge_source(self):
+        result = {"issues": [], "projects": [{"name": "P", "repos": [{
+            "repo": "o/p/r", "provider": "azure", "deploy_source": "merge", "type": ["backend"], "measured": True,
+            "deployment_frequency": 4, "lead_time_median_hours": 6.0, "lead_time_n": 4, "issues": []}]}],
+            "practice_guidance": []}
+        text = dora_metrics.format_human_summary(result, 14)
+        self.assertIn("Azure DevOps", text)
+        self.assertIn("deploy_source: merge", text)
+
+
 if __name__ == "__main__":
     unittest.main()

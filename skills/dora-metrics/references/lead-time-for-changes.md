@@ -42,6 +42,11 @@ window): they are **excluded** from this window's calculation. They enter the
 calculation of the window where the deploy that includes them is actually
 tagged. "Now" is not used as a proxy for the end.
 
+With `deploy_source: "merge"` the population is every PR/MR merged into
+`prod_branch` inside the window — each one is its own deploy, so its lead time
+runs from its first commit to its own merge and no PR is bounded by a previous
+marker (the `first_marker_no_prior` gap does not exist in this mode).
+
 ## Calculation
 For each included PR: `lead_time = prod_tag_ts − first_commit_ts`.
 Metric per repo: **median** of those lead times (robust to outliers, not the

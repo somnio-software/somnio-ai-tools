@@ -581,7 +581,7 @@ Not Flutter-specific — the domain/extension map adapts to any stack (detects `
 
 ## DORA Metrics
 
-Fetches two DORA metrics per project and per repo — **Deployment Frequency** and **Lead Time for Changes** — from the repo's provider API — **GitHub, GitLab, or Bitbucket Cloud** (never a local git clone), so lead time stays accurate regardless of merge strategy (including squash merges).
+Fetches two DORA metrics per project and per repo — **Deployment Frequency** and **Lead Time for Changes** — from the repo's provider API — **GitHub, GitLab, Bitbucket Cloud, or Azure DevOps** (never a local git clone); the deploy marker per repo is a Release, a tag, or — for branches that auto-deploy on every merge — each merged PR (`deploy_source: "merge"`), so lead time stays accurate regardless of merge strategy (including squash merges).
 
 > **Read-only and non-judgmental.** This skill only fetches and reports the numbers — it never ranks, scores, or compares projects or people. Interpreting the data is a separate, deliberate step left to whoever runs it: mixing measurement with evaluation is how metrics stop being useful (Goodhart's Law).
 
