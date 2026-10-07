@@ -15,6 +15,16 @@ providers (GitHub, GitLab, Bitbucket) — each repo declares its own `provider`
 and `deploy_source` in `config/projects.json`; Bitbucket Cloud has no
 Releases API, so its repos always use a plain tag (`deploy_source: "tag"`).
 
+### `deploy_source: "merge"`
+
+For a repo whose `prod_branch` deploys itself on every merge and that publishes
+neither Releases nor tags, the marker is **each PR/MR merged into
+`prod_branch`** inside the window, dated by its merge time (`merged_at` on
+GitHub/GitLab, the merge commit date on Bitbucket, `closedDate` on Azure
+DevOps). Deployment Frequency is then the count of those merges. It measures
+integration/CD cadence rather than production releases — report it with that
+caveat, never alongside release-based numbers as if they were the same thing.
+
 ## Operational definition
 Number of **prod tags** (`vX.Y.Z` on `main`) per project, within a 14-day
 window.

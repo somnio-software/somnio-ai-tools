@@ -34,27 +34,40 @@ the moment a metric is used to evaluate people, it stops being a good metric
 CI is uniform (GitHub Actions) but CD is heterogeneous (mobile/web/backend
 deploy differently), so instead of measuring the actual CD we use a uniform
 marker: a **Release with a semver tag `vX.Y.Z`** on each repo's production
-branch (a plain tag where the provider has no Releases API). All data comes
+branch (a plain tag where the provider has no Releases API), or — for repos
+whose integration branch deploys itself on every merge and that publish
+neither releases nor tags — **every PR/MR merged into that branch**
+(`deploy_source: "merge"`). All data comes
 from the repo's **provider API** — never a local git clone — because lead time
 depends on the real first commit of each PR/MR, and that is only reliable when
 read from the provider's PR/MR object (it stays correct even if the merge was a
 squash; the git log of `main` does not guarantee it).
 
-Each repo belongs to one of three supported providers, declared per repo in
+Each repo belongs to one of four supported providers, declared per repo in
 `config/projects.json` (`provider`, default `"github"`):
 
 | Provider | Repo identifier format | Deploy marker |
 |---|---|---|
-| `github` (default) | `org/repo` | GitHub Release, or plain tag |
-| `gitlab` | project path, e.g. `group/project` or `group/subgroup/project` | GitLab Release, or plain tag |
-| `bitbucket` | `workspace/repo_slug` | Plain tag only — Bitbucket Cloud has no Releases API |
+| `github` (default) | `org/repo` | GitHub Release, plain tag, or merge |
+| `gitlab` | project path, e.g. `group/project` or `group/subgroup/project` | GitLab Release, plain tag, or merge |
+| `bitbucket` | `workspace/repo_slug` | Plain tag or merge — Bitbucket Cloud has no Releases API |
+| `azure` | `organization/project/repository` (Azure DevOps) | Plain tag or merge — Azure DevOps has no Releases API |
+
+`deploy_source` per repo picks the marker: `"release"` (default on GitHub and
+GitLab), `"tag"` (default on Bitbucket and Azure DevOps) or `"merge"`. With
+`"merge"` every PR/MR merged into `prod_branch` inside the window is one
+deploy, dated by its merge, and its lead time runs from its first commit to
+that merge — the right marker for a branch that auto-deploys on every merge
+(`develop`, `staging`) with no release or tag ceremony. It changes what the
+number means: it is integration/CD cadence, not production releases, so say so
+when reporting it.
 
 A single project — and even a single run — can mix providers across repos: a
 project's frontend can live on GitHub while its backend lives on GitLab, and
-each is measured with its own credential. Bitbucket Server/Data Center and
-GitHub Enterprise beyond `api_base` overrides are out of scope — this talks to
-GitHub.com, GitLab.com (or a self-hosted instance via `api_base`), and
-Bitbucket Cloud.
+each is measured with its own credential. Bitbucket Server/Data Center,
+Azure DevOps Server (on-prem) and GitHub Enterprise beyond `api_base`
+overrides are out of scope — this talks to GitHub.com, GitLab.com (or a
+self-hosted instance via `api_base`), Bitbucket Cloud and dev.azure.com.
 
 Projects can be mono-repo or multi-repo. In multi-repo, each repo is measured
 and reported **independently, never combined**: if a project deploys the
@@ -105,18 +118,22 @@ ask them directly for the missing details and add them to
 
 - Project name.
 - The repo(s) that make it up, one or several (multi-repo), and **which
-  provider each one is on** (`github`, `gitlab`, or `bitbucket` — default
-  `github`, but confirm rather than assume when the user doesn't say). The
-  identifier format depends on the provider: `org/repo` for GitHub, a project
-  path for GitLab, `workspace/repo_slug` for Bitbucket.
+  provider each one is on** (`github`, `gitlab`, `bitbucket` or `azure` —
+  default `github`, but confirm rather than assume when the user doesn't say).
+  The identifier format depends on the provider: `org/repo` for GitHub, a
+  project path for GitLab, `workspace/repo_slug` for Bitbucket,
+  `organization/project/repository` for Azure DevOps.
 - Type of each repo (web / mobile / backend).
 - Production branch of each repo (reasonable default: `main`, but
   confirm — do not assume).
 - Optional: whether any repo uses plain tags instead of Releases
-  (`deploy_source: "tag"`), or a `tag_pattern` different from the global one.
+  (`deploy_source: "tag"`), counts every merge into `prod_branch` as a deploy
+  (`deploy_source: "merge"` — for a branch that auto-deploys and has no
+  release/tag ceremony), or a `tag_pattern` different from the global one.
   Default: inherits the global `tag_pattern`, and `deploy_source: "release"`
-  for github/gitlab — **except Bitbucket, which has no Releases API and
-  always defaults to (and in practice requires) `deploy_source: "tag"`.**
+  for github/gitlab — **except Bitbucket and Azure DevOps, which have no
+  Releases API and default to `deploy_source: "tag"` (`"release"` is rejected
+  there; `"merge"` is fine).**
 - Optional: `api_base` for a self-hosted GitHub Enterprise or GitLab instance,
   if the repo isn't on github.com / gitlab.com. Not supported for Bitbucket
   (Cloud only).
@@ -160,6 +177,7 @@ order per provider, automatic:
 | `github` | `GITHUB_TOKEN` env var | `gh auth token` (logged-in GitHub CLI) |
 | `gitlab` | `GITLAB_TOKEN` env var | `glab auth token` (logged-in GitLab CLI) |
 | `bitbucket` | `BITBUCKET_TOKEN` env var (bearer) | `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` together (no CLI fallback) |
+| `azure` | `AZURE_DEVOPS_PAT` env var (a PAT with *Code: Read*) | `az account get-access-token` for the Azure DevOps resource (logged-in Azure CLI) |
 
 A run can mix providers: a repo whose provider has no resolvable credential is
 reported as `measured: false` with a `no_credential` problem (same shape as any
@@ -171,8 +189,8 @@ output (and saves it, if `--out-dir` was passed).
 
 Report missing credentials like any other problem — do not ask the user to
 paste a token in the chat if the flow is Cowork; in local Claude Code, suggest
-`gh auth login` / `glab auth login` if they haven't done it (Bitbucket has no
-CLI login to suggest — point at the env vars instead).
+`gh auth login` / `glab auth login` / `az login` if they haven't done it
+(Bitbucket has no CLI login to suggest — point at the env vars instead).
 
 ### Step 4 — Run the script
 
@@ -192,9 +210,9 @@ Available flags:
 - `--branch <branch>`: one-off override of `prod_branch` for this run
   (requires `--project`). Does not modify the config — use only for one-off
   tests against a branch different from the configured one.
-- `--deploy-source {release,tag}`: one-off override of `deploy_source`
+- `--deploy-source {release,tag,merge}`: one-off override of `deploy_source`
   (requires `--project`). Does not modify the config.
-- `--provider {github,gitlab,bitbucket}`: one-off override of `provider`
+- `--provider {github,gitlab,bitbucket,azure}`: one-off override of `provider`
   (requires `--project`). Does not modify the config — applies to every repo
   in that project, so it's only useful for a single-provider project.
 - `--window-days N`: one-off override of the window in days. Does not modify
@@ -208,7 +226,8 @@ from Bash as a reason to discard the output or tell the user the run failed.
 The only case that produces no report at all is a usage error — an unknown
 `--project`, `--branch`/`--deploy-source`/`--provider` passed without
 `--project`, an invalid `deploy_source` or `provider`, `deploy_source:
-"release"` on a bitbucket repo, or `api_base` on a bitbucket repo — which
+"release"` on a bitbucket or azure repo, an azure repo not written as
+`organization/project/repository`, or `api_base` on a bitbucket repo — which
 prints an error to stderr and exits 1 before anything is measured.
 
 `config/projects.json` field reference (also documented in `README.md` for a

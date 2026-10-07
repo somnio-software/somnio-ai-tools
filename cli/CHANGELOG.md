@@ -5,6 +5,16 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.4] - 2026-10-07
+
+### Added
+
+- **`dora-metrics` skill: Azure DevOps provider and a `merge` deploy marker.** Repos on Azure DevOps are declared as `provider: "azure"` with the `organization/project/repository` identifier and authenticate with `AZURE_DEVOPS_PAT` (or a logged-in `az` CLI); completed pull requests into `prod_branch` and their commits feed Deployment Frequency and Lead Time like on the other providers, and tags (annotated or lightweight) work as markers. A new `deploy_source: "merge"` — valid on every provider — counts each PR/MR merged into `prod_branch` inside the window as one deploy, dated by its merge, with lead time from the PR's first commit to that merge: the marker for integration branches that deploy themselves on every merge and publish neither releases nor tags (the report says it measures integration/CD cadence, not production releases). A zero in that mode is reported as the new `no_merged_prs_in_window` note.
+
+### Fixed
+
+- **`dora-metrics` script was still GitHub-only.** 3.2.3 documented and tested GitLab and Bitbucket Cloud support, but `scripts/dora_metrics.py` had not been updated: the suite failed on 65 of 150 tests and a `provider: "gitlab"` or `"bitbucket"` repo could not be measured. The script now carries the provider layer the docs and tests describe — per-provider credentials (`GITLAB_TOKEN` / `glab auth token`, `BITBUCKET_TOKEN` or username + app password), sessions, pagination, releases/tags, merged PR/MR lookup, first-commit lead time, preflight and error classification (`classify_api_error`, `api_error` replaces `github_api_error`) — mixing providers in one run and reporting a repo whose provider has no credential as `no_credential` without blocking the rest.
+
 ## [3.2.3] - 2026-10-06
 
 ### Changed

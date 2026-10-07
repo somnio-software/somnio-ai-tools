@@ -2,12 +2,14 @@
 
 Skill + script that **fetches** (does not interpret) two DORA metrics per
 project and per repo: **Deployment Frequency** and **Lead Time for Changes**.
-All data comes from the GitHub API — never a local git clone. The full contract
+All data comes from the repo provider's API (GitHub, GitLab, Bitbucket Cloud,
+Azure DevOps) — never a local git clone. The full contract
 (what it measures, what it does NOT do, the rationale behind each decision) is
 in `SKILL.md`; this README is the entry point for a human opening the folder.
 
 Fully self-contained folder: it depends on nothing outside `dora-metrics/`
-except `gh` (GitHub CLI) and Python 3 with `requests`.
+except Python 3 with `requests` and a credential per provider in use (`gh`,
+`glab` or `az` CLIs are optional fallbacks).
 
 ## What it does and doesn't do
 
@@ -52,12 +54,31 @@ of the project's repos — a multi-repo project, for example, can have repos in
 | `--project` | all in the config | Exact name of the project to run. |
 | `--out-dir` | doesn't save | If passed, in addition to stdout it saves one file **per repo** there: `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable file). |
 | `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--project`). Doesn't touch the config. |
-| `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--project`). Doesn't touch the config. |
+| `--deploy-source {release,tag,merge}` | — | One-off override of `deploy_source` (requires `--project`). Doesn't touch the config. |
+| `--provider {github,gitlab,bitbucket,azure}` | — | One-off override of `provider` for every repo of `--project`. Doesn't touch the config. |
 | `--window-days N` | — | One-off override of the window in days. Doesn't touch the config. |
 
 The overrides (`--branch`, `--deploy-source`, `--window-days`) are for one-off
 tests — the real biweekly run uses whatever the config says, with no extra
 flags.
+
+### Providers and deploy markers
+
+Each repo declares its `provider` (`github` default, `gitlab`, `bitbucket`,
+`azure` = Azure DevOps, identified as `organization/project/repository`) and
+its `deploy_source`:
+
+| `deploy_source` | What counts as a deploy | Where |
+|---|---|---|
+| `release` | A published Release whose tag matches `tag_pattern` | GitHub, GitLab (default there) |
+| `tag` | A git tag matching `tag_pattern`, dated by the tag object or its commit | all providers (default on Bitbucket and Azure DevOps, which have no Releases API) |
+| `merge` | Every PR/MR merged into `prod_branch` inside the window, dated by its merge; lead time = first commit → merge | all providers — for branches that auto-deploy on merge and publish no releases or tags |
+
+Credentials per provider: `GITHUB_TOKEN` / `gh auth token`, `GITLAB_TOKEN` /
+`glab auth token`, `BITBUCKET_TOKEN` or `BITBUCKET_USERNAME` +
+`BITBUCKET_APP_PASSWORD`, `AZURE_DEVOPS_PAT` / `az account get-access-token`.
+A provider without a credential leaves its repos unmeasured (`no_credential`)
+while the others still run.
 
 ## How to add a new project
 
