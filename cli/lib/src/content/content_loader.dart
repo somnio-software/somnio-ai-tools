@@ -258,6 +258,7 @@ class ContentLoader {
   /// # Rule Name
   ///
   /// > Description text
+  /// > may span several lines
   ///
   /// **File pattern**: `*`
   ///
@@ -281,7 +282,19 @@ class ContentLoader {
         if (name.isEmpty && line.startsWith('# ')) {
           name = line.substring(2).trim();
         } else if (description.isEmpty && line.startsWith('> ')) {
-          description = line.substring(2).trim();
+          // Consume the whole blockquote, keeping the original line breaks.
+          final quoted = <String>[];
+          while (i < lines.length && lines[i].startsWith('>')) {
+            final quoteLine = lines[i];
+            quoted.add(
+              quoteLine.startsWith('> ')
+                  ? quoteLine.substring(2)
+                  : quoteLine.substring(1),
+            );
+            i++;
+          }
+          i--; // The for loop advances past the last quoted line.
+          description = quoted.join('\n').trim();
         } else if (line.startsWith('**File pattern**: ')) {
           final patternMatch = RegExp(r'`([^`]+)`').firstMatch(line);
           if (patternMatch != null) {

@@ -105,6 +105,39 @@ void main() {
       expect(content, contains('Keep layers clean.'));
     });
 
+    test('prefixes every line of a multi-line blockquote description', () {
+      final tmp = Directory.systemTemp.createTempSync('cursor_multiline_');
+      addTearDown(() => tmp.deleteSync(recursive: true));
+
+      final bundle = _setupBundle(
+        repoRoot: tmp.path,
+        name: 'cursor-multiline',
+        planContent: '# Plan\n\nDo the audit.',
+        references: {
+          'testing.md':
+              '# Testing\n'
+              '\n'
+              '> First line.\n'
+              '>\n'
+              '> Third line.\n'
+              '\n'
+              '**File pattern**: `**/*.dart`\n'
+              '\n'
+              '---\n'
+              '\n'
+              'Cover everything.',
+        },
+      );
+
+      final loader = ContentLoader(tmp.path);
+      final agent = AgentRegistry.findById('cursor')!;
+
+      final output = transformer.transform(bundle, loader, agent);
+      final content = output.files['cursor-multiline.md']!;
+
+      expect(content, contains('> First line.\n>\n> Third line.\n'));
+    });
+
     test('still emits a command file with the Rule Reference header when '
         'there are zero references', () {
       final tmp = Directory.systemTemp.createTempSync('cursor_norefs_');

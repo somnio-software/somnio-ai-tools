@@ -5,6 +5,12 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.5] - 2026-10-08
+
+### Fixed
+
+- **Multi-line `>` summaries in skill references were cut to their first line on install.** `ContentLoader` kept only the first line of a reference's blockquote description and silently dropped the rest, so the installed `references/*.md` (Claude Code skill folders, CLI-execution rules) and the rule sections embedded by the Cursor and Markdown formats lost part of the summary. It hit the three `harness-audit` references (`harness-inventory`, `harness-scoring`, `report-generator`). The whole blockquote is now read, keeping its line breaks and bare `>` paragraph breaks, and the new `ClaudeTransformer.blockquote` re-emits every line with `> `, so the installed quote matches the source. Single-line summaries are unchanged.
+
 ## [3.2.4] - 2026-10-08
 
 ### Changed

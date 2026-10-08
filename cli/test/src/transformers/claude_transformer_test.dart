@@ -341,6 +341,20 @@ void main() {
       expect(md, endsWith('Do the thing.\n'));
     });
 
+    test('quotes every line of a multi-line description', () {
+      const rule = ParsedRule(
+        name: 'Multi',
+        description: 'One,\ntwo,\n\nthree.',
+        match: '*',
+        prompt: 'Body.',
+        fileName: 'multi',
+      );
+
+      final md = ClaudeTransformer.ruleToMarkdown(rule);
+
+      expect(md, contains('> One,\n> two,\n>\n> three.\n'));
+    });
+
     test('does not double the trailing newline when prompt already ends in \\n',
         () {
       const rule = ParsedRule(

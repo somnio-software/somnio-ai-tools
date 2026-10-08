@@ -270,11 +270,18 @@ class ClaudeTransformer implements Transformer {
   /// Shared by multiple transformers.
   static String ruleToMarkdown(ParsedRule rule) => _ruleToMarkdown(rule);
 
+  /// Renders [text] as a markdown blockquote, prefixing each line with `> `.
+  ///
+  /// Empty lines become a bare `>` so paragraph breaks stay inside the quote
+  /// without trailing whitespace.
+  static String blockquote(String text) =>
+      text.split('\n').map((line) => line.isEmpty ? '>' : '> $line').join('\n');
+
   static String _ruleToMarkdown(ParsedRule rule) {
     final buffer = StringBuffer();
     buffer.writeln('# ${rule.name}');
     buffer.writeln();
-    buffer.writeln('> ${rule.description}');
+    buffer.writeln(blockquote(rule.description));
     buffer.writeln();
     buffer.writeln('**File pattern**: `${rule.match}`');
     buffer.writeln();

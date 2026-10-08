@@ -1,6 +1,7 @@
 import '../agents/agent_config.dart';
 import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
+import 'claude_transformer.dart';
 import 'transformer.dart';
 
 /// Transforms plan.md + YAML rules into a generic single markdown file.
@@ -39,7 +40,7 @@ class MarkdownTransformer implements Transformer {
       for (final rule in rules) {
         buffer.writeln('## ${rule.name}');
         buffer.writeln();
-        buffer.writeln('> ${rule.description}');
+        buffer.writeln(ClaudeTransformer.blockquote(rule.description));
         buffer.writeln();
         buffer.writeln('**File pattern**: `${rule.match}`');
         buffer.writeln();

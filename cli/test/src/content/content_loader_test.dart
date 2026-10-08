@@ -256,6 +256,34 @@ void main() {
       expect(rules[1].fileName, 'b-second');
     });
 
+    test('keeps every line of a multi-line blockquote description', () {
+      final bundle = _bundle(
+        repoRoot: tmp.path,
+        planContent: '# Plan',
+        referenceFiles: {
+          'multi.md': '# Multi Rule\n'
+              '\n'
+              '> Line one,\n'
+              '> line two,\n'
+              '>\n'
+              '> line three.\n'
+              '\n'
+              '**File pattern**: `lib/**`\n'
+              '\n'
+              '---\n'
+              '\n'
+              'Prompt body.',
+        },
+      );
+
+      final rules = loader.loadRules(bundle);
+
+      expect(rules, hasLength(1));
+      expect(rules[0].description, 'Line one,\nline two,\n\nline three.');
+      expect(rules[0].match, 'lib/**');
+      expect(rules[0].prompt, 'Prompt body.');
+    });
+
     test('drops a malformed yaml rule but keeps a valid one', () {
       final bundle = _bundle(
         repoRoot: tmp.path,
