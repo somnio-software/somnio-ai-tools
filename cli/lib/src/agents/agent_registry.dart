@@ -270,8 +270,7 @@ class AgentRegistry {
     executionRulesPath: '{home}/.aider/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://aider.chat',
-    installInstructions:
-        '  pip install aider-chat\n'
+    installInstructions: '  pip install aider-chat\n'
         '  Or visit: https://aider.chat/docs/install.html',
   );
 
@@ -304,8 +303,7 @@ class AgentRegistry {
     executionRulesPath: '{home}/.opencode/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://opencode.ai',
-    installInstructions:
-        '  go install github.com/opencode-ai/opencode@latest\n'
+    installInstructions: '  go install github.com/opencode-ai/opencode@latest\n'
         '  Or visit: https://opencode.ai',
   );
 
@@ -323,8 +321,7 @@ class AgentRegistry {
     executionRulesPath: '{home}/.codebuddy/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://codebuddy.dev',
-    installInstructions:
-        '  Download from https://codebuddy.dev\n'
+    installInstructions: '  Download from https://codebuddy.dev\n'
         '  Or: npm install -g @anthropic-ai/codebuddy (if available)',
   );
 

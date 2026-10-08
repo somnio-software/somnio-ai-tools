@@ -265,8 +265,8 @@ class WorkflowRunner {
     }
 
     // Resolve model
-    final model = config.resolveModel(stepNum, stepEntry.tag) ??
-        agentConfig.defaultModel;
+    final model =
+        config.resolveModel(stepNum, stepEntry.tag) ?? agentConfig.defaultModel;
 
     // Resolve placeholders. {previous_output} comes from the completion map
     // rather than the positional predecessor: under wave parallelism the

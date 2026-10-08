@@ -158,8 +158,7 @@ const _expectedWeights = <String, Map<String, double>>{
 /// The scorecard's scoring-legend blockquote, byte-identical across all seven
 /// — including the en dash (U+2013) and middle dot (U+00B7). Same literal
 /// as `report_template_drift_test.dart`'s `_scoringLegend`.
-const _scoringLegend =
-    '> **Scoring:** Strong (85–100) · Fair (70–84) · '
+const _scoringLegend = '> **Scoring:** Strong (85–100) · Fair (70–84) · '
     'Weak (0–69)';
 
 /// A `/10` occurrence that is not part of `/100` — e.g. a stray `/10` scale
@@ -208,7 +207,8 @@ String _generatorLabel(String stack) =>
     '$stack-best-practices best-practices-generator.md';
 
 /// `1. EXECUTIVE SUMMARY` entries under the generator's `## REPORT SECTIONS`.
-final _generatorSectionPattern = RegExp(r'^(\d+)\.\s+([A-Z][A-Z0-9 &/():-]*?)\s*$');
+final _generatorSectionPattern =
+    RegExp(r'^(\d+)\.\s+([A-Z][A-Z0-9 &/():-]*?)\s*$');
 
 /// `    - Testing Quality: 20%` rows under `COMPUTE OVERALL SCORE`.
 final _generatorWeightPattern = RegExp(r'^\s*-\s+(.+?):\s*(\d+)%\s*$');
@@ -236,7 +236,8 @@ Map<String, double> _generatorWeights(String generator) {
   if (start == -1) return const {};
   final weights = <String, double>{};
   for (var i = start + 1; i < lines.length; i++) {
-    if (RegExp(r'^\d+\.\s+\*\*').hasMatch(lines[i])) break; // next numbered step
+    if (RegExp(r'^\d+\.\s+\*\*').hasMatch(lines[i]))
+      break; // next numbered step
     final m = _generatorWeightPattern.firstMatch(lines[i]);
     if (m != null) weights[m.group(1)!.trim()] = double.parse(m.group(2)!);
   }
@@ -291,12 +292,17 @@ Map<String, double> _parseWeightRows(List<String> sectionLines) {
   final weights = <String, double>{};
   for (final line in sectionLines) {
     if (!line.trimLeft().startsWith('|')) continue;
-    final cells = line.split('|').map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
+    final cells = line
+        .split('|')
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toList();
     if (cells.length != 2) continue;
     final label = cells[0].replaceAll('*', '').trim();
     final rawValue = cells[1].replaceAll('*', '').replaceAll('%', '').trim();
     final value = double.tryParse(rawValue);
-    if (value == null) continue; // header row ("Section"/"Weight") or the '---' separator
+    if (value == null)
+      continue; // header row ("Section"/"Weight") or the '---' separator
     if (label == 'Total') continue;
     weights[label] = value;
   }
@@ -310,7 +316,11 @@ List<String> _parseScoreBreakdownLabels(List<String> sectionLines) {
   final labels = <String>[];
   for (final line in sectionLines) {
     if (!line.trimLeft().startsWith('|')) continue;
-    final cells = line.split('|').map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
+    final cells = line
+        .split('|')
+        .map((c) => c.trim())
+        .where((c) => c.isNotEmpty)
+        .toList();
     if (cells.length != 3) continue;
     final label = cells[0].replaceAll('*', '').trim();
     if (label == 'Section') continue; // header row
@@ -322,7 +332,9 @@ List<String> _parseScoreBreakdownLabels(List<String> sectionLines) {
 }
 
 void main() {
-  final content = {for (final s in _stacks) s: File(_templatePath(s)).readAsStringSync()};
+  final content = {
+    for (final s in _stacks) s: File(_templatePath(s)).readAsStringSync()
+  };
   final generators = {
     for (final s in _stacks) s: File(_generatorPath(s)).readAsStringSync(),
   };
@@ -330,7 +342,8 @@ void main() {
   final headings = {for (final s in _stacks) s: _numberedHeadings(lines[s]!)};
 
   group('best-practices report-template.md drift check (unified skeleton)', () {
-    group('invariant 1: numbered headings run 1..N with no gaps or duplicates '
+    group(
+        'invariant 1: numbered headings run 1..N with no gaps or duplicates '
         '(N is per-skill)', () {
       for (final stack in _stacks) {
         test(stack, () {
@@ -339,13 +352,15 @@ void main() {
           expect(
             numbers,
             List.generate(n, (i) => i + 1),
-            reason: '${_skillLabel(stack)}: expected numbered headings 1..$n in order '
+            reason:
+                '${_skillLabel(stack)}: expected numbered headings 1..$n in order '
                 'with no gaps or duplicates, found $numbers',
           );
           expect(
             n,
             _expectedSectionCount[stack],
-            reason: '${_skillLabel(stack)}: expected ${_expectedSectionCount[stack]} '
+            reason:
+                '${_skillLabel(stack)}: expected ${_expectedSectionCount[stack]} '
                 'numbered sections (verified against the file at authoring time), '
                 'found $n. If this is a deliberate change to the section list, update '
                 'both this test and docs/report-template-canonical.md\'s expectations '
@@ -355,7 +370,8 @@ void main() {
       }
     });
 
-    group('invariant 2: section 1 = Executive Summary, section 2 = Score '
+    group(
+        'invariant 2: section 1 = Executive Summary, section 2 = Score '
         'Breakdown, last two = Prioritized Recommendations then Evidence Index, '
         'stack-variable middle matches the scored sections that skill actually '
         'has analysis references for', () {
@@ -365,16 +381,20 @@ void main() {
           expect(
             titles.length >= 4,
             isTrue,
-            reason: '${_skillLabel(stack)}: too few numbered sections to have a '
+            reason:
+                '${_skillLabel(stack)}: too few numbered sections to have a '
                 'head/tail shape ($titles)',
           );
 
           expect(titles.first, 'Executive Summary',
-              reason: '${_skillLabel(stack)}: section 1 diverged, found "${titles.first}"');
+              reason:
+                  '${_skillLabel(stack)}: section 1 diverged, found "${titles.first}"');
           expect(titles[1], 'Score Breakdown',
-              reason: '${_skillLabel(stack)}: section 2 diverged, found "${titles[1]}"');
+              reason:
+                  '${_skillLabel(stack)}: section 2 diverged, found "${titles[1]}"');
           expect(titles[titles.length - 2], 'Prioritized Recommendations',
-              reason: '${_skillLabel(stack)}: second-to-last numbered section diverged, '
+              reason:
+                  '${_skillLabel(stack)}: second-to-last numbered section diverged, '
                   'found "${titles[titles.length - 2]}"');
           expect(titles.last, 'Evidence Index',
               reason: '${_skillLabel(stack)}: last numbered section diverged, '
@@ -384,7 +404,8 @@ void main() {
           expect(
             middle,
             _expectedScoredSections[stack],
-            reason: '${_skillLabel(stack)}: stack-variable scored-section middle '
+            reason:
+                '${_skillLabel(stack)}: stack-variable scored-section middle '
                 'diverged from what this skill\'s references/ actually analyzes.\n'
                 '  expected: ${_expectedScoredSections[stack]}\n'
                 '  found:    $middle\n'
@@ -395,15 +416,18 @@ void main() {
       }
     });
 
-    group('invariant 3: the literal heading form "## Section " never appears '
+    group(
+        'invariant 3: the literal heading form "## Section " never appears '
         '(it was flutter\'s pre-unification heading and is retired)', () {
       for (final stack in _stacks) {
         test(stack, () {
-          final matches = lines[stack]!.where((l) => l.startsWith('## Section ')).toList();
+          final matches =
+              lines[stack]!.where((l) => l.startsWith('## Section ')).toList();
           expect(
             matches,
             isEmpty,
-            reason: '${_skillLabel(stack)}: found a literal "## Section " heading '
+            reason:
+                '${_skillLabel(stack)}: found a literal "## Section " heading '
                 '$matches — that heading form belonged to flutter\'s old skeleton '
                 '(before it was unified onto "## N. Title" numbered headings) and '
                 'must not reappear',
@@ -412,13 +436,15 @@ void main() {
       }
     });
 
-    group('invariant 4: exactly one "## 2. Score Breakdown" table with header '
+    group(
+        'invariant 4: exactly one "## 2. Score Breakdown" table with header '
         '"| Section | Score | Label |", a **Weighted Overall** row, and no Weight '
         'column', () {
       for (final stack in _stacks) {
         test(stack, () {
           final fileLines = lines[stack]!;
-          final headingCount = fileLines.where((l) => l == '## 2. Score Breakdown').length;
+          final headingCount =
+              fileLines.where((l) => l == '## 2. Score Breakdown').length;
           expect(
             headingCount,
             1,
@@ -430,7 +456,8 @@ void main() {
           final bodyLines = fileLines.sublist(range.start, range.end);
           final body = bodyLines.join('\n');
 
-          final headerRowCount = bodyLines.where((l) => l == '| Section | Score | Label |').length;
+          final headerRowCount =
+              bodyLines.where((l) => l == '| Section | Score | Label |').length;
           expect(
             headerRowCount,
             1,
@@ -442,7 +469,8 @@ void main() {
           expect(
             body.contains('**Weighted Overall**'),
             isTrue,
-            reason: '${_skillLabel(stack)}: Score Breakdown table is missing its '
+            reason:
+                '${_skillLabel(stack)}: Score Breakdown table is missing its '
                 '"**Weighted Overall**" row',
           );
 
@@ -453,12 +481,17 @@ void main() {
           // the substring "Weight".
           for (final line in bodyLines) {
             if (!line.trimLeft().startsWith('|')) continue;
-            final cells = line.split('|').map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
+            final cells = line
+                .split('|')
+                .map((c) => c.trim())
+                .where((c) => c.isNotEmpty)
+                .toList();
             if (cells.isEmpty) continue;
             expect(
               cells.length,
               3,
-              reason: '${_skillLabel(stack)}: Score Breakdown table row "$line" has '
+              reason:
+                  '${_skillLabel(stack)}: Score Breakdown table row "$line" has '
                   '${cells.length} columns, expected 3 ("Section", "Score", "Label") — '
                   'weights must not appear as a column here, only in the Appendix: '
                   'Scoring Methodology',
@@ -468,7 +501,8 @@ void main() {
       }
     });
 
-    group('invariant 5: scoring-legend blockquote is byte-identical, en dash + '
+    group(
+        'invariant 5: scoring-legend blockquote is byte-identical, en dash + '
         'middle dot, exactly once', () {
       for (final stack in _stacks) {
         test(stack, () {
@@ -477,7 +511,8 @@ void main() {
           expect(
             matches,
             1,
-            reason: '${_skillLabel(stack)}: expected exactly one occurrence of the '
+            reason:
+                '${_skillLabel(stack)}: expected exactly one occurrence of the '
                 'canonical scoring-legend line (with U+2013 en dash and U+00B7 '
                 'middle dot):\n  $_scoringLegend\nbut found $matches. Check for '
                 'plain ASCII hyphens/dots or reworded text.',
@@ -486,17 +521,20 @@ void main() {
       }
     });
 
-    group('invariant 6: /100 scale — no bare "/10" that is not part of "/100" '
+    group(
+        'invariant 6: /100 scale — no bare "/10" that is not part of "/100" '
         '(D1: every scored section in this family reports on a /100 scale with '
         'the standard Strong/Fair/Weak bands)', () {
       for (final stack in _stacks) {
         test(stack, () {
           final c = content[stack]!;
-          final matches = _bareOutOfTen.allMatches(c).map((m) => m.group(0)).toList();
+          final matches =
+              _bareOutOfTen.allMatches(c).map((m) => m.group(0)).toList();
           expect(
             matches,
             isEmpty,
-            reason: '${_skillLabel(stack)}: found a bare "/10" occurrence not part of '
+            reason:
+                '${_skillLabel(stack)}: found a bare "/10" occurrence not part of '
                 '"/100" at ${_bareOutOfTen.allMatches(c).map((m) => m.start).toList()} '
                 '— every scored section in this unified skeleton scores on /100, '
                 'never the old /10 scale',
@@ -505,7 +543,8 @@ void main() {
       }
     });
 
-    group('invariant 7: exactly one unnumbered "## Appendix: Scoring '
+    group(
+        'invariant 7: exactly one unnumbered "## Appendix: Scoring '
         'Methodology" and one "## Report Metadata", in that order, both after '
         'the last numbered section, neither matched as a numbered heading', () {
       for (final stack in _stacks) {
@@ -514,15 +553,17 @@ void main() {
           final fileLines = lines[stack]!;
           final lastHeading = headings[stack]!.last;
 
-          final scoringCount =
-              fileLines.where((l) => l == '## Appendix: Scoring Methodology').length;
+          final scoringCount = fileLines
+              .where((l) => l == '## Appendix: Scoring Methodology')
+              .length;
           expect(
             scoringCount,
             1,
             reason: '${_skillLabel(stack)}: expected exactly one unnumbered '
                 '"## Appendix: Scoring Methodology" heading, found $scoringCount',
           );
-          final metadataCount = fileLines.where((l) => l == '## Report Metadata').length;
+          final metadataCount =
+              fileLines.where((l) => l == '## Report Metadata').length;
           expect(
             metadataCount,
             1,
@@ -530,13 +571,15 @@ void main() {
                 '"## Report Metadata" heading, found $metadataCount',
           );
 
-          final lastHeadingIdx = c.indexOf('## ${lastHeading.number}. ${lastHeading.title}');
+          final lastHeadingIdx =
+              c.indexOf('## ${lastHeading.number}. ${lastHeading.title}');
           final scoringIdx = c.indexOf('## Appendix: Scoring Methodology');
           final metadataIdx = c.indexOf('## Report Metadata');
           expect(
             lastHeadingIdx < scoringIdx && scoringIdx < metadataIdx,
             isTrue,
-            reason: '${_skillLabel(stack)}: expected order last numbered section '
+            reason:
+                '${_skillLabel(stack)}: expected order last numbered section '
                 '("## ${lastHeading.number}. ${lastHeading.title}") → '
                 '"Appendix: Scoring Methodology" → "Report Metadata", found offsets '
                 '$lastHeadingIdx, $scoringIdx, $metadataIdx',
@@ -546,20 +589,23 @@ void main() {
           expect(
             numberedTitles.contains('Appendix: Scoring Methodology'),
             isFalse,
-            reason: '${_skillLabel(stack)}: "Appendix: Scoring Methodology" must stay '
+            reason:
+                '${_skillLabel(stack)}: "Appendix: Scoring Methodology" must stay '
                 'unnumbered (no "## N." prefix)',
           );
           expect(
             numberedTitles.contains('Report Metadata'),
             isFalse,
-            reason: '${_skillLabel(stack)}: "Report Metadata" must stay unnumbered '
+            reason:
+                '${_skillLabel(stack)}: "Report Metadata" must stay unnumbered '
                 '(no "## N." prefix)',
           );
         });
       }
     });
 
-    group('invariant 8: Appendix weight rows parse, sum to exactly 100, and their '
+    group(
+        'invariant 8: Appendix weight rows parse, sum to exactly 100, and their '
         'labels match that skill\'s own Score Breakdown row labels exactly and in '
         'the same order (catches a weight table copied from the wrong sibling '
         'skill)', () {
@@ -567,12 +613,15 @@ void main() {
         test(stack, () {
           final fileLines = lines[stack]!;
 
-          final appendixRange = _sectionRange(fileLines, '## Appendix: Scoring Methodology');
-          final weights = _parseWeightRows(fileLines.sublist(appendixRange.start, appendixRange.end));
+          final appendixRange =
+              _sectionRange(fileLines, '## Appendix: Scoring Methodology');
+          final weights = _parseWeightRows(
+              fileLines.sublist(appendixRange.start, appendixRange.end));
           expect(
             weights.isNotEmpty,
             isTrue,
-            reason: '${_skillLabel(stack)}: could not parse any "| Section | Weight |" '
+            reason:
+                '${_skillLabel(stack)}: could not parse any "| Section | Weight |" '
                 'rows out of Appendix: Scoring Methodology',
           );
 
@@ -580,20 +629,29 @@ void main() {
           expect(
             sum,
             closeTo(100, 0.001),
-            reason: '${_skillLabel(stack)}: Appendix weights sum to $sum, expected '
+            reason:
+                '${_skillLabel(stack)}: Appendix weights sum to $sum, expected '
                 '100. Rows: $weights',
           );
 
-          final scorecardRange = _sectionRange(fileLines, '## 2. Score Breakdown');
-          final scorecardLabels =
-              _parseScoreBreakdownLabels(fileLines.sublist(scorecardRange.start, scorecardRange.end));
+          final scorecardRange =
+              _sectionRange(fileLines, '## 2. Score Breakdown');
+          final scorecardLabels = _parseScoreBreakdownLabels(
+              fileLines.sublist(scorecardRange.start, scorecardRange.end));
           final appendixLabelsInOrder = <String>[];
-          for (final line in fileLines.sublist(appendixRange.start, appendixRange.end)) {
+          for (final line
+              in fileLines.sublist(appendixRange.start, appendixRange.end)) {
             if (!line.trimLeft().startsWith('|')) continue;
-            final cells = line.split('|').map((c) => c.trim()).where((c) => c.isNotEmpty).toList();
+            final cells = line
+                .split('|')
+                .map((c) => c.trim())
+                .where((c) => c.isNotEmpty)
+                .toList();
             if (cells.length != 2) continue;
             final label = cells[0].replaceAll('*', '').trim();
-            if (double.tryParse(cells[1].replaceAll('*', '').replaceAll('%', '').trim()) == null) {
+            if (double.tryParse(
+                    cells[1].replaceAll('*', '').replaceAll('%', '').trim()) ==
+                null) {
               continue;
             }
             if (label == 'Total') continue;
@@ -603,7 +661,8 @@ void main() {
           expect(
             appendixLabelsInOrder,
             scorecardLabels,
-            reason: '${_skillLabel(stack)}: Appendix: Scoring Methodology row labels '
+            reason:
+                '${_skillLabel(stack)}: Appendix: Scoring Methodology row labels '
                 'diverged from this skill\'s own Score Breakdown row labels.\n'
                 '  Score Breakdown labels: $scorecardLabels\n'
                 '  Appendix labels:        $appendixLabelsInOrder\n'
@@ -614,14 +673,17 @@ void main() {
       }
     });
 
-    group('invariant 9: each skill\'s appendix maps each section label to its '
+    group(
+        'invariant 9: each skill\'s appendix maps each section label to its '
         'own expected weight (catches both a weight set cross-applied from a '
         'sibling skill and two weights transposed within one skill)', () {
       for (final stack in _stacks) {
         test(stack, () {
           final fileLines = lines[stack]!;
-          final range = _sectionRange(fileLines, '## Appendix: Scoring Methodology');
-          final weights = _parseWeightRows(fileLines.sublist(range.start, range.end));
+          final range =
+              _sectionRange(fileLines, '## Appendix: Scoring Methodology');
+          final weights =
+              _parseWeightRows(fileLines.sublist(range.start, range.end));
           final expected = _expectedWeights[stack]!;
 
           // Compared as label -> weight PAIRS, deliberately not as a sorted
@@ -659,7 +721,8 @@ void main() {
     // appear in a real run. Invariants 10-12 guard that file too.
     // ---------------------------------------------------------------------
 
-    group('invariant 10: the generator\'s REPORT SECTIONS list matches the '
+    group(
+        'invariant 10: the generator\'s REPORT SECTIONS list matches the '
         'template\'s numbered sections, in number and name and order', () {
       for (final stack in _stacks) {
         test(stack, () {
@@ -677,7 +740,8 @@ void main() {
           expect(
             generatorTitles.length,
             templateTitles.length,
-            reason: '${_generatorLabel(stack)}: lists ${generatorTitles.length} '
+            reason:
+                '${_generatorLabel(stack)}: lists ${generatorTitles.length} '
                 'numbered sections but the template renders '
                 '${templateTitles.length}.\n'
                 '  generator: $generatorTitles\n'
@@ -707,7 +771,8 @@ void main() {
       }
     });
 
-    group('invariant 11: the generator also specifies the two unnumbered '
+    group(
+        'invariant 11: the generator also specifies the two unnumbered '
         'closing blocks (Appendix: Scoring Methodology, Report Metadata)', () {
       for (final stack in _stacks) {
         test(stack, () {
@@ -732,7 +797,8 @@ void main() {
       }
     });
 
-    group('invariant 12: the generator\'s COMPUTE OVERALL SCORE weights match '
+    group(
+        'invariant 12: the generator\'s COMPUTE OVERALL SCORE weights match '
         'the template appendix per label, and sum to 100', () {
       for (final stack in _stacks) {
         test(stack, () {
@@ -754,7 +820,8 @@ void main() {
           );
 
           final fileLines = lines[stack]!;
-          final range = _sectionRange(fileLines, '## Appendix: Scoring Methodology');
+          final range =
+              _sectionRange(fileLines, '## Appendix: Scoring Methodology');
           final appendixWeights =
               _parseWeightRows(fileLines.sublist(range.start, range.end));
 

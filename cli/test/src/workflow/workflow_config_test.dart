@@ -78,7 +78,8 @@ void main() {
 
         expect(json['ide'], 'claudecode');
         final assignments = json['model_assignments'] as Map;
-        expect(assignments['by_role'], {'research': 'haiku', 'execution': 'sonnet'});
+        expect(assignments['by_role'],
+            {'research': 'haiku', 'execution': 'sonnet'});
         expect(assignments['by_step'], {'3': 'opus'});
       });
 
@@ -126,7 +127,11 @@ void main() {
       test('fromJson(toJson) preserves data', () {
         const original = WorkflowConfig(
           ide: 'claudecode',
-          byRole: {'research': 'haiku', 'planning': 'opus', 'execution': 'sonnet'},
+          byRole: {
+            'research': 'haiku',
+            'planning': 'opus',
+            'execution': 'sonnet'
+          },
           byStep: {3: 'opus', 4: 'haiku'},
         );
 
@@ -205,7 +210,8 @@ void main() {
 
     group('configFileName', () {
       test('maps claude to config.claudecode.json', () {
-        expect(WorkflowConfig.configFileName('claude'), 'config.claudecode.json');
+        expect(
+            WorkflowConfig.configFileName('claude'), 'config.claudecode.json');
       });
 
       test('maps cursor to config.cursor.json', () {
@@ -217,7 +223,8 @@ void main() {
       });
 
       test('maps antigravity to config.gemini.json', () {
-        expect(WorkflowConfig.configFileName('antigravity'), 'config.gemini.json');
+        expect(
+            WorkflowConfig.configFileName('antigravity'), 'config.gemini.json');
       });
 
       test('generates generic name for unknown agent', () {

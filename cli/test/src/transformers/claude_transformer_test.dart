@@ -88,7 +88,8 @@ void main() {
         planContent: '# Plan\n\nNo special refs here.',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(output.skillMd, startsWith('---\n'));
       expect(output.skillMd, contains('name: flutter-health-audit'));
@@ -116,7 +117,8 @@ void main() {
             '# Plan\n\nbody',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(output.skillMd, contains('Triggers on'));
       expect(
@@ -127,7 +129,8 @@ void main() {
       );
     });
 
-    test('rewrites `@rule_name` backtick references to references/<rule>.md', () {
+    test('rewrites `@rule_name` backtick references to references/<rule>.md',
+        () {
       final tmp = Directory.systemTemp.createTempSync('claude_rule_');
       addTearDown(() => tmp.deleteSync(recursive: true));
 
@@ -146,7 +149,8 @@ void main() {
         },
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(
         output.skillMd,
@@ -178,7 +182,8 @@ void main() {
         },
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(output.skillMd, contains('(or `@for` track) for lists'));
       expect(output.skillMd, isNot(contains('references/for.md')));
@@ -197,7 +202,8 @@ void main() {
             'See @flutter_best_practices_check/plan/best_practices.plan.md',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       // flutter_plan exists in the registry -> name flutter-best-practices.
       expect(output.skillMd, contains('`/flutter-best-practices`'));
@@ -216,12 +222,14 @@ void main() {
             'See @nonexistent_best_practices_check/plan/best_practices.plan.md',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       // No `nonexistent_plan` registry entry -> original text preserved.
       expect(
         output.skillMd,
-        contains('@nonexistent_best_practices_check/plan/best_practices.plan.md'),
+        contains(
+            '@nonexistent_best_practices_check/plan/best_practices.plan.md'),
       );
     });
 
@@ -236,7 +244,8 @@ void main() {
         planContent: 'Apply `@architecture.yaml` rules.',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(
         output.skillMd,
@@ -258,7 +267,8 @@ void main() {
         planContent: 'Then run `@best_practices.plan.md`.',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(output.skillMd, contains('`/flutter-best-practices`'));
     });
@@ -274,12 +284,14 @@ void main() {
         planContent: 'Then run `@best_practices.plan.md`.',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(output.skillMd, contains('`/mystery-health-audit`'));
     });
 
-    test('rewrites workflow cross-ref `<prefix>_best_practices_check/.agent/...`',
+    test(
+        'rewrites workflow cross-ref `<prefix>_best_practices_check/.agent/...`',
         () {
       final tmp = Directory.systemTemp.createTempSync('claude_wf_');
       addTearDown(() => tmp.deleteSync(recursive: true));
@@ -292,7 +304,8 @@ void main() {
             'Follow `flutter_best_practices_check/.agent/workflows/x.md` next.',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(output.skillMd, contains('`/flutter-best-practices`'));
     });
@@ -309,7 +322,8 @@ void main() {
             'Use `flutter_best_practices_check/cursor_rules/testing.yaml`.',
       );
 
-      final output = transformer.transformBundle(bundle, ContentLoader(tmp.path));
+      final output =
+          transformer.transformBundle(bundle, ContentLoader(tmp.path));
 
       expect(
         output.skillMd,
@@ -376,7 +390,8 @@ void main() {
   // transform — file layout
   // ---------------------------------------------------------------------------
   group('transform', () {
-    test('lays out SKILL.md, references/ and assets/ when template present', () {
+    test('lays out SKILL.md, references/ and assets/ when template present',
+        () {
       final tmp = Directory.systemTemp.createTempSync('claude_layout_');
       addTearDown(() => tmp.deleteSync(recursive: true));
 

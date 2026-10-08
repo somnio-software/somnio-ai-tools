@@ -234,7 +234,9 @@ void main() {
 
     test('negative dependency throws', () {
       expect(
-        () => planner.plan([_entry(file: '01.md', needs: [-1])]),
+        () => planner.plan([
+          _entry(file: '01.md', needs: [-1])
+        ]),
         throwsA(isA<FormatException>()),
       );
     });

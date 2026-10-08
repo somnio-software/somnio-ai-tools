@@ -227,8 +227,7 @@ class AgentConfig {
 
   /// Resolves the install path by replacing `{home}` and `{name}`.
   String resolvedInstallPath({required String home, String? name}) {
-    var path = installPath
-        .replaceAll('{home}', home);
+    var path = installPath.replaceAll('{home}', home);
     if (name != null) {
       path = path.replaceAll('{name}', name);
     }

@@ -305,7 +305,8 @@ void main() {
 
       _writeSkill(p.join(home.path, '.claude', 'skills'), 'security-audit');
 
-      expect(removeAgentInstalls(home: home.path, environment: const {}), isTrue);
+      expect(
+          removeAgentInstalls(home: home.path, environment: const {}), isTrue);
     });
   });
 

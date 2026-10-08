@@ -15,20 +15,16 @@ class SkillRegistry {
       name: 'flutter-health-audit',
       aliases: ['somnio-fh', 'fh'],
       displayName: 'Flutter Project Health Audit',
-      description:
-          'Execute a comprehensive Flutter Project Health Audit. '
+      description: 'Execute a comprehensive Flutter Project Health Audit. '
           'Analyzes tech stack, architecture, state management, testing, '
           'code quality, CI/CD, and documentation. Produces a '
           'Google Docs-ready report with section scores and weighted '
           'overall score.',
-      planRelativePath:
-          'skills/flutter-health-audit/SKILL.md',
-      rulesDirectory:
-          'skills/flutter-health-audit/references',
+      planRelativePath: 'skills/flutter-health-audit/SKILL.md',
+      rulesDirectory: 'skills/flutter-health-audit/references',
       workflowPath:
           'skills/flutter-health-audit/.agent/workflows/flutter_health_audit.md',
-      templatePath:
-          'skills/flutter-health-audit/assets/report-template.md',
+      templatePath: 'skills/flutter-health-audit/assets/report-template.md',
       agentsDirectory: 'skills/flutter-health-audit/agents',
     ),
     SkillBundle(
@@ -36,21 +32,17 @@ class SkillRegistry {
       name: 'angular-health-audit',
       aliases: ['somnio-ah', 'ah'],
       displayName: 'Angular Project Health Audit',
-      description:
-          'Execute a comprehensive modern Angular (2+/Angular CLI, '
+      description: 'Execute a comprehensive modern Angular (2+/Angular CLI, '
           'TypeScript) Project Health Audit. Analyzes tech stack, '
           'module/component architecture, state & data flow (services/'
           'RxJS), change detection, build & bundle pipeline, testing, '
           'code quality, CI/CD, AI harness, and documentation. Produces '
           'a report with section scores and weighted overall score.',
-      planRelativePath:
-          'skills/angular-health-audit/SKILL.md',
-      rulesDirectory:
-          'skills/angular-health-audit/references',
+      planRelativePath: 'skills/angular-health-audit/SKILL.md',
+      rulesDirectory: 'skills/angular-health-audit/references',
       workflowPath:
           'skills/angular-health-audit/.agent/workflows/angular_health_audit.md',
-      templatePath:
-          'skills/angular-health-audit/assets/report-template.md',
+      templatePath: 'skills/angular-health-audit/assets/report-template.md',
       agentsDirectory: 'skills/angular-health-audit/agents',
     ),
     SkillBundle(
@@ -58,19 +50,15 @@ class SkillRegistry {
       name: 'flutter-best-practices',
       aliases: ['somnio-fp', 'fp'],
       displayName: 'Flutter Best Practices Check',
-      description:
-          'Execute a micro-level Flutter code quality audit. '
+      description: 'Execute a micro-level Flutter code quality audit. '
           'Validates code against live GitHub standards for testing, '
           'architecture, and code implementation. Produces a detailed '
           'violations report with prioritized action plan.',
-      planRelativePath:
-          'skills/flutter-best-practices/SKILL.md',
-      rulesDirectory:
-          'skills/flutter-best-practices/references',
+      planRelativePath: 'skills/flutter-best-practices/SKILL.md',
+      rulesDirectory: 'skills/flutter-best-practices/references',
       workflowPath:
           'skills/flutter-best-practices/.agent/workflows/flutter_best_practices.md',
-      templatePath:
-          'skills/flutter-best-practices/assets/report-template.md',
+      templatePath: 'skills/flutter-best-practices/assets/report-template.md',
       agentsDirectory: 'skills/flutter-best-practices/agents',
     ),
     SkillBundle(
@@ -78,8 +66,7 @@ class SkillRegistry {
       name: 'soc2-audit',
       aliases: ['somnio-s2', 's2'],
       displayName: 'SOC 2 Readiness Audit',
-      description:
-          'Execute a framework-agnostic, whole-project SOC 2 '
+      description: 'Execute a framework-agnostic, whole-project SOC 2 '
           'readiness audit. Inspects the repository/application for '
           'evidence of the Trust Services Criteria (Common Criteria '
           'security plus Availability, Confidentiality, Processing '
@@ -87,14 +74,10 @@ class SkillRegistry {
           'maps gaps to control refs, and produces a prioritized '
           'remediation plan with an overall readiness score and band. '
           'Read-only; secrets are redacted.',
-      planRelativePath:
-          'skills/soc2-audit/SKILL.md',
-      rulesDirectory:
-          'skills/soc2-audit/references',
-      workflowPath:
-          'skills/soc2-audit/.agent/workflows/soc2_audit.md',
-      templatePath:
-          'skills/soc2-audit/assets/report-template.md',
+      planRelativePath: 'skills/soc2-audit/SKILL.md',
+      rulesDirectory: 'skills/soc2-audit/references',
+      workflowPath: 'skills/soc2-audit/.agent/workflows/soc2_audit.md',
+      templatePath: 'skills/soc2-audit/assets/report-template.md',
       agentsDirectory: 'skills/soc2-audit/agents',
     ),
     SkillBundle(
@@ -102,20 +85,16 @@ class SkillRegistry {
       name: 'nestjs-health-audit',
       aliases: ['somnio-nh', 'nh'],
       displayName: 'NestJS Project Health Audit',
-      description:
-          'Execute a comprehensive NestJS Project Health Audit. '
+      description: 'Execute a comprehensive NestJS Project Health Audit. '
           'Analyzes tech stack, architecture, API design, data layer, '
           'testing, code quality, CI/CD, and documentation. '
           'Produces a Google Docs-ready report with section scores and '
           'weighted overall score.',
-      planRelativePath:
-          'skills/nestjs-health-audit/SKILL.md',
-      rulesDirectory:
-          'skills/nestjs-health-audit/references',
+      planRelativePath: 'skills/nestjs-health-audit/SKILL.md',
+      rulesDirectory: 'skills/nestjs-health-audit/references',
       workflowPath:
           'skills/nestjs-health-audit/.agent/workflows/nestjs_health_audit.md',
-      templatePath:
-          'skills/nestjs-health-audit/assets/report-template.md',
+      templatePath: 'skills/nestjs-health-audit/assets/report-template.md',
       agentsDirectory: 'skills/nestjs-health-audit/agents',
     ),
     SkillBundle(
@@ -123,22 +102,18 @@ class SkillRegistry {
       name: 'angularjs-best-practices',
       aliases: ['somnio-ajp', 'ajp'],
       displayName: 'AngularJS Best Practices Check',
-      description:
-          'Execute a micro-level AngularJS (Angular 1.x) code quality '
+      description: 'Execute a micro-level AngularJS (Angular 1.x) code quality '
           'audit. Validates code against standards for module, '
           'controller, and directive architecture, \$scope and binding '
           'patterns, services and \$http data flow, digest-cycle '
           'performance, minification-safe DI, and Karma/Jasmine testing. '
           'Produces a detailed violations report with a prioritized '
           'action plan.',
-      planRelativePath:
-          'skills/angularjs-best-practices/SKILL.md',
-      rulesDirectory:
-          'skills/angularjs-best-practices/references',
+      planRelativePath: 'skills/angularjs-best-practices/SKILL.md',
+      rulesDirectory: 'skills/angularjs-best-practices/references',
       workflowPath:
           'skills/angularjs-best-practices/.agent/workflows/angularjs_best_practices.md',
-      templatePath:
-          'skills/angularjs-best-practices/assets/report-template.md',
+      templatePath: 'skills/angularjs-best-practices/assets/report-template.md',
       agentsDirectory: 'skills/angularjs-best-practices/agents',
     ),
     SkillBundle(
@@ -146,20 +121,16 @@ class SkillRegistry {
       name: 'nestjs-best-practices',
       aliases: ['somnio-np', 'np'],
       displayName: 'NestJS Best Practices Check',
-      description:
-          'Execute a micro-level NestJS code quality audit. '
+      description: 'Execute a micro-level NestJS code quality audit. '
           'Validates code against live GitHub standards for testing, '
           'architecture, DTO validation, error handling, and code '
           'implementation. Produces a detailed violations report with '
           'prioritized action plan.',
-      planRelativePath:
-          'skills/nestjs-best-practices/SKILL.md',
-      rulesDirectory:
-          'skills/nestjs-best-practices/references',
+      planRelativePath: 'skills/nestjs-best-practices/SKILL.md',
+      rulesDirectory: 'skills/nestjs-best-practices/references',
       workflowPath:
           'skills/nestjs-best-practices/.agent/workflows/nestjs_best_practices.md',
-      templatePath:
-          'skills/nestjs-best-practices/assets/report-template.md',
+      templatePath: 'skills/nestjs-best-practices/assets/report-template.md',
       agentsDirectory: 'skills/nestjs-best-practices/agents',
     ),
     SkillBundle(
@@ -167,21 +138,17 @@ class SkillRegistry {
       name: 'angular-best-practices',
       aliases: ['somnio-ap', 'ap'],
       displayName: 'Angular Best Practices Check',
-      description:
-          'Execute a micro-level modern Angular (2+) code quality '
+      description: 'Execute a micro-level modern Angular (2+) code quality '
           'audit. Validates code against standards for component and '
           'module architecture, RxJS and state management, change-'
           'detection performance, TypeScript strictness and template '
           'type-checking, and testing. Produces a detailed violations '
           'report with a prioritized action plan.',
-      planRelativePath:
-          'skills/angular-best-practices/SKILL.md',
-      rulesDirectory:
-          'skills/angular-best-practices/references',
+      planRelativePath: 'skills/angular-best-practices/SKILL.md',
+      rulesDirectory: 'skills/angular-best-practices/references',
       workflowPath:
           'skills/angular-best-practices/.agent/workflows/angular_best_practices.md',
-      templatePath:
-          'skills/angular-best-practices/assets/report-template.md',
+      templatePath: 'skills/angular-best-practices/assets/report-template.md',
       agentsDirectory: 'skills/angular-best-practices/agents',
     ),
     SkillBundle(
@@ -189,20 +156,16 @@ class SkillRegistry {
       name: 'react-health-audit',
       aliases: ['somnio-rh', 'rh'],
       displayName: 'React Project Health Audit',
-      description:
-          'Execute a comprehensive React Project Health Audit. '
+      description: 'Execute a comprehensive React Project Health Audit. '
           'Analyzes tech stack, architecture, state management, testing, '
           'code quality, CI/CD, and documentation. Produces a '
           'Google Docs-ready report with section scores and weighted '
           'overall score.',
-      planRelativePath:
-          'skills/react-health-audit/SKILL.md',
-      rulesDirectory:
-          'skills/react-health-audit/references',
+      planRelativePath: 'skills/react-health-audit/SKILL.md',
+      rulesDirectory: 'skills/react-health-audit/references',
       workflowPath:
           'skills/react-health-audit/.agent/workflows/react_health_audit.md',
-      templatePath:
-          'skills/react-health-audit/assets/report-template.md',
+      templatePath: 'skills/react-health-audit/assets/report-template.md',
       agentsDirectory: 'skills/react-health-audit/agents',
     ),
     SkillBundle(
@@ -210,8 +173,7 @@ class SkillRegistry {
       name: 'angularjs-health-audit',
       aliases: ['somnio-ajh', 'ajh'],
       displayName: 'AngularJS Project Health Audit',
-      description:
-          'Execute a comprehensive AngularJS (Angular 1.x) Project '
+      description: 'Execute a comprehensive AngularJS (Angular 1.x) Project '
           'Health Audit. Analyzes tech stack & runtime, module/component '
           'architecture, state & data flow, templating & DOM patterns, '
           'build & asset pipeline, testing, code quality, CI/CD, AI '
@@ -219,14 +181,11 @@ class SkillRegistry {
           '1.x (controllers, directives, services, \$scope, Bower). '
           'Produces a report with section scores and a weighted overall '
           'score.',
-      planRelativePath:
-          'skills/angularjs-health-audit/SKILL.md',
-      rulesDirectory:
-          'skills/angularjs-health-audit/references',
+      planRelativePath: 'skills/angularjs-health-audit/SKILL.md',
+      rulesDirectory: 'skills/angularjs-health-audit/references',
       workflowPath:
           'skills/angularjs-health-audit/.agent/workflows/angularjs_health_audit.md',
-      templatePath:
-          'skills/angularjs-health-audit/assets/report-template.md',
+      templatePath: 'skills/angularjs-health-audit/assets/report-template.md',
       agentsDirectory: 'skills/angularjs-health-audit/agents',
     ),
     SkillBundle(
@@ -234,20 +193,16 @@ class SkillRegistry {
       name: 'react-best-practices',
       aliases: ['somnio-rp', 'rp'],
       displayName: 'React Best Practices Check',
-      description:
-          'Execute a micro-level React code quality audit. '
+      description: 'Execute a micro-level React code quality audit. '
           'Validates code against live GitHub standards for testing, '
           'component architecture, hooks patterns, state management, '
           'and TypeScript. Produces a detailed violations report with '
           'prioritized action plan.',
-      planRelativePath:
-          'skills/react-best-practices/SKILL.md',
-      rulesDirectory:
-          'skills/react-best-practices/references',
+      planRelativePath: 'skills/react-best-practices/SKILL.md',
+      rulesDirectory: 'skills/react-best-practices/references',
       workflowPath:
           'skills/react-best-practices/.agent/workflows/react_best_practices.md',
-      templatePath:
-          'skills/react-best-practices/assets/report-template.md',
+      templatePath: 'skills/react-best-practices/assets/report-template.md',
       agentsDirectory: 'skills/react-best-practices/agents',
     ),
     SkillBundle(
@@ -255,8 +210,7 @@ class SkillRegistry {
       name: 'python-health-audit',
       aliases: ['somnio-ph', 'ph'],
       displayName: 'Python Project Health Audit',
-      description:
-          'Execute a comprehensive Python Project Health Audit. '
+      description: 'Execute a comprehensive Python Project Health Audit. '
           'Analyzes tech stack, architecture, API/interface design, '
           'data layer, testing, code quality, CI/CD, and documentation. '
           'Produces a Google Docs-ready report with section scores and '
@@ -273,8 +227,7 @@ class SkillRegistry {
       name: 'iso27001-audit',
       aliases: ['somnio-iso', 'iso'],
       displayName: 'ISO 27001 Readiness Audit',
-      description:
-          'Execute a framework-agnostic, whole-project ISO/IEC '
+      description: 'Execute a framework-agnostic, whole-project ISO/IEC '
           '27001:2022 readiness audit. Inspects the repository/'
           'application for evidence of an ISMS and Annex A controls '
           '(organizational, people, physical, technological), scores '
@@ -282,14 +235,10 @@ class SkillRegistry {
           'produces a prioritized remediation plan plus a Statement-of-'
           'Applicability starter, with an overall readiness score and '
           'band. Read-only; secrets are redacted.',
-      planRelativePath:
-          'skills/iso27001-audit/SKILL.md',
-      rulesDirectory:
-          'skills/iso27001-audit/references',
-      workflowPath:
-          'skills/iso27001-audit/.agent/workflows/iso27001_audit.md',
-      templatePath:
-          'skills/iso27001-audit/assets/report-template.md',
+      planRelativePath: 'skills/iso27001-audit/SKILL.md',
+      rulesDirectory: 'skills/iso27001-audit/references',
+      workflowPath: 'skills/iso27001-audit/.agent/workflows/iso27001_audit.md',
+      templatePath: 'skills/iso27001-audit/assets/report-template.md',
       agentsDirectory: 'skills/iso27001-audit/agents',
     ),
     SkillBundle(
@@ -297,8 +246,7 @@ class SkillRegistry {
       name: 'python-best-practices',
       aliases: ['somnio-pp', 'pp'],
       displayName: 'Python Best Practices Check',
-      description:
-          'Execute a micro-level Python code quality audit. '
+      description: 'Execute a micro-level Python code quality audit. '
           'Validates code against live GitHub standards for typing, '
           'code style, function design, data validation, error handling, '
           'module structure, and testing. Produces a detailed violations '
@@ -315,8 +263,7 @@ class SkillRegistry {
       name: 'dotnet-health-audit',
       aliases: ['somnio-dh', 'dh'],
       displayName: '.NET Project Health Audit',
-      description:
-          'Execute a comprehensive .NET / ASP.NET Core Project Health '
+      description: 'Execute a comprehensive .NET / ASP.NET Core Project Health '
           'Audit. Analyzes tech stack, architecture, API design, data '
           'layer, testing, code quality, CI/CD, and documentation. '
           'Produces a Google Docs-ready report with section scores and '
@@ -357,14 +304,10 @@ class SkillRegistry {
           'accordingly. Analyzes sensitive files, source code secrets, '
           'and dependency vulnerabilities. Produces a severity-classified '
           'report.',
-      planRelativePath:
-          'skills/security-audit/SKILL.md',
-      rulesDirectory:
-          'skills/security-audit/references',
-      workflowPath:
-          'skills/security-audit/.agent/workflows/security_audit.md',
-      templatePath:
-          'skills/security-audit/assets/report-template.md',
+      planRelativePath: 'skills/security-audit/SKILL.md',
+      rulesDirectory: 'skills/security-audit/references',
+      workflowPath: 'skills/security-audit/.agent/workflows/security_audit.md',
+      templatePath: 'skills/security-audit/assets/report-template.md',
       agentsDirectory: 'skills/security-audit/agents',
     ),
     SkillBundle(
@@ -372,20 +315,15 @@ class SkillRegistry {
       name: 'harness-audit',
       aliases: ['somnio-ha', 'ha'],
       displayName: 'Harness Audit',
-      description:
-          'Audit how complete the AI coding harness of a project is — '
+      description: 'Audit how complete the AI coding harness of a project is — '
           'CLAUDE.md, .claude/rules, settings.json permissions and '
           'hooks, commands/skills, agents, and the autotest-to-PR '
           'lifecycle — and return a score out of 100 with a band '
           'reading and a prioritized action plan. Framework-agnostic.',
-      planRelativePath:
-          'skills/harness-audit/SKILL.md',
-      rulesDirectory:
-          'skills/harness-audit/references',
-      workflowPath:
-          'skills/harness-audit/.agent/workflows/harness_audit.md',
-      templatePath:
-          'skills/harness-audit/assets/report-template.md',
+      planRelativePath: 'skills/harness-audit/SKILL.md',
+      rulesDirectory: 'skills/harness-audit/references',
+      workflowPath: 'skills/harness-audit/.agent/workflows/harness_audit.md',
+      templatePath: 'skills/harness-audit/assets/report-template.md',
       agentsDirectory: 'skills/harness-audit/agents',
     ),
   ];
@@ -402,28 +340,23 @@ class SkillRegistry {
           'Manages Clockify time tracking via the official Clockify REST '
           'API (v1): list workspaces and projects, create time entries '
           'with correct UTC timestamps.',
-      planRelativePath:
-          'skills/clockify-tracker/SKILL.md',
+      planRelativePath: 'skills/clockify-tracker/SKILL.md',
     ),
     WorkflowSkill(
       id: 'git_commit_format',
       name: 'git-commit-format',
       displayName: 'Git Commit Format',
-      description:
-          'Generates properly formatted Git commit messages (title + '
+      description: 'Generates properly formatted Git commit messages (title + '
           'description) following Conventional Commits.',
-      planRelativePath:
-          'skills/git-commit-format/SKILL.md',
+      planRelativePath: 'skills/git-commit-format/SKILL.md',
     ),
     WorkflowSkill(
       id: 'git_branch_format',
       name: 'git-branch-format',
       displayName: 'Git Branch Format',
-      description:
-          'Generates properly formatted Git branch names following '
+      description: 'Generates properly formatted Git branch names following '
           'project conventions.',
-      planRelativePath:
-          'skills/git-branch-format/SKILL.md',
+      planRelativePath: 'skills/git-branch-format/SKILL.md',
     ),
     WorkflowSkill(
       id: 'workflow_builder',
@@ -433,20 +366,17 @@ class SkillRegistry {
           'Create and execute custom, repeatable workflows with multiple '
           'steps that can each use different AI models and run in '
           'parallel waves.',
-      planRelativePath:
-          'skills/workflow-builder/SKILL.md',
+      planRelativePath: 'skills/workflow-builder/SKILL.md',
       referencesRelativePath: 'skills/workflow-builder/references',
     ),
     WorkflowSkill(
       id: 'dart_model_from_json',
       name: 'dart-model-from-json',
       displayName: 'Dart Model from JSON',
-      description:
-          'Generates Dart model classes from a JSON structure using '
+      description: 'Generates Dart model classes from a JSON structure using '
           'json_annotation and equatable. Includes copyWith, fromJson, '
           'toJson, and Equatable props. Handles nested objects and arrays.',
-      planRelativePath:
-          'skills/dart-model-from-json/SKILL.md',
+      planRelativePath: 'skills/dart-model-from-json/SKILL.md',
     ),
     WorkflowSkill(
       id: 'optimize_claude_config',
@@ -460,8 +390,7 @@ class SkillRegistry {
           'tree (catching stale and over-broad patterns), slims redundant '
           'CLAUDE.md content, and installs the read-not-create hook. Runs '
           'audit-first with confirmation; pass --audit-only to skip applying.',
-      planRelativePath:
-          'skills/optimize-claude-config/SKILL.md',
+      planRelativePath: 'skills/optimize-claude-config/SKILL.md',
     ),
     WorkflowSkill(
       id: 'dora_metrics',
@@ -475,8 +404,7 @@ class SkillRegistry {
           'process-gap warnings. Use when asked to run or update DORA '
           'metrics, measure deployment frequency or lead time for a '
           'project, or generate the biweekly metrics report.',
-      planRelativePath:
-          'skills/dora-metrics/SKILL.md',
+      planRelativePath: 'skills/dora-metrics/SKILL.md',
       assetDirectories: [
         'skills/dora-metrics/scripts',
         'skills/dora-metrics/config',
@@ -526,8 +454,6 @@ class SkillRegistry {
 
   /// Returns bundles matching the given technology display names.
   static List<SkillBundle> byTechnologies(List<String> techNames) {
-    return skills
-        .where((s) => techNames.contains(s.techDisplayName))
-        .toList();
+    return skills.where((s) => techNames.contains(s.techDisplayName)).toList();
   }
 }

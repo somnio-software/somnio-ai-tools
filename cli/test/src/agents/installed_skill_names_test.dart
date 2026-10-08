@@ -54,8 +54,8 @@ void main() {
   group('InstalledSkillNames.matches', () {
     test('matches the names the transformers really write', () {
       // These are unprefixed, so the old filePrefix check missed them.
-      expect(InstalledSkillNames.matches(claude, 'flutter-health-audit'),
-          isTrue);
+      expect(
+          InstalledSkillNames.matches(claude, 'flutter-health-audit'), isTrue);
       expect(InstalledSkillNames.matches(cursor, 'security-audit.md'), isTrue);
       expect(InstalledSkillNames.matches(gemini, 'flutter_health_audit.md'),
           isTrue);
@@ -64,8 +64,8 @@ void main() {
     });
 
     test('matches skills added to the registry after the v1.x rename', () {
-      expect(InstalledSkillNames.matches(claude, 'python-health-audit'),
-          isTrue);
+      expect(
+          InstalledSkillNames.matches(claude, 'python-health-audit'), isTrue);
       expect(InstalledSkillNames.matches(gemini, 'python_best_practices.md'),
           isTrue);
     });
@@ -78,8 +78,8 @@ void main() {
     test('does not match unrelated user content', () {
       expect(InstalledSkillNames.matches(claude, 'my-own-skill'), isFalse);
       expect(InstalledSkillNames.matches(gemini, 'notes.md'), isFalse);
-      expect(InstalledSkillNames.matches(cursor, 'flutter-health-audit'),
-          isFalse);
+      expect(
+          InstalledSkillNames.matches(cursor, 'flutter-health-audit'), isFalse);
     });
   });
 }

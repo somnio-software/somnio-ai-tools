@@ -15,8 +15,10 @@ void main() {
   final home = PlatformUtils.homeDirectory;
   final claude = AgentRegistry.findById('claude')!;
   final cursor = AgentRegistry.findById('cursor')!;
-  final gemini = AgentRegistry.findById('gemini')!; // default + executionRulesPath
-  final codex = AgentRegistry.findById('codex')!; // default + executionRulesPath
+  final gemini =
+      AgentRegistry.findById('gemini')!; // default + executionRulesPath
+  final codex =
+      AgentRegistry.findById('codex')!; // default + executionRulesPath
   final copilot = AgentRegistry.findById('copilot')!; // no executionRulesPath
   final antigravity = AgentRegistry.findById('antigravity')!; // binary == null
 

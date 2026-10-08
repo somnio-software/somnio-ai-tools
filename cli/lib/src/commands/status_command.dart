@@ -222,7 +222,12 @@ class StatusCommand extends Command<int> {
 
       if (i == 0) {
         rows.add([
-          agent.name, 'Installed', t.tech, items, rules, agent.location,
+          agent.name,
+          'Installed',
+          t.tech,
+          items,
+          rules,
+          agent.location,
         ]);
       } else {
         rows.add(['', '', t.tech, items, rules, '']);

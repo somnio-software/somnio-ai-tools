@@ -102,8 +102,7 @@ void main() {
         displayName: 'Copilot Multiline',
         planContent: '# Plan\n\nRun the audit.',
         references: {
-          'testing.md':
-              '# Testing\n'
+          'testing.md': '# Testing\n'
               '\n'
               '> First line.\n'
               '>\n'

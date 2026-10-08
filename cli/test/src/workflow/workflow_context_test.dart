@@ -35,7 +35,8 @@ void main() {
         'frontmatter is a scalar': '---\njust a string\n---\n',
         'version is a string': '---\nname: c\nversion: "one"\n---\n',
         'invalid yaml': '---\nname: [unclosed\n---\n',
-        'step entry missing file key': '---\nname: c\nsteps:\n  - tag: x\n---\n',
+        'step entry missing file key':
+            '---\nname: c\nsteps:\n  - tag: x\n---\n',
         'needs holds a non-int':
             '---\nname: c\nsteps:\n  - file: 01.md\n    needs: [a]\n---\n',
         'needs is an unrecognized comma-separated string':
@@ -96,7 +97,8 @@ Some description text here.
         final context = WorkflowContext.parse(content);
 
         expect(context.name, 'dependency-cleanup');
-        expect(context.description, 'Analyze and clean up project dependencies');
+        expect(
+            context.description, 'Analyze and clean up project dependencies');
         expect(context.version, 1);
         expect(context.created, DateTime.utc(2026, 3, 3, 14, 30));
         expect(context.steps, hasLength(4));
@@ -372,8 +374,7 @@ steps: []
         expect(context.steps, isEmpty);
       });
 
-      test('defaults to empty steps when `steps:` key is missing entirely',
-          () {
+      test('defaults to empty steps when `steps:` key is missing entirely', () {
         // Distinct from `steps: []`: the planner AI may omit the frontmatter
         // key altogether. The parser is deliberately lenient here — rejecting
         // a stepless workflow is the command layer's job, not the parser's.

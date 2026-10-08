@@ -368,7 +368,6 @@ class UninstallCommand extends Command<int> {
   }
 }
 
-
 /// Removes every somnio-installed skill, command and workflow for all
 /// registered agents under [home].
 ///
@@ -395,7 +394,8 @@ bool removeAgentInstalls({
   void Function(String message)? onRemoved,
   void Function(String message)? onWarning,
 }) {
-  final cleaner = SkillsShCleaner(homeDirectory: home, environment: environment);
+  final cleaner =
+      SkillsShCleaner(homeDirectory: home, environment: environment);
   final skillsSh = cleaner.apply(cleaner.plan());
   final skillsShPaths = [
     ...skillsSh.unlinkedLinks,

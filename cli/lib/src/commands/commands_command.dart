@@ -64,8 +64,7 @@ class _CommandsInstallCommand extends Command<int> {
   String get name => 'install';
 
   @override
-  String get description =>
-      'Install Somnio commands to the current project '
+  String get description => 'Install Somnio commands to the current project '
       '(${CommandRegistry.commands.map((c) => c.name).join(' / ')}).\n'
       '\n'
       'Commands install at project scope only — under `.claude/commands/` '
@@ -111,7 +110,8 @@ class _CommandsInstallCommand extends Command<int> {
       _logger.info('Which commands do you want to install?');
       _logger.info('');
       for (var i = 0; i < bundles.length; i++) {
-        _logger.info('  ${i + 1}) ${bundles[i].name}  —  ${bundles[i].description}');
+        _logger.info(
+            '  ${i + 1}) ${bundles[i].name}  —  ${bundles[i].description}');
       }
       _logger.info('  ${bundles.length + 1}) All commands');
       _logger.info('');
@@ -223,7 +223,8 @@ class _CommandsStatusCommand extends Command<int> {
   String get name => 'status';
 
   @override
-  String get description => 'Show which commands are installed in this project.';
+  String get description =>
+      'Show which commands are installed in this project.';
 
   @override
   Future<int> run() async {
@@ -248,9 +249,8 @@ class _CommandsStatusCommand extends Command<int> {
         final targetDir = CommandInstaller.resolveTargetDir(agent);
         final installed = installer.isInstalled(bundle, targetDir);
         final label = _agentDisplayNames[agent] ?? agent;
-        final wrapped = installed
-            ? lightGreen.wrap('✓ $label')
-            : darkGray.wrap('✗ $label');
+        final wrapped =
+            installed ? lightGreen.wrap('✓ $label') : darkGray.wrap('✗ $label');
         statuses.add(wrapped ?? (installed ? '✓ $label' : '✗ $label'));
       }
       _logger.info('  ${bundle.name.padRight(18)} ${statuses.join('  |  ')}');

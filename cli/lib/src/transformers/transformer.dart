@@ -37,8 +37,8 @@ abstract class Transformer {
 
 /// Returns the appropriate transformer for the given install format.
 Transformer transformerFor(InstallFormat format) => switch (format) {
-  InstallFormat.skillDir => SkillDirTransformer(),
-  InstallFormat.singleFile => SingleFileTransformer(),
-  InstallFormat.workflow => WorkflowTransformer(),
-  InstallFormat.markdown => MarkdownTransformer(),
-};
+      InstallFormat.skillDir => SkillDirTransformer(),
+      InstallFormat.singleFile => SingleFileTransformer(),
+      InstallFormat.workflow => WorkflowTransformer(),
+      InstallFormat.markdown => MarkdownTransformer(),
+    };

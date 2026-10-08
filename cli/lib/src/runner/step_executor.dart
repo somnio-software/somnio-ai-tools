@@ -250,9 +250,7 @@ class StepExecutor {
         tokenUsage: usage,
         errorMessage: result.exitCode != 0
             ? _describeProcessError(result, effectiveModel)
-            : (!artifactExists
-                ? 'Artifact not created: $artifactPath'
-                : null),
+            : (!artifactExists ? 'Artifact not created: $artifactPath' : null),
       );
     } on StepTimeoutException catch (e) {
       stopwatch.stop();
@@ -357,9 +355,7 @@ class StepExecutor {
         tokenUsage: usage,
         errorMessage: result.exitCode != 0
             ? _describeProcessError(result, effectiveModel)
-            : (!reportExists
-                ? 'Report not created: $reportPath'
-                : null),
+            : (!reportExists ? 'Report not created: $reportPath' : null),
       );
     } on StepTimeoutException catch (e) {
       stopwatch.stop();
@@ -548,8 +544,7 @@ class StepExecutor {
     String ruleFile,
     String artifactPath,
   ) {
-    final readInstruction =
-        config.agentConfig.formatReadInstruction(ruleFile);
+    final readInstruction = config.agentConfig.formatReadInstruction(ruleFile);
 
     return 'You are executing step ${step.index} of ${config.steps.length} '
         'in the ${config.displayName}.\n\n'
@@ -578,8 +573,7 @@ class StepExecutor {
     String ruleFile,
     String reportPath,
   ) {
-    final readInstruction =
-        config.agentConfig.formatReadInstruction(ruleFile);
+    final readInstruction = config.agentConfig.formatReadInstruction(ruleFile);
 
     final reportDir = p.dirname(reportPath);
 
@@ -639,8 +633,7 @@ class StepExecutor {
   /// a fixed band list or a fixed score-line format here — send the model
   /// back to the skill's own template and rule file, which differ per skill.
   String _buildFormatEnforcerPrompt(String ruleFile, String reportPath) {
-    final readInstruction =
-        config.agentConfig.formatReadInstruction(ruleFile);
+    final readInstruction = config.agentConfig.formatReadInstruction(ruleFile);
 
     return 'You are validating and enforcing formatting on the '
         '${config.displayName} report.\n\n'
@@ -700,9 +693,8 @@ class StepExecutor {
       executable,
       args,
       workingDirectory: Directory.current.path,
-      environment: artifactPath == null
-          ? null
-          : {'SOMNIO_ARTIFACT_FILE': artifactPath},
+      environment:
+          artifactPath == null ? null : {'SOMNIO_ARTIFACT_FILE': artifactPath},
       timeout: stepTimeout,
       processStarter: _processStarter,
     );

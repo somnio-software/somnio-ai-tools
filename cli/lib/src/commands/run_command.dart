@@ -88,22 +88,23 @@ class RunCommand extends Command<int> {
   ///
   /// Runnable audits are identified by `id` ending with `_health`,
   /// `_plan`, or `_audit`.
-  List<SkillBundle> get _runnableBundles =>
-      SkillRegistry.skills
-          .where((b) =>
-              b.id.endsWith('_health') ||
-              b.id.endsWith('_plan') ||
-              b.id.endsWith('_audit'))
-          .toList();
+  List<SkillBundle> get _runnableBundles => SkillRegistry.skills
+      .where((b) =>
+          b.id.endsWith('_health') ||
+          b.id.endsWith('_plan') ||
+          b.id.endsWith('_audit'))
+      .toList();
 
   /// Derives a display code from a bundle for listing.
   ///
   /// Shows the primary name and short alias if available.
   /// `flutter-health-audit` (fh)
   String _codeFromBundle(SkillBundle bundle) {
-    final shortAlias = bundle.aliases.where(
-      (a) => !a.startsWith('somnio-'),
-    ).firstOrNull;
+    final shortAlias = bundle.aliases
+        .where(
+          (a) => !a.startsWith('somnio-'),
+        )
+        .firstOrNull;
     if (shortAlias != null) return shortAlias;
     return bundle.name;
   }

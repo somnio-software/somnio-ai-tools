@@ -111,8 +111,7 @@ exit 0
   String get name => 'hooks';
 
   @override
-  String get description =>
-      'Install Claude Code hooks from somnio-ai-tools.\n'
+  String get description => 'Install Claude Code hooks from somnio-ai-tools.\n'
       '\n'
       'Installs the work-log Stop hook into ~/.claude/hooks/ and registers\n'
       'it in ~/.claude/settings.json. After each Claude Code session turn,\n'
@@ -197,7 +196,6 @@ exit 0
 
     return ExitCode.success.code;
   }
-
 }
 
 /// Merges the Stop hook entry for [hookCommand] into the settings file at

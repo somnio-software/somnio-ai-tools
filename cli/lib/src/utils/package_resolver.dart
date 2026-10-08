@@ -35,9 +35,7 @@ class PackageResolver {
 
     // Strategy 3: Walk up from the resolved executable
     final execDir = File(Platform.resolvedExecutable).parent.path;
-    for (var dir = execDir;
-        dir != p.dirname(dir);
-        dir = p.dirname(dir)) {
+    for (var dir = execDir; dir != p.dirname(dir); dir = p.dirname(dir)) {
       if (_validateRepoRoot(dir)) return p.normalize(dir);
     }
 

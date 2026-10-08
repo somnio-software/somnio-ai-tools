@@ -81,8 +81,7 @@ class BundleDetector {
 
   /// Classifies a subdirectory name into a bundle type.
   String? _classifyBundleType(String dirName) {
-    if (dirName.endsWith('-health-audit') ||
-        dirName.contains('health-audit')) {
+    if (dirName.endsWith('-health-audit') || dirName.contains('health-audit')) {
       return 'health_audit';
     }
     if (dirName.endsWith('-best-practices') ||

@@ -47,7 +47,10 @@ class WavePlanner {
     }
 
     // Kahn's algorithm, one wave per level.
-    var current = [for (var i = 0; i < n; i++) if (indegree[i] == 0) i];
+    var current = [
+      for (var i = 0; i < n; i++)
+        if (indegree[i] == 0) i
+    ];
     final waves = <Wave>[];
     var placed = 0;
     while (current.isNotEmpty) {

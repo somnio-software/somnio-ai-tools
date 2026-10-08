@@ -645,7 +645,8 @@ class _SkillsUpdateCommand extends Command<int> {
   void _printRefreshPlan(List<_UpdateUnit> units) {
     _logger.info('');
     if (units.isEmpty) {
-      _logger.info('Would refresh: nothing (no somnio-installed skills found).');
+      _logger
+          .info('Would refresh: nothing (no somnio-installed skills found).');
       return;
     }
     _logger.info('Would refresh:');

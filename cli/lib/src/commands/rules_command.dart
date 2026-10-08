@@ -75,8 +75,7 @@ class _RulesInstallCommand extends Command<int> {
   String get name => 'install';
 
   @override
-  String get description =>
-      'Install agent coding rules per stack '
+  String get description => 'Install agent coding rules per stack '
       '(${AgentRuleRegistry.stacks.join(' / ')}).\n'
       '\n'
       'Examples:\n'

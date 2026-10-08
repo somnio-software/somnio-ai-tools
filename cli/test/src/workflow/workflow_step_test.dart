@@ -134,12 +134,20 @@ Do something simple.
         final resolved = step.resolveBody(
           workflowDir: '/project/.somnio/workflows/test',
           outputsDir: '/project/.somnio/workflows/test/outputs',
-          outputPath: '/project/.somnio/workflows/test/outputs/02-test-output.md',
-          previousOutputPath: '/project/.somnio/workflows/test/outputs/01-prev-output.md',
+          outputPath:
+              '/project/.somnio/workflows/test/outputs/02-test-output.md',
+          previousOutputPath:
+              '/project/.somnio/workflows/test/outputs/01-prev-output.md',
         );
 
-        expect(resolved, contains('/project/.somnio/workflows/test/outputs/01-prev-output.md'));
-        expect(resolved, contains('/project/.somnio/workflows/test/outputs/02-test-output.md'));
+        expect(
+            resolved,
+            contains(
+                '/project/.somnio/workflows/test/outputs/01-prev-output.md'));
+        expect(
+            resolved,
+            contains(
+                '/project/.somnio/workflows/test/outputs/02-test-output.md'));
         expect(resolved, contains('/project/.somnio/workflows/test/outputs'));
         expect(resolved, contains('/project/.somnio/workflows/test'));
       });
@@ -190,7 +198,8 @@ Do something simple.
         expect(resolved, contains('{step_5_output}'));
       });
 
-      test('leaves {step_N_output} unreplaced when stepOutputPaths is null', () {
+      test('leaves {step_N_output} unreplaced when stepOutputPaths is null',
+          () {
         const step = WorkflowStep(
           name: 'Test',
           tag: 'execution',

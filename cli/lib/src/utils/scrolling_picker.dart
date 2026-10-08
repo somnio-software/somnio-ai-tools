@@ -122,9 +122,7 @@ class ScrollingPicker {
   }
 
   List<int> _finish() {
-    final result = multi
-        ? (_selected.toList()..sort())
-        : <int>[_index];
+    final result = multi ? (_selected.toList()..sort()) : <int>[_index];
     _wipe();
     _console.writeLine(_successLine(result));
     return result;
@@ -245,7 +243,8 @@ class ScrollingPicker {
   /// the value, so the confirmed line is byte-identical to what the replaced
   /// components printed.
   String _successLine(List<int> result) {
-    final value = result.map((i) => options[i]).map(theme.valueStyle).join(', ');
+    final value =
+        result.map((i) => options[i]).map(theme.valueStyle).join(', ');
     return '${theme.successPrefix}${theme.messageStyle(prompt)}'
         '${theme.successSuffix}${theme.valueStyle(' $value ')}';
   }

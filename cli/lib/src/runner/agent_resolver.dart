@@ -48,8 +48,8 @@ class AgentResolver {
       case 'claude':
         return p.join(home, '.claude', 'skills', bundleName, 'references');
       case 'cursor':
-        return p.join(home, '.cursor', 'somnio_rules', planSubDir,
-            'references');
+        return p.join(
+            home, '.cursor', 'somnio_rules', planSubDir, 'references');
       default:
         // Agents with executionRulesPath use the same subdirectory layout
         // as Cursor: {rulesPath}/{planSubDir}/references/
@@ -75,19 +75,18 @@ class AgentResolver {
 
     switch (agent.id) {
       case 'claude':
-        return p.join(home, '.claude', 'skills', bundleName, 'assets',
-            templateFile);
+        return p.join(
+            home, '.claude', 'skills', bundleName, 'assets', templateFile);
       case 'cursor':
-        return p.join(home, '.cursor', 'somnio_rules', planSubDir,
-            'assets', templateFile);
+        return p.join(home, '.cursor', 'somnio_rules', planSubDir, 'assets',
+            templateFile);
       default:
         final basePath = agent.resolvedExecutionRulesPath(
           home: home,
           name: bundleName,
         );
         if (agent.executionRulesPath != null) {
-          return p.join(basePath, planSubDir, 'assets',
-              templateFile);
+          return p.join(basePath, planSubDir, 'assets', templateFile);
         }
         return p.join(basePath, 'assets', templateFile);
     }

@@ -98,9 +98,7 @@ class WorkflowStepExecutor {
         tokenUsage: usage,
         errorMessage: result.exitCode != 0
             ? _describeProcessError(result, model)
-            : (!outputExists
-                ? 'Output not created: $outputPath'
-                : null),
+            : (!outputExists ? 'Output not created: $outputPath' : null),
       );
     } on StepTimeoutException catch (e) {
       stopwatch.stop();

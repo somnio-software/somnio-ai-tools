@@ -22,14 +22,14 @@ class UpdateCommand extends Command<int> {
 
   final Logger _logger;
 
-  static const _repoUrl =
-      'https://github.com/somnio-software/somnio-ai-tools';
+  static const _repoUrl = 'https://github.com/somnio-software/somnio-ai-tools';
 
   @override
   String get name => 'update';
 
   @override
-  String get description => 'Update the somnio CLI itself to the latest version.';
+  String get description =>
+      'Update the somnio CLI itself to the latest version.';
 
   @override
   Future<int> run() async {

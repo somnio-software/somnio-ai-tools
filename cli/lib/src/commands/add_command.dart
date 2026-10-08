@@ -98,7 +98,8 @@ class AddCommand extends Command<int> {
     }
 
     // Mode detection: wizard vs auto-detect
-    final healthDir = Directory(p.join(repoRoot, 'skills', '$tech-health-audit'));
+    final healthDir =
+        Directory(p.join(repoRoot, 'skills', '$tech-health-audit'));
     final practicesDir =
         Directory(p.join(repoRoot, 'skills', '$tech-best-practices'));
     if (healthDir.existsSync() || practicesDir.existsSync()) {
@@ -221,7 +222,9 @@ class AddCommand extends Command<int> {
           .toLowerCase()
           .trim();
 
-      if (answer == 'cancel' || answer == 'c' || answer == 'n' ||
+      if (answer == 'cancel' ||
+          answer == 'c' ||
+          answer == 'n' ||
           answer == 'no') {
         _logger.info('Cancelled.');
         return ExitCode.success.code;
@@ -331,8 +334,7 @@ class AddCommand extends Command<int> {
         description: descriptions['practices']!,
         planRelativePath: 'skills/$tech-best-practices/SKILL.md',
         rulesDirectory: 'skills/$tech-best-practices/references',
-        templatePath:
-            'skills/$tech-best-practices/assets/report-template.md',
+        templatePath: 'skills/$tech-best-practices/assets/report-template.md',
       ));
     }
 
@@ -506,7 +508,9 @@ class AddCommand extends Command<int> {
           .toLowerCase()
           .trim();
 
-      if (answer == 'cancel' || answer == 'c' || answer == 'n' ||
+      if (answer == 'cancel' ||
+          answer == 'c' ||
+          answer == 'n' ||
           answer == 'no') {
         _logger.info('Cancelled.');
         return ExitCode.success.code;
@@ -739,5 +743,4 @@ class AddCommand extends Command<int> {
           s.aliases.contains(suffix),
     );
   }
-
 }

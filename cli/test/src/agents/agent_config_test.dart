@@ -27,9 +27,12 @@ void main() {
       );
       final args = agent.buildArgs('prompt');
       expect(args, [
-        '-p', 'prompt',
-        '--allowedTools', 'Read,Bash',
-        '--output-format', 'json',
+        '-p',
+        'prompt',
+        '--allowedTools',
+        'Read,Bash',
+        '--output-format',
+        'json',
       ]);
     });
 
@@ -84,7 +87,8 @@ void main() {
         'exec',
         '--dangerously-bypass-approvals-and-sandbox',
         '--json',
-        '--model', 'o4-mini',
+        '--model',
+        'o4-mini',
         'prompt',
       ]);
     });
@@ -100,8 +104,10 @@ void main() {
       );
       final args = agent.buildArgs('my prompt');
       expect(args, [
-        '--print', '--force',
-        '--output-format', 'json',
+        '--print',
+        '--force',
+        '--output-format',
+        'json',
         'my prompt',
       ]);
     });
@@ -245,10 +251,14 @@ void main() {
       );
       final args = agent.buildArgs('test prompt', model: 'sonnet');
       expect(args, [
-        '-p', 'test prompt',
-        '--allowedTools', 'Read,Bash,Glob,Grep,Write',
-        '--output-format', 'json',
-        '--model', 'sonnet',
+        '-p',
+        'test prompt',
+        '--allowedTools',
+        'Read,Bash,Glob,Grep,Write',
+        '--output-format',
+        'json',
+        '--model',
+        'sonnet',
       ]);
     });
 
@@ -264,10 +274,13 @@ void main() {
       );
       final args = agent.buildArgs('test prompt', model: 'gemini-2.5-flash');
       expect(args, [
-        '-p', 'test prompt',
+        '-p',
+        'test prompt',
         '--yolo',
-        '-o', 'json',
-        '--model', 'gemini-2.5-flash',
+        '-o',
+        'json',
+        '--model',
+        'gemini-2.5-flash',
       ]);
     });
 
@@ -282,9 +295,12 @@ void main() {
       );
       final args = agent.buildArgs('test prompt', model: 'auto');
       expect(args, [
-        '--print', '--force',
-        '--output-format', 'json',
-        '--model', 'auto',
+        '--print',
+        '--force',
+        '--output-format',
+        'json',
+        '--model',
+        'auto',
         'test prompt',
       ]);
     });
@@ -333,8 +349,8 @@ void main() {
         installPath: '{home}/.test',
       );
       final instruction = agent.formatReadInstruction('/path/to/rule.md');
-      expect(instruction,
-          'Read and follow ALL instructions in /path/to/rule.md');
+      expect(
+          instruction, 'Read and follow ALL instructions in /path/to/rule.md');
     });
 
     test('uses custom template when provided', () {

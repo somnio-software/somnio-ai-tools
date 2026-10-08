@@ -251,7 +251,8 @@ class PreflightRunner {
       ['flutter', '--version'],
       workingDirectory: cwd,
     );
-    final currentVersion = (checkVersion.stdout as String).trim().split('\n').first;
+    final currentVersion =
+        (checkVersion.stdout as String).trim().split('\n').first;
     validPhase.info('Current Flutter version: $currentVersion');
 
     if (requiredVersion != null) {
@@ -1147,8 +1148,7 @@ class PreflightRunner {
       }
     }
 
-    final percentage =
-        totalLines > 0 ? (coveredLines * 100 ~/ totalLines) : 0;
+    final percentage = totalLines > 0 ? (coveredLines * 100 ~/ totalLines) : 0;
 
     return LcovStats(
       total: totalLines,

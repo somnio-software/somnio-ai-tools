@@ -44,8 +44,8 @@ void main() {
         format: RulesInstallFormat.singleFile,
       );
 
-      final result = installer.install(rule, p.join(tmp.path, '.cursorrules'),
-          const <String>[]);
+      final result = installer
+          .install(rule, p.join(tmp.path, '.cursorrules'), const <String>[]);
 
       expect(result.success, isFalse);
       expect(result.error, contains('No stacks selected'));
@@ -112,7 +112,8 @@ void main() {
       expect(result.error, contains('Adapter file not found'));
     });
 
-    test('reads source fragment from adapterFileName when it differs from '
+    test(
+        'reads source fragment from adapterFileName when it differs from '
         'the target basename (Codex: system-prompt.md -> AGENTS.md)', () {
       const codexRule = AgentRule(
         agentId: 'codex',
@@ -122,7 +123,8 @@ void main() {
         adapterFileName: 'system-prompt.md',
         format: RulesInstallFormat.singleFile,
       );
-      _writeFile(repoRoot, 'adapters/codex/flutter/system-prompt.md', 'FLUTTER\n');
+      _writeFile(
+          repoRoot, 'adapters/codex/flutter/system-prompt.md', 'FLUTTER\n');
       final target = p.join(tmp.path, 'out', 'AGENTS.md');
 
       final result = installer.install(codexRule, target, const ['flutter']);
@@ -223,8 +225,8 @@ void main() {
     );
 
     void seedStack(String stack) {
-      _writeFile(repoRoot, 'adapters/claude/$stack/CLAUDE.md',
-          '@import $stack rules');
+      _writeFile(
+          repoRoot, 'adapters/claude/$stack/CLAUDE.md', '@import $stack rules');
       _writeFile(
           repoRoot, 'adapters/claude/$stack/rules/core.md', '$stack core');
     }
@@ -258,7 +260,8 @@ void main() {
 
       installer.install(rule, target, const ['react']);
       // Dropped upstream, replaced by a renamed rule.
-      File(p.join(repoRoot, 'adapters/claude/react/rules/core.md')).deleteSync();
+      File(p.join(repoRoot, 'adapters/claude/react/rules/core.md'))
+          .deleteSync();
       _writeFile(repoRoot, 'adapters/claude/react/rules/testing.md', 'testing');
       // The user's own file, added after the first install.
       _writeFile(stackDir, 'my-notes.md', 'mine');
@@ -312,15 +315,16 @@ void main() {
       final removed = RulesInstaller.removeManifestFiles(stackDir);
 
       expect(removed, isFalse);
-      expect(File(p.join(stackDir.path, 'user-authored.md')).existsSync(),
-          isTrue);
+      expect(
+          File(p.join(stackDir.path, 'user-authored.md')).existsSync(), isTrue);
     });
 
     test(
         'removeKnownAdapterFiles deletes only files the adapter would have '
         'installed, keeping user files', () {
       seedStack('django');
-      final stackDir = Directory(p.join(tmp.path, '.claude', 'rules', 'django'));
+      final stackDir =
+          Directory(p.join(tmp.path, '.claude', 'rules', 'django'));
       _writeFile(stackDir.path, 'core.md', 'django core');
       _writeFile(stackDir.path, 'my-notes.md', 'mine');
 
@@ -339,8 +343,7 @@ void main() {
       );
     });
 
-    test('removeKnownAdapterFiles is a no-op when the stack dir is absent',
-        () {
+    test('removeKnownAdapterFiles is a no-op when the stack dir is absent', () {
       seedStack('flutter');
       final stackDir =
           Directory(p.join(tmp.path, 'nonexistent', 'rules', 'flutter'));
@@ -459,7 +462,8 @@ void main() {
       expect(content, contains('BODY'));
     });
 
-    test('appends a block with extra separator when file lacks trailing newline',
+    test(
+        'appends a block with extra separator when file lacks trailing newline',
         () {
       final target = p.join(tmp.path, 'out', '.cursorrules');
       File(target)

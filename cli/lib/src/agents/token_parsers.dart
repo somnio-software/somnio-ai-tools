@@ -22,8 +22,7 @@ TokenUsage? parseClaudeUsage(Map<String, dynamic> json) {
   return TokenUsage(
     inputTokens: (usage['input_tokens'] as num?)?.toInt() ?? 0,
     outputTokens: (usage['output_tokens'] as num?)?.toInt() ?? 0,
-    cacheReadTokens:
-        (usage['cache_read_input_tokens'] as num?)?.toInt() ?? 0,
+    cacheReadTokens: (usage['cache_read_input_tokens'] as num?)?.toInt() ?? 0,
     cacheCreationTokens:
         (usage['cache_creation_input_tokens'] as num?)?.toInt() ?? 0,
     costUsd: (json['total_cost_usd'] as num?)?.toDouble(),

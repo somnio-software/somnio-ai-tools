@@ -114,8 +114,7 @@ void main() {
         name: 'cursor-multiline',
         planContent: '# Plan\n\nDo the audit.',
         references: {
-          'testing.md':
-              '# Testing\n'
+          'testing.md': '# Testing\n'
               '\n'
               '> First line.\n'
               '>\n'
@@ -138,7 +137,8 @@ void main() {
       expect(content, contains('> First line.\n>\n> Third line.\n'));
     });
 
-    test('still emits a command file with the Rule Reference header when '
+    test(
+        'still emits a command file with the Rule Reference header when '
         'there are zero references', () {
       final tmp = Directory.systemTemp.createTempSync('cursor_norefs_');
       addTearDown(() => tmp.deleteSync(recursive: true));

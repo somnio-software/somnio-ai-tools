@@ -195,8 +195,6 @@ class RegistryModifier {
   /// Escapes a string for embedding in a single-quoted Dart literal.
   /// Order matters: backslash first, otherwise the escape characters
   /// introduced below get double-escaped.
-  String _escapeSingle(String s) => s
-      .replaceAll(r'\', r'\\')
-      .replaceAll(r'$', r'\$')
-      .replaceAll("'", r"\'");
+  String _escapeSingle(String s) =>
+      s.replaceAll(r'\', r'\\').replaceAll(r'$', r'\$').replaceAll("'", r"\'");
 }

@@ -91,7 +91,8 @@ void main() {
       expect(r.rulesDirectory, 'skills/nestjs-health-audit/references');
       expect(r.ruleCount, 2);
       expect(r.validRuleCount, 2);
-      expect(r.templatePath, 'skills/nestjs-health-audit/assets/report-template.md');
+      expect(r.templatePath,
+          'skills/nestjs-health-audit/assets/report-template.md');
       expect(r.errors, isEmpty);
       expect(r.isRegistrable, isTrue);
     });
@@ -303,14 +304,12 @@ rules:
       final results = await _detector().detectBundles('flutter');
       _detector().printReport(results);
 
-      verify(() => logger.info(any(that: contains('Health Audit'))))
-          .called(1);
+      verify(() => logger.info(any(that: contains('Health Audit')))).called(1);
       verify(() => logger.info(any(that: contains('Ready to register'))))
           .called(1);
     });
 
-    test('prints cannot-register bundle with errors and no template',
-        () async {
+    test('prints cannot-register bundle with errors and no template', () async {
       final base = _bundleDir('flutter-best-practices');
       // No SKILL.md, no references → not registrable.
       Directory(base).createSync(recursive: true);

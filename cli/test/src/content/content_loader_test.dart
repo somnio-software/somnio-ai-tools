@@ -48,8 +48,7 @@ SkillBundle _bundle({
 
   String? workflowPath;
   if (workflowContent != null) {
-    final wfDir =
-        Directory(p.join(skillDir.path, '.agent', 'workflows'));
+    final wfDir = Directory(p.join(skillDir.path, '.agent', 'workflows'));
     wfDir.createSync(recursive: true);
     File(p.join(wfDir.path, '$skillId.md')).writeAsStringSync(workflowContent);
     workflowPath = 'skills/$skillName/.agent/workflows/$skillId.md';
@@ -128,8 +127,7 @@ void main() {
       expect(
         fm['allowed-tools'],
         contains('AskUserQuestion'),
-        reason:
-            'block-sequence allowed-tools must retain every declared tool',
+        reason: 'block-sequence allowed-tools must retain every declared tool',
       );
     });
 
@@ -144,7 +142,8 @@ void main() {
       );
 
       expect(
-        loader.loadPlanFrontmatter('skills/demo-skill/SKILL.md')['allowed-tools'],
+        loader
+            .loadPlanFrontmatter('skills/demo-skill/SKILL.md')['allowed-tools'],
         'Bash, Read',
       );
     });
@@ -207,7 +206,8 @@ void main() {
         rulesDirectory: 'skills/missing-skill/references',
       );
 
-      expect(() => loader.loadPlan(bundle), throwsA(isA<FileSystemException>()));
+      expect(
+          () => loader.loadPlan(bundle), throwsA(isA<FileSystemException>()));
     });
   });
 

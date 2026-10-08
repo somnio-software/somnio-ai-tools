@@ -46,7 +46,6 @@ bool isReportGeneratorRule(String ruleName) =>
 String? formatEnforcerRuleFor(String generatorRuleName) =>
     switch (generatorRuleName) {
       kReportGeneratorRuleName => kReportFormatEnforcerRuleName,
-      kBestPracticesGeneratorRuleName =>
-        kBestPracticesFormatEnforcerRuleName,
+      kBestPracticesGeneratorRuleName => kBestPracticesFormatEnforcerRuleName,
       _ => null,
     };

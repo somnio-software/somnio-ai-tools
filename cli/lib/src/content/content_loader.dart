@@ -303,8 +303,7 @@ class ContentLoader {
         } else if (line.trim() == '---' && name.isNotEmpty) {
           promptStart = i + 1;
           // Skip blank line after ---
-          if (promptStart < lines.length &&
-              lines[promptStart].trim().isEmpty) {
+          if (promptStart < lines.length && lines[promptStart].trim().isEmpty) {
             promptStart++;
           }
           break;

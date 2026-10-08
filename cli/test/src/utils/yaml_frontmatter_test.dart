@@ -31,10 +31,12 @@ void main() {
     test('leaves an ordinary tool list verbatim', () {
       // Pins the no-churn property: the common form must not gain quotes,
       // or every installed SKILL.md would be rewritten for no reason.
-      expect(yamlInlineScalar('Bash, Read, Edit, Write'), 'Bash, Read, Edit, Write');
+      expect(yamlInlineScalar('Bash, Read, Edit, Write'),
+          'Bash, Read, Edit, Write');
     });
 
-    test('quotes a value containing ": " so it is not a nested mapping key', () {
+    test('quotes a value containing ": " so it is not a nested mapping key',
+        () {
       const authored = 'Bash(deploy: prod), Read';
       final emitted = yamlInlineScalar(authored);
       expect(emitted, "'Bash(deploy: prod), Read'");

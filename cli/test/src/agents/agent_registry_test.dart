@@ -53,8 +53,8 @@ void main() {
     });
 
     test('installableAgents returns all agents', () {
-      expect(AgentRegistry.installableAgents.length,
-          AgentRegistry.agents.length);
+      expect(
+          AgentRegistry.installableAgents.length, AgentRegistry.agents.length);
     });
 
     test('ideAgents only includes non-executable agents', () {
@@ -132,7 +132,8 @@ void main() {
       final codex = AgentRegistry.findById('codex')!;
       expect(codex.promptStyle, PromptStyle.subcommand);
       expect(codex.promptFlag, 'exec');
-      expect(codex.autoApproveFlags, ['--dangerously-bypass-approvals-and-sandbox']);
+      expect(codex.autoApproveFlags,
+          ['--dangerously-bypass-approvals-and-sandbox']);
       expect(codex.outputFlags, ['--json']);
       expect(codex.models, contains('gpt-5.3-codex'));
     });

@@ -30,7 +30,8 @@ class _FakeStdout implements io.Stdout {
       written.add(objects.join(sep));
 
   @override
-  void writeCharCode(int charCode) => written.add(String.fromCharCode(charCode));
+  void writeCharCode(int charCode) =>
+      written.add(String.fromCharCode(charCode));
 
   @override
   void add(List<int> data) => written.add(utf8.decode(data));

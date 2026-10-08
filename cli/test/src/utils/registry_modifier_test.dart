@@ -132,8 +132,7 @@ class SkillRegistry {
 
     test(
         'inserts into the skills list, not workflowSkills, when both '
-        'lists are present (regression for wrong-list insertion)',
-        () async {
+        'lists are present (regression for wrong-list insertion)', () async {
       _writeRegistry(fixtureRegistryWithWorkflowSkills);
 
       const bundle = SkillBundle(

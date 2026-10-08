@@ -49,7 +49,8 @@ void main() {
     });
 
     test('reports an all-pass run', () {
-      final counts = runner.parseCompactTestOutput('+42: All tests passed!', '');
+      final counts =
+          runner.parseCompactTestOutput('+42: All tests passed!', '');
 
       expect(counts.passed, 42);
       expect(counts.failed, 0);
@@ -60,8 +61,8 @@ void main() {
     test('reads the final summary line, not an earlier progress line', () {
       final counts = runner.parseCompactTestOutput(
         '+1: loads config\n'
-        '+2: parses steps\n'
-        '+2 -1: Some tests failed.',
+            '+2: parses steps\n'
+            '+2 -1: Some tests failed.',
         '',
       );
 
@@ -197,7 +198,8 @@ void main() {
       expect(stats.files, 1);
     });
 
-    test('does not count an uncovered .g.dart file as a zero-coverage file', () {
+    test('does not count an uncovered .g.dart file as a zero-coverage file',
+        () {
       final file = writeLcov(
         'SF:lib/src/vehicle.g.dart\n'
         'DA:1,0\n'

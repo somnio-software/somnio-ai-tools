@@ -37,8 +37,8 @@ void main() {
           steps: const [step],
           ruleBasePath: p.join(tempDir.path, 'references'),
           templatePath: p.join(tempDir.path, 'template.md'),
-          artifactsDir:
-              p.join(tempDir.path, 'reports', '.artifacts', 'flutter-health-audit'),
+          artifactsDir: p.join(
+              tempDir.path, 'reports', '.artifacts', 'flutter-health-audit'),
           reportPath: p.join(
             tempDir.path,
             'reports',
@@ -93,9 +93,8 @@ void main() {
       final executor = StepExecutor(
         config: config,
         logger: Logger(level: Level.quiet),
-        processStarter: (executable, args,
-                {workingDirectory, environment}) async =>
-            hung,
+        processStarter:
+            (executable, args, {workingDirectory, environment}) async => hung,
         stepTimeout: const Duration(milliseconds: 50),
       );
 
@@ -267,8 +266,7 @@ void main() {
       promptConfig = buildPromptConfig();
 
       // executeFormatEnforcer requires the report to already exist.
-      Directory(p.dirname(promptConfig.reportPath))
-          .createSync(recursive: true);
+      Directory(p.dirname(promptConfig.reportPath)).createSync(recursive: true);
       File(promptConfig.reportPath).writeAsStringSync('# draft report');
     });
 
@@ -309,8 +307,7 @@ void main() {
       return prompt!;
     }
 
-    test(
-        'report-generator prompt does not assert a score-label band scale',
+    test('report-generator prompt does not assert a score-label band scale',
         () async {
       final prompt = await captureReportPrompt();
 
@@ -358,7 +355,8 @@ void main() {
             'template fixes the section order',
       );
       expect(
-        RegExp(r"(do\s+not|don't|never)\s+re-?(order|sort)", caseSensitive: false)
+        RegExp(r"(do\s+not|don't|never)\s+re-?(order|sort)",
+                caseSensitive: false)
             .hasMatch(prompt),
         isFalse,
         reason: 'prompt must not itself forbid reordering sections — that '

@@ -131,15 +131,17 @@ void main() {
       expect(
         report,
         isNot(contains(RegExp(r'/10(?!\d)'))),
-        reason: 'scaffolded template must score on /100, never the old /10 scale',
+        reason:
+            'scaffolded template must score on /100, never the old /10 scale',
       );
 
       // The placeholder appendix weights must themselves sum to 100, so a new
       // skill starts valid instead of starting broken.
-      final weights = RegExp(r'^\| (?!\*\*Total)[^|]+ \| (\d+)% \|', multiLine: true)
-          .allMatches(report)
-          .map((m) => int.parse(m.group(1)!))
-          .toList();
+      final weights =
+          RegExp(r'^\| (?!\*\*Total)[^|]+ \| (\d+)% \|', multiLine: true)
+              .allMatches(report)
+              .map((m) => int.parse(m.group(1)!))
+              .toList();
       expect(weights, isNotEmpty, reason: 'no appendix weight rows parsed');
       expect(
         weights.fold<int>(0, (a, b) => a + b),

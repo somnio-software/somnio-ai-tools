@@ -15,8 +15,7 @@ class CommandRegistry {
       id: 'ship',
       name: 'ship',
       displayName: 'Ship',
-      description:
-          'Ship workflow — merge base, run tests, review diff, bump '
+      description: 'Ship workflow — merge base, run tests, review diff, bump '
           'VERSION, update CHANGELOG, commit, push, open PR.',
       sourceRelativePath: 'commands/ship.md',
     ),
@@ -24,8 +23,7 @@ class CommandRegistry {
       id: 'audit',
       name: 'audit',
       displayName: 'Audit',
-      description:
-          'Run a project health, best-practices, or security audit.',
+      description: 'Run a project health, best-practices, or security audit.',
       sourceRelativePath: 'commands/audit.md',
     ),
     CommandBundle(

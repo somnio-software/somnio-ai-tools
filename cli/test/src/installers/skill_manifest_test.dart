@@ -143,10 +143,10 @@ void main() {
       );
       manifestB.save();
 
-      final contentsA =
-          File(p.join(tmp.path, 'a', SkillManifest.fileName)).readAsStringSync();
-      final contentsB =
-          File(p.join(tmp.path, 'b', SkillManifest.fileName)).readAsStringSync();
+      final contentsA = File(p.join(tmp.path, 'a', SkillManifest.fileName))
+          .readAsStringSync();
+      final contentsB = File(p.join(tmp.path, 'b', SkillManifest.fileName))
+          .readAsStringSync();
 
       expect(
         contentsA,

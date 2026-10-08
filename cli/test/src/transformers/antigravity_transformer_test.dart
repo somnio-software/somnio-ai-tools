@@ -70,8 +70,7 @@ SkillBundle _setupBundle({
     description: 'A test skill.',
     planRelativePath: 'skills/$skillName/SKILL.md',
     rulesDirectory: 'skills/$skillName/references',
-    workflowPath:
-        'skills/$skillName/.agent/workflows/$workflowFileName',
+    workflowPath: 'skills/$skillName/.agent/workflows/$workflowFileName',
     templatePath: templatePath,
     agentsDirectory: agentsDirectory,
   );
@@ -168,7 +167,7 @@ void main() {
         ruleFiles: {
           'report-generator.md':
               'Use the structure from assets/report-template.md '
-              'and `assets/report-template.md`.',
+                  'and `assets/report-template.md`.',
         },
         templateContent: '# Report Template\n',
       );
@@ -272,7 +271,8 @@ void main() {
         ]),
       );
       expect(
-        output.files['somnio_rules/react-best-practices/agents/orchestrator.md'],
+        output
+            .files['somnio_rules/react-best-practices/agents/orchestrator.md'],
         '# Orchestrator\n',
       );
     });
@@ -318,8 +318,7 @@ void main() {
         repoRoot: tmpDir.path,
         skillName: 'flutter-health-audit',
         skillId: 'flutter_health_audit',
-        workflowContent:
-            'After this step, follow workflow: '
+        workflowContent: 'After this step, follow workflow: '
             '`flutter-best-practices/.agent/workflows/flutter_best_practices.md`',
       );
       loader = ContentLoader(tmpDir.path);
@@ -369,8 +368,7 @@ void main() {
         repoRoot: tmpDir.path,
         skillName: 'flutter-health-audit',
         skillId: 'flutter_health_audit',
-        workflowContent:
-            '## Step 1\n'
+        workflowContent: '## Step 1\n'
             'Read `flutter-health-audit/references/tool-installer.md`.\n\n'
             '## Step 2\n'
             'If needed, run: `flutter-best-practices/.agent/workflows/'
@@ -407,7 +405,8 @@ void main() {
       final output = transformer.transformBundle(bundle, loader);
 
       expect(output.workflowContent, isNot(contains('somnio_rules')));
-      expect(output.workflowContent, isNot(contains('somnio_nestjs_best_practices')));
+      expect(output.workflowContent,
+          isNot(contains('somnio_nestjs_best_practices')));
     });
 
     test('rewrites prefixed agents/ subagent-definition paths', () {
@@ -456,7 +455,8 @@ void main() {
           'flutter-best-practices/agents/orchestrator.md`',
         ),
       );
-      expect(output.workflowContent, isNot(contains('`agents/orchestrator.md`')));
+      expect(
+          output.workflowContent, isNot(contains('`agents/orchestrator.md`')));
     });
 
     test('rewrites bare assets/report-template.md refs in workflow content',
@@ -485,8 +485,7 @@ void main() {
         repoRoot: tmpDir.path,
         skillName: 'security-audit',
         skillId: 'security_audit',
-        workflowContent:
-            'Read `security-audit/references/file-analysis.md`.\n'
+        workflowContent: 'Read `security-audit/references/file-analysis.md`.\n'
             'Read `security-audit/references/secret-patterns.md`.\n'
             'Read `security-audit/references/sast.md`.\n',
       );
@@ -494,7 +493,8 @@ void main() {
 
       final output = transformer.transformBundle(bundle, loader);
 
-      final base = '~/.gemini/antigravity/somnio_rules/security-audit/references';
+      final base =
+          '~/.gemini/antigravity/somnio_rules/security-audit/references';
       expect(output.workflowContent, contains('`$base/file-analysis.md`'));
       expect(output.workflowContent, contains('`$base/secret-patterns.md`'));
       expect(output.workflowContent, contains('`$base/sast.md`'));

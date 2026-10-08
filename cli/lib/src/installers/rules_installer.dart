@@ -315,7 +315,10 @@ class RulesInstaller {
   /// Deletes empty subdirectories of [dir], deepest first.
   static void _pruneEmptyDirs(Directory dir) {
     if (!dir.existsSync()) return;
-    final subDirs = dir.listSync(recursive: true).whereType<Directory>().toList()
+    final subDirs = dir
+        .listSync(recursive: true)
+        .whereType<Directory>()
+        .toList()
       ..sort((a, b) => b.path.length.compareTo(a.path.length));
     for (final sub in subDirs) {
       if (sub.existsSync() && sub.listSync().isEmpty) sub.deleteSync();

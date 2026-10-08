@@ -318,8 +318,7 @@ void main() {
         }
       });
 
-      final path =
-          locator.createWorkflowDir(name, scope: WorkflowScope.global);
+      final path = locator.createWorkflowDir(name, scope: WorkflowScope.global);
 
       expect(path, globalDir.path);
       expect(Directory(path).existsSync(), isTrue);

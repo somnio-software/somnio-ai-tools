@@ -40,18 +40,21 @@ void main() {
 
   group('resolveTargetDir', () {
     test('resolves the claude project commands directory', () {
-      final dir = CommandInstaller.resolveTargetDir('claude', projectDir: tmp.path);
+      final dir =
+          CommandInstaller.resolveTargetDir('claude', projectDir: tmp.path);
       expect(dir, p.join(tmp.path, '.claude', 'commands'));
     });
 
     test('resolves the cursor project commands directory', () {
-      final dir = CommandInstaller.resolveTargetDir('cursor', projectDir: tmp.path);
+      final dir =
+          CommandInstaller.resolveTargetDir('cursor', projectDir: tmp.path);
       expect(dir, p.join(tmp.path, '.cursor', 'commands'));
     });
 
     test('throws for an unsupported agent', () {
       expect(
-        () => CommandInstaller.resolveTargetDir('unknown', projectDir: tmp.path),
+        () =>
+            CommandInstaller.resolveTargetDir('unknown', projectDir: tmp.path),
         throwsArgumentError,
       );
     });
@@ -67,7 +70,8 @@ void main() {
       final result = installer.install(bundle, targetDir);
 
       expect(result.success, isTrue);
-      final targetFile = File(p.join(tmp.path, '.claude', 'commands', 'ship.md'));
+      final targetFile =
+          File(p.join(tmp.path, '.claude', 'commands', 'ship.md'));
       expect(targetFile.existsSync(), isTrue);
 
       final sourceBytes =
@@ -83,7 +87,8 @@ void main() {
       final result = installer.install(bundle, targetDir);
 
       expect(result.success, isTrue);
-      final targetFile = File(p.join(tmp.path, '.cursor', 'commands', 'ship.md'));
+      final targetFile =
+          File(p.join(tmp.path, '.cursor', 'commands', 'ship.md'));
       expect(targetFile.existsSync(), isTrue);
 
       final sourceBytes =
@@ -106,7 +111,8 @@ void main() {
               File(p.join(repoRoot, b.sourceRelativePath)).readAsBytesSync();
           final targetBytes =
               File(p.join(targetDir, '${b.name}.md')).readAsBytesSync();
-          expect(targetBytes, equals(sourceBytes), reason: '$agentId/${b.name}');
+          expect(targetBytes, equals(sourceBytes),
+              reason: '$agentId/${b.name}');
         }
       }
     });

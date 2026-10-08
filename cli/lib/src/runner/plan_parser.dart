@@ -63,11 +63,13 @@ class PlanParser {
         final modelMatch = _modelTokenPattern.firstMatch(remainder);
         if (modelMatch != null) {
           model = modelMatch.group(1);
-          remainder = remainder.replaceRange(
-            modelMatch.start,
-            modelMatch.end,
-            '',
-          ).trim();
+          remainder = remainder
+              .replaceRange(
+                modelMatch.start,
+                modelMatch.end,
+                '',
+              )
+              .trim();
         }
 
         // Check for MANDATORY annotation

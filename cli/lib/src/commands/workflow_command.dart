@@ -90,9 +90,8 @@ class _WorkflowPlanCommand extends Command<int> {
       choices: ['project', 'global'],
       defaultValue: 'project',
     );
-    final workflowScope = scope == 'global'
-        ? WorkflowScope.global
-        : WorkflowScope.project;
+    final workflowScope =
+        scope == 'global' ? WorkflowScope.global : WorkflowScope.project;
 
     // Create directory
     final workflowDir = locator.createWorkflowDir(
@@ -115,7 +114,8 @@ class _WorkflowPlanCommand extends Command<int> {
     );
 
     _logger.info('');
-    _logger.info('Creating workflow "$workflowName" using ${agent.displayName}...');
+    _logger.info(
+        'Creating workflow "$workflowName" using ${agent.displayName}...');
     _logger.info('');
 
     // Run planner
@@ -134,8 +134,7 @@ class _WorkflowPlanCommand extends Command<int> {
       _logger.err('Workflow planning failed.');
       // Clean up empty directory
       final dir = Directory(workflowDir);
-      if (dir.existsSync() &&
-          dir.listSync().isEmpty) {
+      if (dir.existsSync() && dir.listSync().isEmpty) {
         dir.deleteSync(recursive: true);
       }
       return ExitCode.software.code;
@@ -172,9 +171,11 @@ class _WorkflowPlanCommand extends Command<int> {
     }
 
     _logger.info('');
-    _logger.success('Workflow "$workflowName" created with ${context.steps.length} steps.');
+    _logger.success(
+        'Workflow "$workflowName" created with ${context.steps.length} steps.');
     if (missingSteps > 0) {
-      _logger.warn('$missingSteps step file(s) were not created by the planner.');
+      _logger
+          .warn('$missingSteps step file(s) were not created by the planner.');
     }
     _logger.info('');
     _logger.info('Next steps:');
@@ -417,8 +418,7 @@ class _WorkflowConfigCommand extends Command<int> {
   String get name => 'config';
 
   @override
-  String get description =>
-      'Configure model assignments for a workflow.';
+  String get description => 'Configure model assignments for a workflow.';
 
   @override
   String get invocation => 'somnio workflow config <name>';
@@ -492,7 +492,8 @@ class _WorkflowConfigCommand extends Command<int> {
 
     if (useDefaults == 'defaults') {
       byRole = Map.of(WorkflowConfig.defaultRoleMapping);
-      _logger.info('Using defaults: research=haiku, planning=opus, execution=sonnet');
+      _logger.info(
+          'Using defaults: research=haiku, planning=opus, execution=sonnet');
     } else {
       byRole = {};
       // Collect unique tags
@@ -599,9 +600,8 @@ class _WorkflowListCommand extends Command<int> {
 
       final name = context?.name ?? location.name;
       final stepCount = context?.steps.length ?? 0;
-      final scopeLabel = location.scope == WorkflowScope.project
-          ? 'project'
-          : 'global';
+      final scopeLabel =
+          location.scope == WorkflowScope.project ? 'project' : 'global';
 
       String statusLabel;
       if (progress == null) {

@@ -138,14 +138,10 @@ void main() {
 /// comment-only differences between the source .sh file and the embedded
 /// Dart constant.
 List<String> _logicLines(String script) {
-  return script
-      .split('\n')
-      .map((l) => l.trimRight())
-      .where((l) {
-        if (l.isEmpty) return false;
-        if (l.startsWith('#!/')) return true; // keep shebang
-        if (l.trimLeft().startsWith('#')) return false; // drop comments
-        return true;
-      })
-      .toList();
+  return script.split('\n').map((l) => l.trimRight()).where((l) {
+    if (l.isEmpty) return false;
+    if (l.startsWith('#!/')) return true; // keep shebang
+    if (l.trimLeft().startsWith('#')) return false; // drop comments
+    return true;
+  }).toList();
 }

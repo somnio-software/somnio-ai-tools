@@ -121,7 +121,8 @@ void main() {
       final output =
           ClaudeTransformer().transformBundle(bundle, loader, agent: gemini);
 
-      expect(output.agentFiles['scanner.md'], contains('model: gemini-3-flash'));
+      expect(
+          output.agentFiles['scanner.md'], contains('model: gemini-3-flash'));
     });
 
     test('leaves unknown model values unchanged', () {

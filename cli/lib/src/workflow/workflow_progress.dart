@@ -82,8 +82,7 @@ class WorkflowProgress {
   }
 
   /// Whether all steps have completed successfully.
-  bool get isComplete =>
-      steps.every((s) => s.status == StepStatus.completed);
+  bool get isComplete => steps.every((s) => s.status == StepStatus.completed);
 
   /// Number of completed steps.
   int get completedCount =>
