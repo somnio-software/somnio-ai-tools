@@ -58,6 +58,20 @@ class ManifestPath {
         'path': path,
       };
 
+  /// Whether [path] names something strictly inside its root: non-empty,
+  /// relative on every platform, and free of empty, `.` and `..` segments.
+  ///
+  /// The installer only ever records such paths. [SkillManifest.load] drops
+  /// any other, so a hand-edited or committed manifest can never point
+  /// install, update or removal at the root itself or outside it.
+  bool get isContained {
+    if (path.isEmpty || path.startsWith(RegExp(r'[/\\]|[A-Za-z]:'))) {
+      return false;
+    }
+    return path.split(RegExp(r'[/\\]')).every(
+        (segment) => segment.isNotEmpty && segment != '.' && segment != '..');
+  }
+
   /// Orders paths by (root, path) so writing the manifest is deterministic
   /// and repeated installs produce a byte-identical file.
   int compareTo(ManifestPath other) {
@@ -106,6 +120,7 @@ class ManifestEntry {
       kind: json['kind'] as String? ?? '',
       paths: pathsJson
           .map((e) => ManifestPath.fromJson(e as Map<String, dynamic>))
+          .where((path) => path.isContained)
           .toList(),
     );
   }

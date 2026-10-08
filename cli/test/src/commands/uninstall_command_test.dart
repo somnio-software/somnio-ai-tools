@@ -308,6 +308,36 @@ void main() {
       expect(
           removeAgentInstalls(home: home.path, environment: const {}), isTrue);
     });
+    test('removes a pre-manifest Codex install in the pre-3.2.10 layout', () {
+      final codexSkills = p.join(home.path, '.codex', 'skills');
+      _writeFile(p.join(codexSkills, 'flutter_health_audit.md'));
+      _writeFile(
+        p.join(
+          home.path,
+          '.codex',
+          'somnio_rules',
+          'flutter-health-audit',
+          'references',
+          'rule.md',
+        ),
+      );
+      _writeSkill(codexSkills, 'security-audit');
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(
+        File(p.join(codexSkills, 'flutter_health_audit.md')).existsSync(),
+        isFalse,
+      );
+      expect(
+        Directory(p.join(home.path, '.codex', 'somnio_rules')).existsSync(),
+        isFalse,
+      );
+      expect(
+        Directory(p.join(codexSkills, 'security-audit')).existsSync(),
+        isFalse,
+      );
+    });
   });
 
   group('removeManifestTrackedInstalls', () {
@@ -367,6 +397,138 @@ void main() {
           isFalse,
         );
       });
+    });
+
+    group('a Codex manifest written before 3.2.10', () {
+      late String codexSkills;
+      late String legacyRules;
+
+      setUp(() {
+        codexSkills = p.join(home.path, '.codex', 'skills');
+        legacyRules = p.join(home.path, '.codex', 'somnio_rules');
+        _writeFile(p.join(codexSkills, 'flutter_health_audit.md'));
+        _writeFile(
+          p.join(legacyRules, 'flutter-health-audit', 'references', 'r.md'),
+        );
+        // Not recorded: must survive even though it shares the rules entry's
+        // relative path under the install root.
+        _writeSkill(codexSkills, 'flutter-health-audit');
+        SkillManifest.load(codexSkills)
+          ..record(
+            skill: 'flutter-health-audit',
+            kind: 'audit',
+            paths: const [
+              ManifestPath(ManifestRoot.install, 'flutter_health_audit.md'),
+              ManifestPath(ManifestRoot.rules, 'flutter-health-audit'),
+            ],
+          )
+          ..save();
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+        );
+      });
+
+      test('removes the recorded flat file', () {
+        expect(
+          File(p.join(codexSkills, 'flutter_health_audit.md')).existsSync(),
+          isFalse,
+        );
+      });
+
+      test('resolves rules entries against the legacy somnio_rules dir', () {
+        expect(
+          Directory(p.join(legacyRules, 'flutter-health-audit')).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(p.join(codexSkills, 'flutter-health-audit', 'SKILL.md'))
+              .existsSync(),
+          isTrue,
+        );
+      });
+    });
+
+    test(
+        'also cleans a pre-3.2.10 Codex install left at ~/.codex with CODEX_HOME set',
+        () {
+      final oldSkills = p.join(home.path, '.codex', 'skills');
+      final oldRules = p.join(home.path, '.codex', 'somnio_rules');
+      _writeFile(p.join(oldSkills, 'security_audit.md'));
+      _writeFile(p.join(oldRules, 'security-audit', 'references', 'r.md'));
+      SkillManifest.load(oldSkills)
+        ..record(
+          skill: 'security-audit',
+          kind: 'audit',
+          paths: const [
+            ManifestPath(ManifestRoot.install, 'security_audit.md'),
+            ManifestPath(ManifestRoot.rules, 'security-audit'),
+          ],
+        )
+        ..save();
+
+      removeManifestTrackedInstalls(
+        home: home.path,
+        projectRoot: project.path,
+        environment: {'CODEX_HOME': p.join(home.path, 'custom-codex')},
+      );
+
+      expect(
+          File(p.join(oldSkills, 'security_audit.md')).existsSync(), isFalse);
+      expect(
+          Directory(p.join(oldRules, 'security-audit')).existsSync(), isFalse);
+      expect(
+        File(p.join(oldSkills, SkillManifest.fileName)).existsSync(),
+        isFalse,
+      );
+    });
+
+    test('never deletes through a symlinked directory a manifest records', () {
+      // A cloned repo could commit `.claude/skills/evil -> ../..` plus a
+      // manifest entry `evil/src`; following it would delete <project>/src.
+      final skills = p.join(project.path, '.claude', 'skills');
+      final src = Directory(p.join(project.path, 'src'))
+        ..createSync(recursive: true);
+      Link(p.join(skills, 'evil')).createSync(project.path, recursive: true);
+      SkillManifest.load(skills)
+        ..record(
+          skill: 'evil',
+          kind: 'audit',
+          paths: const [ManifestPath(ManifestRoot.install, 'evil/src')],
+        )
+        ..save();
+
+      removeManifestTrackedInstalls(
+        home: home.path,
+        projectRoot: project.path,
+      );
+
+      expect(src.existsSync(), isTrue);
+    });
+
+    test('finds the global Codex manifest under CODEX_HOME', () {
+      final codexHome = p.join(home.path, 'custom-codex');
+      final skills = p.join(codexHome, 'skills');
+      _writeSkill(skills, 'security-audit');
+      SkillManifest.load(skills)
+        ..record(
+          skill: 'security-audit',
+          kind: 'audit',
+          paths: const [ManifestPath(ManifestRoot.install, 'security-audit')],
+        )
+        ..save();
+
+      final removed = removeManifestTrackedInstalls(
+        home: home.path,
+        projectRoot: project.path,
+        environment: {'CODEX_HOME': codexHome},
+      );
+
+      expect(removed, isTrue);
+      expect(Directory(p.join(skills, 'security-audit')).existsSync(), isFalse);
+      expect(
+          File(p.join(skills, SkillManifest.fileName)).existsSync(), isFalse);
     });
 
     test('removes a project-scoped install the home sweep cannot reach', () {

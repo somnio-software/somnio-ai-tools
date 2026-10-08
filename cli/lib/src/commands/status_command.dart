@@ -259,7 +259,10 @@ class StatusCommand extends Command<int> {
   /// no somnio files — meaning the agent is not shown in the table at all.
   _AgentData? _collectAgentData(AgentConfig agent) {
     final home = PlatformUtils.homeDirectory;
-    final installDir = agent.resolvedInstallPath(home: home);
+    final installDir = agent.resolvedInstallPath(
+      home: home,
+      environment: PlatformUtils.environment,
+    );
     final dir = Directory(installDir);
 
     if (!dir.existsSync()) return null;
@@ -300,7 +303,10 @@ class StatusCommand extends Command<int> {
         // Count rules from executionRulesPath if it exists
         if (agent.executionRulesPath != null) {
           final rulesDir = Directory(
-            agent.executionRulesPath!.replaceAll('{home}', home),
+            agent.resolvedExecutionRulesPath(
+              home: home,
+              environment: PlatformUtils.environment,
+            ),
           );
           if (rulesDir.existsSync()) {
             for (final sub in rulesDir.listSync().whereType<Directory>()) {

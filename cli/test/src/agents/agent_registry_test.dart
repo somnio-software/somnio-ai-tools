@@ -116,7 +116,7 @@ void main() {
       final gemini = AgentRegistry.findById('gemini')!;
       expect(gemini.promptStyle, PromptStyle.flag);
       expect(gemini.promptFlag, '-p');
-      expect(gemini.installFormat, InstallFormat.markdown);
+      expect(gemini.installFormat, InstallFormat.skillDir);
       expect(gemini.tokenUsageParser, isNotNull);
     });
 
@@ -136,6 +136,48 @@ void main() {
           ['--dangerously-bypass-approvals-and-sandbox']);
       expect(codex.outputFlags, ['--json']);
       expect(codex.models, contains('gpt-5.3-codex'));
+    });
+
+    test('codex installs skill directories under \$CODEX_HOME/skills', () {
+      final codex = AgentRegistry.findById('codex')!;
+      expect(codex.installFormat, InstallFormat.skillDir);
+      expect(codex.executionRulesPath, isNull);
+      expect(
+        codex.resolvedInstallPath(home: '/h', environment: const {}),
+        '/h/.codex/skills',
+      );
+      expect(
+        codex.resolvedInstallPath(
+          home: '/h',
+          environment: const {'CODEX_HOME': '/custom/codex'},
+        ),
+        '/custom/codex/skills',
+      );
+    });
+
+    test('agents that load <name>/SKILL.md install skill directories', () {
+      // Each of these only loads `<name>/SKILL.md` directories from its
+      // install path, so the flat markdown files earlier releases wrote there
+      // were never picked up. The old layout stays recorded for migration.
+      for (final id in [
+        'codex',
+        'gemini',
+        'auggie',
+        'opencode',
+        'cline',
+        'codebuddy',
+        'qwen',
+      ]) {
+        final agent = AgentRegistry.findById(id)!;
+        expect(agent.installFormat, InstallFormat.skillDir, reason: id);
+        expect(agent.executionRulesPath, isNull, reason: id);
+        expect(agent.legacyInstallFormat, InstallFormat.markdown, reason: id);
+        expect(
+          agent.legacyExecutionRulesPath,
+          endsWith('/somnio_rules'),
+          reason: id,
+        );
+      }
     });
 
     test('all CLI agents with yolo-style auto-approve', () {

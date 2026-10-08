@@ -9,6 +9,12 @@ class AgentRegistry {
   AgentRegistry._(); // coverage:ignore-line
 
   /// All registered agents.
+  ///
+  /// Agents that load skills as `<name>/SKILL.md` directories use
+  /// [InstallFormat.skillDir]. Those installed as flat markdown before CLI
+  /// 3.2.10 (files these agents never load) record that in
+  /// `legacyInstallFormat` / `legacyExecutionRulesPath`, so update, remove
+  /// and uninstall migrate or delete the old layout.
   static const List<AgentConfig> agents = [
     // ── CLI agents (canExecute: true) ─────────────────────────────
     _claude,
@@ -154,9 +160,10 @@ class AgentRegistry {
     },
     defaultModel: 'gemini-3-flash',
     fallbackModel: 'gemini-2.5-flash',
-    installFormat: InstallFormat.markdown,
+    installFormat: InstallFormat.skillDir,
     installPath: '{home}/.gemini/skills',
-    executionRulesPath: '{home}/.gemini/somnio_rules',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyExecutionRulesPath: '{home}/.gemini/somnio_rules',
     tokenUsageParser: parseGeminiUsage,
     filePrefix: 'somnio_',
     npmPackage: '@google/gemini-cli',
@@ -199,9 +206,15 @@ class AgentRegistry {
     },
     defaultModel: 'gpt-5.3-codex',
     fallbackModel: 'gpt-5.1-codex-mini',
-    installFormat: InstallFormat.markdown,
+    installFormat: InstallFormat.skillDir,
+    // Codex still scans `$CODEX_HOME/skills` for user skills. The documented
+    // `~/.agents/skills` is left alone: skills.sh owns it, and other agents
+    // read it too.
     installPath: '{home}/.codex/skills',
-    executionRulesPath: '{home}/.codex/somnio_rules',
+    configHome: '{home}/.codex',
+    configHomeVariable: 'CODEX_HOME',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyExecutionRulesPath: '{home}/.codex/somnio_rules',
     filePrefix: 'somnio',
     npmPackage: '@openai/codex',
     installUrl: 'https://github.com/openai/codex',
@@ -231,9 +244,10 @@ class AgentRegistry {
     },
     defaultModel: 'claude-sonnet-4-5',
     fallbackModel: 'claude-haiku-4-5',
-    installFormat: InstallFormat.markdown,
+    installFormat: InstallFormat.skillDir,
     installPath: '{home}/.augment/skills',
-    executionRulesPath: '{home}/.augment/somnio_rules',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyExecutionRulesPath: '{home}/.augment/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://www.augmentcode.com',
     installInstructions:
@@ -282,9 +296,10 @@ class AgentRegistry {
     promptStyle: PromptStyle.positionalLast,
     autoApproveFlags: ['-y'],
     outputFlags: ['--json'],
-    installFormat: InstallFormat.markdown,
+    installFormat: InstallFormat.skillDir,
     installPath: '{home}/.cline/skills',
-    executionRulesPath: '{home}/.cline/somnio_rules',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyExecutionRulesPath: '{home}/.cline/somnio_rules',
     filePrefix: 'somnio',
     npmPackage: 'cline',
     installUrl: 'https://cline.bot',
@@ -298,9 +313,10 @@ class AgentRegistry {
     promptStyle: PromptStyle.flag,
     promptFlag: '-p',
     outputFlags: ['-f', 'json'],
-    installFormat: InstallFormat.markdown,
+    installFormat: InstallFormat.skillDir,
     installPath: '{home}/.opencode/skills',
-    executionRulesPath: '{home}/.opencode/somnio_rules',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyExecutionRulesPath: '{home}/.opencode/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://opencode.ai',
     installInstructions: '  go install github.com/opencode-ai/opencode@latest\n'
@@ -316,9 +332,10 @@ class AgentRegistry {
     promptFlag: '-p',
     autoApproveFlags: ['--dangerously-skip-permissions'],
     outputFlags: ['--output-format', 'json'],
-    installFormat: InstallFormat.markdown,
+    installFormat: InstallFormat.skillDir,
     installPath: '{home}/.codebuddy/skills',
-    executionRulesPath: '{home}/.codebuddy/somnio_rules',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyExecutionRulesPath: '{home}/.codebuddy/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://codebuddy.dev',
     installInstructions: '  Download from https://codebuddy.dev\n'
@@ -346,9 +363,10 @@ class AgentRegistry {
     },
     defaultModel: 'qwen3-coder-plus',
     fallbackModel: 'qwen3-coder-next',
-    installFormat: InstallFormat.markdown,
+    installFormat: InstallFormat.skillDir,
     installPath: '{home}/.qwen/skills',
-    executionRulesPath: '{home}/.qwen/somnio_rules',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyExecutionRulesPath: '{home}/.qwen/somnio_rules',
     filePrefix: 'somnio',
     npmPackage: 'qwen-code',
     installUrl: 'https://qwen.ai',

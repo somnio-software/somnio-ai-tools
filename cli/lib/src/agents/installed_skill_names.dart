@@ -36,22 +36,28 @@ class InstalledSkillNames {
         ...legacyNames,
       ];
 
-  /// The basenames somnio writes into [agent]'s install directory.
+  /// The basenames somnio writes into [agent]'s install directory, plus
+  /// those of its [AgentConfig.legacyInstallFormat] so content an earlier
+  /// release wrote in another layout is still found.
   ///
   /// Mirrors the transformers: `{name}/` (skillDir), `{name}.md`
   /// (singleFile), `{name_underscored}.md` (markdown). Workflow files are
   /// named after the bundle's workflow path rather than its skill name, so
   /// they are matched by prefix instead — see [matches].
-  static Set<String> basenamesFor(AgentConfig agent) {
-    return switch (agent.installFormat) {
-      InstallFormat.skillDir => all.toSet(),
-      InstallFormat.singleFile => {for (final name in all) '$name.md'},
-      InstallFormat.markdown => {
-          for (final name in all) '${name.replaceAll('-', '_')}.md',
-        },
-      InstallFormat.workflow => const <String>{},
-    };
-  }
+  static Set<String> basenamesFor(AgentConfig agent) => {
+        ..._basenamesIn(agent.installFormat),
+        if (agent.legacyInstallFormat case final legacy?)
+          ..._basenamesIn(legacy),
+      };
+
+  static Set<String> _basenamesIn(InstallFormat format) => switch (format) {
+        InstallFormat.skillDir => all.toSet(),
+        InstallFormat.singleFile => {for (final name in all) '$name.md'},
+        InstallFormat.markdown => {
+            for (final name in all) '${name.replaceAll('-', '_')}.md',
+          },
+        InstallFormat.workflow => const <String>{},
+      };
 
   /// Whether [basename] inside [agent]'s install directory is somnio content.
   static bool matches(AgentConfig agent, String basename) =>

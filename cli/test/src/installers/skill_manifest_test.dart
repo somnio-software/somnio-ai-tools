@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -22,6 +23,42 @@ void main() {
   });
 
   group('load', () {
+    test('drops recorded paths that are not strictly inside their root', () {
+      _writeFile(
+        p.join(tmp.path, SkillManifest.fileName),
+        jsonEncode({
+          'version': SkillManifest.formatVersion,
+          'skills': {
+            'flutter-health-audit': {
+              'kind': 'audit',
+              'paths': [
+                for (final path in [
+                  '../../.git',
+                  'a/../../b',
+                  '/etc/passwd',
+                  r'C:\\Windows',
+                  r'..\\x',
+                  '',
+                  '.',
+                  'a//b',
+                  'flutter-health-audit',
+                  'global_workflows/somnio_x.md',
+                ])
+                  {'root': 'install', 'path': path},
+              ],
+            },
+          },
+        }),
+      );
+
+      final paths = SkillManifest.load(tmp.path)
+          .entryFor('flutter-health-audit')!
+          .paths
+          .map((path) => path.path);
+
+      expect(paths, ['flutter-health-audit', 'global_workflows/somnio_x.md']);
+    });
+
     test('returns an empty manifest when no manifest file exists', () {
       final manifest = SkillManifest.load(tmp.path);
 

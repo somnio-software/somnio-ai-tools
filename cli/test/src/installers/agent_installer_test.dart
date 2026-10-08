@@ -8,6 +8,7 @@ import 'package:somnio/src/content/content_loader.dart';
 import 'package:somnio/src/content/skill_bundle.dart';
 import 'package:somnio/src/content/workflow_skill.dart';
 import 'package:somnio/src/installers/agent_installer.dart';
+import 'package:somnio/src/installers/skill_manifest.dart';
 import 'package:test/test.dart';
 import 'package:yaml/yaml.dart';
 
@@ -1209,6 +1210,202 @@ void main() {
       );
 
       expect(installer.installedCount(), 1);
+    });
+  });
+  // ---------------------------------------------------------------------------
+  // Layout migration (markdown + somnio_rules -> skillDir)
+  // ---------------------------------------------------------------------------
+  group('layout migration', () {
+    late String installDir;
+    late String rulesDir;
+
+    setUp(() {
+      installDir = p.join(tmp.path, 'install');
+      rulesDir = p.join(tmp.path, 'somnio_rules');
+    });
+
+    /// The layout CLI releases before 3.2.10 used for Codex and similar agents.
+    AgentConfig legacyAgent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installPath: installDir,
+          executionRulesPath: rulesDir,
+        );
+
+    /// The same agent after its switch to skill directories.
+    AgentConfig migratedAgent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.skillDir,
+          installPath: installDir,
+          legacyInstallFormat: InstallFormat.markdown,
+          legacyExecutionRulesPath: rulesDir,
+        );
+
+    AgentInstaller installerFor(AgentConfig agent) => AgentInstaller(
+          logger: logger,
+          loader: loader,
+          agentConfig: agent,
+          environment: const {},
+        );
+
+    test('replaces the recorded flat file and rules with a skill directory',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(legacyAgent()).install(bundles: [bundle]);
+      expect(
+          File(p.join(installDir, 'flutter_health.md')).existsSync(), isTrue);
+      expect(
+          Directory(p.join(rulesDir, bundle.planSubDir)).existsSync(), isTrue);
+
+      await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(
+          File(p.join(installDir, 'flutter_health.md')).existsSync(), isFalse);
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(installDir, bundle.name, 'references', 'architecture.md'))
+            .existsSync(),
+        isTrue,
+      );
+      expect(Directory(rulesDir).existsSync(), isFalse,
+          reason: 'the emptied legacy rules root is removed too');
+      expect(
+        SkillManifest.load(installDir).entryFor(bundle.name)!.paths,
+        [ManifestPath(ManifestRoot.install, bundle.name)],
+      );
+    });
+
+    test('keeps the legacy rules root while it still holds other content',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(legacyAgent()).install(bundles: [bundle]);
+      _writeFile(rulesDir, 'not-ours/rule.md', 'THEIRS');
+
+      await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(
+          Directory(p.join(rulesDir, bundle.planSubDir)).existsSync(), isFalse);
+      expect(
+          File(p.join(rulesDir, 'not-ours', 'rule.md')).existsSync(), isTrue);
+    });
+
+    test('never prunes through a symlinked directory', () async {
+      final bundle = _seedBundle(repoRoot);
+      final outside = Directory(p.join(tmp.path, 'outside'))..createSync();
+      _writeFile(outside.path, 'sub/keep.md', 'THEIRS');
+      Directory(rulesDir).createSync(recursive: true);
+      Link(p.join(rulesDir, 'linked')).createSync(outside.path);
+      SkillManifest.load(installDir)
+        ..record(
+          skill: bundle.name,
+          kind: 'audit',
+          paths: const [ManifestPath(ManifestRoot.rules, 'linked/sub')],
+        )
+        ..save();
+
+      await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(File(p.join(outside.path, 'sub', 'keep.md')).existsSync(), isTrue);
+    });
+
+    test('leaves legacy files no manifest records untouched', () async {
+      final bundle = _seedBundle(repoRoot);
+      _writeFile(installDir, 'flutter_health.md', 'HAND WRITTEN');
+
+      await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(installDir, 'flutter_health.md')).readAsStringSync(),
+        'HAND WRITTEN',
+      );
+    });
+
+    test('migrates workflow skills from flat files to skill directories', () {
+      _writeFile(
+        repoRoot,
+        'skills/git-commit-format/SKILL.md',
+        '---\ndescription: Writes commits.\n---\n\n# Commit\n',
+      );
+      const skill = WorkflowSkill(
+        id: 'git_commit_format',
+        name: 'git-commit-format',
+        displayName: 'Git Commit Format',
+        description: 'Writes commits.',
+        planRelativePath: 'skills/git-commit-format/SKILL.md',
+      );
+      installerFor(legacyAgent()).installWorkflowSkills([skill]);
+      expect(File(p.join(installDir, 'git_commit_format.md')).existsSync(),
+          isTrue);
+
+      installerFor(migratedAgent()).installWorkflowSkills([skill]);
+
+      expect(File(p.join(installDir, 'git_commit_format.md')).existsSync(),
+          isFalse);
+      expect(
+        File(p.join(installDir, 'git-commit-format', 'SKILL.md'))
+            .readAsStringSync(),
+        startsWith('---\nname: git-commit-format\n'),
+      );
+      expect(
+        SkillManifest.load(installDir).entryFor('git-commit-format')!.paths,
+        [const ManifestPath(ManifestRoot.install, 'git-commit-format')],
+      );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Config-home override (e.g. CODEX_HOME)
+  // ---------------------------------------------------------------------------
+  group('config-home override', () {
+    AgentConfig agent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.skillDir,
+          installPath: p.join(tmp.path, 'default-home', 'skills'),
+          configHome: p.join(tmp.path, 'default-home'),
+          configHomeVariable: 'TEST_AGENT_HOME',
+        );
+
+    test('installs under the directory the variable names', () async {
+      final bundle = _seedBundle(repoRoot);
+      final custom = p.join(tmp.path, 'custom-home');
+
+      final result = await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agent(),
+        environment: {'TEST_AGENT_HOME': custom},
+      ).install(bundles: [bundle]);
+
+      expect(result.targetDirectory, p.join(custom, 'skills'));
+      expect(
+        File(p.join(custom, 'skills', bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(custom, 'skills', SkillManifest.fileName)).existsSync(),
+        isTrue,
+      );
+      expect(Directory(p.join(tmp.path, 'default-home')).existsSync(), isFalse);
+    });
+
+    test('falls back to the default directory when the variable is blank',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+
+      final result = await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agent(),
+        environment: const {'TEST_AGENT_HOME': '  '},
+      ).install(bundles: [bundle]);
+
+      expect(
+          result.targetDirectory, p.join(tmp.path, 'default-home', 'skills'));
     });
   });
 }

@@ -10,15 +10,13 @@ import 'package:test/test.dart';
 void main() {
   late AgentResolver resolver;
 
-  setUp(() => resolver = AgentResolver());
+  setUp(() => resolver = AgentResolver(environment: const {}));
 
   final home = PlatformUtils.homeDirectory;
   final claude = AgentRegistry.findById('claude')!;
   final cursor = AgentRegistry.findById('cursor')!;
-  final gemini =
-      AgentRegistry.findById('gemini')!; // default + executionRulesPath
-  final codex =
-      AgentRegistry.findById('codex')!; // default + executionRulesPath
+  final amp = AgentRegistry.findById('amp')!; // default + executionRulesPath
+  final codex = AgentRegistry.findById('codex')!; // skillDir + CODEX_HOME
   final copilot = AgentRegistry.findById('copilot')!; // no executionRulesPath
   final antigravity = AgentRegistry.findById('antigravity')!; // binary == null
 
@@ -43,18 +41,28 @@ void main() {
     });
 
     test('default with executionRulesPath uses planSubDir layout', () {
-      final path = resolver.ruleBasePath(gemini, 'flutter-health', 'flutter');
+      final path = resolver.ruleBasePath(amp, 'flutter-health', 'flutter');
       expect(
         path,
-        p.join(home, '.gemini', 'somnio_rules', 'flutter', 'references'),
+        p.join(home, '.amp', 'somnio_rules', 'flutter', 'references'),
       );
     });
 
-    test('codex → ~/.codex/somnio_rules/{planSubDir}/references', () {
+    test('codex → ~/.codex/skills/{bundle}/references', () {
       final path = resolver.ruleBasePath(codex, 'flutter-health', 'flutter');
       expect(
         path,
-        p.join(home, '.codex', 'somnio_rules', 'flutter', 'references'),
+        p.join(home, '.codex', 'skills', 'flutter-health', 'references'),
+      );
+    });
+
+    test('codex honours CODEX_HOME', () {
+      final path = AgentResolver(
+        environment: const {'CODEX_HOME': '/custom/codex'},
+      ).ruleBasePath(codex, 'flutter-health', 'flutter');
+      expect(
+        path,
+        p.join('/custom/codex', 'skills', 'flutter-health', 'references'),
       );
     });
 
@@ -92,19 +100,19 @@ void main() {
 
     test('default with executionRulesPath uses planSubDir layout', () {
       final path =
-          resolver.templatePath(gemini, 'flutter-health', 'flutter', 't.md');
+          resolver.templatePath(amp, 'flutter-health', 'flutter', 't.md');
       expect(
         path,
-        p.join(home, '.gemini', 'somnio_rules', 'flutter', 'assets', 't.md'),
+        p.join(home, '.amp', 'somnio_rules', 'flutter', 'assets', 't.md'),
       );
     });
 
-    test('codex → ~/.codex/somnio_rules/{planSubDir}/assets/{file}', () {
+    test('codex → ~/.codex/skills/{bundle}/assets/{file}', () {
       final path =
           resolver.templatePath(codex, 'flutter-health', 'flutter', 't.md');
       expect(
         path,
-        p.join(home, '.codex', 'somnio_rules', 'flutter', 'assets', 't.md'),
+        p.join(home, '.codex', 'skills', 'flutter-health', 'assets', 't.md'),
       );
     });
 

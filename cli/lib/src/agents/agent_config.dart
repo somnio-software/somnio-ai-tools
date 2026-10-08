@@ -61,6 +61,10 @@ class AgentConfig {
     required this.installPath,
     this.ruleExtension = '.md',
     this.executionRulesPath,
+    this.configHome,
+    this.configHomeVariable,
+    this.legacyInstallFormat,
+    this.legacyExecutionRulesPath,
     this.readInstructionTemplate,
     this.tokenUsageParser,
     this.filePrefix = 'somnio',
@@ -144,6 +148,37 @@ class AgentConfig {
   /// When null, rules are read from installPath.
   final String? executionRulesPath;
 
+  /// The agent's global config directory as a template prefix of
+  /// [installPath] (e.g. `{home}/.codex`), relocatable through
+  /// [configHomeVariable].
+  ///
+  /// Both must be set for the override to apply.
+  final String? configHome;
+
+  /// Environment variable that relocates [configHome] for the global scope
+  /// (e.g. `CODEX_HOME`).
+  ///
+  /// When it is set and non-blank, every path template starting with
+  /// [configHome] resolves under its value instead. Project-scope installs
+  /// ignore it: they are anchored at the project root.
+  final String? configHomeVariable;
+
+  /// The [InstallFormat] an earlier CLI release installed this agent's
+  /// skills in, when that differs from [installFormat].
+  ///
+  /// Lets status / uninstall still recognize (and clean up) content in the
+  /// old layout that no manifest records.
+  final InstallFormat? legacyInstallFormat;
+
+  /// Execution-rules directory an earlier CLI release wrote for this agent
+  /// and this one no longer does.
+  ///
+  /// Manifest entries rooted at `ManifestRoot.rules` keep resolving against
+  /// it, so update / remove / uninstall can delete the old copies instead of
+  /// resolving them against [installPath] — where the agent's current skill
+  /// directories live.
+  final String? legacyExecutionRulesPath;
+
   /// Template for read instructions in step prompts.
   /// Uses `{file}` placeholder. If null, defaults to
   /// 'Read and follow ALL instructions in {file}'.
@@ -226,21 +261,69 @@ class AgentConfig {
   }
 
   /// Resolves the install path by replacing `{home}` and `{name}`.
-  String resolvedInstallPath({required String home, String? name}) {
-    var path = installPath.replaceAll('{home}', home);
-    if (name != null) {
-      path = path.replaceAll('{name}', name);
-    }
-    return path;
-  }
+  ///
+  /// [environment] supplies [configHomeVariable]; it defaults to empty so
+  /// a caller that resolves against a non-real [home] (tests, dry runs)
+  /// never picks up the user's real override by accident.
+  String resolvedInstallPath({
+    required String home,
+    String? name,
+    Map<String, String> environment = const {},
+  }) =>
+      _resolve(installPath, home: home, name: name, environment: environment);
 
-  /// Resolves the execution rules path, falling back to install path.
+  /// Resolves the execution rules path, falling back to
+  /// [legacyExecutionRulesPath] and then to the install path.
+  ///
+  /// [legacyExecutionRulesPath] is never relocated: the releases that wrote
+  /// it ignored [configHomeVariable].
   String resolvedExecutionRulesPath({
     required String home,
     String? name,
+    Map<String, String> environment = const {},
   }) {
-    final template = executionRulesPath ?? installPath;
-    var path = template.replaceAll('{home}', home);
+    final legacy = legacyExecutionRulesPath;
+    if (executionRulesPath == null && legacy != null) {
+      return _resolve(legacy, home: home, name: name, environment: const {});
+    }
+    return _resolve(
+      executionRulesPath ?? installPath,
+      home: home,
+      name: name,
+      environment: environment,
+    );
+  }
+
+  /// Every directory a global install may live in: [resolvedInstallPath]
+  /// first, then the default location when [configHomeVariable] relocates
+  /// it, where releases before 3.2.10 installed regardless of the variable.
+  List<String> resolvedGlobalInstallPaths({
+    required String home,
+    Map<String, String> environment = const {},
+  }) {
+    final current = resolvedInstallPath(home: home, environment: environment);
+    final fallback = resolvedInstallPath(home: home);
+    return [current, if (fallback != current) fallback];
+  }
+
+  /// Substitutes the placeholders in [template], relocating a [configHome]
+  /// prefix to [configHomeVariable]'s value when [environment] sets it.
+  String _resolve(
+    String template, {
+    required String home,
+    String? name,
+    required Map<String, String> environment,
+  }) {
+    var path = template;
+    final prefix = configHome;
+    final variable = configHomeVariable;
+    if (prefix != null && variable != null && path.startsWith(prefix)) {
+      final override = environment[variable]?.trim();
+      if (override != null && override.isNotEmpty) {
+        path = override + path.substring(prefix.length);
+      }
+    }
+    path = path.replaceAll('{home}', home);
     if (name != null) {
       path = path.replaceAll('{name}', name);
     }
@@ -256,15 +339,21 @@ class AgentConfig {
 
   /// Resolves the install path for [scope], anchoring at [home] for
   /// [InstallScope.global] and at [projectRoot] for [InstallScope.project].
+  ///
+  /// [environment] only applies to the global scope; see
+  /// [configHomeVariable].
   String resolvedScopedInstallPath({
     required InstallScope scope,
     required String home,
     required String projectRoot,
     String? name,
+    Map<String, String> environment = const {},
   }) {
+    final global = scope == InstallScope.global;
     return resolvedInstallPath(
-      home: scope == InstallScope.global ? home : projectRoot,
+      home: global ? home : projectRoot,
       name: name,
+      environment: global ? environment : const {},
     );
   }
 
@@ -275,10 +364,13 @@ class AgentConfig {
     required String home,
     required String projectRoot,
     String? name,
+    Map<String, String> environment = const {},
   }) {
+    final global = scope == InstallScope.global;
     return resolvedExecutionRulesPath(
-      home: scope == InstallScope.global ? home : projectRoot,
+      home: global ? home : projectRoot,
       name: name,
+      environment: global ? environment : const {},
     );
   }
 

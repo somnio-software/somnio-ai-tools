@@ -25,3 +25,20 @@ String realPathOf(String path) {
     return normalized;
   }
 }
+
+/// Whether [target] lies strictly inside [root] without passing through a
+/// symlinked directory on the way, so deleting it cannot reach outside
+/// [root].
+///
+/// [root] itself may be a symlink (skills.sh links whole agent folders);
+/// only the directories between it and [target] are checked.
+bool isSafelyWithin(String root, String target) {
+  final normalized = p.normalize(target);
+  if (!p.isWithin(root, normalized)) return false;
+  for (var dir = p.dirname(normalized);
+      p.isWithin(root, dir);
+      dir = p.dirname(dir)) {
+    if (FileSystemEntity.isLinkSync(dir)) return false;
+  }
+  return true;
+}

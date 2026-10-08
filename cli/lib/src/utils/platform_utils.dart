@@ -13,6 +13,10 @@ class PlatformUtils {
     return Platform.environment['HOME'] ?? '';
   }
 
+  /// The process environment, for agent config-home overrides such as
+  /// `CODEX_HOME` (see `AgentConfig.configHomeVariable`).
+  static Map<String, String> get environment => Platform.environment;
+
   /// Returns the path to Claude Code's global skills directory.
   static String get claudeGlobalSkillsDir =>
       p.join(homeDirectory, '.claude', 'skills');

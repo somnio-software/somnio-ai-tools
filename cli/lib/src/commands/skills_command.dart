@@ -340,6 +340,7 @@ class _SkillsInstallCommand extends Command<int> {
         scope: InstallScope.global,
         home: home,
         projectRoot: projectRoot,
+        environment: PlatformUtils.environment,
       );
       final projectPath = agent.resolvedScopedInstallPath(
         scope: InstallScope.project,
@@ -656,6 +657,7 @@ class _SkillsUpdateCommand extends Command<int> {
           scope: scope,
           home: home,
           projectRoot: projectRoot,
+          environment: PlatformUtils.environment,
         );
         if (!seen.add(realPathOf(dir))) continue;
         final manifest = SkillManifest.load(dir);
@@ -970,20 +972,31 @@ class _SkillsRemoveCommand extends Command<int> {
         if (scope == InstallScope.project && !agent.supportsProjectScope) {
           continue;
         }
-        final dir = agent.resolvedScopedInstallPath(
-          scope: scope,
-          home: home,
-          projectRoot: projectRoot,
-        );
-        if (!seen.add(realPathOf(dir))) continue;
-        final manifest = SkillManifest.load(dir);
-        for (final entry in manifest.entries) {
-          candidates.add((
-            agent: agent,
-            scope: scope,
-            manifest: manifest,
-            entry: entry,
-          ));
+        // A relocated global install (CODEX_HOME) may still have an older
+        // one at the default location.
+        final dirs = scope == InstallScope.global
+            ? agent.resolvedGlobalInstallPaths(
+                home: home,
+                environment: PlatformUtils.environment,
+              )
+            : [
+                agent.resolvedScopedInstallPath(
+                  scope: scope,
+                  home: home,
+                  projectRoot: projectRoot,
+                ),
+              ];
+        for (final dir in dirs) {
+          if (!seen.add(realPathOf(dir))) continue;
+          final manifest = SkillManifest.load(dir);
+          for (final entry in manifest.entries) {
+            candidates.add((
+              agent: agent,
+              scope: scope,
+              manifest: manifest,
+              entry: entry,
+            ));
+          }
         }
       }
     }
@@ -1014,28 +1027,32 @@ class _SkillsRemoveCommand extends Command<int> {
     final home = PlatformUtils.homeDirectory;
     final projectRoot = Directory.current.path;
     final touchedManifests = <SkillManifest>{};
+    final touchedRules = <(AgentConfig, String)>{};
 
     for (final candidate in selected) {
+      final rulesDir = candidate.agent.resolvedScopedExecutionRulesPath(
+        scope: candidate.scope,
+        home: home,
+        projectRoot: projectRoot,
+        environment: PlatformUtils.environment,
+      );
       for (final path in candidate.entry.paths) {
         final base = path.root == ManifestRoot.install
-            ? candidate.agent.resolvedScopedInstallPath(
-                scope: candidate.scope,
-                home: home,
-                projectRoot: projectRoot,
-              )
-            : candidate.agent.resolvedScopedExecutionRulesPath(
-                scope: candidate.scope,
-                home: home,
-                projectRoot: projectRoot,
-              );
-        _deletePath(p.join(base, path.path));
+            ? candidate.manifest.directory
+            : rulesDir;
+        final target = p.join(base, path.path);
+        if (isSafelyWithin(base, target)) _deletePath(target);
       }
       candidate.manifest.removeEntry(candidate.entry.skill);
       touchedManifests.add(candidate.manifest);
+      touchedRules.add((candidate.agent, rulesDir));
     }
 
     for (final manifest in touchedManifests) {
       manifest.save();
+    }
+    for (final (agent, rulesDir) in touchedRules) {
+      AgentInstaller.removeEmptyLegacyRulesDir(agent, rulesDir);
     }
   }
 

@@ -10,6 +10,7 @@ import '../transformers/claude_transformer.dart';
 import '../transformers/transformer.dart';
 import '../utils/bundle_file_filter.dart';
 import '../utils/platform_utils.dart';
+import '../utils/real_path.dart';
 import '../utils/yaml_frontmatter.dart';
 import 'installer.dart';
 import 'skill_manifest.dart';
@@ -26,7 +27,9 @@ class AgentInstaller extends Installer {
     this.scope = InstallScope.global,
     String? projectRoot,
     this.recordManifest = true,
-  }) : projectRoot = projectRoot ?? Directory.current.path;
+    Map<String, String>? environment,
+  })  : projectRoot = projectRoot ?? Directory.current.path,
+        environment = environment ?? PlatformUtils.environment;
 
   final AgentConfig agentConfig;
 
@@ -45,6 +48,10 @@ class AgentInstaller extends Installer {
   /// escape hatch exists for callers that only probe paths.
   final bool recordManifest;
 
+  /// Environment the agent's config-home override (e.g. `CODEX_HOME`) is
+  /// read from. Defaults to the process environment.
+  final Map<String, String> environment;
+
   String get _home => PlatformUtils.homeDirectory;
 
   /// Resolves the base install directory for this agent, honouring [scope].
@@ -52,6 +59,7 @@ class AgentInstaller extends Installer {
         scope: scope,
         home: _home,
         projectRoot: projectRoot,
+        environment: environment,
       );
 
   /// Resolves the execution-rules directory for this agent, honouring
@@ -61,6 +69,7 @@ class AgentInstaller extends Installer {
         scope: scope,
         home: _home,
         projectRoot: projectRoot,
+        environment: environment,
       );
 
   @override
@@ -122,6 +131,7 @@ class AgentInstaller extends Installer {
           paths.add(ManifestPath(ManifestRoot.rules, bundle.planSubDir));
         }
 
+        _pruneObsolete(manifest.entryFor(bundle.name), paths);
         manifest.record(skill: bundle.name, kind: 'audit', paths: paths);
 
         skillCount++;
@@ -133,6 +143,7 @@ class AgentInstaller extends Installer {
       }
     }
 
+    _removeEmptyLegacyRulesDir();
     if (recordManifest) manifest.save();
 
     return InstallResult(
@@ -215,6 +226,7 @@ class AgentInstaller extends Installer {
         final planFile = File(planPath);
         if (!planFile.existsSync()) continue;
 
+        final previous = manifest.entryFor(skill.name);
         var content = planFile.readAsStringSync();
 
         // Strip existing YAML frontmatter so agents that add their own
@@ -370,6 +382,7 @@ class AgentInstaller extends Installer {
             );
         }
 
+        _pruneObsolete(previous, manifest.entryFor(skill.name)!.paths);
         count++;
         installedNames.add(skill.name);
       } catch (e) {
@@ -379,6 +392,7 @@ class AgentInstaller extends Installer {
       }
     }
 
+    _removeEmptyLegacyRulesDir();
     if (recordManifest) manifest.save();
 
     return (
@@ -463,7 +477,62 @@ class AgentInstaller extends Installer {
     return count;
   }
 
-  /// Deletes a somnio-owned directory so a reinstall starts from a clean slate.
+  /// Deletes what [previous] recorded for a skill that [current] no longer
+  /// writes, e.g. the flat `<name>.md` file and `somnio_rules/<name>/`
+  /// directory a switch to [InstallFormat.skillDir] replaced.
+  ///
+  /// Only recorded paths strictly inside their root are deleted, never
+  /// through a symlinked directory, and never one that is, contains or lies
+  /// inside a path in [current].
+  void _pruneObsolete(ManifestEntry? previous, List<ManifestPath> current) {
+    if (previous == null) return;
+    final written = current.map(_absolutePath).toList();
+    for (final path in previous.paths) {
+      if (current.contains(path)) continue;
+      final target = _absolutePath(path);
+      if (!isSafelyWithin(_rootOf(path), target)) continue;
+      final overlaps = written.any(
+        (w) =>
+            p.equals(w, target) ||
+            p.isWithin(w, target) ||
+            p.isWithin(target, w),
+      );
+      if (!overlaps) _prune(target);
+    }
+  }
+
+  /// The directory a manifest [path] is relative to.
+  String _rootOf(ManifestPath path) =>
+      path.root == ManifestRoot.install ? _installDir : _rulesDir;
+
+  /// Resolves a manifest [path] against the root it was recorded under.
+  String _absolutePath(ManifestPath path) =>
+      p.normalize(p.join(_rootOf(path), path.path));
+
+  /// Deletes [AgentConfig.legacyExecutionRulesPath] once migrating the
+  /// skills out of it has left it empty.
+  void _removeEmptyLegacyRulesDir() =>
+      removeEmptyLegacyRulesDir(agentConfig, _rulesDir);
+
+  /// Deletes [rulesDir] when it is [agent]'s legacy execution-rules
+  /// directory (it has no current one) and holds nothing anymore.
+  ///
+  /// A symlink at [rulesDir] is left alone.
+  static void removeEmptyLegacyRulesDir(AgentConfig agent, String rulesDir) {
+    if (agent.executionRulesPath != null ||
+        agent.legacyExecutionRulesPath == null) {
+      return;
+    }
+    if (FileSystemEntity.typeSync(rulesDir, followLinks: false) !=
+        FileSystemEntityType.directory) {
+      return;
+    }
+    final dir = Directory(rulesDir);
+    if (dir.listSync().isEmpty) dir.deleteSync();
+  }
+
+  /// Deletes a somnio-owned file or directory so a reinstall starts from a
+  /// clean slate.
   ///
   /// A symlink at [path] is unlinked rather than followed — skills.sh installs
   /// some skill dirs as symlinks, and recursing into one would delete the
@@ -475,7 +544,12 @@ class AgentInstaller extends Installer {
       return;
     }
     final dir = Directory(path);
-    if (dir.existsSync()) dir.deleteSync(recursive: true);
+    if (dir.existsSync()) {
+      dir.deleteSync(recursive: true);
+      return;
+    }
+    final file = File(path);
+    if (file.existsSync()) file.deleteSync();
   }
 
   /// Writes [content] to [path], which must lie inside the install [root].

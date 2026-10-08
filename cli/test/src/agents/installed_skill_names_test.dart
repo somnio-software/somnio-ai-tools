@@ -6,7 +6,8 @@ import 'package:test/test.dart';
 void main() {
   final claude = AgentRegistry.findById('claude')!; // skillDir
   final cursor = AgentRegistry.findById('cursor')!; // singleFile
-  final gemini = AgentRegistry.findById('gemini')!; // markdown
+  final copilot = AgentRegistry.findById('copilot')!; // markdown
+  final codex = AgentRegistry.findById('codex')!; // skillDir, legacy markdown
   final antigravity = AgentRegistry.findById('antigravity')!; // workflow
 
   group('InstalledSkillNames.all', () {
@@ -41,8 +42,19 @@ void main() {
 
     test('markdown underscores the bundle name', () {
       expect(
-        InstalledSkillNames.basenamesFor(gemini),
+        InstalledSkillNames.basenamesFor(copilot),
         contains('flutter_health_audit.md'),
+      );
+    });
+
+    test('also covers the legacy install format', () {
+      expect(
+        InstalledSkillNames.basenamesFor(codex),
+        containsAll(['flutter-health-audit', 'flutter_health_audit.md']),
+      );
+      expect(
+        InstalledSkillNames.basenamesFor(claude),
+        isNot(contains('flutter_health_audit.md')),
       );
     });
 
@@ -57,7 +69,7 @@ void main() {
       expect(
           InstalledSkillNames.matches(claude, 'flutter-health-audit'), isTrue);
       expect(InstalledSkillNames.matches(cursor, 'security-audit.md'), isTrue);
-      expect(InstalledSkillNames.matches(gemini, 'flutter_health_audit.md'),
+      expect(InstalledSkillNames.matches(copilot, 'flutter_health_audit.md'),
           isTrue);
       expect(InstalledSkillNames.matches(antigravity, 'somnio_flutter_ha.md'),
           isTrue);
@@ -66,18 +78,18 @@ void main() {
     test('matches skills added to the registry after the v1.x rename', () {
       expect(
           InstalledSkillNames.matches(claude, 'python-health-audit'), isTrue);
-      expect(InstalledSkillNames.matches(gemini, 'python_best_practices.md'),
+      expect(InstalledSkillNames.matches(copilot, 'python_best_practices.md'),
           isTrue);
     });
 
     test('still matches legacy prefixed installs', () {
       expect(InstalledSkillNames.matches(claude, 'somnio-fh'), isTrue);
-      expect(InstalledSkillNames.matches(gemini, 'somnio_fh.md'), isTrue);
+      expect(InstalledSkillNames.matches(copilot, 'somnio_fh.md'), isTrue);
     });
 
     test('does not match unrelated user content', () {
       expect(InstalledSkillNames.matches(claude, 'my-own-skill'), isFalse);
-      expect(InstalledSkillNames.matches(gemini, 'notes.md'), isFalse);
+      expect(InstalledSkillNames.matches(copilot, 'notes.md'), isFalse);
       expect(
           InstalledSkillNames.matches(cursor, 'flutter-health-audit'), isFalse);
     });

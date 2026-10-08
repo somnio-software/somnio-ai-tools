@@ -30,13 +30,22 @@ class AgentDetector {
   /// Creates a detector that resolves install folders under [homeDirectory]
   /// (default: the user's home) and looks binaries up with [whichBinary]
   /// (default: [PlatformUtils.whichBinary]).
+  ///
+  /// [environment] supplies config-home overrides such as `CODEX_HOME`. It
+  /// defaults to the process environment only for the real home, so a
+  /// detector rooted at another [homeDirectory] never looks at the user's
+  /// real agent folders.
   AgentDetector({
     String? homeDirectory,
+    Map<String, String>? environment,
     Future<String?> Function(String binary)? whichBinary,
   })  : _home = homeDirectory ?? PlatformUtils.homeDirectory,
+        _environment = environment ??
+            (homeDirectory == null ? PlatformUtils.environment : const {}),
         _which = whichBinary ?? PlatformUtils.whichBinary;
 
   final String _home;
+  final Map<String, String> _environment;
   final Future<String?> Function(String binary) _which;
 
   /// Whether [path] is a directory holding something that shows the agent
@@ -99,7 +108,8 @@ class AgentDetector {
     // PATH). An empty one does not count: skills.sh creates `<agent>/skills`
     // folders for agents the user may never have installed.
     if (agent.installScope == InstallScope.global) {
-      final installDir = agent.resolvedInstallPath(home: _home);
+      final installDir =
+          agent.resolvedInstallPath(home: _home, environment: _environment);
       if (hasContent(installDir, home: _home)) {
         return AgentInfo(installed: true, path: installDir);
       }

@@ -392,7 +392,10 @@ class _RulesInstallCommand extends Command<int> {
         // 4. Check install directory (installed but binary not in PATH)
         if (path == null) {
           final home = PlatformUtils.homeDirectory;
-          final installDir = agentConfig.resolvedInstallPath(home: home);
+          final installDir = agentConfig.resolvedInstallPath(
+            home: home,
+            environment: PlatformUtils.environment,
+          );
           if (await _pathExists(installDir)) {
             path = installDir;
           }

@@ -44,4 +44,44 @@ void main() {
       );
     });
   });
+  group('isSafelyWithin', () {
+    test('accepts a path strictly inside the root', () {
+      expect(isSafelyWithin(temp.path, p.join(temp.path, 'a', 'b')), isTrue);
+    });
+
+    test('rejects the root itself', () {
+      expect(isSafelyWithin(temp.path, temp.path), isFalse);
+    });
+
+    test('rejects a path that climbs out of the root', () {
+      expect(
+        isSafelyWithin(temp.path, p.join(temp.path, 'a', '..', '..', 'x')),
+        isFalse,
+      );
+    });
+
+    test('rejects a path through a symlinked directory', () {
+      Directory(p.join(temp.path, 'outside')).createSync();
+      final root = Directory(p.join(temp.path, 'root'))..createSync();
+      Link(p.join(root.path, 'evil')).createSync(p.join(temp.path, 'outside'));
+
+      expect(
+          isSafelyWithin(root.path, p.join(root.path, 'evil', 'x')), isFalse);
+    });
+
+    test('accepts a target that is itself a symlink', () {
+      final root = Directory(p.join(temp.path, 'root'))..createSync();
+      Link(p.join(root.path, 'skill')).createSync(temp.path);
+
+      expect(isSafelyWithin(root.path, p.join(root.path, 'skill')), isTrue);
+    });
+
+    test('accepts a root reached through a symlink', () {
+      final real = Directory(p.join(temp.path, 'real'))..createSync();
+      Link(p.join(temp.path, 'alias')).createSync(real.path);
+      final root = p.join(temp.path, 'alias');
+
+      expect(isSafelyWithin(root, p.join(root, 'skill')), isTrue);
+    });
+  });
 }

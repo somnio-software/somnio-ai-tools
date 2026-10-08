@@ -8,6 +8,13 @@ import '../utils/platform_utils.dart';
 
 /// Resolves the AI CLI agent and verifies skill installation paths.
 class AgentResolver {
+  /// Creates a resolver that reads agent config-home overrides (e.g.
+  /// `CODEX_HOME`) from [environment] (default: the process environment).
+  AgentResolver({Map<String, String>? environment})
+      : _environment = environment ?? PlatformUtils.environment;
+
+  final Map<String, String> _environment;
+
   /// Auto-detects available AI CLI, preferring the registry order
   /// (Claude > Cursor > Gemini > ...).
   ///
@@ -33,35 +40,20 @@ class AgentResolver {
 
   /// Returns the base path where rule files are installed for the given agent.
   ///
-  /// - Claude: `~/.claude/skills/{bundleName}/references/`
-  /// - Cursor: `~/.cursor/somnio_rules/{planSubDir}/references/`
-  /// - Others (incl. Gemini): derived from [AgentConfig.resolvedExecutionRulesPath]
+  /// - skillDir agents (Claude, Codex, Gemini, ...):
+  ///   `<installPath>/{bundleName}/references/`
+  /// - agents with an executionRulesPath (Cursor, Amp, ...):
+  ///   `<executionRulesPath>/{planSubDir}/references/`
+  /// - others: [AgentConfig.resolvedExecutionRulesPath]
   String ruleBasePath(
     AgentConfig agent,
     String bundleName,
     String planSubDir,
   ) {
-    final home = PlatformUtils.homeDirectory;
-
-    // Agent-specific paths for the original three agents
-    switch (agent.id) {
-      case 'claude':
-        return p.join(home, '.claude', 'skills', bundleName, 'references');
-      case 'cursor':
-        return p.join(
-            home, '.cursor', 'somnio_rules', planSubDir, 'references');
-      default:
-        // Agents with executionRulesPath use the same subdirectory layout
-        // as Cursor: {rulesPath}/{planSubDir}/references/
-        final basePath = agent.resolvedExecutionRulesPath(
-          home: home,
-          name: bundleName,
-        );
-        if (agent.executionRulesPath != null) {
-          return p.join(basePath, planSubDir, 'references');
-        }
-        return basePath;
-    }
+    final base = _bundleBasePath(agent, bundleName, planSubDir);
+    final hasReferencesDir = agent.installFormat == InstallFormat.skillDir ||
+        agent.executionRulesPath != null;
+    return hasReferencesDir ? p.join(base, 'references') : base;
   }
 
   /// Returns the template file path for the given agent and bundle.
@@ -70,26 +62,35 @@ class AgentResolver {
     String bundleName,
     String planSubDir,
     String templateFile,
+  ) =>
+      p.join(
+        _bundleBasePath(agent, bundleName, planSubDir),
+        'assets',
+        templateFile,
+      );
+
+  /// The directory holding a bundle's installed `references/` and `assets/`.
+  String _bundleBasePath(
+    AgentConfig agent,
+    String bundleName,
+    String planSubDir,
   ) {
     final home = PlatformUtils.homeDirectory;
-
-    switch (agent.id) {
-      case 'claude':
-        return p.join(
-            home, '.claude', 'skills', bundleName, 'assets', templateFile);
-      case 'cursor':
-        return p.join(home, '.cursor', 'somnio_rules', planSubDir, 'assets',
-            templateFile);
-      default:
-        final basePath = agent.resolvedExecutionRulesPath(
-          home: home,
-          name: bundleName,
-        );
-        if (agent.executionRulesPath != null) {
-          return p.join(basePath, planSubDir, 'assets', templateFile);
-        }
-        return p.join(basePath, 'assets', templateFile);
+    if (agent.installFormat == InstallFormat.skillDir) {
+      return p.join(
+        agent.resolvedInstallPath(home: home, environment: _environment),
+        bundleName,
+      );
     }
+    final basePath = agent.resolvedExecutionRulesPath(
+      home: home,
+      name: bundleName,
+      environment: _environment,
+    );
+    if (agent.executionRulesPath != null) {
+      return p.join(basePath, planSubDir);
+    }
+    return basePath;
   }
 
   /// Verifies that the rule files exist at the expected location.

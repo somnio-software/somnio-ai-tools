@@ -154,6 +154,22 @@ void main() {
         expect(await augmentDetected(), isTrue);
       });
 
+      test('detects Codex skills under CODEX_HOME', () async {
+        final codex = AgentRegistry.findById('codex')!;
+        final codexHome = p.join(home, 'custom-codex');
+        Directory(p.join(codexHome, 'skills', 'mine'))
+            .createSync(recursive: true);
+
+        final detector = AgentDetector(
+          homeDirectory: home,
+          environment: {'CODEX_HOME': codexHome},
+          whichBinary: (_) async => null,
+        );
+        final info = (await detector.detect())[codex]!;
+
+        expect(info.path, p.join(codexHome, 'skills'));
+      });
+
       test('detects an agent whose binary is on PATH', () async {
         final detector = AgentDetector(
           homeDirectory: home,

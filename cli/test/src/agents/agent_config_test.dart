@@ -190,6 +190,30 @@ void main() {
   });
 
   group('AgentConfig.resolvedExecutionRulesPath', () {
+    test('falls back to legacyExecutionRulesPath before installPath', () {
+      const agent = AgentConfig(
+        id: 'codex',
+        displayName: 'Codex',
+        installFormat: InstallFormat.skillDir,
+        installPath: '{home}/.codex/skills',
+        legacyExecutionRulesPath: '{home}/.codex/somnio_rules',
+      );
+      final path = agent.resolvedExecutionRulesPath(home: '/home/u');
+      expect(path, '/home/u/.codex/somnio_rules');
+    });
+
+    test('prefers executionRulesPath over legacyExecutionRulesPath', () {
+      const agent = AgentConfig(
+        id: 'x',
+        displayName: 'X',
+        installPath: '{home}/.x/commands',
+        executionRulesPath: '{home}/.x/rules',
+        legacyExecutionRulesPath: '{home}/.x/old_rules',
+      );
+      final path = agent.resolvedExecutionRulesPath(home: '/home/u');
+      expect(path, '/home/u/.x/rules');
+    });
+
     test('falls back to installPath when executionRulesPath is null', () {
       const agent = AgentConfig(
         id: 'claude',

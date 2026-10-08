@@ -69,12 +69,12 @@ cli/lib/src/
 
 | Format | Agent | Output |
 |--------|-------|--------|
-| `skillDir` | Claude Code | Directory with SKILL.md + rule files |
+| `skillDir` | Claude Code, Codex, Gemini CLI, Augment Code, OpenCode, Cline, CodeBuddy, Qwen CLI | `<name>/` directory with SKILL.md (frontmatter) + references/, assets/, agents/ |
 | `singleFile` | Cursor | Single merged markdown file |
-| `workflow` | Gemini/Antigravity | Workflow YAML format |
-| `markdown` | Generic | Standard markdown |
+| `workflow` | Antigravity | Workflow YAML format |
+| `markdown` | Amp, Aider, Copilot, Windsurf, Roo, Kilo, Amazon Q | Standard markdown |
 
-**Installers** — Write transformed skills to agent-specific locations (`~/.claude/skills/`, `~/.cursor/commands/`, etc.). `AgentInstaller` resolves its target through `InstallScope`: `global` anchors the path template's `{home}` placeholder at the user's home directory, `project` anchors it at the current project root (`./.claude/skills/`). Only agents whose `installPath` is home-relative expose a project scope (`AgentConfig.supportsProjectScope`).
+**Installers** — Write transformed skills to agent-specific locations (`~/.claude/skills/`, `~/.codex/skills/`, `~/.cursor/commands/`, etc.). An agent's `configHome` + `configHomeVariable` relocate its global install path when the variable is set (Codex: `$CODEX_HOME/skills`). An agent that changed format keeps its old layout in `legacyInstallFormat` / `legacyExecutionRulesPath`: when a reinstall writes paths the previous manifest entry did not have, `AgentInstaller` deletes the recorded paths it no longer writes (never one overlapping a new path) and removes the legacy rules directory once it is empty, and remove/uninstall resolve old `rules` entries against that directory. `AgentInstaller` resolves its target through `InstallScope`: `global` anchors the path template's `{home}` placeholder at the user's home directory, `project` anchors it at the current project root (`./.claude/skills/`). Only agents whose `installPath` is home-relative expose a project scope (`AgentConfig.supportsProjectScope`).
 
 **Skill Manifest** (`installers/skill_manifest.dart`) — Every install writes a `.somnio-skills.json` at the root of the target directory, recording the exact relative paths written per skill (tagged by which root they belong to — the install dir or the agent's separate `executionRulesPath`). One manifest per agent and scope. This is what makes `somnio skills update` and `somnio skills remove` exact: they act only on recorded paths instead of guessing ownership by matching names against the registry, so user-authored skills sharing a name are never modified or deleted. A missing or corrupt manifest reads as empty rather than throwing, so a bad file can't wedge the install commands.
 
