@@ -5,6 +5,12 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.6] - 2026-10-08
+
+### Fixed
+
+- **`soc2-audit` and `iso27001-audit` had a `description` over the Agent Skills limit.** The Agent Skills specification caps a `SKILL.md` frontmatter `description` at 1024 characters. Codex rejects a longer one, as do claude.ai uploads and the Skills API; Claude Code only truncates its skill listing (at 1,536 characters). `soc2-audit` was 1197 characters and `iso27001-audit` 1027, so installs that copy `SKILL.md` as it is (skills.sh, and the `plugins/development/skills` symlink to `skills/`) shipped descriptions those agents refuse. Both are now shorter (1012 and 929) and keep their "Use when" and "Triggers on" clauses. A new test, `skill_frontmatter_test.dart`, loads each `skills/*/SKILL.md` through `ContentLoader.loadPlanFrontmatter` and fails `dart test` unless `name` is 1-64 lowercase letters, digits and single hyphens (no leading or trailing hyphen) and matches its directory, `description` is present and at most 1024 characters, and `compatibility`, when set, is 1-500 characters.
+
 ## [3.2.5] - 2026-10-08
 
 ### Fixed
