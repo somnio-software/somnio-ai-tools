@@ -243,9 +243,11 @@ somnio skills remove --agent claude --project
 
 > Running non-interactively requires an explicit `--global` or `--project` — the command clears an entire scope, so it will not guess.
 
+Only skills recorded in a location's `.somnio-skills.json` manifest are removed from it. When the global scope is cleared for all agents (no `--agent`), the Somnio skills installed by skills.sh are removed too, through the same [cleanup](#cleanup-of-skillssh-installs) as the install commands: they are listed with the rest and covered by the same confirmation (`--verbose` lists every link path). Their canonical copies are shared by every agent and never live in a project, so `--agent` and `--project` leave them in place and say how many were kept. It does not remove agent rules or the CLI — that is `somnio uninstall --skills`.
+
 ### Cleanup of skills.sh installs
 
-The CLI does not use skills.sh (`npx skills add`). Somnio skills that skills.sh installed globally are not recorded in the `.somnio-skills.json` manifest, so `somnio skills update` could never refresh them: they go stale next to the Somnio-managed copies. `somnio setup`, `somnio install`, `somnio skills install` and `somnio skills update` therefore remove them once, after they know the install can go ahead and before installing anything (`somnio uninstall --skills` removes them too):
+The CLI does not use skills.sh (`npx skills add`). Somnio skills that skills.sh installed globally are not recorded in the `.somnio-skills.json` manifest, so `somnio skills update` could never refresh them: they go stale next to the Somnio-managed copies. `somnio setup`, `somnio install`, `somnio skills install` and `somnio skills update` therefore remove them once, after they know the install can go ahead and before installing anything (`somnio uninstall --skills` and `somnio skills remove --global` remove them too):
 
 1. Reads the skills.sh global lock — `$XDG_STATE_HOME/skills/.skill-lock.json` if `XDG_STATE_HOME` is set, otherwise `~/.agents/.skill-lock.json`. A missing lock means there is nothing to do; an unreadable or unrecognised lock is reported and **nothing is touched**.
 2. Picks every lock entry whose source is `somnio-software/somnio-ai-tools` — including skills that are no longer shipped. Third-party skills are never touched.

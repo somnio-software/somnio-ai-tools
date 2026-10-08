@@ -5,6 +5,12 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.4] - 2026-10-08
+
+### Changed
+
+- **`somnio skills remove` also removes the Somnio skills installed by skills.sh.** It used to delete only what `.somnio-skills.json` records, so the copies `npx skills add -g` left in `~/.agents/skills` and their agent links survived it. When the global scope is cleared for all agents (`--global` or "both", no `--agent`), it now runs the same `SkillsShCleaner` as the install commands: the skills.sh plan is listed next to the manifest-tracked skills, one confirmation covers both (`--force` skips it), and the cleanup runs before the manifest removal. Only lock entries attributed to `somnio-software/somnio-ai-tools` go, with their links, canonical copies and the agent folders they empty; third-party skills are untouched. `--verbose` lists every link path in the plan and every removed path. With `--agent` or `--project` the skills.sh copies are kept, since they are global and shared by all agents, and the command says how many were kept. Agent rules and the CLI itself are still only removed by `somnio uninstall --skills`.
+
 ## [3.2.3] - 2026-10-06
 
 ### Changed

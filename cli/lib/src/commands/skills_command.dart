@@ -690,11 +690,18 @@ typedef _RemoveCandidate = ({
 /// removed. Picking skills one by one is what `install` is for — remove is
 /// the "clean this location out" operation.
 ///
+/// When the global scope is cleared for every agent (no `--agent`), the
+/// Somnio skills a skills.sh install left there are removed too, through
+/// [SkillsShCleaner]: their canonical copies are shared by all agents, so
+/// they cannot be removed for a single one, and they are never in a
+/// project scope.
+///
 /// SAFETY GUARANTEE: only skills recorded in a location's
-/// `.somnio-skills.json` manifest are ever deleted. A skill directory the
-/// user wrote by hand, or one a different tool installed, never appears in
-/// that manifest and therefore can never be removed by this command — no
-/// matter what flags are passed.
+/// `.somnio-skills.json` manifest, or attributed to this repo by the
+/// skills.sh lock, are ever deleted. A skill directory the user wrote by
+/// hand, or one a different tool installed, appears in neither and
+/// therefore can never be removed by this command — no matter what flags
+/// are passed.
 class _SkillsRemoveCommand extends Command<int> {
   _SkillsRemoveCommand({required Logger logger}) : _logger = logger {
     argParser
@@ -745,7 +752,9 @@ class _SkillsRemoveCommand extends Command<int> {
       '\n'
       'Only skills recorded in the .somnio-skills.json manifest — i.e. '
       'skills this CLI itself installed — are ever deleted; hand-authored '
-      'skills are never touched.\n'
+      'skills are never touched. Clearing the global scope for all agents '
+      'also removes the Somnio skills installed by skills.sh '
+      '(npx skills add -g).\n'
       '\n'
       'Examples:\n'
       '  somnio skills remove                    # asks global / project / both\n'
@@ -797,8 +806,18 @@ class _SkillsRemoveCommand extends Command<int> {
 
     final candidates = _discoverCandidates(agents, scopes);
 
-    if (candidates.isEmpty) {
+    // skills.sh copies live only in the global scope and are shared by every
+    // agent, so they go only when the global scope is cleared for all agents.
+    final cleaner = SkillsShCleaner();
+    final skillsShPlan = cleaner.plan();
+    final cleanSkillsSh =
+        scopes.contains(InstallScope.global) && agentId == null;
+    if (cleanSkillsSh) skillsShPlan.warnings.forEach(_logger.warn);
+    final removesSkillsSh = cleanSkillsSh && !skillsShPlan.isEmpty;
+
+    if (candidates.isEmpty && !removesSkillsSh) {
       _logger.info('No somnio-installed skills found for the selected scope.');
+      _hintSkippedSkillsSh(skillsShPlan, cleanSkillsSh);
       return ExitCode.success.code;
     }
 
@@ -806,15 +825,26 @@ class _SkillsRemoveCommand extends Command<int> {
     // to clear, not a list of skills. Listing them first keeps that from
     // being a blind destructive step.
     _logger.info('');
-    _logger.info('The following skills will be removed:');
-    for (final candidate in candidates) {
-      _logger.info('  ${_candidateLabel(candidate)}');
+    if (candidates.isNotEmpty) {
+      _logger.info('The following skills will be removed:');
+      for (final candidate in candidates) {
+        _logger.info('  ${_candidateLabel(candidate)}');
+      }
+      _logger.info('');
     }
-    _logger.info('');
+    if (removesSkillsSh) {
+      skillsShPlan.describe(verbose: _verbose).forEach(_logger.info);
+      _logger.info('');
+    }
+    _hintSkippedSkillsSh(skillsShPlan, cleanSkillsSh);
 
     if (!force) {
+      final total = candidates.length + skillsShPlan.skills.length;
       final confirmed = _logger.confirm(
-        'Remove all ${candidates.length} skill(s)?',
+        removesSkillsSh
+            ? 'Remove all $total skill(s)? skills.sh copies are removed '
+                'globally, from all agents.'
+            : 'Remove all ${candidates.length} skill(s)?',
         defaultValue: false,
       );
       if (!confirmed) {
@@ -823,11 +853,46 @@ class _SkillsRemoveCommand extends Command<int> {
       }
     }
 
-    _removeAll(candidates);
-
-    _logger.info('');
-    _logger.success('Removed ${candidates.length} skill(s).');
+    if (removesSkillsSh) _removeSkillsSh(cleaner, skillsShPlan);
+    if (candidates.isNotEmpty) {
+      _removeAll(candidates);
+      _logger.info('');
+      _logger.success('Removed ${candidates.length} skill(s).');
+    }
     return ExitCode.success.code;
+  }
+
+  /// Tells the user why Somnio skills installed by skills.sh were left in
+  /// place when [plan] found some but this run does not clean them up.
+  void _hintSkippedSkillsSh(SkillsShCleanupPlan plan, bool cleanSkillsSh) {
+    if (cleanSkillsSh || plan.isEmpty) return;
+    _logger.info(
+      '${plan.skills.length} Somnio skill(s) installed by skills.sh were '
+      'kept: they are global and shared by all agents. Run '
+      '"somnio skills remove --global" (no --agent) to remove them.',
+    );
+  }
+
+  /// Applies the confirmed skills.sh cleanup [plan] and reports the result.
+  void _removeSkillsSh(SkillsShCleaner cleaner, SkillsShCleanupPlan plan) {
+    final result = cleaner.apply(plan);
+    if (_verbose) {
+      for (final path in [
+        ...result.unlinkedLinks,
+        ...result.deletedCanonicals,
+        ...result.removedDirectories,
+      ]) {
+        _logger.info('  Removed: $path');
+      }
+    }
+    result.warnings.forEach(_logger.warn);
+    final copies = result.deletedCanonicals.length;
+    _logger.success(
+      'Removed ${result.removedSkills.length} Somnio skill(s) installed by '
+      'skills.sh (${result.unlinkedLinks.length} link(s), $copies canonical '
+      '${copies == 1 ? 'copy' : 'copies'}, '
+      '${result.removedDirectories.length} empty folder(s)).',
+    );
   }
 
   /// Finds every skill somnio recorded as installed for [agents] across
