@@ -72,6 +72,8 @@ The CLI installs skills with its own installer (not skills.sh) and offers to rem
 | [Python Health Audit](docs/skills.md#python-health-audit) | `ph` | 13-step project health audit with weighted scoring |
 | [Python Best Practices](docs/skills.md#python-best-practices) | `pp` | Code style, typing, function design, and testing validation |
 | [Angular Best Practices](docs/skills.md#angular-best-practices) | `ap` | Angular 2+ code-quality validation (RxJS, change detection, TS) |
+| [.NET Health Audit](docs/skills.md#net-health-audit) | `dh` | .NET / ASP.NET Core Web API health audit with weighted scoring |
+| [.NET Best Practices](docs/skills.md#net-best-practices) | `dp` | Testing, architecture, SOLID, DTO validation, and error handling validation |
 | [Security Audit](docs/skills.md#security-audit) | `sa` | Framework-agnostic security scan (secrets, deps, SAST) |
 | [ISO 27001 Readiness Audit](docs/skills.md#iso-27001-readiness-audit) | `iso` | Whole-project ISO/IEC 27001:2022 ISMS & Annex A readiness & gap analysis |
 

@@ -286,6 +286,46 @@ Check this Python project against current best practices and flag any violations
 
 ---
 
+## .NET Health Audit
+
+**Aliases:** `dh`, `somnio-dh`
+
+Comprehensive health audit for .NET / ASP.NET Core Web API projects. Evaluates the tech stack (including the .NET support lifecycle and dependency vulnerabilities), architecture (including SOLID compliance and cyclomatic complexity), API design, data layer, testing, code quality, CI/CD, documentation, and AI harness & adoption, with section scores and a weighted overall score.
+
+**Use when:**
+- Onboarding to an existing .NET backend
+- Assessing technical debt or an out-of-support .NET version before an upgrade
+- Running a periodic project health check on an ASP.NET Core service
+
+**Example prompt:**
+```
+Run a full .NET health audit on this project and generate a report.
+```
+
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-dotnet-health-audit.md`
+
+---
+
+## .NET Best Practices
+
+**Aliases:** `dp`, `somnio-dp`
+
+Micro-level .NET / ASP.NET Core code quality validation against team standards. Checks testing quality, architecture compliance, SOLID principles and cyclomatic complexity, code standards, DTO validation, and error handling.
+
+**Use when:**
+- Reviewing a pull request for .NET code quality
+- Enforcing team-wide C# coding standards
+- Validating a feature or service before release
+
+**Example prompt:**
+```
+Check this .NET project against current best practices and flag any violations.
+```
+
+**Output:** Violations report with prioritized action plan, saved to `./reports/<YYYY-MM-DD>-<project>-dotnet-best-practices.md`
+
+---
+
 ## Harness Audit
 
 **Aliases:** `ha`, `somnio-ha`
