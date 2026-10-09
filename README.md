@@ -64,14 +64,14 @@ somnio status          # check the CLI version against each installed skill's st
 | [Harness Audit](docs/skills.md#harness-audit) | `ha` | AI-harness completeness score (CLAUDE.md, rules, hooks, agents) |
 | [Flutter Best Practices](docs/skills.md#flutter-best-practices) | `fp` | Code quality validation against live GitHub standards |
 | [Angular Health Audit](docs/skills.md#angular-health-audit) | `ah` | 13-step modern Angular (2+) health audit with weighted scoring |
-| [NestJS Health Audit](docs/skills.md#nestjs-health-audit) | `nh` | 13-step backend health audit with weighted scoring |
+| [NestJS Health Audit](docs/skills.md#nestjs-health-audit) | `nh` | 14-step backend health audit with weighted scoring |
 | [NestJS Best Practices](docs/skills.md#nestjs-best-practices) | `np` | DTO, architecture, and error handling validation |
 | [SOC 2 Readiness Audit](docs/skills.md#soc-2-readiness-audit) | `s2` | Whole-project SOC 2 Trust Services Criteria readiness & gap analysis |
 | [React Health Audit](docs/skills.md#react-health-audit) | `rh` | 13-step frontend health audit with weighted scoring |
 | [React Best Practices](docs/skills.md#react-best-practices) | `rp` | Component, hooks, state management, and TypeScript validation |
 | [AngularJS Best Practices](docs/skills.md#angularjs-best-practices) | `ajp` | AngularJS 1.x code-quality validation (DI-safety, digest, testing) |
 | [AngularJS Health Audit](docs/skills.md#angularjs-health-audit) | `ajh` | 13-step legacy AngularJS 1.x health audit with weighted scoring |
-| [Python Health Audit](docs/skills.md#python-health-audit) | `ph` | 13-step project health audit with weighted scoring |
+| [Python Health Audit](docs/skills.md#python-health-audit) | `ph` | 14-step project health audit with weighted scoring |
 | [Python Best Practices](docs/skills.md#python-best-practices) | `pp` | Code style, typing, function design, and testing validation |
 | [Angular Best Practices](docs/skills.md#angular-best-practices) | `ap` | Angular 2+ code-quality validation (RxJS, change detection, TS) |
 | [.NET Health Audit](docs/skills.md#net-health-audit) | `dh` | .NET / ASP.NET Core Web API health audit with weighted scoring |
@@ -85,7 +85,6 @@ somnio status          # check the CLI version against each installed skill's st
 |:------|:------------|
 | [Clockify Tracker](docs/skills.md#clockify-tracker) | Log time manually or auto-fill from daily work logs — two modes, full preview before posting |
 | [Workflow Builder](docs/skills.md#workflow-builder) | Custom multi-step AI workflows with parallel execution |
-| [Ship](docs/skills.md#ship) | Automated ship workflow: merge, test, bump, changelog, commit, push, open PR |
 | [Git Branch Format](docs/skills.md#git-branch-format) | Branch naming convention generator |
 | [Git Commit Format](docs/skills.md#git-commit-format) | Conventional Commits message generator |
 | [Dart Model from JSON](docs/skills.md#dart-model-from-json) | Generate Dart model classes from a JSON structure with json_annotation + equatable |
