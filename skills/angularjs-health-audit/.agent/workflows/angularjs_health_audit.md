@@ -1,9 +1,14 @@
 ---
 description: >-
-  Execute a comprehensive AngularJS (Angular 1.x) Project Health Audit. Analyzes
-  tech stack, architecture, services & data flow, testing, code quality, build
-  & asset pipeline, and documentation. Produces a Google Docs-ready report with
-  section scores and weighted overall score.
+  Execute a comprehensive AngularJS (Angular 1.x) Project Health Audit.
+  Analyzes tech stack, module/component architecture, services & data flow,
+  templating & digest hygiene, testing, code quality, build & asset pipeline,
+  and documentation. Produces a shareable Markdown report with section scores
+  and weighted overall score. Use when the user asks to audit an AngularJS /
+  Angular 1 project, run a legacy frontend health check, evaluate a Bower/Grunt
+  codebase, or assess technical debt. Triggers on: 'angularjs audit',
+  'angular 1 audit', 'angularjs health', 'legacy frontend audit', 'bower audit',
+  'project quality check'.
 ---
 
 # AngularJS Project Health Audit

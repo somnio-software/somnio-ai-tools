@@ -3,7 +3,7 @@ name: python-health-audit
 description: >-
   Execute a comprehensive Python Project Health Audit. Analyzes tech stack,
   architecture, API/interface design, data layer, testing, code quality,
-  CI/CD, and documentation. Produces a Google Docs-ready report with section
+  CI/CD, and documentation. Produces a shareable Markdown report with section
   scores and weighted overall score. Use when the user asks to audit a Python
   project, run a health check, evaluate backend quality, or assess technical
   debt. Triggers on: 'python audit', 'python health audit', 'fastapi audit',
@@ -301,7 +301,7 @@ generates the final report.
 
 ## Step 11. Export Final Report
 
-Goal: Save the final Google Docs-ready Markdown report to the reports
+Goal: Save the final shareable Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save

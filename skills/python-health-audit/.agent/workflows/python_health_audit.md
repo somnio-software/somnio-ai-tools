@@ -1,5 +1,13 @@
 ---
-description: Execute a comprehensive Python Project Health Audit. Analyzes tech stack, architecture, API design, data layer, testing, code quality, CI/CD, and documentation. Produces a report with section scores and weighted overall score.
+description: >-
+  Execute a comprehensive Python Project Health Audit. Analyzes tech stack,
+  architecture, API/interface design, data layer, testing, code quality,
+  CI/CD, and documentation. Produces a shareable Markdown report with section
+  scores and weighted overall score. Use when the user asks to audit a Python
+  project, run a health check, evaluate backend quality, or assess technical
+  debt. Triggers on: 'python audit', 'python health audit', 'fastapi audit',
+  'django audit', 'flask audit', 'tech debt assessment', 'python health',
+  'python project quality', 'python quality check', 'python code review'.
 ---
 
 # Python Project Health Audit

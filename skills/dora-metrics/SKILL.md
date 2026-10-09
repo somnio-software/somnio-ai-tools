@@ -185,10 +185,12 @@ python3 scripts/dora_metrics.py --project "Example Project" --out-dir reports
 Available flags:
 - `--config`: path to the config (default: `config/projects.json`).
 - `--project`: exact project name (default: runs all projects in the config).
-- `--out-dir`: if passed, in addition to printing to stdout it saves one
+- `--out-dir`: **recommended whenever a report is wanted** (it stays optional). If passed, in addition to printing to stdout it saves one
   file per repo there — `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable
   file). Note this selects **where** to save, while `--project` selects **what**
-  to measure; the file name comes from the repo, not from the project.
+  to measure; the file name comes from the repo, not from the project. The
+  saved per-repo file is the artifact to share: upload it as written, one file
+  per repo, never merged.
 - `--branch <branch>`: one-off override of `prod_branch` for this run
   (requires `--project`). Does not modify the config — use only for one-off
   tests against a branch different from the configured one.

@@ -2,7 +2,7 @@
 
 # Skills Catalog
 
-Somnio provides audit, workflow, and utility skills. Audit skills run multi-step analysis and produce reports. Utility skills assist with day-to-day Git workflows.
+Somnio provides audit, workflow, and utility skills. Audit skills run multi-step analysis and produce reports. Utility skills assist with day-to-day Git workflows. Before uploading a report anywhere, read [Sharing reports](cli.md#sharing-reports).
 
 ---
 
@@ -10,7 +10,7 @@ Somnio provides audit, workflow, and utility skills. Audit skills run multi-step
 
 **Aliases:** `fh`, `somnio-fh`
 
-Comprehensive Flutter project health audit with 13 analysis steps covering tech stack, architecture, state management, testing, code quality, CI/CD, and documentation. Produces a weighted score and a Google Docs-ready report.
+Comprehensive Flutter project health audit with 13 analysis steps covering tech stack, architecture, state management, testing, code quality, CI/CD, and documentation. Produces a weighted score and a shareable Markdown report.
 
 **Use when:**
 - Onboarding to an existing Flutter codebase
@@ -150,7 +150,7 @@ Run an AngularJS best-practices check on this project and list violations.
 
 **Aliases:** `rh`, `somnio-rh`
 
-Comprehensive React project health audit with 13 analysis steps covering tech stack, architecture, state management, testing, code quality, performance, CI/CD, and documentation. Supports CRA, Vite, Next.js, and Remix. Produces a weighted score and a Google Docs-ready report.
+Comprehensive React project health audit with 13 analysis steps covering tech stack, architecture, state management, testing, code quality, performance, CI/CD, and documentation. Supports CRA, Vite, Next.js, and Remix. Produces a weighted score and a shareable Markdown report.
 
 **Use when:**
 - Onboarding to an existing React or Next.js codebase
@@ -362,7 +362,7 @@ Framework-agnostic security audit with 11 analysis steps. Scans for hardcoded se
 Run a security audit on this project. Check for secrets, vulnerable dependencies, and misconfigurations.
 ```
 
-**Output:** Severity-classified report, saved to `./reports/<YYYY-MM-DD>-<project>-security-audit.md` (+ a `.json` export)
+**Output:** Severity-classified report, saved to `./reports/<YYYY-MM-DD>-<project>-security-audit.md`
 
 ---
 
@@ -626,6 +626,8 @@ Fetches two DORA metrics per project and per repo — **Deployment Frequency** a
 > **Read-only and non-judgmental.** This skill only fetches and reports the numbers — it never ranks, scores, or compares projects or people. Interpreting the data is a separate, deliberate step left to whoever runs it: mixing measurement with evaluation is how metrics stop being useful (Goodhart's Law).
 
 Projects map to their repos in `config/projects.json` (mono-repo or multi-repo), with each repo declaring its provider: `github` (default), `gitlab`, or `bitbucket`. A single project can mix providers. If a project isn't in the config yet, the skill asks for its repos and provider(s) instead of guessing, and offers to add it.
+
+**Invocation:** when a report is wanted, run the script with `--out-dir reports`; the saved per-repo file (`YYYY-MM-DD-<repo>-dora-metrics.md`) is the artifact to share, unchanged. See [Sharing reports](cli.md#sharing-reports).
 
 **Example prompts:**
 ```

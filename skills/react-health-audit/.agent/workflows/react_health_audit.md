@@ -2,8 +2,11 @@
 description: >-
   Execute a comprehensive React Project Health Audit. Analyzes tech stack,
   architecture, state management, testing, code quality, performance, CI/CD,
-  and documentation. Produces a Google Docs-ready report with section scores
-  and weighted overall score.
+  and documentation. Produces a shareable Markdown report with section scores
+  and weighted overall score. Use when the user asks to audit a React project,
+  run a health check, evaluate frontend quality, or assess technical debt.
+  Triggers on: 'react audit', 'health audit', 'react health', 'frontend audit',
+  'next.js audit', 'vite audit', 'project quality check'.
 ---
 
 # React Project Health Audit

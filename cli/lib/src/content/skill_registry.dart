@@ -18,7 +18,7 @@ class SkillRegistry {
       description: 'Execute a comprehensive Flutter Project Health Audit. '
           'Analyzes tech stack, architecture, state management, testing, '
           'code quality, CI/CD, and documentation. Produces a '
-          'Google Docs-ready report with section scores and weighted '
+          'shareable Markdown report with section scores and weighted '
           'overall score.',
       planRelativePath: 'skills/flutter-health-audit/SKILL.md',
       rulesDirectory: 'skills/flutter-health-audit/references',
@@ -88,7 +88,7 @@ class SkillRegistry {
       description: 'Execute a comprehensive NestJS Project Health Audit. '
           'Analyzes tech stack, architecture, API design, data layer, '
           'testing, code quality, CI/CD, and documentation. '
-          'Produces a Google Docs-ready report with section scores and '
+          'Produces a shareable Markdown report with section scores and '
           'weighted overall score.',
       planRelativePath: 'skills/nestjs-health-audit/SKILL.md',
       rulesDirectory: 'skills/nestjs-health-audit/references',
@@ -159,7 +159,7 @@ class SkillRegistry {
       description: 'Execute a comprehensive React Project Health Audit. '
           'Analyzes tech stack, architecture, state management, testing, '
           'code quality, CI/CD, and documentation. Produces a '
-          'Google Docs-ready report with section scores and weighted '
+          'shareable Markdown report with section scores and weighted '
           'overall score.',
       planRelativePath: 'skills/react-health-audit/SKILL.md',
       rulesDirectory: 'skills/react-health-audit/references',
@@ -213,7 +213,7 @@ class SkillRegistry {
       description: 'Execute a comprehensive Python Project Health Audit. '
           'Analyzes tech stack, architecture, API/interface design, '
           'data layer, testing, code quality, CI/CD, and documentation. '
-          'Produces a Google Docs-ready report with section scores and '
+          'Produces a shareable Markdown report with section scores and '
           'weighted overall score.',
       planRelativePath: 'skills/python-health-audit/SKILL.md',
       rulesDirectory: 'skills/python-health-audit/references',
@@ -266,7 +266,7 @@ class SkillRegistry {
       description: 'Execute a comprehensive .NET / ASP.NET Core Project Health '
           'Audit. Analyzes tech stack, architecture, API design, data '
           'layer, testing, code quality, CI/CD, and documentation. '
-          'Produces a Google Docs-ready report with section scores and '
+          'Produces a shareable Markdown report with section scores and '
           'weighted overall score.',
       planRelativePath: 'skills/dotnet-health-audit/SKILL.md',
       rulesDirectory: 'skills/dotnet-health-audit/references',

@@ -11,7 +11,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Path | What lives here |
 |------|-----------------|
 | `cli/` | The Somnio CLI — a Dart 3 package (`pubspec.yaml`, `bin/somnio.dart`). The only real codebase. |
-| `skills/` | Markdown skill bundles (one dir each: `SKILL.md` + `references/` + `assets/`). Distributed via skills.sh. |
+| `skills/` | Markdown skill bundles (one dir each: `SKILL.md` + `references/` + `assets/`). Distributed via the Somnio CLI. |
 | `agent-rules/` | Canonical coding-standard rules (`rules/<stack>/*.md`) + generated per-agent adapters (`adapters/`). |
 | `commands/`, `hooks/` | Claude Code slash-command markdown and shell hooks (e.g. `hooks/work-log-stop.sh`). |
 | `plugins/`, `.claude-plugin/` | Claude Desktop App (Cowork) plugin packages + `marketplace.json`. |

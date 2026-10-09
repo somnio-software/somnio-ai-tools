@@ -307,7 +307,7 @@ generated report's structure before export.
 
 ## Step 10. Export Final Report
 
-Goal: Save the final Google Docs-ready Markdown report to the reports
+Goal: Save the final shareable Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save

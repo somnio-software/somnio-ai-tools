@@ -3,7 +3,7 @@ name: flutter-health-audit
 description: >-
   Execute a comprehensive Flutter Project Health Audit. Analyzes tech stack,
   architecture, state management, testing, code quality, CI/CD, and
-  documentation. Produces a Google Docs-ready report with section scores and
+  documentation. Produces a shareable Markdown report with section scores and
   weighted overall score. Use when the user asks to audit a Flutter project,
   run a health check, evaluate project quality, or assess technical debt.
   Triggers on: 'flutter audit', 'health audit', 'project audit', 'flutter
@@ -295,7 +295,7 @@ a duplicate of the scorecard and has been removed):
 
 ## Step 10. Export Final Report
 
-Goal: Save the final Google Docs-ready Markdown report to the reports
+Goal: Save the final shareable Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save

@@ -6,7 +6,6 @@
 
 Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, React, Python (FastAPI, Django, Flask), and more — directly from your AI coding assistant.
 
-[![Install Somnio Skills](https://img.shields.io/badge/skills.sh-Install%20Somnio%20Skills-blue?style=for-the-badge)](https://skills.sh/somnio-software/somnio-ai-tools)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
 [![Flutter](https://img.shields.io/badge/Flutter-02569B?style=flat-square&logo=flutter&logoColor=white)](#)
@@ -21,11 +20,14 @@ Run comprehensive health audits, security scans, and best-practices checks on Fl
 
 ## Quick Install
 
+Install the Somnio CLI (requires the Dart SDK 3.0+), then let it install the skills:
+
 ```bash
-npx skills add somnio-software/somnio-ai-tools
+dart pub global activate -sgit https://github.com/somnio-software/somnio-ai-tools.git --git-path cli
+somnio setup
 ```
 
-> Works with Claude Code, Cursor, Windsurf, Copilot, and [40+ other agents](https://agentskills.io).
+The CLI installs skills with its own installer (not skills.sh), records them in a manifest, and offers to remove Somnio skills previously installed by skills.sh, so `somnio skills update` can keep everything current. It also runs the multi-step audits (`somnio run <alias>`). Reports you share must come from `somnio run` or a current install; see [Sharing reports](docs/cli.md#sharing-reports).
 
 <details>
 <summary><strong>Claude Desktop App (Cowork plugin)</strong></summary>
@@ -33,18 +35,6 @@ npx skills add somnio-software/somnio-ai-tools
 1. Open **Claude Desktop App** → **Cowork** tab → **Customize** → **Explore Plugins**
 2. Go to **Personal**, click **+**, paste `somnio-software/somnio-ai-tools`
 3. Select which plugins to install from the marketplace
-
-</details>
-
-<details>
-<summary><strong>Somnio CLI</strong> (includes multi-step audit runner)</summary>
-
-```bash
-dart pub global activate -sgit https://github.com/somnio-software/somnio-ai-tools.git --git-path cli
-somnio setup
-```
-
-The CLI installs skills with its own installer (not skills.sh) and offers to remove Somnio skills previously installed by skills.sh, so `somnio skills update` can keep everything current.
 
 </details>
 
@@ -184,7 +174,7 @@ Somnio ships as a Claude Desktop App plugin (Cowork):
 
 ### Utility CLIs
 
-Separate binaries that add commands to Claude Code. These are not marketplace plugins and do not install via `npx skills add`. You install each one directly.
+Separate binaries that add commands to Claude Code. These are not marketplace plugins. You install each one directly.
 
 | Tool | What it does |
 |:-----|:-------------|

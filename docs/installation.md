@@ -2,39 +2,48 @@
 
 # Installation
 
-Somnio skills can be installed through three methods. Choose the one that fits your workflow.
+Somnio skills can be installed through two methods. Choose the one that fits your workflow.
 
 ## Prerequisites
 
 | Method | Requires |
 |--------|----------|
-| skills.sh | Node.js / npx |
-| Claude Desktop App (Cowork) | Claude Desktop App |
 | Somnio CLI | Dart SDK 3.0+ |
+| Claude Desktop App (Cowork) | Claude Desktop App |
 
 ---
 
-## Option 1: skills.sh (recommended)
+## Option 1: Somnio CLI (recommended)
 
-Works with Claude Code, Cursor, Windsurf, Copilot, and [40+ other agents](https://agentskills.io).
-
-```bash
-npx skills add somnio-software/somnio-ai-tools
-```
-
-This installs all skills globally into each detected agent's skill directory (e.g., `~/.claude/skills/`, `~/.cursor/commands/`).
-
-To update:
+The Dart CLI includes a multi-step audit runner that orchestrates analysis across fresh AI contexts. It installs skills with its own installer and records them in a `.somnio-skills.json` manifest so `somnio skills update` can keep them current.
 
 ```bash
-npx skills add somnio-software/somnio-ai-tools
+dart pub global activate -sgit https://github.com/somnio-software/somnio-ai-tools.git --git-path cli
 ```
 
-To remove:
+Then run the setup wizard:
 
 ```bash
-npx skills remove somnio-software/somnio-ai-tools
+somnio setup
 ```
+
+`somnio setup` detects installed AI CLIs, offers to install missing ones, then installs all skills globally to every detected agent.
+
+> **Previously installed Somnio skills with skills.sh?** `somnio setup`, `somnio install`, `somnio skills install` and `somnio skills update` find the Somnio skills skills.sh installed globally and offer to remove them from all agents (after showing what will go and which of them the command will not reinstall), so they do not linger as stale duplicates. Third-party skills.sh skills are not touched. To uninstall an old skills.sh install by hand instead, run `npx skills remove somnio-software/somnio-ai-tools`. Preview with `somnio skills update --dry-run --verbose`; details in the [CLI Reference](cli.md#cleanup-of-skillssh-installs).
+
+### Setup flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip all confirmation prompts |
+| `--skip-cli` | | Skip CLI detection and installation |
+| `--verbose` | `-v` | Show detailed output, including every skills.sh path removed |
+
+`--legacy` is deprecated: it is accepted but has no effect.
+
+See the [CLI Reference](cli.md) for full usage.
+
+> **Reports for the shared pipeline.** Reports must come from `somnio run`, or from an install kept current with `somnio skills update`. `somnio run` refuses to start when the installed skills are stale (see [Installed-skills version check](cli.md#installed-skills-version-check)). Do not rename or convert the files; see [Sharing reports](cli.md#sharing-reports).
 
 ---
 
@@ -67,38 +76,6 @@ See [Plugin System](plugins.md) for details on each plugin.
 2. Click the **three dots** (⋯) next to the plugin name
 3. Click **Search for updates**
 4. Uninstall and re-install the plugin to apply the update
-
----
-
-## Option 3: Somnio CLI
-
-The Dart CLI includes a multi-step audit runner that orchestrates analysis across fresh AI contexts. It installs skills with its own installer — not skills.sh — and records them in a `.somnio-skills.json` manifest so `somnio skills update` can keep them current.
-
-```bash
-dart pub global activate -sgit https://github.com/somnio-software/somnio-ai-tools.git --git-path cli
-```
-
-Then run the setup wizard:
-
-```bash
-somnio setup
-```
-
-`somnio setup` detects installed AI CLIs, offers to install missing ones, then installs all skills globally to every detected agent.
-
-> **Switching from skills.sh?** Use one channel or the other. `somnio setup`, `somnio install`, `somnio skills install` and `somnio skills update` find the Somnio skills skills.sh installed globally and offer to remove them from all agents (after showing what will go and which of them the command will not reinstall), so they do not linger as stale duplicates. Third-party skills.sh skills are not touched. Preview with `somnio skills update --dry-run --verbose`; details in the [CLI Reference](cli.md#cleanup-of-skillssh-installs).
-
-### Setup flags
-
-| Flag | Short | Description |
-|------|-------|-------------|
-| `--force` | `-f` | Skip all confirmation prompts |
-| `--skip-cli` | | Skip CLI detection and installation |
-| `--verbose` | `-v` | Show detailed output, including every skills.sh path removed |
-
-`--legacy` is deprecated: it is accepted but has no effect.
-
-See the [CLI Reference](cli.md) for full usage.
 
 ---
 

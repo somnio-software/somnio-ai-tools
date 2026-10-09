@@ -5,10 +5,10 @@ description: >-
   Analyzes tech stack (including .NET support lifecycle and dependency
   vulnerabilities), architecture (including SOLID compliance and cyclomatic
   complexity), API design, data layer, testing, code quality, CI/CD,
-  documentation, and AI harness & adoption. Produces a Google Docs-ready report with section scores
-  and weighted overall score. Use when the user asks to audit
-  a .NET project, run a health check, evaluate ASP.NET Core quality, or
-  assess technical debt. Triggers on: 'dotnet audit', 'health audit',
+  documentation, and AI harness & adoption. Produces a shareable Markdown
+  report with section scores and weighted overall score. Use when the user
+  asks to audit a .NET project, run a health check, evaluate ASP.NET Core
+  quality, or assess technical debt. Triggers on: 'dotnet audit', 'health audit',
   '.net audit', 'aspnet audit', 'backend audit', 'csharp audit',
   'webapi audit', 'project quality check'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent, Task
@@ -356,7 +356,7 @@ Steps 3, 7, and 10 deepen existing sections, they do not add new ones):
 
 ## Step 14. Export Final Report
 
-Goal: Save the final Google Docs-ready Markdown report to the reports
+Goal: Save the final shareable Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save

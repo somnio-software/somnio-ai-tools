@@ -3,7 +3,7 @@ name: react-health-audit
 description: >-
   Execute a comprehensive React Project Health Audit. Analyzes tech stack,
   architecture, state management, testing, code quality, performance, CI/CD,
-  and documentation. Produces a Google Docs-ready report with section scores
+  and documentation. Produces a shareable Markdown report with section scores
   and weighted overall score. Use when the user asks to audit a React project,
   run a health check, evaluate frontend quality, or assess technical debt.
   Triggers on: 'react audit', 'health audit', 'react health', 'frontend audit',
@@ -289,7 +289,7 @@ generated report's structure before export.
 
 ## Step 10. Export Final Report
 
-Goal: Save the final Google Docs-ready Markdown report to the reports
+Goal: Save the final shareable Markdown report to the reports
 directory.
 
 **Action**: Create the reports directory if it doesn't exist and save
