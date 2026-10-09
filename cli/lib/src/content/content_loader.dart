@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
+import '../utils/bundle_file_filter.dart';
 import 'skill_bundle.dart';
 
 /// Parsed rule data from a YAML cursor rule file or Markdown reference file.
@@ -209,9 +210,10 @@ class ContentLoader {
 
     final files = <String>[];
     for (final entity in rulesDir.listSync(recursive: true)) {
-      if (entity is File) {
-        files.add(p.relative(entity.path, from: rulesDir.path));
-      }
+      if (entity is! File) continue;
+      final relativePath = p.relative(entity.path, from: rulesDir.path);
+      if (isPythonBytecodeCache(relativePath)) continue;
+      files.add(relativePath);
     }
     files.sort();
     return files;

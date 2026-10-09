@@ -834,6 +834,50 @@ void main() {
       expect(out, contains('Body.'));
     });
 
+    test('skillDir: skips __pycache__ and bytecode files in assetDirectories',
+        () {
+      final skill = seedWorkflow(name: 'dora-pyc');
+      _writeFile(repoRoot, 'skills/dora-pyc/scripts/dora_metrics.py', 'ok\n');
+      final pycDir = Directory(
+        p.join(repoRoot, 'skills/dora-pyc/scripts/__pycache__'),
+      )..createSync(recursive: true);
+      // 0xFF / 0xFE are invalid UTF-8, like a real compiled .pyc.
+      File(p.join(pycDir.path, 'x.cpython-314.pyc'))
+          .writeAsBytesSync([0xFF, 0xFE, 0x00, 0x80]);
+      File(p.join(repoRoot, 'skills/dora-pyc/scripts/stray.pyo'))
+          .writeAsBytesSync([0xFF, 0xFE]);
+      final withAssets = WorkflowSkill(
+        id: skill.id,
+        name: skill.name,
+        displayName: skill.displayName,
+        description: skill.description,
+        planRelativePath: skill.planRelativePath,
+        assetDirectories: ['skills/dora-pyc/scripts'],
+      );
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final count = installer.installWorkflowSkills([withAssets]);
+
+      expect(count, 1);
+      final scriptsDir = p.join(tmp.path, 'install', 'dora-pyc', 'scripts');
+      expect(File(p.join(scriptsDir, 'dora_metrics.py')).readAsStringSync(),
+          'ok\n');
+      expect(
+          Directory(p.join(scriptsDir, '__pycache__')).existsSync(), isFalse);
+      final leaked = Directory(p.join(tmp.path, 'install'))
+          .listSync(recursive: true)
+          .map((e) => e.path)
+          .where((e) =>
+              e.contains('__pycache__') ||
+              e.endsWith('.pyc') ||
+              e.endsWith('.pyo'));
+      expect(leaked, isEmpty);
+    });
+
     test('skillDir: copies assetDirectories verbatim alongside SKILL.md', () {
       final skill = seedWorkflow(name: 'dora-metrics');
       _writeFile(repoRoot, 'skills/dora-metrics/scripts/dora_metrics.py',

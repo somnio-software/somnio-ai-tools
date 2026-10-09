@@ -8,6 +8,7 @@ import '../content/skill_bundle.dart';
 import '../content/workflow_skill.dart';
 import '../transformers/claude_transformer.dart';
 import '../transformers/transformer.dart';
+import '../utils/bundle_file_filter.dart';
 import '../utils/platform_utils.dart';
 import '../utils/yaml_frontmatter.dart';
 import 'installer.dart';
@@ -409,6 +410,8 @@ class AgentInstaller extends Installer {
   /// skill directory (e.g. `scripts/`, `config/`), preserving their relative
   /// layout under `<baseDir>/<skill.name>/<dirBaseName>/...`.
   ///
+  /// Python bytecode caches (`__pycache__/`, `*.pyc`, `*.pyo`) are skipped.
+  ///
   /// Silently skips directories that don't exist in the source repo — a
   /// skill can list a directory it hasn't populated yet without breaking
   /// install.
@@ -421,6 +424,7 @@ class AgentInstaller extends Installer {
       for (final entity in sourceDir.listSync(recursive: true)) {
         if (entity is! File) continue;
         final relativePath = p.relative(entity.path, from: sourceDir.path);
+        if (isPythonBytecodeCache(relativePath)) continue;
         _writeFile(
           baseDir,
           p.join(baseDir, skill.name, dirName, relativePath),
