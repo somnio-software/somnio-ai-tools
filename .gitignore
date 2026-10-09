@@ -66,6 +66,7 @@ reports_history/
 # Dart / CLI build artifacts
 cli/.dart_tool/
 cli/pubspec.lock
+cli/.pub-cache/
 cli/.packages
 cli/coverage/
 
