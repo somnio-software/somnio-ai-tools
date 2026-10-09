@@ -398,9 +398,10 @@ class SkillRegistry {
       displayName: 'DORA Metrics',
       description:
           'Fetches DORA Deployment Frequency and Lead Time for Changes from '
-          'the GitHub API (never local git), per project and per repo. Reads '
-          'a project-to-repos mapping, prompts for missing projects instead '
-          'of guessing, verifies GitHub auth, and reports both metrics with '
+          'the GitHub, GitLab or Bitbucket API (never local git), per '
+          'project and per repo. Reads a project-to-repos mapping, prompts '
+          'for missing projects instead of guessing, verifies provider auth, '
+          'and reports both metrics with '
           'process-gap warnings. Use when asked to run or update DORA '
           'metrics, measure deployment frequency or lead time for a '
           'project, or generate the biweekly metrics report.',
