@@ -144,7 +144,7 @@ void main() {
           resolver.verifyInstallation(claude, tmpDir.path, ['architecture']);
       expect(error, isNotNull);
       expect(error, contains('Rule file not found'));
-      expect(error, contains('somnio update'));
+      expect(error, contains('somnio skills update'));
     });
 
     test('returns null when dir and first rule file exist', () {

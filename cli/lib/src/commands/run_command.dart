@@ -17,11 +17,13 @@ import '../runner/project_validator.dart';
 import '../runner/rule_names.dart';
 import '../runner/run_config.dart';
 import '../runner/step_executor.dart';
+import '../runner/template_version.dart';
 import '../utils/command_helpers.dart';
 import '../utils/repo_name.dart';
 import '../utils/report_naming.dart';
 import '../utils/step_timeout_parser.dart';
 import '../utils/usage_summary.dart';
+import '../version.dart';
 
 /// Executes a health audit or security audit step-by-step using an AI CLI.
 ///
@@ -200,13 +202,7 @@ class RunCommand extends Command<int> {
       );
     }
 
-    // 3. Run pre-flight checks
     final noPreflight = argResults!['no-preflight'] as bool;
-    var preflightResult = PreflightResult();
-    if (!noPreflight) {
-      final preflight = PreflightRunner(logger: _logger);
-      preflightResult = await preflight.run(techPrefix, cwd);
-    }
 
     // 4. Resolve AI agent
     final agentFlag = argResults!['agent'] as String?;
@@ -331,7 +327,7 @@ class RunCommand extends Command<int> {
       projectName: projectName,
       noPreflight: noPreflight,
       agentResolver: agentResolver,
-      preflightResult: preflightResult,
+      preflightResult: null,
       stepTimeout: stepTimeout,
     );
     final aborted = result.aborted;
@@ -402,14 +398,6 @@ class RunCommand extends Command<int> {
   }) async {
     final techPrefix = bundle.techPrefix;
 
-    // Run pre-flight if not provided
-    var result = preflightResult ?? PreflightResult();
-    if (preflightResult == null && !noPreflight) {
-      final preflight = PreflightRunner(logger: _logger);
-      result = await preflight.run(techPrefix, cwd);
-    }
-    final preflightResultForSteps = result;
-
     // Resolve rule paths and verify installation
     final planSubDir = bundle.planSubDir;
     final templateFile = _templateFileFromBundle(bundle);
@@ -426,6 +414,24 @@ class RunCommand extends Command<int> {
       planSubDir,
       templateFile,
     );
+
+    final versionError = checkInstalledTemplate(
+      skillName: bundle.name,
+      templatePath: templatePath,
+      cliVersion: packageVersion,
+    );
+    if (versionError != null) {
+      _logger.err(versionError);
+      return _ExecuteBundleResult(aborted: true);
+    }
+
+    // Run pre-flight only once the installed skills are known to be current.
+    var result = preflightResult ?? PreflightResult();
+    if (preflightResult == null && !noPreflight) {
+      final preflight = PreflightRunner(logger: _logger);
+      result = await preflight.run(techPrefix, cwd);
+    }
+    final preflightResultForSteps = result;
 
     final loader = ContentLoader(repoRoot);
     final planContent = loader.loadPlan(bundle);

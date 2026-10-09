@@ -115,7 +115,7 @@ class AgentResolver {
     );
     if (!firstRule.existsSync()) {
       return 'Rule file not found: ${firstRule.path}\n'
-          'Skills may be outdated. Run "somnio update" to reinstall.';
+          'Skills may be outdated. Run "somnio skills update" to reinstall.';
     }
 
     return null;

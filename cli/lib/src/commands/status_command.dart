@@ -9,7 +9,10 @@ import '../agents/agent_config.dart';
 import '../agents/agent_registry.dart';
 import '../agents/installed_skill_names.dart';
 import '../content/skill_registry.dart';
+import '../runner/agent_resolver.dart';
+import '../runner/template_version.dart';
 import '../utils/platform_utils.dart';
+import '../version.dart';
 
 /// Shows the current installation status of all agents.
 ///
@@ -101,6 +104,8 @@ class StatusCommand extends Command<int> {
   @override
   Future<int> run() async {
     _logger.info('');
+    _logger.info('Somnio CLI v$packageVersion');
+    _logger.info('');
 
     _logger.info('CLI Availability');
     _logger.info('');
@@ -172,7 +177,15 @@ class StatusCommand extends Command<int> {
       return;
     }
 
-    final headers = ['Agent', 'Status', 'Tech', 'Items', 'Rules', 'Location'];
+    final headers = [
+      'Agent',
+      'Status',
+      'Tech',
+      'Items',
+      'Rules',
+      'Stamp',
+      'Location',
+    ];
 
     final allRows = <List<String>>[];
     for (final agent in agents) {
@@ -209,6 +222,7 @@ class StatusCommand extends Command<int> {
           '-',
           '-',
           '-',
+          '-',
           'Run: somnio install --agent ${agent.agentId}',
         ],
       ];
@@ -227,10 +241,11 @@ class StatusCommand extends Command<int> {
           t.tech,
           items,
           rules,
+          t.stamp,
           agent.location,
         ]);
       } else {
-        rows.add(['', '', t.tech, items, rules, '']);
+        rows.add(['', '', t.tech, items, rules, t.stamp, '']);
       }
     }
     return rows;
@@ -357,6 +372,7 @@ class StatusCommand extends Command<int> {
       agentId: agent.id,
       location: '$location/',
       techs: _buildTechList(
+        agent,
         techMap,
         label,
         pluralLabel,
@@ -367,7 +383,39 @@ class StatusCommand extends Command<int> {
 
   // ── Shared helpers ───────────────────────────────────────────────────
 
+  /// Describes the template stamps installed for [tech] under [agent],
+  /// marking any that differ from the CLI version.
+  String stampFor(AgentConfig agent, String tech) {
+    final resolver = AgentResolver();
+    final stamps = <String?>[];
+    for (final bundle in SkillRegistry.skills) {
+      if (bundle.techDisplayName != tech || bundle.templatePath == null) {
+        continue;
+      }
+      final path = resolver.templatePath(
+        agent,
+        bundle.name,
+        bundle.planSubDir,
+        bundle.templatePath!.split('/').last,
+      );
+      if (!File(path).existsSync()) {
+        // A bundle whose rules are installed but whose template is gone is
+        // a damaged install that `somnio run` would refuse.
+        final rules = resolver.ruleBasePath(
+          agent,
+          bundle.name,
+          bundle.planSubDir,
+        );
+        if (Directory(rules).existsSync()) stamps.add(null);
+        continue;
+      }
+      stamps.add(readTemplateVersionFromFile(path));
+    }
+    return formatInstalledStamps(stamps, packageVersion);
+  }
+
   List<_TechData> _buildTechList(
+    AgentConfig agent,
     Map<String, List<int>> techMap,
     String singular,
     String plural,
@@ -381,6 +429,7 @@ class StatusCommand extends Command<int> {
         itemLabel: items == 1 ? singular : plural,
         ruleCount: e.value[1],
         ruleExt: ruleExt,
+        stamp: stampFor(agent, e.key),
       );
     }).toList()
       ..sort((a, b) => a.tech.compareTo(b.tech));
@@ -466,6 +515,7 @@ class _TechData {
     required this.itemLabel,
     required this.ruleCount,
     required this.ruleExt,
+    required this.stamp,
   });
 
   final String tech;
@@ -473,4 +523,5 @@ class _TechData {
   final String itemLabel;
   final int ruleCount;
   final String ruleExt;
+  final String stamp;
 }
