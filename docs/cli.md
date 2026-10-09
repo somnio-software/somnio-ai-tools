@@ -38,7 +38,6 @@ somnio -q status      # Quiet mode (suppress banner)
 | `somnio uninstall` | Remove the CLI, optionally with the installed skills |
 | `somnio rules` | Install coding-standard rules for all detected agents |
 | `somnio workflow` | Create, configure, and run custom workflows |
-| `somnio quote` | Display a random motivational quote |
 
 ### somnio hooks
 

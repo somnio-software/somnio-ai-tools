@@ -1,8 +1,6 @@
 import 'dart:io' as io;
 import 'dart:math';
 
-import 'quotes.dart';
-
 /// RGB color for gradient calculations.
 class Rgb {
   const Rgb(this.r, this.g, this.b);
@@ -22,7 +20,6 @@ const gradientStops = <Rgb>[
 ];
 
 const _dimColor = Rgb(40, 40, 50);
-const _quoteColor = Rgb(100, 130, 220);
 
 // ---------------------------------------------------------------------------
 // ASCII art — figlet "Somnio" + SOFTWARE subtitle
@@ -122,14 +119,11 @@ void _renderFrame({
 // ---------------------------------------------------------------------------
 // Static fallback (no color, no animation)
 // ---------------------------------------------------------------------------
-void _printStaticBanner(io.IOSink out, List<String> lines, SomnioQuote quote) {
+void _printStaticBanner(io.IOSink out, List<String> lines) {
   out.writeln();
   for (final line in lines) {
     out.writeln(line);
   }
-  out.writeln();
-  out.writeln('  "${quote.text}"');
-  out.writeln('     \u2014 ${quote.author}');
   out.writeln();
 }
 
@@ -143,7 +137,6 @@ void _printStaticBanner(io.IOSink out, List<String> lines, SomnioQuote quote) {
 /// or when stdout is not a TTY (e.g. piped output, CI).
 void printBanner({
   required String version,
-  required SomnioQuote quote,
   io.Stdout? stdout,
 }) {
   final out = stdout ?? io.stdout;
@@ -160,7 +153,7 @@ void printBanner({
   // ── Terminal capability check ──────────────────────────────────────────
   final supportsAnsi = out.hasTerminal && out.supportsAnsiEscapes;
   if (!supportsAnsi) {
-    _printStaticBanner(out, lines, quote);
+    _printStaticBanner(out, lines);
     return;
   }
 
@@ -173,10 +166,5 @@ void printBanner({
     wavefrontPos: maxWidth + 20, // fully revealed
   );
 
-  // ── Quote (single color) ──────────────────────────────────────────────
-  final qc = _fg(_quoteColor.r, _quoteColor.g, _quoteColor.b);
-  out.writeln();
-  out.writeln('  $qc"${quote.text}"$_reset');
-  out.writeln('  $qc   \u2014 ${quote.author}$_reset');
   out.writeln();
 }

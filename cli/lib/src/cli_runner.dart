@@ -7,7 +7,6 @@ import 'commands/add_command.dart';
 import 'commands/commands_command.dart';
 import 'commands/hooks_command.dart';
 import 'commands/install_command.dart';
-import 'commands/quote_command.dart';
 import 'commands/rules_command.dart';
 import 'commands/run_command.dart';
 import 'commands/setup_command.dart';
@@ -17,7 +16,6 @@ import 'commands/uninstall_command.dart';
 import 'commands/update_command.dart';
 import 'commands/workflow_command.dart';
 import 'utils/banner.dart';
-import 'utils/quotes.dart';
 import 'version.dart';
 
 /// The main CLI runner for the Somnio tool.
@@ -48,7 +46,6 @@ class SomnioCliRunner extends CommandRunner<int> {
     addCommand(RulesCommand(logger: _logger));
     addCommand(SkillsCommand(logger: _logger));
     addCommand(UpdateCommand(logger: _logger));
-    addCommand(QuoteCommand());
     addCommand(RunCommand(logger: _logger));
     addCommand(SetupCommand(logger: _logger));
     addCommand(StatusCommand(logger: _logger));
@@ -96,7 +93,6 @@ class SomnioCliRunner extends CommandRunner<int> {
   }
 
   void _printBanner() {
-    final quote = getRandomQuote();
-    printBanner(version: version, quote: quote);
+    printBanner(version: version);
   }
 }
