@@ -29,6 +29,18 @@ somnio setup
 
 The CLI installs skills with its own installer (not skills.sh), records them in a manifest, and offers to remove Somnio skills previously installed by skills.sh, so `somnio skills update` can keep everything current. It also runs the multi-step audits (`somnio run <alias>`). Reports you share must come from `somnio run` or a current install; see [Sharing reports](docs/cli.md#sharing-reports).
 
+### Keeping up to date
+
+The CLI and the installed skills update separately. Run both after every release:
+
+```bash
+somnio update          # update the CLI binary; prints "CLI updated to vX.Y.Z"
+somnio skills update   # refresh installed skills; lists the skills it updated
+somnio status          # check the CLI version against each installed skill's stamp
+```
+
+`somnio run` refuses to start when the installed skills were stamped by a different CLI version, and tells you to run `somnio skills update` first.
+
 <details>
 <summary><strong>Claude Desktop App (Cowork plugin)</strong></summary>
 
