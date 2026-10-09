@@ -4,6 +4,12 @@ import 'dart:io';
 import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
+import '../utils/activated_version.dart';
+
+/// Runs [executable] with [arguments]; mirrors [Process.run] for injection.
+typedef ProcessRunner = Future<ProcessResult> Function(
+    String executable, List<String> arguments);
+
 /// Updates the Somnio CLI binary itself to the latest version.
 ///
 /// This command used to also clean up and reinstall every skill across all
@@ -11,7 +17,9 @@ import 'package:mason_logger/mason_logger.dart';
 /// update`. Keeping this command scoped to only the CLI binary means it can
 /// run quickly and safely without touching any agent's skill installations.
 class UpdateCommand extends Command<int> {
-  UpdateCommand({required Logger logger}) : _logger = logger {
+  UpdateCommand({required Logger logger, ProcessRunner? processRunner})
+      : _logger = logger,
+        _runProcess = processRunner ?? Process.run {
     argParser.addFlag(
       'verbose',
       abbr: 'v',
@@ -21,6 +29,7 @@ class UpdateCommand extends Command<int> {
   }
 
   final Logger _logger;
+  final ProcessRunner _runProcess;
 
   static const _repoUrl = 'https://github.com/somnio-software/somnio-ai-tools';
 
@@ -37,7 +46,7 @@ class UpdateCommand extends Command<int> {
 
     final updateProgress = _logger.progress('Updating somnio CLI');
     try {
-      final result = await Process.run('dart', [
+      final result = await _runProcess('dart', [
         'pub',
         'global',
         'activate',
@@ -69,7 +78,9 @@ class UpdateCommand extends Command<int> {
         );
         return ExitCode.software.code;
       }
-      updateProgress.complete('CLI updated');
+      // The running binary is still the old one, so the new version comes from
+      // pub's own output, never from packageVersion.
+      updateProgress.complete(updateSuccessMessage(result.stdout as String));
     } catch (e) {
       updateProgress.fail('Failed to update CLI: $e');
       return ExitCode.software.code;
