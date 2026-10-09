@@ -66,6 +66,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import troubleshooting  # noqa: E402  (sibling module, loaded by path so the script stays runnable from anywhere)
 import practice_guidance  # noqa: E402  (sibling module, same reason)
 
+# Version of the Somnio CLI this script ships with. Kept in sync with
+# `packageVersion` in cli/lib/src/version.dart by `dart run tool/stamp_version.dart`
+# (run from cli/) and checked by cli/test/src/content/version_stamp_test.dart.
+SOMNIO_VERSION = "3.2.5"
+
 API_ROOT = "https://api.github.com"
 # GitLab REST v4 (https://docs.gitlab.com/api/rest/). A repo's `api_base`
 # replaces it for a self-hosted instance, so it is the full API root
