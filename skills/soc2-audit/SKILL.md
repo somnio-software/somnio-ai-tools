@@ -399,7 +399,7 @@ The orchestrator reads this SKILL.md for scope context, then fans out to evidenc
 | `agents/access-analyzer.md` | mid | `references/access-management.md` (step 3, family C) + `references/data-protection.md` (step 4, family D) | `reports/.artifacts/soc2-audit/step_03_soc2_access_management.md`, `reports/.artifacts/soc2-audit/step_04_soc2_data_protection.md` |
 | `agents/pipeline-analyzer.md` | mid | `references/change-management.md` (step 5, family E) + `references/infrastructure-network.md` (step 6, family F) | `reports/.artifacts/soc2-audit/step_05_soc2_change_management.md`, `reports/.artifacts/soc2-audit/step_06_soc2_infrastructure_network.md` |
 | `agents/risk-analyzer.md` | mid | `references/vulnerability-assurance.md` (step 7, families G/I/K) + `references/incident-resilience.md` (step 8, family H) | `reports/.artifacts/soc2-audit/step_07_soc2_vulnerability_assurance.md`, `reports/.artifacts/soc2-audit/step_08_soc2_incident_resilience.md` |
-| `agents/report-writer.md` | frontier | `references/scoring.md` (step 9) + `references/report-generator.md` (step 10) + `references/report-format-enforcer.md` (step 11) + `assets/report-template.md` | `reports/<YYYY-MM-DD>-<project>-soc2-audit.md`, `reports/<YYYY-MM-DD>-<project>-soc2-audit.json`, `reports/.history/last_scores.json` |
+| `agents/report-writer.md` | frontier | `references/scoring.md` (step 9) + `references/report-generator.md` (step 10) + `references/report-format-enforcer.md` (step 11) + `assets/report-template.md` | `reports/<YYYY-MM-DD>-<project>-soc2-audit.md`, `reports/<YYYY-MM-DD>-<project>-soc2-audit.json`, `reports/.history/last_soc2_scores.json` |
 
 **Model tiers** are provider-neutral symbolic names. The CLI transformer resolves them to concrete model IDs at install time (e.g. for Claude: cheap→haiku, mid→sonnet, frontier→opus).
 
@@ -440,7 +440,7 @@ REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
 Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-soc2-audit.md`, it
 means that resolved path.
 
-The JSON export uses the same base name with a `.json` extension. `reports/.history/last_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
+The JSON export uses the same base name with a `.json` extension. `reports/.history/last_soc2_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
 
 **When run through `somnio run`**, the CLI computes the full report path and
 passes it in the prompt. Use the path it gives you verbatim — do not recompute

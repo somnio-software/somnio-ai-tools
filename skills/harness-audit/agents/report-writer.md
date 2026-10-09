@@ -76,7 +76,7 @@ Verify the Total and all 8 rubric-entry scores are present in the scoring artifa
 
 Write the final report to `reports/<YYYY-MM-DD>-<project>-harness-audit.md`.
 Write the JSON export to `reports/<YYYY-MM-DD>-<project>-harness-audit.json` (exact schema in `references/report-generator.md`).
-Write the score history to `reports/.history/last_scores.json`.
+Write the score history to `reports/.history/last_harness_scores.json`.
 
 Run before writing: `mkdir -p reports reports/.history`
 

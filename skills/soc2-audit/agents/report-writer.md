@@ -83,7 +83,7 @@ Execute the computation steps from `references/scoring.md` (extract evidence per
 
 Write the final validated report to `reports/<YYYY-MM-DD>-<project>-soc2-audit.md`.
 Write the JSON export to `reports/<YYYY-MM-DD>-<project>-soc2-audit.json` (schema in `references/report-generator.md`).
-Write the score history to `reports/.history/last_scores.json`.
+Write the score history to `reports/.history/last_soc2_scores.json`.
 Run before writing: `mkdir -p reports reports/.history`
 
 ## Critical Rules

@@ -169,7 +169,7 @@ You MUST compute all scores BEFORE generating any report content.
 A report without scores is INVALID and must not be produced.
 
 SCORE COMPARISON (before generating):
-If reports/.history/last_scores.json exists, read it and extract:
+If reports/.history/last_security_scores.json exists, read it and extract:
 - previous "overall" score
 - previous "timestamp"
 After computing the new overall score in Step C, calculate the change
@@ -324,7 +324,7 @@ Run before saving: mkdir -p reports
 
 SCORE HISTORY (mandatory after writing report):
 After writing reports/<YYYY-MM-DD>-<project>-security-audit.md,
-write reports/.history/last_scores.json with:
+write reports/.history/last_security_scores.json with:
 { "overall": [current overall score], "timestamp": "[ISO8601]",
   "scores": { "sensitiveFile": N, "secretDetection": N, "dependencySecurity": N,
     "supplyChainIntegrity": N, "securityAutomation": N },

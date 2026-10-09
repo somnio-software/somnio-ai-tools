@@ -158,7 +158,7 @@ Step E - Verify all 11 scores (10 families + overall) are computed before
   proceeding to report generation.
 
 SCORE COMPARISON (if history exists):
-If reports/.history/last_scores.json exists, read the previous overall score and
+If reports/.history/last_soc2_scores.json exists, read the previous overall score and
 timestamp. After computing the new overall, record the delta
 (current - previous) for the Executive Summary:
 "Previous: [N]/100, Change: [+/-M] ([improving|declining|unchanged])".

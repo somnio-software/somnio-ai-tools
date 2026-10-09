@@ -14,7 +14,7 @@ and scoring results using the standardized format in `assets/report-template.md`
 READ-ONLY DISCIPLINE:
 - Do NOT re-scan or modify the audited repository. Operate on artifact files.
   Your only writes are `reports/<YYYY-MM-DD>-<project>-harness-audit.md`, `reports/<YYYY-MM-DD>-<project>-harness-audit.json`,
-  and `reports/.history/last_scores.json`.
+  and `reports/.history/last_harness_scores.json`.
 
 STEP ARTIFACT INTEGRATION:
 Read both artifacts for this run under `reports/.artifacts/`:
@@ -78,7 +78,7 @@ Render the per-piece score table exactly, one row per piece:
 - Must include `Total Score: [total]/100 ([band name])`.
 - One-paragraph reading of what the score means for this project.
 - A brief list of the 3 top next steps (full detail goes in Section 4).
-- If `reports/.history/last_scores.json` exists, read it and add
+- If `reports/.history/last_harness_scores.json` exists, read it and add
   `Previous: [N]/100, Change: [+/-M] ([improving|declining|unchanged])`.
 
 ### Section 3 - Harness Piece Detail
@@ -196,7 +196,7 @@ Run before saving: `mkdir -p reports`
 
 ## SCORE HISTORY (mandatory, after report + JSON)
 
-Write `reports/.history/last_scores.json`:
+Write `reports/.history/last_harness_scores.json`:
 
     { "overall": [total], "timestamp": "[ISO8601]",
       "pieces": { "claudeMdExists": N, "claudeMdReal": N, "rules": N,

@@ -24,6 +24,8 @@ final _forbidden = <String, RegExp>{
       RegExp(r'\[Section Name\]: \[Score\]/100'),
   '"No markdown syntax" (contradicts the Markdown rules)':
       RegExp(r'No markdown syntax'),
+  '"last_scores.json" (shared history name; use last_<skill>_scores.json)':
+      RegExp(r'last_scores\.json'),
 };
 
 String _repoRoot() {
@@ -47,6 +49,7 @@ List<File> _proseFiles(Directory skillsDir) {
     for (final name in const [
       'report-generator.md',
       'report-format-enforcer.md',
+      'scoring.md',
       'best-practices-format-enforcer.md',
     ]) {
       final f = File(p.join(refs, name));

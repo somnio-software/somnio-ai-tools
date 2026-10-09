@@ -89,7 +89,7 @@ Execute Steps A through E from `references/report-generator.md` (extract scoring
 
 Write the final validated report to `reports/<YYYY-MM-DD>-<project>-security-audit.md`.
 
-Write the score history to `reports/.history/last_scores.json`.
+Write the score history to `reports/.history/last_security_scores.json`.
 
 Run before writing: `mkdir -p reports reports/.history`
 

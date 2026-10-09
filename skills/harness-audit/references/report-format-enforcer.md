@@ -105,7 +105,7 @@ report and write it. Ensure the reports/ directory exists.
 
 SCORE HISTORY (mandatory after export):
 After validating and exporting both reports/<YYYY-MM-DD>-<project>-harness-audit.md and
-reports/<YYYY-MM-DD>-<project>-harness-audit.json, write reports/.history/last_scores.json with the
+reports/<YYYY-MM-DD>-<project>-harness-audit.json, write reports/.history/last_harness_scores.json with the
 same total, band and per-piece data for future comparison (schema in
 report-generator.md).
 Run: mkdir -p reports/.history

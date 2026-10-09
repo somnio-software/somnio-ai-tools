@@ -101,6 +101,6 @@ reports/ directory exists.
 
 SCORE HISTORY (mandatory after export):
 After validating and exporting both reports/<YYYY-MM-DD>-<project>-soc2-audit.md and
-reports/<YYYY-MM-DD>-<project>-soc2-audit.json, write reports/.history/last_scores.json with the same
+reports/<YYYY-MM-DD>-<project>-soc2-audit.json, write reports/.history/last_soc2_scores.json with the same
 score and gap data for future comparison (schema in report-generator.md).
 Run: mkdir -p reports/.history

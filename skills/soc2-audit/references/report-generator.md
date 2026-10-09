@@ -186,7 +186,7 @@ After writing the readiness output, write reports/<YYYY-MM-DD>-<project>-soc2-au
 Run before saving: mkdir -p reports
 
 SCORE HISTORY (mandatory after output + JSON):
-Write reports/.history/last_scores.json with:
+Write reports/.history/last_soc2_scores.json with:
 { "overall": [current overall], "band": "[band]", "timestamp": "[ISO8601]",
   "scores": { "A_governance": N, "B_humanResources": N, "C_accessManagement": N,
     "D_dataProtection": N, "E_changeManagement": N, "F_infrastructure": N,

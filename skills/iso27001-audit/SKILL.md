@@ -493,7 +493,7 @@ REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
 Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-iso27001-audit.md`, it
 means that resolved path.
 
-The JSON export uses the same base name with a `.json` extension. `reports/.history/last_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
+The JSON export uses the same base name with a `.json` extension. `reports/.history/last_iso27001_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
 
 **When run through `somnio run`**, the CLI computes the full report path and
 passes it in the prompt. Use the path it gives you verbatim — do not recompute

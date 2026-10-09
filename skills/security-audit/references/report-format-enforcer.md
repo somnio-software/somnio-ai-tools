@@ -107,7 +107,7 @@ Output: The formatted Markdown report content ready for export to
 
 SCORE HISTORY (mandatory after export):
 After validating and exporting reports/<YYYY-MM-DD>-<project>-security-audit.md,
-write reports/.history/last_scores.json using the scores and findings computed
+write reports/.history/last_security_scores.json using the scores and findings computed
 for this report, in the exact schema given in references/report-generator.md's
 SCORE HISTORY block, for future score comparison. Format:
 { "overall": N, "timestamp": "ISO8601", "scores": {...}, "findings": {...},
