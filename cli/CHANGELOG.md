@@ -5,6 +5,16 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.7] - 2026-10-09
+
+### Added
+
+- **`somnio update` reports the version it installed.** The success line now reads `CLI updated to vX.Y.Z`, taken from the `Activated somnio X.Y.Z` line that `dart pub global activate` prints, since the running binary still holds the old version. It falls back to `CLI updated` when that line is missing.
+
+### Removed
+
+- **The CLI banner no longer shows a random quote, and the `somnio quote` command is gone.** The banner now prints only the logo and the version line.
+
 ## [3.2.6] - 2026-10-09
 
 ### Added
