@@ -6,12 +6,19 @@ const String pythonCacheDirName = '__pycache__';
 /// File extensions of compiled Python bytecode (`.pyc`, `.pyo`).
 const Set<String> pythonBytecodeExtensions = {'.pyc', '.pyo'};
 
-/// Whether [relativePath] (relative to a skill bundle directory) is a Python
-/// bytecode cache artifact that must never be read or installed.
+/// Exact file names of OS metadata files that must never be installed.
+const Set<String> ignoredBundleFileNames = {'.DS_Store'};
+
+/// Whether [relativePath] (relative to a skill bundle directory) is an
+/// artifact that must never be read or installed: Python bytecode caches
+/// (`__pycache__/`, `*.pyc`, `*.pyo`) or macOS `.DS_Store` files.
 ///
-/// Local checkouts accumulate these (gitignored) after running a skill's
-/// Python tests; they are binary, so reading them as UTF-8 text fails.
-bool isPythonBytecodeCache(String relativePath) {
+/// Local checkouts accumulate these (gitignored) over time; they are binary,
+/// so reading them as UTF-8 text fails.
+bool isIgnoredBundleFile(String relativePath) {
+  if (ignoredBundleFileNames.contains(p.basename(relativePath))) {
+    return true;
+  }
   if (pythonBytecodeExtensions.contains(p.extension(relativePath))) {
     return true;
   }

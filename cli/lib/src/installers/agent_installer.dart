@@ -424,7 +424,7 @@ class AgentInstaller extends Installer {
       for (final entity in sourceDir.listSync(recursive: true)) {
         if (entity is! File) continue;
         final relativePath = p.relative(entity.path, from: sourceDir.path);
-        if (isPythonBytecodeCache(relativePath)) continue;
+        if (isIgnoredBundleFile(relativePath)) continue;
         _writeFile(
           baseDir,
           p.join(baseDir, skill.name, dirName, relativePath),

@@ -212,7 +212,7 @@ class ContentLoader {
     for (final entity in rulesDir.listSync(recursive: true)) {
       if (entity is! File) continue;
       final relativePath = p.relative(entity.path, from: rulesDir.path);
-      if (isPythonBytecodeCache(relativePath)) continue;
+      if (isIgnoredBundleFile(relativePath)) continue;
       files.add(relativePath);
     }
     files.sort();

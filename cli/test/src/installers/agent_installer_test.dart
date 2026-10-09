@@ -878,6 +878,34 @@ void main() {
       expect(leaked, isEmpty);
     });
 
+    test('skillDir: skips .DS_Store in assetDirectories', () {
+      final skill = seedWorkflow(name: 'dora-ds');
+      _writeFile(repoRoot, 'skills/dora-ds/scripts/dora_metrics.py', 'ok\n');
+      File(p.join(repoRoot, 'skills/dora-ds/scripts/.DS_Store'))
+          .writeAsBytesSync([0xFF, 0xFE, 0x00, 0x80]);
+      final withAssets = WorkflowSkill(
+        id: skill.id,
+        name: skill.name,
+        displayName: skill.displayName,
+        description: skill.description,
+        planRelativePath: skill.planRelativePath,
+        assetDirectories: ['skills/dora-ds/scripts'],
+      );
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final count = installer.installWorkflowSkills([withAssets]);
+
+      expect(count, 1);
+      final scriptsDir = p.join(tmp.path, 'install', 'dora-ds', 'scripts');
+      expect(File(p.join(scriptsDir, 'dora_metrics.py')).readAsStringSync(),
+          'ok\n');
+      expect(File(p.join(scriptsDir, '.DS_Store')).existsSync(), isFalse);
+    });
+
     test('skillDir: copies assetDirectories verbatim alongside SKILL.md', () {
       final skill = seedWorkflow(name: 'dora-metrics');
       _writeFile(repoRoot, 'skills/dora-metrics/scripts/dora_metrics.py',
