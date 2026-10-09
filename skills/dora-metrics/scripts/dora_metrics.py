@@ -70,6 +70,7 @@ import practice_guidance  # noqa: E402  (sibling module, same reason)
 # `packageVersion` in cli/lib/src/version.dart by `dart run tool/stamp_version.dart`
 # (run from cli/) and checked by cli/test/src/content/version_stamp_test.dart.
 SOMNIO_VERSION = "3.2.5"
+REPORT_TYPE = "dora-metrics"
 
 API_ROOT = "https://api.github.com"
 # GitLab REST v4 (https://docs.gitlab.com/api/rest/). A repo's `api_base`
@@ -1312,7 +1313,10 @@ def _render_report_metadata(window_days: int, date: str, lines: list) -> None:
     lines.append(f"| Skill | {REPORT_TYPE} |")
     lines.append(f"| Date | {date} |")
     lines.append(f"| Measurement window | {window_days} days |")
-    lines.append("| Somnio AI Tools | https://github.com/somnio-software/somnio-ai-tools |")
+    lines.append(
+        "| Somnio AI Tools | "
+        "https://github.com/somnio-software/somnio-ai-tools |"
+    )
 
 
 def format_human_summary(result: dict, window_days: int, date: str = None) -> str:
@@ -1326,7 +1330,8 @@ def format_human_summary(result: dict, window_days: int, date: str = None) -> st
     `generated_at` (the same `now`), and to today (UTC) for a hand-built
     result that has neither."""
     if date is None:
-        date = (result.get("generated_at") or "")[:10] or datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        fallback_date = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        date = (result.get("generated_at") or "")[:10] or fallback_date
     lines = []
 
     root_issues = result.get("issues", [])
@@ -1630,7 +1635,6 @@ def merge_stub_repos(result: dict, stubs: dict) -> None:
             result["projects"].append({"name": name, "repos": list(repos)})
 
 
-REPORT_TYPE = "dora-metrics"
 NO_REPOS_SLUG = "no-repositories"
 
 
