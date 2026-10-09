@@ -327,9 +327,10 @@ missing, it asks.
 - GitLab self-hosted: `merged_after`/`merged_before` filtering on the merge
   requests list requires GitLab >= 13.1; an older instance may need an
   upgrade for Lead Time to measure correctly.
-- GitLab tags: the API exposes only the target commit's date, not a separate
-  "tag creation" date (GitHub distinguishes an annotated tag's own tagging
-  date from the commit's date; GitLab does not).
+- GitLab tags: the script dates a tag by the tag's own `created_at` when the
+  API returns one (set for annotated tags, null for lightweight ones) and falls
+  back to the target commit's date otherwise. A lightweight tag created well
+  after its commit therefore reads as if it happened at commit time.
 - Bitbucket: no Releases API at all — every Bitbucket repo measures via plain
   tags (`deploy_source` is forced to `"tag"`). Its pull request object also
   has no direct "merged at" timestamp; the script uses the merge commit's date
@@ -338,6 +339,12 @@ missing, it asks.
   costs more API calls on Bitbucket than on GitHub/GitLab, since there is no
   server-side "merged between these dates" filter to push the window down to
   the provider.
+- Bitbucket deleted source branch/fork: the PR commits endpoint returns an empty
+  list once the source branch is deleted and a 404 when the source fork is
+  deleted; that PR is then excluded from Lead Time
+  (`pr_first_commit_unfetchable`), so teams that delete branches on merge can
+  see many exclusions or `no data in the window`.
+  Detail: `references/troubleshooting.md`.
 - Bitbucket Server/Data Center and GitHub Enterprise are out of scope beyond
   the `api_base` override for GitHub Enterprise; Bitbucket is Cloud-only.
 - E2E tests (`tests/e2e/`) currently cover the GitHub path only — GitLab and

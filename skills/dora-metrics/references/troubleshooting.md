@@ -138,7 +138,8 @@ is revoked independently of the account password — check it wasn't deleted.
 The provider's API refused the request for being over its rate limit, so the
 run stopped reading data for this repo. This is not a configuration problem —
 it is a quota one. GitHub's Search API (used for merged PRs) has a much lower
-limit than its REST API; GitLab and Bitbucket signal this with a plain 429.
+limit than its REST API; GitLab signals this with a plain 429, and the script
+also treats a Bitbucket 429 as a rate limit (Atlassian does not document one).
 
 ### How to check
 
@@ -147,8 +148,11 @@ limit than its REST API; GitLab and Bitbucket signal this with a plain 429.
 - **GitLab:** the response headers on any API call include `RateLimit-Remaining`
   and `RateLimit-Reset`; `glab api rate_limit` surfaces them too on recent
   `glab` versions.
-- **Bitbucket:** a 429 response includes a `Retry-After` header with the
-  number of seconds to wait.
+- **Bitbucket:** Atlassian documents hourly request limits and `X-RateLimit-*`
+  headers (https://support.atlassian.com/bitbucket-cloud/docs/api-request-limits/),
+  but does not document a 429 response or a `Retry-After` header. The script
+  treats any 429 as a rate limit, without relying on a header: it stops
+  reading that repo and reports this problem. Wait before re-running.
 
 ### Where to fix
 
@@ -415,6 +419,9 @@ excludes that single PR/MR. The other PRs/MRs in the interval are unaffected.
   the provider with the same account and check its commit list is visible. A
   credential missing read scope (or org/group access, for a multi-org/group
   project) can return the PR/MR from the list but fail on the commit fetch.
+- **Bitbucket:** check whether the PR's source branch or source fork was
+  deleted. An empty commit list (branch deleted) or a 404 (fork deleted) is the
+  expected cause, and common when PRs delete their source branch on merge.
 - Open the PR/MR and check its commit history is present and not empty
   (unusual merge history — e.g. a PR whose commits were rewritten or whose head
   was force-removed — can leave no fetchable commits).
@@ -470,19 +477,26 @@ would be interpreting performance, which is out of scope.
 ## Known provider-specific precision gaps
 
 > No anchor: background for a human reading a Lead Time number that looks off
-> by a few seconds or minutes, not a problem the script surfaces as an issue.
+> by a little, or that rests on fewer PRs than expected. Not a problem the
+> script surfaces as an issue.
 
-- **GitLab tags:** the API exposes only the target commit's date, not a
-  separate "when was this tag created" date — unlike GitHub, which
-  distinguishes an annotated tag's own tagging date from the underlying
-  commit's date. A GitLab tag created well after its commit will read as if it
-  happened at commit time.
+- **GitLab tags:** the script dates a tag by the tag's own `created_at` when the
+  API returns one (set for annotated tags, null for lightweight ones) and falls
+  back to the target commit's date otherwise. A lightweight GitLab tag created
+  well after its commit will read as if it happened at commit time.
 - **Bitbucket PR merge time:** Bitbucket Cloud's pull request object has no
   directly exposed "merged at" timestamp. The script uses the merge commit's
   own commit date when available, falling back to the PR's `updated_on`
   otherwise — a reasonable proxy, not as exact as GitHub's Search API or
   GitLab's `merged_after`/`merged_before` filters.
+- **Bitbucket deleted source branch or fork:** Bitbucket returns an empty PR
+  commit list once the PR's source branch is deleted, and a 404 when the source
+  fork is deleted
+  (https://api.bitbucket.org/swagger.json, `GET .../pullrequests/{id}/commits`).
+  The script then excludes that PR from Lead Time (`pr_first_commit_unfetchable`).
+  Teams that delete source branches on merge will see many exclusions, and
+  possibly `no data in the window`.
 
-Neither of these is something `config/projects.json` can fix — they are limits
-of what each provider's API reports, documented here so a small discrepancy
-isn't mistaken for a bug.
+None of these is something `config/projects.json` can fix — they are limits
+of what each provider's API reports, documented here so a small discrepancy or
+a set of excluded PRs isn't mistaken for a bug.

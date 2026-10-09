@@ -2,12 +2,16 @@
 
 Skill + script that **fetches** (does not interpret) two DORA metrics per
 project and per repo: **Deployment Frequency** and **Lead Time for Changes**.
-All data comes from the GitHub API — never a local git clone. The full contract
+All data comes from the repo's provider API (GitHub, GitLab or Bitbucket
+Cloud) — never a local git clone. The full contract
 (what it measures, what it does NOT do, the rationale behind each decision) is
 in `SKILL.md`; this README is the entry point for a human opening the folder.
 
 Fully self-contained folder: it depends on nothing outside `dora-metrics/`
-except `gh` (GitHub CLI) and Python 3 with `requests`.
+except Python 3 with `requests` (outside the standard library and its sibling
+modules in `scripts/`, the script imports only that). The `gh` and `glab`
+CLIs are optional: the script runs `gh auth token` or `glab auth token` only
+as a credential fallback, when the token env var is not set.
 
 ## What it does and doesn't do
 
@@ -34,15 +38,27 @@ for the details of the flow (confirmation table, auth, reporting).
 pip install requests --break-system-packages   # if needed
 
 export GITHUB_TOKEN=ghp_xxxx    # or just have `gh auth login` done
+# Only for repos on those providers (see "Auth" below):
+# export GITLAB_TOKEN=glpat-xxxx  # or `glab auth login`
+# export BITBUCKET_TOKEN=xxxx     # or BITBUCKET_USERNAME + BITBUCKET_APP_PASSWORD
 
 python3 scripts/dora_metrics.py --project "Example Project" --out-dir reports
 ```
 
-Auth: the script looks for `GITHUB_TOKEN` in the environment, and if it's not
-there, tries `gh auth token` (if you have the GitHub CLI logged in, there's
-nothing to generate or paste). The token needs read access to **all** the orgs
-of the project's repos — a multi-repo project, for example, can have repos in
-`example-org` and `example-partner-org`.
+Auth: each repo is measured with the credential of its own `provider`, and a
+run can mix providers. Resolution order per provider:
+
+| Provider | 1st | 2nd |
+|---|---|---|
+| `github` (default) | `GITHUB_TOKEN` | `gh auth token` (GitHub CLI logged in) |
+| `gitlab` | `GITLAB_TOKEN` | `glab auth token` (GitLab CLI logged in) |
+| `bitbucket` | `BITBUCKET_TOKEN`, sent as `Authorization: Bearer`; use a repository, project or workspace access token | `BITBUCKET_USERNAME` + `BITBUCKET_APP_PASSWORD` together, sent as Basic auth (no CLI fallback; half a pair is no credential) |
+
+The credential needs read access to **all** the orgs/groups/workspaces of the
+project's repos on that provider — a multi-repo project, for example, can have
+repos in `example-org` and `example-partner-org`. A provider with no credential
+only turns its own repos into `no_credential` problems; the other providers
+still measure.
 
 ### Flags
 
@@ -53,9 +69,10 @@ of the project's repos — a multi-repo project, for example, can have repos in
 | `--out-dir` | doesn't save (recommended: `reports`) | Use it whenever a report is wanted; the saved per-repo file is the artifact to share. If passed, in addition to stdout it saves one file **per repo** there: `YYYY-MM-DD-<repo>-dora-metrics.md` (the same summary as a readable file). |
 | `--branch <branch>` | — | One-off override of `prod_branch` for this run (requires `--project`). Doesn't touch the config. |
 | `--deploy-source {release,tag}` | — | One-off override of `deploy_source` (requires `--project`). Doesn't touch the config. |
+| `--provider {github,gitlab,bitbucket}` | — | One-off override of `provider` for every repo of the project (requires `--project`). Doesn't touch the config. |
 | `--window-days N` | — | One-off override of the window in days. Doesn't touch the config. |
 
-The overrides (`--branch`, `--deploy-source`, `--window-days`) are for one-off
+The overrides (`--branch`, `--deploy-source`, `--provider`, `--window-days`) are for one-off
 tests — the real biweekly run uses whatever the config says, with no extra
 flags.
 
@@ -67,7 +84,7 @@ these repos...") — it will ask for any missing details and edit
 
 If you prefer to edit it by hand, for each project you need to resolve:
 
-- **Mono-repo or multi-repo?** List all the GitHub repos that make it up.
+- **Mono-repo or multi-repo?** List all the repos that make it up, and which provider (GitHub, GitLab or Bitbucket Cloud) each one is on.
 - **Which branch is "production"** in each repo? (don't assume `main` — confirm
   it).
 - **In multi-repo, do the repos deploy coupled or independently?** If a deploy
@@ -75,7 +92,8 @@ If you prefer to edit it by hand, for each project you need to resolve:
   case), each repo is counted and reported separately, never combined. This is
   already the skill's default behavior; nothing extra needs to be configured
   for it.
-- **Does the repo use GitHub Releases, or only plain tags?** See "Configuration"
+- **Does the repo use Releases, or only plain tags?** (Bitbucket has no
+  Releases API: its repos always measure via plain tags.) See "Configuration"
   below (`deploy_source`).
 
 ## Configuration
@@ -111,10 +129,12 @@ projects unless a repo overrides it) and per repo.
 | `window_days` | global | — (required) | Measurement window in days. |
 | `projects[].name` | project | — (required) | Name the project is looked up by (case-insensitive). |
 | `projects[].notes` | project | none | Free text: rationale or clarifications specific to that project (not general methodology — that lives here, in the README). |
-| `repos[].repo` | repo | — (required) | GitHub `org/repo`. |
+| `repos[].repo` | repo | — (required) | Repo identifier, format depends on `provider`: `org/repo` (github), project path (gitlab), `workspace/repo_slug` (bitbucket). |
+| `repos[].provider` | repo | `"github"` | `"github"`, `"gitlab"` or `"bitbucket"`. |
+| `repos[].api_base` | repo | the provider's public API root | API root of a GitHub Enterprise or self-hosted GitLab instance. Rejected for bitbucket (Cloud only). |
 | `repos[].type` | repo | `[]` | Informational list (web/mobile/backend), only used for display in the output. |
 | `repos[].prod_branch` | repo | — (required) | Production branch of that repo. |
-| `repos[].deploy_source` | repo | `"release"` | `"release"` = GitHub Release with a semver tag. `"tag"` = plain tag with no Release (annotated or lightweight git tag), for projects that tag but don't publish Releases. |
+| `repos[].deploy_source` | repo | `"release"` (github, gitlab); `"tag"` (bitbucket) | `"release"` = provider Release (GitHub/GitLab) whose tag matches `tag_pattern`; not valid on bitbucket. `"tag"` = plain tag with no Release (annotated or lightweight git tag), for projects that tag but don't publish Releases. |
 | `repos[].tag_pattern` | repo | the global `tag_pattern` | Override if that specific repo uses a different tag format (e.g. with a build number). |
 
 ## Output example
