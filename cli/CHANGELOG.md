@@ -5,6 +5,17 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.8] - 2026-10-09
+
+### Added
+
+- **`somnio skills update` lists the skills it updated.** After the per-location lines it prints `Updated skills (N):` with the unique skill names refreshed across all locations, sorted, and a `Failed skills:` list naming each failure with its agent and scope. `--verbose` also lists each location's skills under its `Location:` line.
+
+### Fixed
+
+- **Installing skills from a local checkout no longer fails on Python bytecode caches.** After running the dora-metrics tests, `scripts/__pycache__/*.pyc` exists, and the installer read those binary files as UTF-8 text and failed. Skill installs and updates now skip `__pycache__/`, `*.pyc` and `*.pyo`.
+- **Installing skills no longer fails on a stray macOS `.DS_Store`.** A binary `.DS_Store` inside a bundled skill folder broke installs the same way; the same filter now skips it.
+
 ## [3.2.7] - 2026-10-09
 
 ### Added
