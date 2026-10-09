@@ -11,6 +11,8 @@ class InstallResult {
     required this.targetDirectory,
     this.skippedCount = 0,
     this.failedCount = 0,
+    this.installedSkills = const [],
+    this.failedSkills = const [],
   });
 
   final int skillCount;
@@ -27,10 +29,24 @@ class InstallResult {
   /// Callers map a non-zero count to a non-zero process exit code so CI can
   /// tell a broken install from a clean one.
   final int failedCount;
+
+  /// Names of the bundles written (the manifest's skill names), in install
+  /// order. Skipped bundles are not listed.
+  final List<String> installedSkills;
+
+  /// Names of the bundles that threw while installing.
+  final List<String> failedSkills;
 }
 
 /// How many workflow skills were written, and how many threw.
-typedef WorkflowInstallCounts = ({int installed, int failed});
+///
+/// [installedNames] and [failedNames] carry the skill names behind the counts.
+typedef WorkflowInstallCounts = ({
+  int installed,
+  int failed,
+  List<String> installedNames,
+  List<String> failedNames,
+});
 
 /// Abstract base class for agent-specific installers.
 abstract class Installer {

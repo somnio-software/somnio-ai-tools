@@ -426,6 +426,48 @@ typedef _UpdateUnit = ({
   SkillSelection selection,
 });
 
+/// Collects what `somnio skills update` refreshed per location and prints the
+/// closing summary: the unique, sorted updated skill names and, when any
+/// failed, each failure with its location.
+class SkillsUpdateSummary {
+  final Set<String> _updated = {};
+  final List<({String skill, String label})> _failed = [];
+
+  /// Records one location's outcome. [label] reads `<Agent> (<scope>)`.
+  void addLocation({
+    required String label,
+    required Iterable<String> updated,
+    required Iterable<String> failed,
+  }) {
+    _updated.addAll(updated);
+    for (final skill in failed) {
+      _failed.add((skill: skill, label: label));
+    }
+  }
+
+  /// Prints the summary; prints nothing when no skill was updated or failed.
+  void print(Logger logger) {
+    if (_updated.isEmpty && _failed.isEmpty) return;
+    if (_updated.isNotEmpty) {
+      final names = _updated.toList()..sort();
+      logger
+        ..info('')
+        ..info('Updated skills (${names.length}):');
+      for (final name in names) {
+        logger.info('  - $name');
+      }
+    }
+    if (_failed.isNotEmpty) {
+      logger
+        ..info('')
+        ..info('Failed skills:');
+      for (final f in _failed) {
+        logger.info('  - ${f.skill} — ${f.label}');
+      }
+    }
+  }
+}
+
 class _SkillsUpdateCommand extends Command<int> {
   _SkillsUpdateCommand({required Logger logger}) : _logger = logger {
     argParser
@@ -438,8 +480,8 @@ class _SkillsUpdateCommand extends Command<int> {
       ..addFlag(
         'verbose',
         abbr: 'v',
-        help: 'Show the install directory for each refreshed location and '
-            'every skills.sh link path in the cleanup plan.',
+        help: 'Show the install directory and the updated skill names for '
+            'each refreshed location and every skills.sh link path in the cleanup plan.',
         negatable: false,
       );
     _addCleanupFlags(argParser, addVerbose: false);
@@ -539,6 +581,7 @@ class _SkillsUpdateCommand extends Command<int> {
     }
 
     var anyFailed = false;
+    final summary = SkillsUpdateSummary();
 
     for (final unit in units) {
       final label = '${unit.agent.displayName} (${_scopeLabel(unit.scope)})';
@@ -560,6 +603,13 @@ class _SkillsUpdateCommand extends Command<int> {
       final failed = result.failedCount + wf.failed;
       if (failed > 0) anyFailed = true;
 
+      final updatedNames = [...result.installedSkills, ...wf.installedNames];
+      summary.addLocation(
+        label: label,
+        updated: updatedNames,
+        failed: [...result.failedSkills, ...wf.failedNames],
+      );
+
       final line = '$label  $total skills updated';
       if (failed > 0) {
         progress.fail('$line, $failed failed');
@@ -568,8 +618,13 @@ class _SkillsUpdateCommand extends Command<int> {
       }
       if (_verbose) {
         _logger.info('  Location: ${result.targetDirectory}');
+        for (final name in updatedNames) {
+          _logger.info('    - $name');
+        }
       }
     }
+
+    summary.print(_logger);
 
     return anyFailed ? ExitCode.software.code : ExitCode.success.code;
   }

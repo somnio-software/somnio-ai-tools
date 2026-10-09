@@ -133,6 +133,20 @@ void main() {
       expect(result.targetDirectory, endsWith('install'));
     });
 
+    test('reports the names of the bundles it installed', () async {
+      final bundle = _seedBundle(repoRoot);
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agentFor(format: InstallFormat.markdown),
+      );
+
+      final result = await installer.install(bundles: [bundle]);
+
+      expect(result.installedSkills, [bundle.name]);
+      expect(result.failedSkills, isEmpty);
+    });
+
     test('skillDir format writes agents/ files with resolved tiers', () async {
       final bundle = _seedBundleWithAgents(repoRoot);
       final installer = AgentInstaller(
@@ -358,6 +372,8 @@ void main() {
       final result = await installer.install(bundles: [bad]);
 
       expect(result.skillCount, 0);
+      expect(result.installedSkills, isEmpty);
+      expect(result.failedSkills, ['missing']);
       verify(() => logger.err(any())).called(greaterThanOrEqualTo(1));
     });
   });
@@ -529,6 +545,22 @@ void main() {
 
       expect(counts.installed, 0);
       expect(counts.failed, 1);
+      expect(counts.installedNames, isEmpty);
+      expect(counts.failedNames, [skill.name]);
+    });
+
+    test('installWorkflowSkillsDetailed reports the installed names', () {
+      final skill = seedWorkflow();
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: agentFor(format: InstallFormat.markdown),
+      );
+
+      final counts = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(counts.installedNames, [skill.name]);
+      expect(counts.failedNames, isEmpty);
     });
 
     test('a missing plan file is skipped, not counted as a failure', () {

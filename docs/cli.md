@@ -240,11 +240,22 @@ somnio skills update --dry-run --verbose   # show the cleanup plan and what woul
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--agent` | `-a` | Limit the refresh to a single agent |
-| `--verbose` | `-v` | Show the install directory for each refreshed location and every skills.sh link path in the cleanup plan |
+| `--verbose` | `-v` | Show the install directory and the updated skill names under each refreshed location, and every skills.sh link path in the cleanup plan |
 | `--yes` | `-y` | Remove Somnio skills installed by skills.sh without asking |
 | `--dry-run` | | Print the skills.sh cleanup plan and what would be refreshed (agent, scope, location, skill names), then exit without removing or refreshing anything |
 
 When run from the home directory, the project scope is the global folder; that location is refreshed once, as global.
+
+Each location still prints its own progress line (`✓ Claude Code (global)  25 skills updated`). After all locations are processed, `update` prints the skills it refreshed, covering both audit and workflow skills:
+
+```
+Updated skills (25):
+  - flutter-health-audit
+  - security-audit
+  ...
+```
+
+`N` counts the unique skill names refreshed in at least one location; names are sorted alphabetically. If any skill failed, a `Failed skills:` block follows with one `  - <skill> — <Agent> (<scope>)` line per failure, and the command exits non-zero. Nothing is printed when no skills were refreshed (including `No somnio-installed skills found.`), and `--dry-run` keeps printing its plan only.
 
 `update` only reinstalls what the discovered manifests cover. Any skills.sh skill outside them is listed as **"will be removed and NOT reinstalled"** (also with `--yes` and in `--dry-run`), and the cleanup prompt then defaults to *no*. Run `somnio skills install` afterwards to get those back.
 
