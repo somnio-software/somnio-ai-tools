@@ -10,7 +10,7 @@
 
 1.  **USE MARKDOWN FORMATTING**:
     *   `#` for main title, `##` for sections, `###` for subsections
-    *   `**bold**` for scores, labels, and key terms
+    *   `**bold**` for field labels and key terms. Bold the field label only; never bold the numeric value after `**Score:**`.
     *   Backticks for file paths and code references
     *   `- ` for bullet points
 
@@ -20,7 +20,7 @@
     *   Lists: `- ` prefix for all bullet points
     *   Numbered lists: `1. `, `2. ` format
     *   File paths: `` `path/to/file.ts` `` (backtick-wrapped)
-    *   Scores: **[Score]/100 ([Label])**
+    *   Scores: [Score]/100 ([Label]) (value not bold)
 
 3.  **MANDATORY SECTION FORMAT**:
     Each section must include in order:
@@ -42,8 +42,8 @@
     - Section 2 (At-a-Glance Scorecard) MUST be followed by the
       `> **Test Coverage:**` blockquote (with its no-tool fallback line
       inside the same blockquote), then the `> **Scoring:**` legend,
-      then a one-sentence interpretation of the Overall Score. No
-      Weight column on the scorecard table itself.
+      then a one-sentence interpretation of the Overall Score.
+      The scorecard has exactly the template's columns (`| Section | Score | Label |`). Never add Weight, Previous, Baseline, Change or Delta columns; trend data goes only in its defined slot.
     - Section 6 (Testing) MUST include the `**Code Coverage:**` and
       `**Coverage Breakdown:**` fields between Score and Key Findings
     - Section 11 (AI Harness & Adoption) uses the richer shape: Description,
@@ -104,7 +104,7 @@ Before finalizing the report, verify:
   Metrics anywhere in the report — coverage appears exactly twice: the
   Section 2 Test Coverage line and the Section 6 Testing fields
 - The `## Appendix: Scoring Methodology` block is present, before
-  `## Report Metadata`, with weights summing to 1.00
+  `## Report Metadata`; the weights in the appendix sum to 1.00
 - Weights appear ONLY in the Appendix: Scoring Methodology — never as a
   column in the At-a-Glance Scorecard table or anywhere else
 - All sections follow the required format

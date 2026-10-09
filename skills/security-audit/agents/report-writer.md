@@ -81,6 +81,8 @@ Weights:
 
 Overall formula: round(file_protection*0.25 + secret_detection*0.30 + dependency*0.20 + supply_chain*0.10 + automation*0.15)
 
+Section 1 is the template's `| Area | Score |` table with the `| **Overall Score** | **N/100 (Label)** |` row and the `**Security Posture:**` line. No table may have a column beyond the template's (no Weight, Previous, Baseline, Change or Delta). The weights and formula go, unchanged, in the unnumbered `## Appendix: Scoring Methodology` between `## 11. Appendix: Evidence Index` and `## 12. Report Metadata`. Trend data goes only in the Executive Summary `**Trend:**` line. Bold the field label only; never bold the numeric value after `**Score:**`.
+
 Execute Steps A through E from `references/report-generator.md` (extract scoring data, compute each section score, compute overall, determine labels, verify all 6 scores) before writing any report content. A report without all 6 computed scores is invalid and must not be produced.
 
 ## Output

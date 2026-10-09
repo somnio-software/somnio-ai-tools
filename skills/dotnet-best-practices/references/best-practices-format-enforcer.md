@@ -10,7 +10,7 @@
 
 1.  **USE MARKDOWN FORMATTING**:
     *   `#` for main title, `##` for sections, `###` for subsections
-    *   `**bold**` for scores, labels, and key terms
+    *   `**bold**` for field labels and key terms. Bold the field label only; never bold the numeric value after `**Score:**`.
     *   Backticks for file paths and code references
     *   `- ` for bullet points
 

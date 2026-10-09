@@ -10,7 +10,7 @@
 
 1.  **USE MARKDOWN FORMATTING**:
     *   `#` for main title, `##` for sections, `###` for subsections
-    *   `**bold**` for scores, labels, and key terms
+    *   `**bold**` for field labels and key terms. Bold the field label only; never bold the numeric value after `**Score:**`.
     *   Backticks for file paths and code references
     *   `- ` for bullet points
 
@@ -20,7 +20,7 @@
     *   Lists: `- ` prefix for all bullet points
     *   Numbered lists: `1. `, `2. ` format
     *   File paths: `` `path/to/file.js` `` (backtick-wrapped)
-    *   Scores: **[Score]/100 ([Label])**
+    *   Scores: [Score]/100 ([Label]) (value not bold)
 
 3.  **MANDATORY SECTION FORMAT**:
     Each section must include in order:
@@ -52,9 +52,7 @@
       one-sentence Overall Score interpretation.
     - NEVER a bare "Coverage" label here — always "Test Coverage" (a bare
       "Coverage" collides with the AI Harness & Adoption rubric heading).
-    - NEVER add a Weight column to this table — weights appear ONLY in the
-      unnumbered Appendix: Scoring Methodology (see item 9 below), never as
-      a column in the scorecard.
+    - The scorecard has exactly the template's columns (`| Section | Score | Label |`). Never add Weight, Previous, Baseline, Change or Delta columns; trend data goes only in its defined slot.
 
 7.  **SPECIAL SECTIONS**:
     - Section 6 (Testing) MUST include, between Score and Key Findings, the

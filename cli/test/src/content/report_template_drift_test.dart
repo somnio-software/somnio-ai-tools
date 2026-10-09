@@ -8,6 +8,9 @@
 // doc's header), so nothing else in `dart analyze`/`dart test` would ever
 // catch a hand-edit that quietly breaks the contract. This file is that
 // safety net.
+//
+// The security-audit template (`skills/security-audit/assets/report-template.md`)
+// has its own, smaller contract, checked in the last group of `main`.
 import 'dart:io';
 
 import 'package:path/path.dart' as p;
@@ -610,6 +613,78 @@ void main() {
           );
         });
       }
+    });
+  });
+
+  group('security-audit report-template.md drift check', () {
+    final path = p.join(_repoRoot(), 'skills', 'security-audit', 'assets',
+        'report-template.md');
+    final secLines = File(path).readAsStringSync().split('\n');
+    const label = 'security-audit report-template.md';
+    const areaNames = {
+      'Sensitive File Protection',
+      'Secret Detection',
+      'Dependency Security',
+      'Supply Chain Integrity',
+      'Security Automation & CI/CD',
+    };
+
+    test('has 12 numbered sections: 1, 2, one 3-7 placeholder, 8..12', () {
+      final numbers = _numberedHeadings(secLines).map((h) => h.number).toList();
+      expect(numbers, [1, 2, 8, 9, 10, 11, 12],
+          reason: '$label: numbered headings other than the single '
+              '"## [N]. [Section Name]" placeholder for sections 3-7');
+      final placeholders =
+          secLines.where((l) => l == '## [N]. [Section Name]').length;
+      expect(placeholders, 1,
+          reason: '$label: expected one "## [N]. [Section Name]" placeholder');
+    });
+
+    test('sections 3-7 are exactly the five area names', () {
+      final noteLine = secLines.firstWhere((l) => l.startsWith('> _(One of:'),
+          orElse: () => '');
+      expect(noteLine, isNotEmpty,
+          reason: '$label: missing the "> _(One of: ...)_" area-name note');
+      final names = noteLine
+          .replaceFirst('> _(One of:', '')
+          .replaceFirst(')_', '')
+          .split('·')
+          .map((n) => n.trim())
+          .toSet();
+      expect(names, areaNames, reason: '$label: area names diverged');
+    });
+
+    test('## 1. header row is exactly "| Area | Score |"', () {
+      final start = secLines.indexOf('## 1. Security Scoring Breakdown');
+      expect(start, isNot(-1), reason: '$label: missing "## 1." heading');
+      final header = secLines
+          .skip(start + 1)
+          .firstWhere((l) => l.trimLeft().startsWith('|'), orElse: () => '');
+      expect(header, '| Area | Score |',
+          reason: '$label: Section 1 table header must be exactly two columns');
+    });
+
+    test('has the Overall Score row', () {
+      expect(secLines,
+          contains('| **Overall Score** | **[Score]/100 ([Label])** |'),
+          reason: '$label: Overall Score row missing or reshaped');
+    });
+
+    test(
+        'Scoring Methodology appendix sits before Report Metadata, '
+        'which is the last block', () {
+      final evidence = secLines.indexOf('## 11. Appendix: Evidence Index');
+      final appendix = secLines.indexOf('## Appendix: Scoring Methodology');
+      final metadata = secLines.indexOf('## 12. Report Metadata');
+      expect(appendix, isNot(-1),
+          reason: '$label: missing "## Appendix: Scoring Methodology"');
+      expect(evidence, lessThan(appendix),
+          reason: '$label: appendix must come after section 11');
+      expect(appendix, lessThan(metadata),
+          reason: '$label: appendix must come before Report Metadata');
+      final lastHeading = secLines.lastIndexWhere((l) => l.startsWith('## '));
+      expect(lastHeading, metadata,
+          reason: '$label: Report Metadata must be the last "## " block');
     });
   });
 }

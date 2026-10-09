@@ -25,6 +25,9 @@
 
 **Overall Score:** [Score]/100 ([Label])
 
+**Trend:** Previous [N]/100, change [+/-M] ([improving|declining|unchanged])
+> _(First run, with no previous score: write `**Trend:** first run`.)_
+
 **Top Findings:**
 - [Finding 1 with severity]
 - [Finding 2 with severity]
@@ -53,7 +56,7 @@
 
 **Score Breakdown:**
 - Base: [100 or 0]
-- [Deduction reason]: −[value]
+- [Deduction reason]: -[value]
 - [Bonus reason]: +[value]
 - **Final:** [Score]/100 ([Label])
 
@@ -138,6 +141,19 @@
 **Configuration:**
 - [File path or config reference]
 - [Continue as needed]
+
+---
+
+## Appendix: Scoring Methodology
+
+**Area Weights:**
+- Sensitive File Protection: 0.25
+- Secret Detection: 0.30
+- Dependency Security: 0.20
+- Supply Chain Integrity: 0.10
+- Security Automation & CI/CD: 0.15
+
+**Formula:** overall = round(file_protection * 0.25 + secret_detection * 0.30 + dependency * 0.20 + supply_chain * 0.10 + automation * 0.15)
 
 ---
 

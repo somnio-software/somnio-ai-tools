@@ -187,16 +187,20 @@ Priority Recommendations:
 3. [Continue as needed]
 
 2. At-a-Glance Scorecard:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- API Design: [Score]/100 ([Label])
-- Data Layer: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality (Linter & Warnings): [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD (Configs Found in Repo): [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-- Overall: [Score]/100 ([Label])
+| Section | Score | Label |
+|---------|-------|-------|
+| Tech Stack | [Score]/100 | [Label] |
+| Architecture | [Score]/100 | [Label] |
+| API Design | [Score]/100 | [Label] |
+| Data Layer | [Score]/100 | [Label] |
+| Testing | [Score]/100 | [Label] |
+| Code Quality (Linter & Warnings) | [Score]/100 | [Label] |
+| Documentation & Operations | [Score]/100 | [Label] |
+| CI/CD (Configs Found in Repo) | [Score]/100 | [Label] |
+| AI Harness & Adoption | [Score]/100 | [Label] |
+| **Overall** | **[Score]/100** | **[Label]** |
+
+The scorecard has exactly the template's columns (`| Section | Score | Label |`). Never add Weight, Previous, Baseline, Change or Delta columns; trend data goes only in its defined slot.
 
 Immediately below the scorecard, in this exact order:
 - Test Coverage: [X]% (lines) — full breakdown in the Testing section.
@@ -299,7 +303,7 @@ Metadata (MANDATORY)" for the exact table shape.
 
 FORMATTING RULES:
 - USE MARKDOWN SYNTAX: Use ## headings, **bold**, `backtick` paths
-- USE BOLD: Bold field labels and key values (**Score:**, **Overall**)
+- USE BOLD: Bold the field label only; never bold the numeric value after `**Score:**`.
 - USE CODE BLOCKS: Backticks for file paths and inline code
 - USE TABLES: Markdown pipe tables wherever the template renders one
 - SECTION HEADERS: Use "## X. Section Name"; subsections use "### Name"

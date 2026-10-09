@@ -186,7 +186,7 @@ using the scoring rubrics BEFORE writing any report content. A report
 without computed scores is INVALID.
 
 **Report Sections** (12 sections with quantitative scoring):
-- Security Scoring Breakdown (5 scored lines + Overall + Posture)
+- Security Scoring Breakdown (`| Area | Score |` table: 5 area rows + Overall Score row, then Posture)
 - Executive Summary with Overall Score
 - Scored Detail Sections (5 sections, dynamically ordered by score ascending — lowest first):
   - Sensitive File Protection (scored, weight 25%)
@@ -198,6 +198,7 @@ without computed scores is INVALID.
 - Remediation Priority Matrix
 - Project Detection Results
 - Appendix: Evidence Index
+- Appendix: Scoring Methodology (unnumbered; weights and formula; placed before Report Metadata)
 - Report Metadata
 
 **Scoring Requirement**: Every scored section MUST include: Score line
@@ -212,8 +213,9 @@ rules, then save the final Markdown report.
 Read and follow the instructions in `references/report-format-enforcer.md`
 
 **Validation**: Read the generated report and validate ALL structural checks
-from the format enforcer rule: exactly 12 sections, Section 1 has 5 scored
-lines with weights + Overall + Formula + Posture, Sections 3-7 have Score
+from the format enforcer rule: exactly 12 sections, Section 1 is the
+`| Area | Score |` table with 5 area rows + the Overall Score row + Posture
+(weights and formula live in the unnumbered Scoring Methodology appendix), Sections 3-7 have Score
 lines, sections are ordered by score ascending, score labels match ranges,
 proper Markdown syntax. Fix any issues in-place. If scores are missing entirely,
 re-run step 10 before exporting.

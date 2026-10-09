@@ -151,20 +151,22 @@ Priority Recommendations:
 3. [Continue as needed]
 
 2. At-a-Glance Scorecard:
-- Tech Stack: [Score]/100 ([Label])
-- Architecture: [Score]/100 ([Label])
-- State Management: [Score]/100 ([Label])
-- Repositories & Data Layer: [Score]/100 ([Label])
-- Testing: [Score]/100 ([Label])
-- Code Quality (Linter & Warnings): [Score]/100 ([Label])
-- Documentation & Operations: [Score]/100 ([Label])
-- CI/CD (Configs Found in Repo): [Score]/100 ([Label])
-- AI Harness & Adoption: [Score]/100 ([Label])
-- Overall: [Score]/100 ([Label])
+| Section | Score | Label |
+|---------|-------|-------|
+| Tech Stack | [Score]/100 | [Label] |
+| Architecture | [Score]/100 | [Label] |
+| State Management | [Score]/100 | [Label] |
+| Repositories & Data Layer | [Score]/100 | [Label] |
+| Testing | [Score]/100 | [Label] |
+| Code Quality (Linter & Warnings) | [Score]/100 | [Label] |
+| Documentation & Operations | [Score]/100 | [Label] |
+| CI/CD (Configs Found in Repo) | [Score]/100 | [Label] |
+| AI Harness & Adoption | [Score]/100 | [Label] |
+| **Overall** | **[Score]/100** | **[Label]** |
 
-REQUIRED — no Weight column in this table (weights live only in the
-Appendix: Scoring Methodology). Immediately below the scorecard, in
-this exact order:
+The scorecard has exactly the template's columns (`| Section | Score | Label |`). Never add Weight, Previous, Baseline, Change or Delta columns; trend data goes only in its defined slot.
+
+REQUIRED. Immediately below the scorecard, in this exact order:
 > **Test Coverage:** [X]% (lines) — full breakdown in the Testing section.
 > Fallback when no coverage tool is detected: `Not measured (no coverage tool detected/configured)`
 
@@ -279,7 +281,7 @@ FORMATTING RULES
 ----------------------------------------------------------------------
 
 1. USE MARKDOWN SYNTAX: Use proper Markdown formatting (# headers, **bold**, `backtick` paths)
-2. USE BOLD: Use **bold** for scores, labels, and key terms
+2. USE BOLD: Use **bold** for field labels and key terms. Bold the field label only; never bold the numeric value after `**Score:**`.
 3. USE CODE BLOCKS: Use backticks for file paths and inline code
 4. USE TABLES: Use Markdown tables for scorecards and metadata
 5. SECTION HEADERS: Use "## X. Section Name" Markdown format

@@ -15,8 +15,9 @@ of the formatted report. Do NOT attempt to format an incomplete report.
 
 Required structure checks:
 1. Report must contain exactly 12 numbered sections
-2. Section 1 must be "Security Scoring Breakdown" with 5 scored lines
-   + Overall Score + Security Posture
+2. Section 1 must be "Security Scoring Breakdown": a `| Area | Score |`
+   table with 5 area rows + the `| **Overall Score** | **N/100 (Label)** |`
+   row, followed by the `**Security Posture:**` line
 3. Section 2 must be "Executive Summary" with Overall Score
 4. Sections 3-7 must each contain "Score:" followed by
    [Score]/100 ([Label])
@@ -39,23 +40,34 @@ FORMATTING RULES TO ENFORCE:
 - SECTION HEADERS: Must use "## X. Section Name" Markdown format (number + period)
 - BULLET POINTS: Must use "- " prefix (dash + space)
 - NUMBERED LISTS: Must use "1. " format (number + period + space)
-- SEVERITY TAGS: Must use "[HIGH]:", "[MEDIUM]:", or "[LOW]:" prefix
+- SEVERITY TAGS: Must use the template's "**[HIGH]** —", "**[MEDIUM]** —" or "**[LOW]** —" prefix
 - SCORE FORMAT: Must use "[Score]/100 ([Label])" where Label is one of
   Strong, Fair, Weak, or Critical
-- NO UNICODE: Replace fancy quotes, dashes, and bullets with ASCII
+- ALLOWED NON-ASCII: Exactly the characters the template uses: en dash
+  (–), middle dot (·), em dash (—), and the emoji 🔴 🟡 🟢. Replace
+  fancy quotes, other dashes, other bullets and any other non-ASCII
+  character with ASCII
+- BOLD: Bold the field label only; never bold the numeric value after
+  `**Score:**`
+- NO EXTRA COLUMNS: No table may have a column beyond the template's.
+  Never add Weight, Previous, Baseline, Change or Delta columns; trend
+  data goes only in the Executive Summary `**Trend:**` line
 - LINE LENGTH: No hard wrapping requirement, but ensure readability
 - BLANK LINES: One blank line between sections, no triple+ blank lines
 
 SCORE VALIDATION:
-- Section 1 (Security Scoring Breakdown) must have 5 scored lines
-  with weights + Overall Score + Formula + Security Posture
+- Section 1 (Security Scoring Breakdown) must be the `| Area | Score |`
+  table (5 area rows + the Overall Score row) followed by Security
+  Posture. Weights and the formula belong only in the unnumbered
+  "## Appendix: Scoring Methodology", placed between
+  "11. Appendix: Evidence Index" and "12. Report Metadata"
 - Sections 3-7 must each contain a "Score:" line with format
   [Score]/100 ([Label])
 - Valid labels by score range: 85-100 = Strong, 70-84 = Fair,
   50-69 = Weak, 0-49 = Critical
 - Verify the label matches the score range
 - Scores in Section 1 must match their respective detail sections (3-7)
-- Executive Summary (Section 2) must include "Overall Score: [Score]/100 ([Label])"
+- Executive Summary (Section 2) must include "Overall Score: [Score]/100 ([Label])" and one `**Trend:**` line (`Previous N/100, change +/-M (improving|declining|unchanged)` or `first run`)
 
 EXCLUSION LEAK DETECTION:
 - If the text "IMPORTANT EXCLUSIONS" appears in the report, remove it
@@ -73,10 +85,10 @@ VALIDATION CHECKLIST:
   8. Consolidated Findings by Severity,
   9. Remediation Priority Matrix,
   10. Project Detection Results, 11. Appendix: Evidence Index,
-  12. Report Metadata
+  Appendix: Scoring Methodology (unnumbered), 12. Report Metadata
 - Markdown formatting applied correctly throughout
 - Severity classifications use correct format
-- Section 1 has 5 scored lines + Overall + Posture
+- Section 1 is the `| Area | Score |` table + Overall Score row + Posture line
 - Score lines use correct format in sections 3-7
 - Sections 3-7 ordered by score ascending (lowest first)
 - Scores in Section 1 match their respective detail sections (3-7)

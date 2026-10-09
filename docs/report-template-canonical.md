@@ -393,3 +393,26 @@ in them is invented. They exist to show what a conforming, fully-populated repor
 particular how the Overall Score reconciles against the section scores and weights, and how the
 coverage figure stays consistent between the scorecard and the Testing section. Each file opens with
 an admonition saying so. Never cite them as audit results.
+
+## 14. Security audit layout
+
+`skills/security-audit/assets/report-template.md` is the contract for the security report, and its
+prose copies (`references/report-generator.md`, `references/report-format-enforcer.md`, `SKILL.md`
+and `agents/report-writer.md`) must describe the same shape. Drift is caught by
+`cli/test/src/content/report_template_drift_test.dart` and
+`cli/test/src/content/skill_prose_drift_test.dart`.
+
+- 12 numbered sections. Sections 3-7 are the five scored areas (Sensitive File Protection, Secret
+  Detection, Dependency Security, Supply Chain Integrity, Security Automation & CI/CD), ordered by
+  score ascending, so the template holds one `## [N]. [Section Name]` placeholder for them.
+- `## 1. Security Scoring Breakdown` is a two-column `| Area | Score |` table (five area rows plus
+  `| **Overall Score** | **N/100 (Label)** |`), followed by the `**Security Posture:**` line. No
+  Weight, Previous, Baseline, Change or Delta column is ever added.
+- The Executive Summary carries one trend slot:
+  `**Trend:** Previous N/100, change +/-M (improving|declining|unchanged)`, or `**Trend:** first run`.
+- Weights and the Overall Score formula live only in the unnumbered
+  `## Appendix: Scoring Methodology`, placed between `## 11. Appendix: Evidence Index` and
+  `## 12. Report Metadata`, so Report Metadata stays the last block.
+- Severity tags are `**[HIGH]** —` (also MEDIUM, LOW). The only non-ASCII characters allowed are the
+  en dash, middle dot, em dash and the emoji 🔴 🟡 🟢.
+- Bold the field label only; never bold the numeric value after `**Score:**`.

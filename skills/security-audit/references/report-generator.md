@@ -18,7 +18,7 @@ OUTPUT DIRECTIVE: Do NOT include the EXCLUSIONS block above in the
 report output. These are instructions for the generator only.
 
 MANDATORY REPORT STRUCTURE (12 sections):
-1. Security Scoring Breakdown (5 scored lines + Overall + Posture)
+1. Security Scoring Breakdown (`| Area | Score |` table: 5 area rows + the Overall Score row, then the Security Posture line)
 2. Executive Summary (Overall Score + top findings + priority recommendations)
 3-7. Scored Detail Sections (DYNAMIC ORDER — sorted by score ascending, lowest first):
    - Sensitive File Protection (scored)
@@ -30,6 +30,10 @@ MANDATORY REPORT STRUCTURE (12 sections):
 9. Remediation Priority Matrix
 10. Project Detection Results
 11. Appendix: Evidence Index
+Appendix: Scoring Methodology (unnumbered `## Appendix: Scoring Methodology`,
+   placed between 11. Appendix: Evidence Index and 12. Report Metadata,
+   so Report Metadata stays the last block; carries the area weights and
+   the Overall Score formula)
 12. Report Metadata
 
 DYNAMIC ORDERING INSTRUCTION:
@@ -76,7 +80,7 @@ must be traceable from evidence in the artifacts.
 
 SCORING SYSTEM:
 
-5 Scored Sections with Weights:
+5 Scored Sections, weights:
 - Sensitive File Protection (Weight: 0.25) - Source: Step 2
 - Secret Detection (Weight: 0.30) - Source: Step 3
 - Dependency Security (Weight: 0.20) - Source: Steps 5+6 (step_06
@@ -155,7 +159,9 @@ overall = round(file_protection * 0.25 + secret_detection * 0.30
 
 All section scores must be clamped to 0-100 range before applying
 the formula. The Overall Score in the Security Scoring Breakdown
-(Section 1) and Executive Summary (Section 2) must match.
+(Section 1) and Executive Summary (Section 2) must match. The weights
+and the formula are reproduced, unchanged, in the unnumbered
+"## Appendix: Scoring Methodology" block (never in Section 1).
 
 MANDATORY SCORING COMPUTATION (execute before writing report):
 
@@ -167,8 +173,11 @@ If reports/.history/last_scores.json exists, read it and extract:
 - previous "overall" score
 - previous "timestamp"
 After computing the new overall score in Step C, calculate the change
-(current - previous). If history exists, add to Executive Summary
-(Section 2): "Previous: [N]/100, Change: [+/-M] ([improving|declining|unchanged])"
+(current - previous). Always write the one defined Trend line in the
+Executive Summary (Section 2), directly after the Overall Score line:
+"**Trend:** Previous [N]/100, change [+/-M] ([improving|declining|unchanged])"
+or, when no history exists, "**Trend:** first run". Trend data goes only
+in that slot.
 
 Step A - Extract scoring data from each artifact:
   - From step_02: .env tracked count (only count if step_02 verified via
@@ -262,10 +271,14 @@ Scored sections (3-7) MUST each follow this exact format:
 SPECIAL SECTION FORMATS:
 
 Security Scoring Breakdown (Section 1):
-- 5 scored lines, one per scored section
-- Each line: "[Section Name]: [Score]/100 ([Label])"
-- Followed by "Overall Score: [Score]/100 ([Label])"
-- Followed by "Security Posture: [Posture]"
+- A `| Area | Score |` table with one row per scored section; each Score
+  cell is "[Score]/100 ([Label])"
+- The last row is "| **Overall Score** | **[Score]/100 ([Label])** |"
+- Followed by "**Security Posture:** [Posture]"
+- No table may have a column beyond the template's: never add Weight,
+  Previous, Baseline, Change or Delta columns
+- Weights and the formula do not appear here; they live in the
+  "## Appendix: Scoring Methodology" block
 - This is THE FIRST THING a CTO sees when opening the report
 
 Executive Summary (Section 2):
@@ -274,32 +287,32 @@ Executive Summary (Section 2):
 
 FORMATTING RULES:
 - USE MARKDOWN SYNTAX: Use ## headings, **bold**, `backtick` paths
-- USE BOLD: Bold field labels and key values (**Score:**, **Overall**)
+- USE BOLD: Bold the field label only; never bold the numeric value after `**Score:**`.
 - USE CODE BLOCKS: Backticks for file paths and inline code
 - USE TABLES: Markdown pipe tables wherever the template renders one
 - SECTION HEADERS: Use "## X. Section Name"; subsections use "### Name"
 - BULLET POINTS: Use "- " for all lists
 - NUMBERED LISTS: Use "1. ", "2. " format
-- SEVERITY: Always format as "[SEVERITY]: [Finding]"
+- SEVERITY: Always format as "**[HIGH]** — [Finding]" (also MEDIUM, LOW), as the template does
 - SCORES: Always format as "[Score]/100 ([Label])"
 
 VALIDATION CHECKLIST:
 Before finalizing the report, verify:
 - All 12 sections are present
-- Section 1 (Security Scoring Breakdown) has 5 scored lines + Overall + Posture
+- Section 1 (Security Scoring Breakdown) is a `| Area | Score |` table with 5 area rows + the Overall Score row + the Security Posture line, and no extra columns
 - All 5 scored sections (3-7) have Score line with [Score]/100 ([Label])
 - All scored sections have Description/Score/Score Breakdown/Key Findings/Evidence/Risks/Recommendations
 - Scored sections (3-7) are ordered by score ascending (lowest first)
-- Executive Summary (Section 2) includes Overall Score
+- Executive Summary (Section 2) includes Overall Score and the Trend line
+- "## Appendix: Scoring Methodology" sits between 11 and 12, so Report Metadata is the last block
 - Scores in Section 1 match scores in their respective detail sections (3-7)
 - All findings have severity classifications
 - All evidence references actual files and line numbers
 - All recommendations are actionable and prioritized
-- No markdown syntax is used
 - No EXCLUSIONS block appears in the output
 - Security posture label matches the Overall Score range
 - Report starts with "Security Audit Report" (no other text before it)
-- Report is ready for Google Docs copy-paste
+- Report is complete shareable Markdown
 - No duplicate score displays (old At-a-Glance Scorecard and Score Index are gone)
 
 Format: Markdown-formatted report — ## headings, **bold** field
