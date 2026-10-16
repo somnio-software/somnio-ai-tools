@@ -5,6 +5,16 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.14] - 2026-10-16
+
+### Changed
+
+- **Antigravity gets skills instead of workflows.** Antigravity IDE workflows stop working on 2026-10-19, so the CLI no longer writes `~/.gemini/antigravity/global_workflows/somnio_<name>.md` plus `~/.gemini/antigravity/somnio_rules/`. Antigravity now uses the `skillDir` format, like Claude Code: one `<name>/` directory per skill with `SKILL.md`, `references/`, `assets/` and `agents/`, in its global skills folder `~/.gemini/config/skills`. Its references are plain markdown, so the YAML `.yaml` rule extension and the "prompt field" read instruction are gone.
+
+### Fixed
+
+- **Upgrading moves the old Antigravity workflows out.** New `AgentConfig.legacyInstallPath` records an install directory an agent moved away from. `skills update` also reads the manifest there (`~/.gemini/antigravity/.somnio-skills.json`) and reinstalls those skills into `~/.gemini/config/skills`; every reinstall (`setup`, `skills install`, `skills update`) then deletes the workflow and rule files that manifest recorded for the skill, drops its entry, and removes `somnio_rules/` once only empty directories are left in it. Other workflows in `global_workflows/`, and the folder itself, are never touched; workflows installed before the manifest existed are left for `uninstall --skills`. `skills remove` and `uninstall --skills` also clear what the legacy manifest records, in both scopes, and `uninstall --skills` still removes unrecorded `somnio_` workflows and `somnio_rules/`. Agent detection still recognises Antigravity by a populated `~/.gemini/antigravity`.
+
 ## [3.2.12] - 2026-10-16
 
 ### Fixed

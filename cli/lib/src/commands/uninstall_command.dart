@@ -378,8 +378,9 @@ class UninstallCommand extends Command<int> {
 /// bespoke handling can never drift out of sync with the set the generic
 /// cleanup covers. [_removeGenericInstall] handles any agent whose content
 /// lives directly under its registered `installPath` (by name, and only for
-/// locations without a manifest); only Antigravity, which also writes into
-/// `global_workflows/`, needs its own remover.
+/// locations without a manifest); [_removeWorkflowInstall] additionally
+/// covers the workflow layout (`global_workflows/` + `somnio_rules/`)
+/// Antigravity used before CLI 3.2.14.
 ///
 /// Somnio skills installed by skills.sh are removed first through
 /// [SkillsShCleaner], so only lock-owned Somnio entries go and their agent
@@ -416,12 +417,8 @@ bool removeAgentInstalls({
   var removed = skillsShPaths.isNotEmpty;
 
   for (final agent in AgentRegistry.installableAgents) {
-    removed |= switch (agent.id) {
-      // Workflows live one level down, in global_workflows/.
-      'antigravity' => _removeAntigravityInstall(agent, home, onRemoved) |
-          _removeGenericInstall(agent, home, env, onRemoved, onWarning),
-      _ => _removeGenericInstall(agent, home, env, onRemoved, onWarning),
-    };
+    removed |= _removeWorkflowInstall(agent, home, onRemoved) |
+        _removeGenericInstall(agent, home, env, onRemoved, onWarning);
   }
 
   return removed;
@@ -452,13 +449,21 @@ bool removeManifestTrackedInstalls({
   var removed = false;
 
   for (final agent in AgentRegistry.installableAgents) {
+    String? legacyDir(InstallScope scope) =>
+        agent.resolvedScopedLegacyInstallPath(
+          scope: scope,
+          home: home,
+          projectRoot: projectRoot,
+        );
     final locations = [
       for (final dir in agent.resolvedGlobalInstallPaths(
         home: home,
         environment: environment,
       ))
         (scope: InstallScope.global, dir: dir),
-      if (agent.supportsProjectScope)
+      if (legacyDir(InstallScope.global) case final dir?)
+        (scope: InstallScope.global, dir: dir),
+      if (agent.supportsProjectScope) ...[
         (
           scope: InstallScope.project,
           dir: agent.resolvedScopedInstallPath(
@@ -467,6 +472,9 @@ bool removeManifestTrackedInstalls({
             projectRoot: projectRoot,
           ),
         ),
+        if (legacyDir(InstallScope.project) case final dir?)
+          (scope: InstallScope.project, dir: dir),
+      ],
     ];
     // Run from the home directory, the project scope is the global one.
     final seen = <String>{};
@@ -527,12 +535,29 @@ bool _deleteEntity(String path) {
   return false;
 }
 
-bool _removeAntigravityInstall(
+/// Removes the workflow layout (Antigravity before CLI 3.2.14) from [agent]'s
+/// global install directory, or from its legacy one when the agent has
+/// since moved: `somnio_`-prefixed files in `global_workflows/` when no
+/// manifest records them, and the whole somnio-owned `somnio_rules/`.
+///
+/// Does nothing for an agent that never used the workflow layout.
+bool _removeWorkflowInstall(
   AgentConfig agent,
   String home,
   void Function(String)? onRemoved,
 ) {
-  final baseDir = agent.resolvedInstallPath(home: home);
+  final baseDir = switch (agent) {
+    AgentConfig(installFormat: InstallFormat.workflow) =>
+      agent.resolvedInstallPath(home: home),
+    AgentConfig(legacyInstallFormat: InstallFormat.workflow) =>
+      agent.resolvedScopedLegacyInstallPath(
+        scope: InstallScope.global,
+        home: home,
+        projectRoot: home,
+      ),
+    _ => null,
+  };
+  if (baseDir == null) return false;
   var removed = false;
 
   // Remove workflow files — unless a manifest records exactly which ones
@@ -548,7 +573,7 @@ bool _removeAntigravityInstall(
     for (final file in files) {
       final name = p.basename(file.path);
       file.deleteSync();
-      onRemoved?.call('  Removed Antigravity workflow: $name');
+      onRemoved?.call('  Removed ${agent.displayName} workflow: $name');
       removed = true;
     }
   }
@@ -557,7 +582,7 @@ bool _removeAntigravityInstall(
   final rulesDir = Directory(p.join(baseDir, 'somnio_rules'));
   if (rulesDir.existsSync()) {
     rulesDir.deleteSync(recursive: true);
-    onRemoved?.call('  Removed Antigravity rules: somnio_rules/');
+    onRemoved?.call('  Removed ${agent.displayName} rules: somnio_rules/');
     removed = true;
   }
 

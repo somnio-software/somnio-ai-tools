@@ -120,12 +120,36 @@ void main() {
       expect(gemini.tokenUsageParser, isNotNull);
     });
 
-    test('antigravity has correct configuration', () {
+    test('antigravity installs skill directories, not workflows', () {
+      // Antigravity IDE workflows stop working on 2026-10-19; skills live in
+      // `~/.gemini/config/skills/<name>/SKILL.md`.
       final antigravity = AgentRegistry.findById('antigravity')!;
       expect(antigravity.canExecute, false);
-      expect(antigravity.installFormat, InstallFormat.workflow);
-      expect(antigravity.ruleExtension, '.yaml');
-      expect(antigravity.readInstructionTemplate, isNotNull);
+      expect(antigravity.installFormat, InstallFormat.skillDir);
+      expect(antigravity.executionRulesPath, isNull);
+      expect(antigravity.ruleExtension, '.md');
+      expect(antigravity.readInstructionTemplate, isNull);
+      expect(
+        antigravity.resolvedInstallPath(home: '/h'),
+        '/h/.gemini/config/skills',
+      );
+    });
+
+    test('antigravity records the workflow layout it replaced', () {
+      final antigravity = AgentRegistry.findById('antigravity')!;
+      expect(antigravity.legacyInstallFormat, InstallFormat.workflow);
+      expect(
+        antigravity.resolvedScopedLegacyInstallPath(
+          scope: InstallScope.global,
+          home: '/h',
+          projectRoot: '/p',
+        ),
+        '/h/.gemini/antigravity',
+      );
+      expect(
+        antigravity.resolvedExecutionRulesPath(home: '/h'),
+        '/h/.gemini/antigravity/somnio_rules',
+      );
     });
 
     test('codex has correct configuration', () {

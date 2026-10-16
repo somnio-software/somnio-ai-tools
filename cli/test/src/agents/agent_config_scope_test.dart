@@ -122,6 +122,74 @@ void main() {
       );
     });
   });
+  group('resolvedScopedLegacyInstallPath', () {
+    const moved = AgentConfig(
+      id: 'antigravity',
+      displayName: 'Antigravity',
+      installPath: '{home}/.gemini/config/skills',
+      legacyInstallPath: '{home}/.gemini/antigravity',
+      configHome: '{home}/.gemini',
+      configHomeVariable: 'TEST_GEMINI_HOME',
+    );
+
+    test('anchors at home for the global scope', () {
+      expect(
+        moved.resolvedScopedLegacyInstallPath(
+          scope: InstallScope.global,
+          home: '/Users/me',
+          projectRoot: '/Users/me/app',
+        ),
+        '/Users/me/.gemini/antigravity',
+      );
+    });
+
+    test('anchors at the project root for the project scope', () {
+      expect(
+        moved.resolvedScopedLegacyInstallPath(
+          scope: InstallScope.project,
+          home: '/Users/me',
+          projectRoot: '/Users/me/app',
+        ),
+        '/Users/me/app/.gemini/antigravity',
+      );
+    });
+
+    test('is never relocated by the config-home variable', () {
+      expect(
+        moved.resolvedInstallPath(
+          home: '/Users/me',
+          environment: const {'TEST_GEMINI_HOME': '/custom'},
+        ),
+        '/custom/config/skills',
+      );
+      expect(
+        moved.resolvedScopedLegacyInstallPath(
+          scope: InstallScope.global,
+          home: '/Users/me',
+          projectRoot: '/Users/me/app',
+        ),
+        '/Users/me/.gemini/antigravity',
+      );
+    });
+
+    test('is null for an agent that never moved', () {
+      const agent = AgentConfig(
+        id: 'claude',
+        displayName: 'Claude Code',
+        installPath: '{home}/.claude/skills',
+      );
+
+      expect(
+        agent.resolvedScopedLegacyInstallPath(
+          scope: InstallScope.global,
+          home: '/Users/me',
+          projectRoot: '/Users/me/app',
+        ),
+        isNull,
+      );
+    });
+  });
+
   group('config-home override', () {
     const agent = AgentConfig(
       id: 'codex',

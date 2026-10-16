@@ -255,6 +255,36 @@ void main() {
       );
     });
 
+    test('keeps workflows somnio did not write in global_workflows/', () {
+      final workflows =
+          p.join(home.path, '.gemini', 'antigravity', 'global_workflows');
+      _writeFile(p.join(workflows, 'somnio_flutter_health.md'));
+      _writeFile(p.join(workflows, 'deploy.md'));
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(
+        File(p.join(workflows, 'somnio_flutter_health.md')).existsSync(),
+        isFalse,
+      );
+      expect(File(p.join(workflows, 'deploy.md')).existsSync(), isTrue);
+    });
+
+    test('removes Antigravity skill directories from ~/.gemini/config/skills',
+        () {
+      final skills = p.join(home.path, '.gemini', 'config', 'skills');
+      _writeSkill(skills, 'flutter-health-audit');
+      _writeSkill(skills, 'my-own-skill');
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(
+        Directory(p.join(skills, 'flutter-health-audit')).existsSync(),
+        isFalse,
+      );
+      expect(Directory(p.join(skills, 'my-own-skill')).existsSync(), isTrue);
+    });
+
     test('removes Gemini skills and its execution rules', () {
       _writeFile(
         p.join(home.path, '.gemini', 'skills', 'security_audit.md'),
@@ -447,6 +477,84 @@ void main() {
               .existsSync(),
           isTrue,
         );
+      });
+    });
+
+    group('an Antigravity manifest written before 3.2.14', () {
+      late String legacyDir;
+
+      /// Seeds the workflow layout releases before 3.2.14 wrote under [root], recorded in
+      /// that location's manifest the way the installer recorded it.
+      void seedWorkflowInstall(String root) {
+        legacyDir = p.join(root, '.gemini', 'antigravity');
+        const workflow = 'global_workflows/somnio_flutter_health.md';
+        const rule = 'somnio_rules/flutter-health/references/r.md';
+        _writeFile(p.join(legacyDir, workflow));
+        _writeFile(p.join(legacyDir, rule));
+        _writeFile(p.join(legacyDir, 'global_workflows', 'deploy.md'));
+        SkillManifest.load(legacyDir)
+          ..record(
+            skill: 'flutter-health-audit',
+            kind: 'audit',
+            paths: const [
+              ManifestPath(ManifestRoot.install, workflow),
+              ManifestPath(ManifestRoot.install, rule),
+            ],
+          )
+          ..save();
+      }
+
+      void expectRemoved() {
+        expect(
+          File(p.join(
+            legacyDir,
+            'global_workflows',
+            'somnio_flutter_health.md',
+          )).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(p.join(
+            legacyDir,
+            'somnio_rules',
+            'flutter-health',
+            'references',
+            'r.md',
+          )).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(p.join(legacyDir, SkillManifest.fileName)).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(p.join(legacyDir, 'global_workflows', 'deploy.md')).existsSync(),
+          isTrue,
+          reason: 'a workflow the manifest does not record is not ours',
+        );
+      }
+
+      test('removes the recorded files at the global legacy location', () {
+        seedWorkflowInstall(home.path);
+
+        final removed = removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+        );
+
+        expect(removed, isTrue);
+        expectRemoved();
+      });
+
+      test('removes the recorded files at the project legacy location', () {
+        seedWorkflowInstall(project.path);
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+        );
+
+        expectRemoved();
       });
     });
 

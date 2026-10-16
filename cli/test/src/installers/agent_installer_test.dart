@@ -1408,4 +1408,227 @@ void main() {
           result.targetDirectory, p.join(tmp.path, 'default-home', 'skills'));
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // Moved install root (Antigravity: workflows -> skill directories)
+  // ---------------------------------------------------------------------------
+  group('moved install root', () {
+    late String legacyDir;
+    late String installDir;
+
+    setUp(() {
+      legacyDir = p.join(tmp.path, 'antigravity');
+      installDir = p.join(tmp.path, 'config', 'skills');
+    });
+
+    /// The workflow layout CLI releases before 3.2.14 used for Antigravity.
+    AgentConfig legacyAgent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.workflow,
+          installPath: legacyDir,
+          filePrefix: 'somnio_',
+        );
+
+    /// The same agent after its move to a skills folder.
+    AgentConfig migratedAgent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.skillDir,
+          installPath: installDir,
+          legacyInstallFormat: InstallFormat.workflow,
+          legacyInstallPath: legacyDir,
+          legacyExecutionRulesPath: p.join(legacyDir, 'somnio_rules'),
+          filePrefix: 'somnio_',
+        );
+
+    AgentInstaller installerFor(AgentConfig agent) => AgentInstaller(
+          logger: logger,
+          loader: loader,
+          agentConfig: agent,
+          environment: const {},
+        );
+
+    /// Seeds a bundle that also ships an Antigravity workflow file.
+    SkillBundle seedWorkflowBundle({String name = 'flutter-health'}) {
+      final base = _seedBundle(repoRoot, name: name);
+      final id = name.replaceAll('-', '_');
+      _writeFile(repoRoot, 'workflows/$id.md', '# $name workflow\n');
+      return SkillBundle(
+        id: base.id,
+        name: base.name,
+        displayName: base.displayName,
+        description: base.description,
+        planRelativePath: base.planRelativePath,
+        rulesDirectory: base.rulesDirectory,
+        templatePath: base.templatePath,
+        workflowPath: 'workflows/$id.md',
+      );
+    }
+
+    test('moves an audit bundle from the workflow layout to a skill dir',
+        () async {
+      final bundle = seedWorkflowBundle();
+      await installerFor(legacyAgent()).install(bundles: [bundle]);
+      final workflow = p.join(
+        legacyDir,
+        'global_workflows',
+        'somnio_flutter_health.md',
+      );
+      expect(File(workflow).existsSync(), isTrue);
+      expect(Directory(p.join(legacyDir, 'somnio_rules')).existsSync(), isTrue);
+
+      final result =
+          await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(result.targetDirectory, installDir);
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      expect(
+        SkillManifest.load(installDir).entryFor(bundle.name)!.paths,
+        [ManifestPath(ManifestRoot.install, bundle.name)],
+      );
+      expect(File(workflow).existsSync(), isFalse);
+      expect(
+        Directory(p.join(legacyDir, 'somnio_rules')).existsSync(),
+        isFalse,
+        reason: 'the per-file layout leaves only empty dirs, removed too',
+      );
+      expect(
+        File(p.join(legacyDir, SkillManifest.fileName)).existsSync(),
+        isFalse,
+        reason: 'the emptied legacy manifest is deleted',
+      );
+    });
+
+    test('leaves third-party workflows and the shared folder in place',
+        () async {
+      final bundle = seedWorkflowBundle();
+      await installerFor(legacyAgent()).install(bundles: [bundle]);
+      _writeFile(legacyDir, 'global_workflows/deploy.md', 'THEIRS');
+
+      await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(legacyDir, 'global_workflows', 'deploy.md'))
+            .readAsStringSync(),
+        'THEIRS',
+      );
+    });
+
+    test('keeps legacy entries for skills that were not reinstalled', () async {
+      final kept = seedWorkflowBundle(name: 'nestjs-health');
+      final moved = seedWorkflowBundle();
+      await installerFor(legacyAgent()).install(bundles: [kept, moved]);
+
+      await installerFor(migratedAgent()).install(bundles: [moved]);
+
+      final legacy = SkillManifest.load(legacyDir);
+      expect(legacy.skillNames, [kept.name]);
+      for (final path in legacy.entryFor(kept.name)!.paths) {
+        expect(
+          File(p.join(legacyDir, path.path)).existsSync(),
+          isTrue,
+          reason: path.path,
+        );
+      }
+      expect(
+        Directory(p.join(legacyDir, 'somnio_rules', moved.planSubDir))
+            .existsSync(),
+        isFalse,
+      );
+    });
+
+    test('moves workflow skills out of global_workflows', () {
+      _writeFile(
+        repoRoot,
+        'skills/git-commit-format/SKILL.md',
+        '---\ndescription: Writes commits.\n---\n\n# Commit\n',
+      );
+      const skill = WorkflowSkill(
+        id: 'git_commit_format',
+        name: 'git-commit-format',
+        displayName: 'Git Commit Format',
+        description: 'Writes commits.',
+        planRelativePath: 'skills/git-commit-format/SKILL.md',
+      );
+      installerFor(legacyAgent()).installWorkflowSkills([skill]);
+      final workflow = p.join(
+        legacyDir,
+        'global_workflows',
+        'somnio_git_commit_format.md',
+      );
+      expect(File(workflow).existsSync(), isTrue);
+
+      installerFor(migratedAgent()).installWorkflowSkills([skill]);
+
+      expect(File(workflow).existsSync(), isFalse);
+      expect(
+        File(p.join(installDir, 'git-commit-format', 'SKILL.md'))
+            .readAsStringSync(),
+        startsWith('---\nname: git-commit-format\n'),
+      );
+      expect(SkillManifest.load(legacyDir).isEmpty, isTrue);
+    });
+
+    test('leaves legacy workflows no manifest records untouched', () async {
+      final bundle = seedWorkflowBundle();
+      _writeFile(
+        legacyDir,
+        'global_workflows/somnio_flutter_health.md',
+        'PRE-MANIFEST',
+      );
+
+      await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(legacyDir, 'global_workflows', 'somnio_flutter_health.md'))
+            .readAsStringSync(),
+        'PRE-MANIFEST',
+      );
+    });
+
+    test('never deletes through a symlinked legacy directory', () async {
+      final bundle = seedWorkflowBundle();
+      final outside = Directory(p.join(tmp.path, 'outside'))..createSync();
+      _writeFile(outside.path, 'keep.md', 'THEIRS');
+      Directory(legacyDir).createSync(recursive: true);
+      Link(p.join(legacyDir, 'global_workflows')).createSync(outside.path);
+      SkillManifest.load(legacyDir)
+        ..record(
+          skill: bundle.name,
+          kind: 'audit',
+          paths: const [
+            ManifestPath(ManifestRoot.install, 'global_workflows/keep.md'),
+          ],
+        )
+        ..save();
+
+      await installerFor(migratedAgent()).install(bundles: [bundle]);
+
+      expect(File(p.join(outside.path, 'keep.md')).existsSync(), isTrue);
+    });
+
+    test('does not migrate when the manifest is not recorded', () async {
+      final bundle = seedWorkflowBundle();
+      await installerFor(legacyAgent()).install(bundles: [bundle]);
+
+      await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: migratedAgent(),
+        environment: const {},
+        recordManifest: false,
+      ).install(bundles: [bundle]);
+
+      expect(SkillManifest.load(legacyDir).skillNames, [bundle.name]);
+      expect(
+        File(p.join(legacyDir, 'global_workflows', 'somnio_flutter_health.md'))
+            .existsSync(),
+        isTrue,
+      );
+    });
+  });
 }

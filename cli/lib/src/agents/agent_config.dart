@@ -64,6 +64,7 @@ class AgentConfig {
     this.configHome,
     this.configHomeVariable,
     this.legacyInstallFormat,
+    this.legacyInstallPath,
     this.legacyExecutionRulesPath,
     this.readInstructionTemplate,
     this.tokenUsageParser,
@@ -169,6 +170,15 @@ class AgentConfig {
   /// Lets status / uninstall still recognize (and clean up) content in the
   /// old layout that no manifest records.
   final InstallFormat? legacyInstallFormat;
+
+  /// Install path template an earlier CLI release wrote this agent's skills
+  /// to, when that differs from [installPath] (e.g. Antigravity's
+  /// `{home}/.gemini/antigravity`, which held `global_workflows/`).
+  ///
+  /// The `.somnio-skills.json` manifest there keeps recording what that
+  /// release wrote, so install migrates those entries out of it and update,
+  /// remove and uninstall still find them.
+  final String? legacyInstallPath;
 
   /// Execution-rules directory an earlier CLI release wrote for this agent
   /// and this one no longer does.
@@ -304,6 +314,25 @@ class AgentConfig {
     final current = resolvedInstallPath(home: home, environment: environment);
     final fallback = resolvedInstallPath(home: home);
     return [current, if (fallback != current) fallback];
+  }
+
+  /// Resolves [legacyInstallPath] for [scope], anchoring `{home}` like
+  /// [resolvedScopedInstallPath]. Null when the agent never moved.
+  ///
+  /// Never relocated through [configHomeVariable]: the releases that wrote
+  /// it ignored the variable.
+  String? resolvedScopedLegacyInstallPath({
+    required InstallScope scope,
+    required String home,
+    required String projectRoot,
+  }) {
+    final legacy = legacyInstallPath;
+    if (legacy == null) return null;
+    return _resolve(
+      legacy,
+      home: scope == InstallScope.global ? home : projectRoot,
+      environment: const {},
+    );
   }
 
   /// Substitutes the placeholders in [template], relocating a [configHome]

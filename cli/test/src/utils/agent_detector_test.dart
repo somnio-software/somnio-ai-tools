@@ -170,6 +170,35 @@ void main() {
         expect(info.path, p.join(codexHome, 'skills'));
       });
 
+      group('Antigravity', () {
+        final antigravity = AgentRegistry.findById('antigravity')!;
+
+        Future<String?> detectedPath() async {
+          final detector = AgentDetector(
+            homeDirectory: home,
+            whichBinary: (_) async => null,
+          );
+          return (await detector.detect())[antigravity]!.path;
+        }
+
+        test('is detected by its skills folder', () async {
+          Directory(p.join(home, '.gemini', 'config', 'skills', 'mine'))
+              .createSync(recursive: true);
+
+          expect(
+            await detectedPath(),
+            p.join(home, '.gemini', 'config', 'skills'),
+          );
+        });
+
+        test('is still detected by its pre-skills folder', () async {
+          Directory(p.join(home, '.gemini', 'antigravity', 'brain'))
+              .createSync(recursive: true);
+
+          expect(await detectedPath(), p.join(home, '.gemini', 'antigravity'));
+        });
+      });
+
       test('detects an agent whose binary is on PATH', () async {
         final detector = AgentDetector(
           homeDirectory: home,

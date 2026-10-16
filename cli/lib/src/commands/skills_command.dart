@@ -660,13 +660,27 @@ class _SkillsUpdateCommand extends Command<int> {
           environment: PlatformUtils.environment,
         );
         if (!seen.add(realPathOf(dir))) continue;
-        final manifest = SkillManifest.load(dir);
-        if (manifest.isEmpty) continue;
+        // Skills an earlier release installed at the agent's old location
+        // (Antigravity's workflows) are refreshed into the current one; the
+        // installer then deletes the old copies.
+        final legacyDir = agent.resolvedScopedLegacyInstallPath(
+          scope: scope,
+          home: home,
+          projectRoot: projectRoot,
+        );
+        final entries = {
+          if (legacyDir != null && seen.add(realPathOf(legacyDir)))
+            for (final entry in SkillManifest.load(legacyDir).entries)
+              entry.skill: entry,
+          for (final entry in SkillManifest.load(dir).entries)
+            entry.skill: entry,
+        };
+        if (entries.isEmpty) continue;
 
         final audit = <SkillBundle>[];
         final workflow = <WorkflowSkill>[];
 
-        for (final entry in manifest.entries) {
+        for (final entry in entries.values) {
           if (entry.kind == 'workflow') {
             final wf = _findWorkflowByName(entry.skill);
             if (wf == null) {
@@ -973,19 +987,27 @@ class _SkillsRemoveCommand extends Command<int> {
           continue;
         }
         // A relocated global install (CODEX_HOME) may still have an older
-        // one at the default location.
-        final dirs = scope == InstallScope.global
-            ? agent.resolvedGlobalInstallPaths(
-                home: home,
-                environment: PlatformUtils.environment,
-              )
-            : [
-                agent.resolvedScopedInstallPath(
-                  scope: scope,
-                  home: home,
-                  projectRoot: projectRoot,
-                ),
-              ];
+        // one at the default location, and an agent that moved (Antigravity)
+        // one at its legacy location.
+        final legacyDir = agent.resolvedScopedLegacyInstallPath(
+          scope: scope,
+          home: home,
+          projectRoot: projectRoot,
+        );
+        final dirs = [
+          if (scope == InstallScope.global)
+            ...agent.resolvedGlobalInstallPaths(
+              home: home,
+              environment: PlatformUtils.environment,
+            )
+          else
+            agent.resolvedScopedInstallPath(
+              scope: scope,
+              home: home,
+              projectRoot: projectRoot,
+            ),
+          if (legacyDir != null) legacyDir,
+        ];
         for (final dir in dirs) {
           if (!seen.add(realPathOf(dir))) continue;
           final manifest = SkillManifest.load(dir);

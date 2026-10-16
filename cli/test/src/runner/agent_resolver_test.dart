@@ -19,6 +19,12 @@ void main() {
   final codex = AgentRegistry.findById('codex')!; // skillDir + CODEX_HOME
   final copilot = AgentRegistry.findById('copilot')!; // no executionRulesPath
   final antigravity = AgentRegistry.findById('antigravity')!; // binary == null
+  const yamlAgent = AgentConfig(
+    id: 'yaml-agent',
+    displayName: 'YAML Agent',
+    installPath: '/tmp/somnio-yaml-agent',
+    ruleExtension: '.yaml',
+  );
 
   // ---------------------------------------------------------------------------
   // ruleBasePath (4 branches)
@@ -53,6 +59,16 @@ void main() {
       expect(
         path,
         p.join(home, '.codex', 'skills', 'flutter-health', 'references'),
+      );
+    });
+
+    test('antigravity → ~/.gemini/config/skills/{bundle}/references', () {
+      final path =
+          resolver.ruleBasePath(antigravity, 'flutter-health', 'flutter');
+      expect(
+        path,
+        p.join(home, '.gemini', 'config', 'skills', 'flutter-health',
+            'references'),
       );
     });
 
@@ -168,11 +184,11 @@ void main() {
     test('uses agent ruleExtension for the rule file check', () {
       final tmpDir = Directory.systemTemp.createTempSync('somnio_vi_');
       addTearDown(() => tmpDir.deleteSync(recursive: true));
-      // antigravity uses .yaml — a .md file should NOT satisfy it.
+      // yamlAgent uses .yaml — a .md file should NOT satisfy it.
       File(p.join(tmpDir.path, 'architecture.md')).writeAsStringSync('x');
 
-      final error = resolver
-          .verifyInstallation(antigravity, tmpDir.path, ['architecture']);
+      final error =
+          resolver.verifyInstallation(yamlAgent, tmpDir.path, ['architecture']);
       expect(error, isNotNull);
       expect(error, contains('architecture.yaml'));
     });
@@ -184,7 +200,7 @@ void main() {
   group('passthrough getters', () {
     test('ruleExtension returns agent extension', () {
       expect(resolver.ruleExtension(claude), '.md');
-      expect(resolver.ruleExtension(antigravity), '.yaml');
+      expect(resolver.ruleExtension(yamlAgent), '.yaml');
     });
 
     test('agentDisplayName returns agent display name', () {

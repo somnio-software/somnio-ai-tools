@@ -105,13 +105,23 @@ class AgentDetector {
     }
 
     // Check for a populated install directory (installed but binary not in
-    // PATH). An empty one does not count: skills.sh creates `<agent>/skills`
+    // PATH), current or legacy (e.g. Antigravity's `~/.gemini/antigravity`).
+    // An empty one does not count: skills.sh creates `<agent>/skills`
     // folders for agents the user may never have installed.
     if (agent.installScope == InstallScope.global) {
-      final installDir =
-          agent.resolvedInstallPath(home: _home, environment: _environment);
-      if (hasContent(installDir, home: _home)) {
-        return AgentInfo(installed: true, path: installDir);
+      final legacyDir = agent.resolvedScopedLegacyInstallPath(
+        scope: InstallScope.global,
+        home: _home,
+        projectRoot: _home,
+      );
+      final installDirs = [
+        agent.resolvedInstallPath(home: _home, environment: _environment),
+        if (legacyDir != null) legacyDir,
+      ];
+      for (final installDir in installDirs) {
+        if (hasContent(installDir, home: _home)) {
+          return AgentInfo(installed: true, path: installDir);
+        }
       }
     }
 

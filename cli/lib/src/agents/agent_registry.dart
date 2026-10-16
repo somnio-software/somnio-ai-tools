@@ -12,9 +12,10 @@ class AgentRegistry {
   ///
   /// Agents that load skills as `<name>/SKILL.md` directories use
   /// [InstallFormat.skillDir]. Those installed as flat markdown before CLI
-  /// 3.2.12 (files these agents never load) record that in
-  /// `legacyInstallFormat` / `legacyExecutionRulesPath`, so update, remove
-  /// and uninstall migrate or delete the old layout.
+  /// 3.2.12 (files these agents never load), or as Antigravity workflows
+  /// before 3.2.14, record that in `legacyInstallFormat` /
+  /// `legacyInstallPath` / `legacyExecutionRulesPath`, so update, remove and
+  /// uninstall migrate or delete the old layout.
   static const List<AgentConfig> agents = [
     // ── CLI agents (canExecute: true) ─────────────────────────────
     _claude,
@@ -173,11 +174,14 @@ class AgentRegistry {
   static const _antigravity = AgentConfig(
     id: 'antigravity',
     displayName: 'Antigravity',
-    installFormat: InstallFormat.workflow,
-    installPath: '{home}/.gemini/antigravity',
-    ruleExtension: '.yaml',
-    readInstructionTemplate:
-        'Read {file} and follow ALL instructions in the prompt field',
+    installFormat: InstallFormat.skillDir,
+    // Antigravity's global skills folder. IDE workflows, which releases before
+    // 3.2.14 wrote to `global_workflows/` under the legacy path, stop working
+    // on 2026-10-19.
+    installPath: '{home}/.gemini/config/skills',
+    legacyInstallFormat: InstallFormat.workflow,
+    legacyInstallPath: '{home}/.gemini/antigravity',
+    legacyExecutionRulesPath: '{home}/.gemini/antigravity/somnio_rules',
     filePrefix: 'somnio_',
     installUrl: 'https://github.com/google-gemini/gemini-cli',
     detectionBinaries: ['agy', 'antigravity'],

@@ -1,3 +1,4 @@
+import 'package:somnio/src/agents/agent_config.dart';
 import 'package:somnio/src/agents/agent_registry.dart';
 import 'package:somnio/src/agents/installed_skill_names.dart';
 import 'package:somnio/src/content/skill_registry.dart';
@@ -8,7 +9,15 @@ void main() {
   final cursor = AgentRegistry.findById('cursor')!; // singleFile
   final copilot = AgentRegistry.findById('copilot')!; // markdown
   final codex = AgentRegistry.findById('codex')!; // skillDir, legacy markdown
-  final antigravity = AgentRegistry.findById('antigravity')!; // workflow
+  // skillDir, legacy workflow
+  final antigravity = AgentRegistry.findById('antigravity')!;
+  const workflowAgent = AgentConfig(
+    id: 'workflow-agent',
+    displayName: 'Workflow Agent',
+    installFormat: InstallFormat.workflow,
+    installPath: '/tmp/workflow-agent',
+    filePrefix: 'somnio_',
+  );
 
   group('InstalledSkillNames.all', () {
     test('covers every registered skill and workflow skill', () {
@@ -59,7 +68,18 @@ void main() {
     });
 
     test('workflow is matched by prefix, not by name', () {
-      expect(InstalledSkillNames.basenamesFor(antigravity), isEmpty);
+      expect(InstalledSkillNames.basenamesFor(workflowAgent), isEmpty);
+      expect(
+        InstalledSkillNames.matches(workflowAgent, 'somnio_flutter_ha.md'),
+        isTrue,
+      );
+    });
+
+    test('a legacy workflow layout adds no names to the skill directories', () {
+      expect(
+        InstalledSkillNames.basenamesFor(antigravity),
+        InstalledSkillNames.basenamesFor(claude),
+      );
     });
   });
 
