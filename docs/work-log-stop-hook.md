@@ -50,7 +50,7 @@ The hook reads `last_assistant_message` (the current turn's response) plus git c
 somnio hooks
 ```
 
-This copies the script to `~/.claude/hooks/work-log-stop.sh`, makes it executable, and merges the Stop hook entry into `~/.claude/settings.json` — all in one step, idempotently. Run it again after any CLI update to pick up script changes.
+This copies the script to `~/.claude/hooks/work-log-stop.sh`, makes it executable, and merges the Stop hook entry into `~/.claude/settings.json` — all in one step, idempotently. With `CLAUDE_CONFIG_DIR` set, both live under that directory instead of `~/.claude`. Run it again after any CLI update to pick up script changes.
 
 ### Manual setup
 

@@ -208,6 +208,9 @@ void main() {
           environment: {
             'HOME': home,
             'PATH': '$fakeBin:${Platform.environment['PATH']}',
+            // Blank, so a caller's Claude config dir never relocates the
+            // install out of the fake home.
+            'CLAUDE_CONFIG_DIR': '',
           },
         );
 

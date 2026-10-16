@@ -468,8 +468,15 @@ bool removeManifestTrackedInstalls({
           ),
         ),
     ];
-    // Run from the home directory, the project scope is the global one.
-    final seen = <String>{};
+    // Run from the home directory, the project scope is the global one,
+    // or a protected default location (another Claude Code account's
+    // ~/.claude) that must be left alone.
+    final seen = {
+      ...agent.resolvedProtectedInstallPaths(
+        home: home,
+        environment: environment,
+      ),
+    };
 
     for (final (:scope, dir: installDir) in locations) {
       if (!seen.add(realPathOf(installDir))) continue;

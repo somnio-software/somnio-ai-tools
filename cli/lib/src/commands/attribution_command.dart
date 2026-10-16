@@ -5,15 +5,28 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_registry.dart';
 import '../utils/platform_utils.dart';
 
 /// The `attribution` value that turns off Claude Code's commit trailer and
 /// pull request footer.
 const disabledClaudeAttribution = {'commit': '', 'pr': ''};
 
-/// Path to the user-level Claude Code settings file.
-String claudeSettingsPath() =>
-    p.join(PlatformUtils.homeDirectory, '.claude', 'settings.json');
+/// Path to the user-level Claude Code settings file, in Claude Code's config
+/// directory: `$CLAUDE_CONFIG_DIR` when [environment] sets it, otherwise
+/// `.claude` under [home].
+///
+/// Both default to the real user's; [environment] defaults to the process
+/// environment only when [home] does too, so a caller passing a temporary
+/// [home] never resolves into the user's real config directory.
+String claudeSettingsPath({String? home, Map<String, String>? environment}) {
+  final configHome = AgentRegistry.findById('claude')!.resolvedConfigHome(
+    home: home ?? PlatformUtils.homeDirectory,
+    environment:
+        environment ?? (home == null ? PlatformUtils.environment : const {}),
+  )!;
+  return p.join(configHome, 'settings.json');
+}
 
 /// Whether Claude Code adds its attribution to commits and pull requests.
 enum ClaudeAttributionState {
@@ -86,7 +99,7 @@ Map<String, dynamic> _readSettings(String settingsPath) {
 
 /// Top-level `somnio attribution` command: turns the "Generated with Claude
 /// Code" footer on pull requests and the `Co-Authored-By` trailer on commits
-/// off or on in `~/.claude/settings.json`.
+/// off or on in `~/.claude/settings.json` (`$CLAUDE_CONFIG_DIR` when set).
 ///
 /// Subcommands:
 ///   somnio attribution off     — remove the attribution

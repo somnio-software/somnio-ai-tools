@@ -105,6 +105,64 @@ void main() {
     });
   });
 
+  group('workLogHookLocation', () {
+    test('uses ~/.claude when CLAUDE_CONFIG_DIR is unset or blank', () {
+      for (final env in const [
+        <String, String>{},
+        {'CLAUDE_CONFIG_DIR': '  '},
+      ]) {
+        final location = workLogHookLocation(home: '/h', environment: env);
+
+        expect(location.scriptPath, '/h/.claude/hooks/work-log-stop.sh');
+        expect(location.settingsPath, '/h/.claude/settings.json');
+        expect(location.command, HooksCommand.hookCommand, reason: '$env');
+      }
+    });
+
+    test('moves under CLAUDE_CONFIG_DIR and registers the absolute path', () {
+      final location = workLogHookLocation(
+        home: '/h',
+        environment: const {'CLAUDE_CONFIG_DIR': '/h/.claude-work'},
+      );
+
+      expect(location.scriptPath, '/h/.claude-work/hooks/work-log-stop.sh');
+      expect(location.settingsPath, '/h/.claude-work/settings.json');
+      expect(location.command, "'/h/.claude-work/hooks/work-log-stop.sh'");
+    });
+
+    test('quotes a relocated path for the shell', () {
+      final location = workLogHookLocation(
+        home: '/h',
+        environment: const {'CLAUDE_CONFIG_DIR': "/h/Claude's config"},
+      );
+
+      expect(
+        location.command,
+        r"'/h/Claude'\''s config/hooks/work-log-stop.sh'",
+      );
+    });
+
+    test('registers a relative CLAUDE_CONFIG_DIR by its absolute path', () {
+      final location = workLogHookLocation(
+        home: '/h',
+        environment: const {'CLAUDE_CONFIG_DIR': '.claude-work'},
+      );
+      final absolute = p.join(Directory.current.path, '.claude-work', 'hooks');
+
+      expect(location.scriptPath, p.join(absolute, 'work-log-stop.sh'));
+      expect(location.command, "'${p.join(absolute, 'work-log-stop.sh')}'");
+    });
+
+    test('keeps the ~ form when CLAUDE_CONFIG_DIR names ~/.claude', () {
+      final location = workLogHookLocation(
+        home: '/h',
+        environment: const {'CLAUDE_CONFIG_DIR': '/h/.claude/'},
+      );
+
+      expect(location.command, HooksCommand.hookCommand);
+    });
+  });
+
   group('HooksCommand.hookScript drift check', () {
     test('embedded hookScript matches hooks/work-log-stop.sh logic', () {
       // Running `dart test` from the cli/ package root; the .sh file sits one
