@@ -1,19 +1,17 @@
 ---
 name: iso27001-audit
 description: >-
-  Execute a comprehensive, framework-agnostic ISO/IEC 27001:2022 readiness
-  audit of an entire repository or application. Detects the stack at runtime
-  and adapts evidence gathering accordingly. Inspects the whole project for
-  evidence of an Information Security Management System (ISMS clauses 4-10)
-  and Annex A controls (93 controls across 4 themes), organized into 11
-  auditable control categories. Records a Status and Owner/lane for every
-  control, scores readiness per category, lists gaps mapped to Annex A
-  references, and produces a prioritized remediation plan, a Statement of
-  Applicability starter, and an ISMS clause coverage check - with an overall
-  readiness score /100 and a readiness band. Read-only and evidence-based:
-  never invents controls; absent evidence is marked a Gap.
-  Use when the user asks to run an ISO 27001 readiness audit, an ISMS audit,
-  an Annex A gap analysis, or an ISO compliance audit.
+  Execute a comprehensive, framework-agnostic ISO/IEC 27001:2022 readiness audit
+  of a whole repository or application. Detects the stack at runtime and
+  inspects the project for evidence of an Information Security Management System
+  (ISMS clauses 4-10) and Annex A controls (93 controls across 4 themes),
+  organized into 11 auditable categories. Records a Status and Owner/lane per
+  control, scores each category, maps gaps to Annex A references, and produces a
+  prioritized remediation plan, a Statement of Applicability starter, and an
+  ISMS clause coverage check, with an overall readiness score /100 and band.
+  Read-only and evidence-based: never invents controls; absent evidence is a Gap.
+  Use when the user asks to run an ISO 27001 readiness audit, an ISMS audit, an
+  Annex A gap analysis, or an ISO compliance audit.
   Triggers on: 'iso 27001 audit', 'iso27001 readiness', 'isms audit',
   'annex a gap analysis', 'iso compliance audit'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
