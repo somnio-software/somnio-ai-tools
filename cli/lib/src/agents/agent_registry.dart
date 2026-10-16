@@ -73,6 +73,10 @@ class AgentRegistry {
     fallbackModel: 'haiku',
     installFormat: InstallFormat.skillDir,
     installPath: '{home}/.claude/skills',
+    configHome: '{home}/.claude',
+    configHomeVariable: 'CLAUDE_CONFIG_DIR',
+    // `~/.claude` may be another account's live config directory.
+    cleansDefaultConfigHome: false,
     ruleExtension: '.md',
     tokenUsageParser: parseClaudeUsage,
     filePrefix: 'somnio-',

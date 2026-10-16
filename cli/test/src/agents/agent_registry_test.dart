@@ -104,6 +104,38 @@ void main() {
       expect(claude.models, contains('haiku'));
     });
 
+    test('claude installs skill directories under \$CLAUDE_CONFIG_DIR/skills',
+        () {
+      final claude = AgentRegistry.findById('claude')!;
+      expect(
+        claude.resolvedInstallPath(home: '/h', environment: const {}),
+        '/h/.claude/skills',
+      );
+      expect(
+        claude.resolvedInstallPath(
+          home: '/h',
+          environment: const {'CLAUDE_CONFIG_DIR': '/h/.claude-work'},
+        ),
+        '/h/.claude-work/skills',
+      );
+      expect(
+        claude.resolvedScopedInstallPath(
+          scope: InstallScope.project,
+          home: '/h',
+          projectRoot: '/repo',
+          environment: const {'CLAUDE_CONFIG_DIR': '/h/.claude-work'},
+        ),
+        '/repo/.claude/skills',
+      );
+      expect(
+        claude.resolvedGlobalInstallPaths(
+          home: '/h',
+          environment: const {'CLAUDE_CONFIG_DIR': '/h/.claude-work'},
+        ),
+        ['/h/.claude-work/skills'],
+      );
+    });
+
     test('cursor has correct configuration', () {
       final cursor = AgentRegistry.findById('cursor')!;
       expect(cursor.promptStyle, PromptStyle.positionalLast);

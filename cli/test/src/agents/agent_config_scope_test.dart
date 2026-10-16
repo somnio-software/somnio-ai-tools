@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:path/path.dart' as p;
 import 'package:somnio/src/agents/agent_config.dart';
+import 'package:somnio/src/utils/real_path.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -169,6 +173,80 @@ void main() {
       );
     });
 
+    test('leaves the default install path out when it may be in use', () {
+      const shared = AgentConfig(
+        id: 'claude',
+        displayName: 'Claude Code',
+        installPath: '{home}/.claude/skills',
+        configHome: '{home}/.claude',
+        configHomeVariable: 'CLAUDE_CONFIG_DIR',
+        cleansDefaultConfigHome: false,
+      );
+
+      expect(
+        shared.resolvedGlobalInstallPaths(
+          home: '/Users/me',
+          environment: const {'CLAUDE_CONFIG_DIR': '/Users/me/.claude-work'},
+        ),
+        ['/Users/me/.claude-work/skills'],
+      );
+    });
+
+    group('resolvedProtectedInstallPaths', () {
+      late Directory home;
+
+      setUp(() => home = Directory.systemTemp.createTempSync('protected_'));
+      tearDown(() => home.deleteSync(recursive: true));
+
+      const shared = AgentConfig(
+        id: 'claude',
+        displayName: 'Claude Code',
+        installPath: '{home}/.claude/skills',
+        configHome: '{home}/.claude',
+        configHomeVariable: 'CLAUDE_CONFIG_DIR',
+        cleansDefaultConfigHome: false,
+      );
+
+      test('lists the default location while the variable relocates it', () {
+        expect(
+          shared.resolvedProtectedInstallPaths(
+            home: home.path,
+            environment: {
+              'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work'),
+            },
+          ),
+          [realPathOf(p.join(home.path, '.claude', 'skills'))],
+        );
+      });
+
+      test('is empty without the variable or with cleanup allowed', () {
+        expect(shared.resolvedProtectedInstallPaths(home: home.path), isEmpty);
+        expect(
+          agent.resolvedProtectedInstallPaths(
+            home: home.path,
+            environment: environment,
+          ),
+          isEmpty,
+        );
+      });
+
+      test('is empty when the variable links to the default location', () {
+        Directory(p.join(home.path, '.claude')).createSync();
+        Link(p.join(home.path, '.claude-link'))
+            .createSync(p.join(home.path, '.claude'));
+
+        expect(
+          shared.resolvedProtectedInstallPaths(
+            home: home.path,
+            environment: {
+              'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-link'),
+            },
+          ),
+          isEmpty,
+        );
+      });
+    });
+
     test('is ignored for the project scope', () {
       final resolved = agent.resolvedScopedInstallPath(
         scope: InstallScope.project,
@@ -192,6 +270,19 @@ void main() {
           reason: '$env',
         );
       }
+    });
+
+    test('resolves the config home itself', () {
+      expect(
+        agent.resolvedConfigHome(home: '/Users/me', environment: environment),
+        '/opt/codex',
+      );
+      expect(agent.resolvedConfigHome(home: '/Users/me'), '/Users/me/.codex');
+      expect(
+        const AgentConfig(id: 'x', displayName: 'X', installPath: '{home}/.x')
+            .resolvedConfigHome(home: '/Users/me', environment: environment),
+        isNull,
+      );
     });
 
     test('does not apply without a configHome prefix', () {

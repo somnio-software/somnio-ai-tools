@@ -649,8 +649,14 @@ class _SkillsUpdateCommand extends Command<int> {
         if (agent.supportsProjectScope) InstallScope.project,
       ];
       // Run from the home directory, the project scope is the global one:
-      // refresh that location once, as global.
-      final seen = <String>{};
+      // refresh that location once, as global. Never touch a protected
+      // default location (another Claude Code account's ~/.claude).
+      final seen = {
+        ...agent.resolvedProtectedInstallPaths(
+          home: home,
+          environment: PlatformUtils.environment,
+        ),
+      };
 
       for (final scope in scopes) {
         final dir = agent.resolvedScopedInstallPath(
@@ -966,8 +972,14 @@ class _SkillsRemoveCommand extends Command<int> {
 
     for (final agent in agents) {
       // Global and project can be the same directory (run from home); its
-      // manifest must be processed once.
-      final seen = <String>{};
+      // manifest must be processed once. A protected default location
+      // (another Claude Code account's ~/.claude) is never a candidate.
+      final seen = {
+        ...agent.resolvedProtectedInstallPaths(
+          home: home,
+          environment: PlatformUtils.environment,
+        ),
+      };
       for (final scope in scopes) {
         if (scope == InstallScope.project && !agent.supportsProjectScope) {
           continue;

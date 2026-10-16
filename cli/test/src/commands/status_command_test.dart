@@ -52,7 +52,9 @@ void main() {
     final result = await Process.run(
       Platform.resolvedExecutable,
       [cliScript(), 'status'],
-      environment: {'HOME': home},
+      // A blank CLAUDE_CONFIG_DIR keeps the caller's Claude config dir from
+      // relocating the install out of the fake home.
+      environment: {'HOME': home, 'CLAUDE_CONFIG_DIR': ''},
     );
     expect(result.exitCode, 0, reason: '${result.stderr}');
     return '${result.stdout}';

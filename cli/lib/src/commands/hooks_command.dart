@@ -6,6 +6,7 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 import 'package:path/path.dart' as p;
 
+import '../agents/agent_registry.dart';
 import '../utils/platform_utils.dart';
 
 /// Installs Claude Code hooks shipped with somnio-ai-tools.
@@ -114,19 +115,23 @@ exit 0
   String get description => 'Install Claude Code hooks from somnio-ai-tools.\n'
       '\n'
       'Installs the work-log Stop hook into ~/.claude/hooks/ and registers\n'
-      'it in ~/.claude/settings.json. After each Claude Code session turn,\n'
-      'the hook appends a 2-3 sentence summary to ~/.work-log/YYYY-MM-DD.md\n'
-      'which the clockify-tracker skill can use to auto-fill time entries.';
+      'it in ~/.claude/settings.json (\$CLAUDE_CONFIG_DIR instead of\n'
+      '~/.claude when set). After each Claude Code session turn, the hook\n'
+      'appends a 2-3 sentence summary to ~/.work-log/YYYY-MM-DD.md which\n'
+      'the clockify-tracker skill can use to auto-fill time entries.';
 
   @override
   Future<int> run() async {
     final force = argResults!['force'] as bool;
     final verbose = argResults!['verbose'] as bool;
 
-    final home = PlatformUtils.homeDirectory;
-    final hooksDir = p.join(home, '.claude', 'hooks');
-    final hookPath = p.join(hooksDir, hookFilename);
-    final settingsPath = p.join(home, '.claude', 'settings.json');
+    final location = workLogHookLocation(
+      home: PlatformUtils.homeDirectory,
+      environment: PlatformUtils.environment,
+    );
+    final hookPath = location.scriptPath;
+    final hooksDir = p.dirname(hookPath);
+    final settingsPath = location.settingsPath;
 
     _logger.info('');
     _logger.info('This will:');
@@ -169,7 +174,7 @@ exit 0
       // 3. Register in settings.json.
       final alreadyRegistered = mergeStopHookIntoSettings(
         settingsPath,
-        hookCommand,
+        location.command,
         onWarn: _logger.warn,
         onVerbose: verbose ? _logger.info : null,
       );
@@ -196,6 +201,35 @@ exit 0
 
     return ExitCode.success.code;
   }
+}
+
+/// Where the work-log hook is installed for Claude Code: the script under
+/// `hooks/` and the registration in `settings.json`, both in its config
+/// directory — `$CLAUDE_CONFIG_DIR` when [environment] sets it, otherwise
+/// `~/.claude`.
+///
+/// For the default directory the registered command keeps the
+/// [HooksCommand.hookCommand] form, so a hook registered by an earlier
+/// release still matches. A relocated directory is registered by the
+/// script's absolute path, single-quoted for the shell. Exposed at the top
+/// level so it can be tested without running the command.
+({String scriptPath, String settingsPath, String command}) workLogHookLocation({
+  required String home,
+  Map<String, String> environment = const {},
+}) {
+  final claude = AgentRegistry.findById('claude')!;
+  final configDir =
+      claude.resolvedConfigHome(home: home, environment: environment)!;
+  final scriptPath = p.absolute(configDir, 'hooks', HooksCommand.hookFilename);
+  final relocated =
+      !p.equals(configDir, claude.resolvedConfigHome(home: home)!);
+  return (
+    scriptPath: scriptPath,
+    settingsPath: p.join(configDir, 'settings.json'),
+    command: relocated
+        ? "'${scriptPath.replaceAll("'", r"'\''")}'"
+        : HooksCommand.hookCommand,
+  );
 }
 
 /// Merges the Stop hook entry for [hookCommand] into the settings file at

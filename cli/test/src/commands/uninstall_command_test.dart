@@ -507,6 +507,69 @@ void main() {
       expect(src.existsSync(), isTrue);
     });
 
+    test('leaves ~/.claude alone with CLAUDE_CONFIG_DIR set', () {
+      final configHome = p.join(home.path, '.claude-work');
+      for (final skills in [
+        p.join(configHome, 'skills'),
+        p.join(home.path, '.claude', 'skills'),
+      ]) {
+        _writeSkill(skills, 'security-audit');
+        SkillManifest.load(skills)
+          ..record(
+            skill: 'security-audit',
+            kind: 'audit',
+            paths: const [
+              ManifestPath(ManifestRoot.install, 'security-audit'),
+            ],
+          )
+          ..save();
+      }
+
+      removeManifestTrackedInstalls(
+        home: home.path,
+        projectRoot: project.path,
+        environment: {'CLAUDE_CONFIG_DIR': configHome},
+      );
+
+      expect(
+        Directory(p.join(configHome, 'skills', 'security-audit')).existsSync(),
+        isFalse,
+      );
+      expect(
+        Directory(p.join(home.path, '.claude', 'skills', 'security-audit'))
+            .existsSync(),
+        isTrue,
+      );
+    });
+
+    test('leaves ~/.claude alone when run from \$HOME with CLAUDE_CONFIG_DIR',
+        () {
+      final otherAccount = p.join(home.path, '.claude', 'skills');
+      _writeSkill(otherAccount, 'security-audit');
+      SkillManifest.load(otherAccount)
+        ..record(
+          skill: 'security-audit',
+          kind: 'audit',
+          paths: const [ManifestPath(ManifestRoot.install, 'security-audit')],
+        )
+        ..save();
+
+      removeManifestTrackedInstalls(
+        home: home.path,
+        projectRoot: home.path,
+        environment: {'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work')},
+      );
+
+      expect(
+        Directory(p.join(otherAccount, 'security-audit')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(otherAccount, SkillManifest.fileName)).existsSync(),
+        isTrue,
+      );
+    });
+
     test('finds the global Codex manifest under CODEX_HOME', () {
       final codexHome = p.join(home.path, 'custom-codex');
       final skills = p.join(codexHome, 'skills');

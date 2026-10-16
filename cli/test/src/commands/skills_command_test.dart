@@ -127,25 +127,29 @@ void main() {
       );
     }
 
-    Future<ProcessResult> runUpdate(List<String> args) => Process.run(
+    Future<ProcessResult> runSkills(
+      List<String> args, {
+      String? workingDirectory,
+      String claudeConfigDir = '',
+    }) =>
+        Process.run(
           Platform.resolvedExecutable,
-          [
-            p.absolute('bin', 'somnio.dart'),
-            'skills',
-            'update',
-            '--agent',
-            'claude',
-            ...args,
-          ],
-          workingDirectory: workDir,
+          [p.absolute('bin', 'somnio.dart'), 'skills', ...args],
+          workingDirectory: workingDirectory ?? workDir,
           environment: {
             'HOME': home.path,
             'USERPROFILE': home.path,
+            // Blank by default, so a caller's Claude config dir never
+            // relocates the install out of the fake home.
+            'CLAUDE_CONFIG_DIR': claudeConfigDir,
             // Keep pub reading the real cache instead of creating one under
             // the fake home.
             'PUB_CACHE': _pubCache,
           },
         );
+
+    Future<ProcessResult> runUpdate(List<String> args) =>
+        runSkills(['update', '--agent', 'claude', ...args]);
 
     test('prints the updated skill names after the progress lines', () async {
       seedManifest({
@@ -163,6 +167,55 @@ void main() {
         ),
       );
       expect(result.stdout, contains('2 skills updated'));
+    });
+
+    group('run from \$HOME with CLAUDE_CONFIG_DIR set', () {
+      // The project scope then resolves to ~/.claude/skills, which belongs
+      // to another Claude Code account.
+      late String otherAccount;
+      late String manifest;
+
+      setUp(() {
+        otherAccount = p.join(home.path, '.claude', 'skills');
+        Directory(p.join(otherAccount, 'security-audit'))
+            .createSync(recursive: true);
+        seedManifest({'security-audit': 'audit'});
+        manifest = File(p.join(otherAccount, '.somnio-skills.json'))
+            .readAsStringSync();
+      });
+
+      void expectOtherAccountUntouched() {
+        expect(
+          Directory(p.join(otherAccount, 'security-audit')).listSync(),
+          isEmpty,
+        );
+        expect(
+          File(p.join(otherAccount, '.somnio-skills.json')).readAsStringSync(),
+          manifest,
+        );
+      }
+
+      test('skills update leaves ~/.claude alone', () async {
+        final result = await runSkills(
+          ['update', '--agent', 'claude'],
+          workingDirectory: home.path,
+          claudeConfigDir: p.join(home.path, '.claude-work'),
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expectOtherAccountUntouched();
+      });
+
+      test('skills remove --project leaves ~/.claude alone', () async {
+        final result = await runSkills(
+          ['remove', '--project', '--agent', 'claude', '--force'],
+          workingDirectory: home.path,
+          claudeConfigDir: p.join(home.path, '.claude-work'),
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expectOtherAccountUntouched();
+      });
     });
 
     test('--verbose lists the updated names under the Location line', () async {

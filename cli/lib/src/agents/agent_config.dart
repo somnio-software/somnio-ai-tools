@@ -1,3 +1,4 @@
+import '../utils/real_path.dart';
 import 'token_parsers.dart';
 
 /// How the CLI accepts prompt text.
@@ -63,6 +64,7 @@ class AgentConfig {
     this.executionRulesPath,
     this.configHome,
     this.configHomeVariable,
+    this.cleansDefaultConfigHome = true,
     this.legacyInstallFormat,
     this.legacyExecutionRulesPath,
     this.readInstructionTemplate,
@@ -156,12 +158,21 @@ class AgentConfig {
   final String? configHome;
 
   /// Environment variable that relocates [configHome] for the global scope
-  /// (e.g. `CODEX_HOME`).
+  /// (e.g. `CODEX_HOME`, `CLAUDE_CONFIG_DIR`).
   ///
   /// When it is set and non-blank, every path template starting with
   /// [configHome] resolves under its value instead. Project-scope installs
   /// ignore it: they are anchored at the project root.
   final String? configHomeVariable;
+
+  /// Whether remove / uninstall also clean the default [configHome] while
+  /// [configHomeVariable] relocates it, where earlier releases installed
+  /// regardless of the variable.
+  ///
+  /// False when the default directory may be another profile's live one:
+  /// `~/.claude` is often a second Claude Code account next to the one
+  /// `CLAUDE_CONFIG_DIR` selects, so its skills are left alone.
+  final bool cleansDefaultConfigHome;
 
   /// The [InstallFormat] an earlier CLI release installed this agent's
   /// skills in, when that differs from [installFormat].
@@ -297,13 +308,47 @@ class AgentConfig {
   /// Every directory a global install may live in: [resolvedInstallPath]
   /// first, then the default location when [configHomeVariable] relocates
   /// it, where releases before 3.2.12 installed regardless of the variable.
+  /// The default location is only listed when [cleansDefaultConfigHome].
   List<String> resolvedGlobalInstallPaths({
     required String home,
     Map<String, String> environment = const {},
   }) {
     final current = resolvedInstallPath(home: home, environment: environment);
     final fallback = resolvedInstallPath(home: home);
-    return [current, if (fallback != current) fallback];
+    return [
+      current,
+      if (cleansDefaultConfigHome && fallback != current) fallback,
+    ];
+  }
+
+  /// Real paths of the install directories remove, update and uninstall
+  /// must leave alone: the default location while [configHomeVariable]
+  /// relocates the global install and [cleansDefaultConfigHome] is false.
+  ///
+  /// Run from [home], the project scope resolves to that same directory, so
+  /// callers skip it in every scope. Empty when the relocated directory is
+  /// the default one under another name (a symlink).
+  List<String> resolvedProtectedInstallPaths({
+    required String home,
+    Map<String, String> environment = const {},
+  }) {
+    if (cleansDefaultConfigHome) return const [];
+    final current = realPathOf(
+      resolvedInstallPath(home: home, environment: environment),
+    );
+    final fallback = realPathOf(resolvedInstallPath(home: home));
+    return [if (fallback != current) fallback];
+  }
+
+  /// Resolves [configHome], relocated by [configHomeVariable] when
+  /// [environment] sets it, or `null` when the agent declares none.
+  String? resolvedConfigHome({
+    required String home,
+    Map<String, String> environment = const {},
+  }) {
+    final template = configHome;
+    if (template == null) return null;
+    return _resolve(template, home: home, environment: environment);
   }
 
   /// Substitutes the placeholders in [template], relocating a [configHome]

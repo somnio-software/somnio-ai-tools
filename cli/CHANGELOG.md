@@ -5,6 +5,12 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.13] - 2026-10-16
+
+### Fixed
+
+- **Claude Code installs ignored `CLAUDE_CONFIG_DIR`.** With `CLAUDE_CONFIG_DIR` set, Claude Code reads its settings and user skills from that directory only, but the CLI always wrote to `~/.claude`, so the installed skills and the work-log hook never loaded and `somnio attribution` changed a settings file Claude Code did not read. Skills now install to `$CLAUDE_CONFIG_DIR/skills` (default `~/.claude/skills`), and update, remove, uninstall, status, agent detection and `somnio run` follow it, as they already do for `CODEX_HOME`; the project scope still uses `.claude/skills`. `somnio hooks` writes the script to `$CLAUDE_CONFIG_DIR/hooks/` and registers it in `$CLAUDE_CONFIG_DIR/settings.json` by its absolute path, and `somnio attribution` (and the prompt in `somnio setup`) reads and writes `$CLAUDE_CONFIG_DIR/settings.json`. Skills an earlier release put in `~/.claude/skills` stay there, so run `somnio skills install` (or `somnio setup`) once with the variable set. Unlike with `CODEX_HOME`, remove, update and uninstall do not touch `~/.claude` while the variable is set, because it is often another Claude Code account, not even when run from the home directory, where the project scope is that folder. Run them without the variable to clean it.
+
 ## [3.2.12] - 2026-10-16
 
 ### Fixed

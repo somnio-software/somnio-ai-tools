@@ -55,6 +55,8 @@ What it does:
 2. Makes the script executable
 3. Merges the Stop hook entry into `~/.claude/settings.json` without overwriting existing config
 
+With `CLAUDE_CONFIG_DIR` set, the script and the settings entry go under that directory instead of `~/.claude`, and the entry points at the script's absolute path.
+
 | Flag | Short | Description |
 |------|-------|-------------|
 | `--force` | `-f` | Skip the confirmation prompt |
@@ -77,7 +79,7 @@ somnio attribution status   # on (default), off, or customized
 ```
 
 What it does:
-1. Reads `~/.claude/settings.json` (creates it if absent)
+1. Reads `~/.claude/settings.json`, or `$CLAUDE_CONFIG_DIR/settings.json` when that is set (creates it if absent)
 2. Sets or removes only the `attribution` key, keeping every other setting
 3. Is idempotent: running `off` twice leaves the file as it is
 
@@ -451,7 +453,7 @@ Claude Code, Cursor, Gemini CLI, Antigravity, Codex, Augment Code, Amp, Aider, C
 **IDE-only agents** (receive skill files via `somnio setup`):
 GitHub Copilot, Windsurf, Roo Code, Kilo Code, Amazon Q
 
-Agents that load skills as `<name>/SKILL.md` directories get one per skill, with its `references/`, `assets/` and `agents/` next to it: Claude Code (`~/.claude/skills`), Codex (`$CODEX_HOME/skills`, default `~/.codex/skills`), Gemini CLI (`~/.gemini/skills`), Augment Code (`~/.augment/skills`), OpenCode (`~/.opencode/skills`), Cline (`~/.cline/skills`), CodeBuddy (`~/.codebuddy/skills`) and Qwen CLI (`~/.qwen/skills`). Releases before 3.2.12 wrote flat `<name>.md` files plus a `somnio_rules/` directory for all of them except Claude Code, which those agents never load. `somnio skills update` replaces that layout: it deletes the old files and rule directories the manifest recorded, then the emptied `somnio_rules/`. `somnio skills remove` deletes what the manifest records in either layout, and `somnio uninstall --skills` also removes unrecorded flat files and `somnio_rules/`. Run `somnio skills update` once after upgrading so `somnio run` finds the references in the skill directories.
+Agents that load skills as `<name>/SKILL.md` directories get one per skill, with its `references/`, `assets/` and `agents/` next to it: Claude Code (`$CLAUDE_CONFIG_DIR/skills`, default `~/.claude/skills`), Codex (`$CODEX_HOME/skills`, default `~/.codex/skills`), Gemini CLI (`~/.gemini/skills`), Augment Code (`~/.augment/skills`), OpenCode (`~/.opencode/skills`), Cline (`~/.cline/skills`), CodeBuddy (`~/.codebuddy/skills`) and Qwen CLI (`~/.qwen/skills`). Releases before 3.2.12 wrote flat `<name>.md` files plus a `somnio_rules/` directory for all of them except Claude Code, which those agents never load. `somnio skills update` replaces that layout: it deletes the old files and rule directories the manifest recorded, then the emptied `somnio_rules/`. `somnio skills remove` deletes what the manifest records in either layout, and `somnio uninstall --skills` also removes unrecorded flat files and `somnio_rules/`. Run `somnio skills update` once after upgrading so `somnio run` finds the references in the skill directories.
 
 ---
 

@@ -30,6 +30,29 @@ void main() {
       ..writeAsStringSync(jsonEncode(settings));
   }
 
+  group('claudeSettingsPath', () {
+    test('is settings.json in ~/.claude when CLAUDE_CONFIG_DIR is unset', () {
+      expect(
+        claudeSettingsPath(home: '/h', environment: const {}),
+        '/h/.claude/settings.json',
+      );
+    });
+
+    test('moves under CLAUDE_CONFIG_DIR when it is set', () {
+      expect(
+        claudeSettingsPath(
+          home: '/h',
+          environment: const {'CLAUDE_CONFIG_DIR': '/h/.claude-work'},
+        ),
+        '/h/.claude-work/settings.json',
+      );
+    });
+
+    test('ignores the process environment for a given home', () {
+      expect(claudeSettingsPath(home: '/h'), '/h/.claude/settings.json');
+    });
+  });
+
   group('setClaudeAttribution off', () {
     test('creates settings.json with empty commit and PR attribution', () {
       final changed = setClaudeAttribution(settingsPath, enabled: false);
