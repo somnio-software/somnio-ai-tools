@@ -3,6 +3,25 @@ import 'package:test/test.dart';
 
 void main() {
   group('AgentConfig.buildArgs', () {
+    test('approveFlags replaces autoApproveFlags in every prompt style', () {
+      for (final style in PromptStyle.values) {
+        final agent = AgentConfig(
+          id: 'test',
+          displayName: 'Test',
+          promptStyle: style,
+          promptFlag: '-p',
+          autoApproveFlags: const ['--allowedTools', 'Read'],
+          installPath: '{home}/.test',
+        );
+        final args = agent.buildArgs(
+          'prompt',
+          approveFlags: const ['--allowedTools', 'Read,Drive'],
+        );
+        expect(args, contains('Read,Drive'), reason: '$style');
+        expect(args, isNot(contains('Read')), reason: '$style');
+      }
+    });
+
     test('flag style places prompt after flag', () {
       const agent = AgentConfig(
         id: 'test',

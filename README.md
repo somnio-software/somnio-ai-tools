@@ -27,7 +27,7 @@ dart pub global activate -sgit https://github.com/somnio-software/somnio-ai-tool
 somnio setup
 ```
 
-The CLI installs skills with its own installer (not skills.sh), records them in a manifest, and offers to remove Somnio skills previously installed by skills.sh, so `somnio skills update` can keep everything current. It also runs the multi-step audits (`somnio run <alias>`). Reports you share must come from `somnio run` or a current install; see [Sharing reports](docs/cli.md#sharing-reports).
+The CLI installs skills with its own installer (not skills.sh), records them in a manifest, and offers to remove Somnio skills previously installed by skills.sh, so `somnio skills update` can keep everything current. It also runs the multi-step audits (`somnio run <alias>`). Reports you share must come from `somnio run` or a current install; see [Sharing reports](docs/cli.md#sharing-reports). Add `--upload` to upload the report to the project's Drive folder ([Uploading reports to Drive](docs/cli.md#uploading-reports-to-drive)).
 
 ### Keeping up to date
 

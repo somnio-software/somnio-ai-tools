@@ -66,6 +66,12 @@ class AgentRegistry {
     promptStyle: PromptStyle.flag,
     promptFlag: '-p',
     autoApproveFlags: ['--allowedTools', 'Read,Bash,Glob,Grep,Write'],
+    // The claude.ai Google Drive connector, plus ToolSearch to load its
+    // deferred tools.
+    driveUploadApproveFlags: [
+      '--allowedTools',
+      'Read,Bash,Glob,Grep,Write,ToolSearch,mcp__claude_ai_Google_Drive',
+    ],
     outputFlags: ['--output-format', 'json'],
     models: ['haiku', 'sonnet', 'opus'],
     modelTiers: {'cheap': 'haiku', 'mid': 'sonnet', 'frontier': 'opus'},

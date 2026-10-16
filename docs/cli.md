@@ -120,6 +120,7 @@ somnio run fh --skip-validation        # Skip project type check
 somnio run fh --no-preflight           # Send all steps to AI
 somnio run fh --step-timeout 45        # Per-step timeout of 45 minutes
 somnio run fh --project-name hoopis    # Override the name in the report file
+somnio run fh --upload                 # Upload the report to the project's Drive folder
 ```
 
 | Flag | Short | Description |
@@ -130,6 +131,8 @@ somnio run fh --project-name hoopis    # Override the name in the report file
 | `--no-preflight` | | Skip pre-flight and send all steps to AI |
 | `--step-timeout` | | Per-step timeout in minutes (default: 30) |
 | `--project-name` | | Project name used in the report file name (default: the git repository name) |
+| `--upload` | | Upload the report to the project's Google Drive folder through the Google Drive MCP (Claude Code only). See [Uploading reports to Drive](#uploading-reports-to-drive) |
+| `--drive-folder` | | Drive folder link or ID for `--upload`; saved for the project, so it is only needed once |
 
 #### Installed-skills version check
 
@@ -177,12 +180,47 @@ with the same base name (`security-audit` writes Markdown only);
 fixed name. Each audit reads only its own file; the legacy shared `last_scores.json` is ignored,
 so the first run after upgrading reports "first run".
 
+### Uploading reports to Drive
+
+Every audit can upload its report to the project's shared Google Drive folder through the **Google Drive MCP**, following the [sharing rules](#sharing-reports). It only happens when you ask for it:
+
+```bash
+somnio run fh --upload                                                # folder saved, or asked once
+somnio run sa --upload --drive-folder https://drive.google.com/drive/folders/<folder_id>
+```
+
+In a Claude Code session, ask for it the same way: `/flutter-health-audit upload`, or "run the security audit and upload it to Drive".
+
+**Requirements:** Claude Code with the Google Drive connector connected (in Claude: Settings → Connectors → Google Drive). `--upload` with another agent stops before running the audit.
+
+**How `somnio run --upload` works:**
+1. Before any step runs, it resolves the project's folder: `--drive-folder` (saved for next time), the folder saved in `~/.somnio-reports-prefs.json` (`SOMNIO_REPORTS_PREFS_PATH` overrides the path), or a prompt in an interactive terminal. With none of those it stops, so a missing folder never costs a full audit.
+2. After the report and format enforcement, one more AI step follows the skill's `references/drive-upload.md` in CLI mode. It is the only step allowed to call the Drive MCP tools. It uploads the `.md` with conversion to Google Docs disabled and writes its result to `reports/.artifacts/<skill>/drive_upload.json`.
+3. The CLI then checks the result against the local report itself: name, `text/markdown` type, folder and exact byte size. A mismatch is reported with the folder link, so you can fix it by hand.
+4. If the folder already has a file with that name (a second run the same day), it asks whether to replace it; non-interactive runs skip it.
+
+A failed upload does not undo the audit, but `somnio run` exits with a non-zero code. The prefs file looks like this, keyed by the project slug in the report file name:
+
+```json
+{
+  "report_folders": {
+    "hoopis-backend": {
+      "folder_id": "<folder_id>",
+      "folder_url": "https://drive.google.com/drive/folders/<folder_id>"
+    }
+  }
+}
+```
+
+The upload instructions are shared by every audit skill: the source is `shared/references/drive-upload.md`, copied into each skill's `references/`, and a test fails when a copy drifts.
+
 ### Sharing reports
 
 Reports feed an internal pipeline that parses them, so share them exactly as the CLI wrote them:
 
 - Upload the `.md` exactly as written, and keep the file name (`YYYY-MM-DD-<repo>-<skill-name>.md`).
 - One file per repo and per report type, flat, in the shared reports folder your EM gives you (one folder per project). No dated subfolders.
+- `somnio run <audit> --upload` (or asking for the upload in session) uploads them this way; see [Uploading reports to Drive](#uploading-reports-to-drive).
 - Do not convert the report to Google Docs or any other format.
 - Never edit the Report Metadata block at the end of the report.
 - Reports from CLI versions before 2.12.0 (`<tech>_audit.md`, `<date>_dora.md`) must be regenerated, not renamed.

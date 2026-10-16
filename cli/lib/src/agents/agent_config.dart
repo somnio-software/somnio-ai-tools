@@ -51,6 +51,7 @@ class AgentConfig {
     this.promptFlag,
     this.outputFlags = const [],
     this.autoApproveFlags = const [],
+    this.driveUploadApproveFlags = const [],
     this.modelFlag = '--model',
     this.models = const [],
     this.modelTiers = const {},
@@ -104,6 +105,16 @@ class AgentConfig {
 
   /// Flags for auto-approval / non-interactive mode.
   final List<String> autoApproveFlags;
+
+  /// Auto-approval flags for the Drive upload step of `somnio run --upload`,
+  /// used instead of [autoApproveFlags] so that only that step can call the
+  /// Google Drive MCP tools.
+  ///
+  /// Empty when the agent cannot upload reports from `somnio run`.
+  final List<String> driveUploadApproveFlags;
+
+  /// Whether `somnio run --upload` can upload reports with this agent.
+  bool get supportsDriveUpload => driveUploadApproveFlags.isNotEmpty;
 
   /// Flag for specifying the model (default: '--model').
   final String modelFlag;
@@ -229,15 +240,22 @@ class AgentConfig {
   ///
   /// The [prompt] is placed according to [promptStyle].
   /// If [model] is provided, it's added via [modelFlag].
-  List<String> buildArgs(String prompt, {String? model}) {
+  /// [approveFlags] replaces [autoApproveFlags] for a single invocation, as
+  /// the Drive upload step does with [driveUploadApproveFlags].
+  List<String> buildArgs(
+    String prompt, {
+    String? model,
+    List<String>? approveFlags,
+  }) {
     final args = <String>[];
+    final approve = approveFlags ?? autoApproveFlags;
 
     switch (promptStyle) {
       case PromptStyle.flag:
         if (promptFlag != null) {
           args.addAll([promptFlag!, prompt]);
         }
-        args.addAll(autoApproveFlags);
+        args.addAll(approve);
         args.addAll(outputFlags);
         if (model != null) args.addAll([modelFlag, model]);
 
@@ -245,13 +263,13 @@ class AgentConfig {
         if (promptFlag != null) {
           args.add(promptFlag!);
         }
-        args.addAll(autoApproveFlags);
+        args.addAll(approve);
         args.addAll(outputFlags);
         if (model != null) args.addAll([modelFlag, model]);
         args.add(prompt);
 
       case PromptStyle.positionalLast:
-        args.addAll(autoApproveFlags);
+        args.addAll(approve);
         args.addAll(outputFlags);
         if (model != null) args.addAll([modelFlag, model]);
         args.add(prompt);

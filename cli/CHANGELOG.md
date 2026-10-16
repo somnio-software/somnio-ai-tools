@@ -5,6 +5,13 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.13] - 2026-10-16
+
+### Added
+
+- **Every audit can upload its report to the project's Google Drive folder.** `somnio run <audit> --upload` uploads the report through the Google Drive MCP after the format enforcement, following the sharing rules: the `.md` exactly as written, same file name, flat in the project folder, never converted to Google Docs. The folder comes from `--drive-folder` (link or ID), the folder saved for the project in `~/.somnio-reports-prefs.json`, or a prompt, and is resolved before any step runs. Only the upload step may call the Drive MCP tools, and the CLI checks its result against the local report (name, `text/markdown` type, folder and exact byte size); a file with the same name is only replaced after you confirm. `--upload` needs Claude Code with the Google Drive connector, and a failed upload makes `somnio run` exit non-zero.
+- **The audit skills offer the same upload in session.** All 18 audit skills ship `references/drive-upload.md` and a "Drive Upload (optional)" section, so `/flutter-health-audit upload` or "and upload it to Drive" uploads the report from the main session once the audit finishes. The instructions live once in `shared/references/drive-upload.md`, and a test fails when a skill's copy drifts.
+
 ## [3.2.12] - 2026-10-16
 
 ### Fixed

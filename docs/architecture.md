@@ -48,6 +48,7 @@ cli/lib/src/
 ├── installers/      # File writers (agent-specific install paths)
 ├── runner/          # Audit execution engine
 │   ├── agent_resolver.dart   # Auto-detect available AI CLIs
+│   ├── drive_upload.dart     # --upload: folder prefs, result check
 │   ├── plan_parser.dart      # Extract steps from SKILL.md
 │   ├── preflight.dart        # Pre-flight steps (no AI needed)
 │   └── step_executor.dart    # Spawn fresh AI CLI per step
@@ -108,6 +109,7 @@ When running from the terminal:
 5. **Parse SKILL.md** — extract step order from "Rule Execution Order" section
 6. **Execute each step** — spawn a fresh AI CLI process with the step prompt, save output to `./reports/.artifacts/<skill-name>/`
 7. **Generate report** — combine artifacts into the final report at `./reports/<YYYY-MM-DD>-<project>-<skill-name>.md`
+8. **Upload to Drive** (only with `--upload`) — one more AI step follows the skill's `references/drive-upload.md` with `AgentConfig.driveUploadApproveFlags`, the only step allowed to call the Google Drive MCP; the CLI then checks its `drive_upload.json` against the local report. See [Uploading reports to Drive](cli.md#uploading-reports-to-drive)
 
 Each step runs in a **fresh AI context** to avoid context window exhaustion on large audits. This is a deliberate design choice — audits of up to 14 steps (flutter: 12, nestjs/python/react: 14) would exceed context limits in a single session.
 

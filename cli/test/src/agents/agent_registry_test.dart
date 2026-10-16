@@ -4,6 +4,22 @@ import 'package:test/test.dart';
 
 void main() {
   group('AgentRegistry', () {
+    test('only Claude Code can upload reports from somnio run', () {
+      final uploaders = AgentRegistry.agents
+          .where((a) => a.supportsDriveUpload)
+          .map((a) => a.id);
+      expect(uploaders, ['claude']);
+
+      final claude = AgentRegistry.findById('claude')!;
+      final tools = claude.driveUploadApproveFlags.last.split(',');
+      expect(tools, containsAll(['ToolSearch', 'mcp__claude_ai_Google_Drive']));
+      expect(
+        tools,
+        containsAll(claude.autoApproveFlags.last.split(',')),
+        reason: 'the upload step keeps the regular step tools',
+      );
+    });
+
     test('agents list is not empty', () {
       expect(AgentRegistry.agents, isNotEmpty);
     });

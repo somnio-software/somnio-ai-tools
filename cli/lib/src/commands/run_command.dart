@@ -11,6 +11,7 @@ import '../content/content_loader.dart';
 import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
 import '../runner/agent_resolver.dart';
+import '../runner/drive_upload.dart';
 import '../runner/plan_parser.dart';
 import '../runner/preflight.dart';
 import '../runner/project_validator.dart';
@@ -19,6 +20,8 @@ import '../runner/run_config.dart';
 import '../runner/step_executor.dart';
 import '../runner/template_version.dart';
 import '../utils/command_helpers.dart';
+import '../utils/platform_utils.dart';
+import '../utils/prompts.dart';
 import '../utils/repo_name.dart';
 import '../utils/report_naming.dart';
 import '../utils/step_timeout_parser.dart';
@@ -64,6 +67,17 @@ class RunCommand extends Command<int> {
       'project-name',
       help: 'Project name used in the report file name '
           '(default: the git repository name, from the origin remote).',
+    );
+    argParser.addFlag(
+      'upload',
+      negatable: false,
+      help: 'Upload the report to the project\'s Google Drive folder through '
+          'the Google Drive MCP (Claude Code only).',
+    );
+    argParser.addOption(
+      'drive-folder',
+      help: 'Drive folder link or ID for --upload. Saved for the project in '
+          '~/.somnio-reports-prefs.json, so it is only needed once.',
     );
   }
 
@@ -308,6 +322,25 @@ class RunCommand extends Command<int> {
       return ExitCode.usage.code;
     }
 
+    // 4d. Resolve the Drive folder before any step runs, so a missing folder
+    // never costs a full audit.
+    String? uploadFolderId;
+    if (argResults!['upload'] as bool) {
+      if (!agent.supportsDriveUpload) {
+        _logger.err(
+          '--upload needs Claude Code: ${agent.displayName} has no Google '
+          'Drive MCP support in somnio run. Run the audit with --agent claude, '
+          'or ask your agent to upload the report in session.',
+        );
+        return ExitCode.usage.code;
+      }
+      uploadFolderId = _resolveUploadFolder(projectSlug(projectName));
+      if (uploadFolderId == null) return ExitCode.usage.code;
+    } else if (argResults!['drive-folder'] != null) {
+      _logger.err('--drive-folder only applies with --upload.');
+      return ExitCode.usage.code;
+    }
+
     // 5. Resolve repo root
     final ResolvedContent resolvedContent;
     try {
@@ -329,8 +362,10 @@ class RunCommand extends Command<int> {
       agentResolver: agentResolver,
       preflightResult: null,
       stepTimeout: stepTimeout,
+      uploadFolderId: uploadFolderId,
     );
     final aborted = result.aborted;
+    var uploadFailed = result.uploadFailed;
     var followUpAborted = false;
 
     // 7. After a successful health audit, prompt for Best Practices and Security Audit
@@ -368,16 +403,79 @@ class RunCommand extends Command<int> {
               agentResolver: agentResolver,
               preflightResult: null,
               stepTimeout: stepTimeout,
+              uploadFolderId: uploadFolderId,
             );
             if (followUpResult.aborted) followUpAborted = true;
+            if (followUpResult.uploadFailed) uploadFailed = true;
           }
         }
       }
     }
 
-    return (aborted || followUpAborted)
+    return (aborted || followUpAborted || uploadFailed)
         ? ExitCode.software.code
         : ExitCode.success.code;
+  }
+
+  /// Resolves the Drive folder for [project]: `--drive-folder` (saved for
+  /// next time), the folder saved in the prefs file, or a prompt when the
+  /// terminal is interactive. Logs why and returns `null` when there is none.
+  String? _resolveUploadFolder(String project) {
+    final prefsPath = reportPrefsPath(
+      home: PlatformUtils.homeDirectory,
+      environment: Platform.environment,
+    );
+
+    String? saveFrom(String input) {
+      final id = parseDriveFolderId(input);
+      if (id == null) {
+        _logger.err('Not a Drive folder link or ID: "$input".');
+        return null;
+      }
+      try {
+        saveProjectFolderId(prefsPath, project, id);
+        _logger.info(
+          '${lightGreen.wrap('✓')} Drive folder for $project saved to '
+          '$prefsPath',
+        );
+      } on FormatException catch (e) {
+        _logger.warn(
+          'Could not save the folder in $prefsPath (${e.message}); '
+          'using it for this run only.',
+        );
+      }
+      return id;
+    }
+
+    final flag = argResults!['drive-folder'] as String?;
+    if (flag != null) return saveFrom(flag);
+
+    try {
+      final saved = readProjectFolderId(prefsPath, project);
+      if (saved != null) {
+        _logger.info('${lightGreen.wrap('✓')} Drive folder: '
+            '${driveFolderUrl(saved)}');
+        return saved;
+      }
+    } on FormatException catch (e) {
+      _logger.err(
+        'Could not read $prefsPath: ${e.message}. Fix the file or pass '
+        '--drive-folder.',
+      );
+      return null;
+    }
+
+    if (!Prompts.isInteractive) {
+      _logger.err(
+        'No Drive folder saved for $project. Pass --drive-folder with the '
+        'project\'s reports folder link.',
+      );
+      return null;
+    }
+    final input = _logger.prompt(
+      'Drive folder link for $project\'s reports',
+    );
+    return saveFrom(input);
   }
 
   /// Executes a single audit bundle.
@@ -395,6 +493,7 @@ class RunCommand extends Command<int> {
     required AgentResolver agentResolver,
     PreflightResult? preflightResult,
     Duration stepTimeout = defaultStepTimeout,
+    String? uploadFolderId,
   }) async {
     final techPrefix = bundle.techPrefix;
 
@@ -653,7 +752,105 @@ class RunCommand extends Command<int> {
       _logger.info('Report saved to: $reportPath');
     }
 
-    return _ExecuteBundleResult(aborted: aborted);
+    var uploadFailed = false;
+    if (uploadFolderId != null) {
+      if (aborted || !File(reportPath).existsSync()) {
+        _logger.warn('No report to upload to Drive.');
+        uploadFailed = true;
+      } else {
+        uploadFailed = !await _uploadReport(
+          executor: executor,
+          reportPath: reportPath,
+          folderId: uploadFolderId,
+        );
+      }
+    }
+
+    return _ExecuteBundleResult(aborted: aborted, uploadFailed: uploadFailed);
+  }
+
+  /// Uploads the report with the upload step and checks the result against
+  /// the local file. Asks before replacing a file with the same name when the
+  /// terminal is interactive. Returns whether the report is in Drive.
+  Future<bool> _uploadReport({
+    required StepExecutor executor,
+    required String reportPath,
+    required String folderId,
+  }) async {
+    final name = p.basename(reportPath);
+    final folderUrl = driveFolderUrl(folderId);
+    _logger.info('');
+
+    Future<DriveUploadResult?> run({required bool replace}) async {
+      final progress = _logger.progress(
+        replace ? 'Replacing $name in Drive' : 'Uploading $name to Drive',
+      );
+      final result = await executor.executeDriveUpload(
+        folderId: folderId,
+        replace: replace,
+      );
+      if (result.upload == null) {
+        progress.fail('Drive upload FAILED');
+        if (result.step.errorMessage != null) {
+          _logger.warn(result.step.errorMessage!);
+        }
+        return null;
+      }
+      progress.complete('Drive upload step  ${_formatStepStats(result.step)}');
+      return result.upload;
+    }
+
+    var upload = await run(replace: false);
+    if (upload == null) return false;
+
+    if (upload.status == DriveUploadStatus.exists) {
+      final replace = Prompts.isInteractive &&
+          _logger.confirm(
+            '$name is already in the Drive folder. Replace it?',
+            defaultValue: false,
+          );
+      if (!replace) {
+        _logger.info('Skipped: $name is already in Drive ($folderUrl).');
+        return true;
+      }
+      upload = await run(replace: true);
+      if (upload == null) return false;
+    }
+
+    switch (upload.status) {
+      case DriveUploadStatus.uploaded:
+        final problems = verifyDriveUpload(
+          result: upload,
+          reportPath: reportPath,
+          folderId: folderId,
+        );
+        if (problems.isEmpty) {
+          _logger.success('Uploaded $name to Drive: $folderUrl');
+          return true;
+        }
+        _logger.err('The file in Drive does not match the local report:');
+        for (final problem in problems) {
+          _logger.err('  - $problem');
+        }
+        _logger.info(
+          'Check it in $folderUrl and upload $reportPath by hand if needed.',
+        );
+        return false;
+      case DriveUploadStatus.noDriveMcp:
+        _logger.warn(
+          'No Google Drive MCP tools were available. Connect the Google '
+          'Drive connector in Claude (Settings → Connectors → Google Drive) '
+          'and retry, or upload $reportPath by hand to $folderUrl.',
+        );
+        return false;
+      case DriveUploadStatus.failed:
+      case DriveUploadStatus.exists:
+        _logger.warn(
+          'Drive upload failed${upload.error != null ? ': ${upload.error}' : ''}. '
+          'Upload $reportPath by hand to $folderUrl.',
+        );
+        return false;
+    }
   }
 
   String _formatStepStats(StepResult result) {
@@ -705,6 +902,7 @@ class RunCommand extends Command<int> {
 
 /// Result of executing a single audit bundle.
 class _ExecuteBundleResult {
-  _ExecuteBundleResult({required this.aborted});
+  _ExecuteBundleResult({required this.aborted, this.uploadFailed = false});
   final bool aborted;
+  final bool uploadFailed;
 }
