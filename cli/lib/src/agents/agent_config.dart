@@ -296,7 +296,7 @@ class AgentConfig {
 
   /// Every directory a global install may live in: [resolvedInstallPath]
   /// first, then the default location when [configHomeVariable] relocates
-  /// it, where releases before 3.2.11 installed regardless of the variable.
+  /// it, where releases before 3.2.12 installed regardless of the variable.
   List<String> resolvedGlobalInstallPaths({
     required String home,
     Map<String, String> environment = const {},

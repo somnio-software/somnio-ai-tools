@@ -1224,7 +1224,7 @@ void main() {
       rulesDir = p.join(tmp.path, 'somnio_rules');
     });
 
-    /// The layout CLI releases before 3.2.11 used for Codex and similar agents.
+    /// The layout CLI releases before 3.2.12 used for Codex and similar agents.
     AgentConfig legacyAgent() => AgentConfig(
           id: 'test-agent',
           displayName: 'Test Agent',

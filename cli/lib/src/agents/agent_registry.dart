@@ -12,7 +12,7 @@ class AgentRegistry {
   ///
   /// Agents that load skills as `<name>/SKILL.md` directories use
   /// [InstallFormat.skillDir]. Those installed as flat markdown before CLI
-  /// 3.2.11 (files these agents never load) record that in
+  /// 3.2.12 (files these agents never load) record that in
   /// `legacyInstallFormat` / `legacyExecutionRulesPath`, so update, remove
   /// and uninstall migrate or delete the old layout.
   static const List<AgentConfig> agents = [

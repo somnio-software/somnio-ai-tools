@@ -308,7 +308,7 @@ void main() {
       expect(
           removeAgentInstalls(home: home.path, environment: const {}), isTrue);
     });
-    test('removes a pre-manifest Codex install in the pre-3.2.11 layout', () {
+    test('removes a pre-manifest Codex install in the pre-3.2.12 layout', () {
       final codexSkills = p.join(home.path, '.codex', 'skills');
       _writeFile(p.join(codexSkills, 'flutter_health_audit.md'));
       _writeFile(
@@ -399,7 +399,7 @@ void main() {
       });
     });
 
-    group('a Codex manifest written before 3.2.11', () {
+    group('a Codex manifest written before 3.2.12', () {
       late String codexSkills;
       late String legacyRules;
 
@@ -451,7 +451,7 @@ void main() {
     });
 
     test(
-        'also cleans a pre-3.2.11 Codex install left at ~/.codex with CODEX_HOME set',
+        'also cleans a pre-3.2.12 Codex install left at ~/.codex with CODEX_HOME set',
         () {
       final oldSkills = p.join(home.path, '.codex', 'skills');
       final oldRules = p.join(home.path, '.codex', 'somnio_rules');
