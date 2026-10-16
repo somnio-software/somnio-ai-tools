@@ -71,7 +71,7 @@ Each `SKILL.md` starts with YAML frontmatter (`name`, `description`, `allowed-to
 
 ## Conventions
 
-- **Commits:** Conventional Commits. **Branches:** `{type}/{TICKET}_{description}`. (Dedicated `git-commit-format` / `git-branch-format` skills exist for these.)
+- **Commits:** Conventional Commits. **Branches:** `{type}/{TICKET}_{description}`. **PRs:** Conventional Commits title, no AI attribution. (Dedicated `git-commit-format` / `git-branch-format` / `git-pr-format` skills exist for these.)
 - Markdown skills should not invent data — audits are explicitly evidence-based; the same applies when authoring skill instructions.
 
 <!-- BEGIN SOMNIO RULES — do not edit this block manually -->

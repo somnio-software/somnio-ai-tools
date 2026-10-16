@@ -3,6 +3,7 @@ import 'package:args/command_runner.dart';
 import 'package:mason_logger/mason_logger.dart';
 
 import '../content/skill_registry.dart';
+import 'attribution_command.dart';
 import '../installers/skills_sh_cleaner.dart';
 import '../installers/skills_sh_cleanup_flow.dart';
 import '../utils/cli_installer.dart';
@@ -113,7 +114,50 @@ class SetupCommand extends Command<int> {
       ),
     );
 
-    return CommandHelpers.installAllSkills(_logger, agents, content);
+    final exitCode =
+        await CommandHelpers.installAllSkills(_logger, agents, content);
+
+    if (agents.any((agent) => agent.id == 'claude')) {
+      _offerAttributionOff(force);
+    }
+
+    return exitCode;
+  }
+
+  /// Offers to turn off Claude Code's commit and PR attribution.
+  ///
+  /// It changes the user's Claude Code settings, so it is only done after an
+  /// explicit yes: `--force` and non-interactive runs skip it and print the
+  /// command instead.
+  void _offerAttributionOff(bool force) {
+    final settingsPath = claudeSettingsPath();
+    final ClaudeAttributionState state;
+    try {
+      state = readClaudeAttribution(settingsPath);
+    } on FormatException {
+      return;
+    }
+    if (state == ClaudeAttributionState.disabled) return;
+
+    final hint = 'Run ${lightCyan.wrap('somnio attribution off')} to remove '
+        'Claude Code\'s "Generated with Claude Code" footer and '
+        'Co-Authored-By trailer.';
+    _logger.info('');
+    if (force || !Prompts.isInteractive) {
+      _logger.info(hint);
+      return;
+    }
+
+    final confirmed = _logger.confirm(
+      'Remove Claude Code\'s AI attribution from commits and PRs?',
+      defaultValue: true,
+    );
+    if (!confirmed) {
+      _logger.info(hint);
+      return;
+    }
+    setClaudeAttribution(settingsPath, enabled: false);
+    _logger.success('Claude Code attribution turned off ($settingsPath).');
   }
 
   /// Detects installed AI CLIs and offers to install missing ones.

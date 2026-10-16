@@ -41,6 +41,15 @@ void main() {
       expect(byName?.id, 'optimize_claude_config');
     });
 
+    test('resolves git-pr-format by id and name', () {
+      final byId = SkillRegistry.findWorkflowById('git_pr_format');
+      final byName = SkillRegistry.findWorkflowById('git-pr-format');
+      expect(byId, isNotNull);
+      expect(byId!.name, 'git-pr-format');
+      expect(byId.displayName, 'Git PR Format');
+      expect(byName?.id, 'git_pr_format');
+    });
+
     test('returns null for an unknown id', () {
       expect(SkillRegistry.findWorkflowById('does-not-exist'), isNull);
     });

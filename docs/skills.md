@@ -550,6 +550,44 @@ feat(flutter): upgrade Flutter SDK to v3.19
 
 ---
 
+## Git PR Format
+
+Generates pull request titles and descriptions. Fills in the repository's PR template when there is one, and never adds AI attribution such as the "🤖 Generated with Claude Code" footer or `Co-Authored-By` lines.
+
+**Format:**
+```
+{type}({optional scope}): {short imperative description}
+
+## Summary
+## Changes
+## Testing
+## Notes for reviewers
+```
+
+**Example prompt:**
+```
+Open a PR for the dark mode work.
+```
+
+**Output:**
+```
+feat(theme): add dark mode support
+
+## Summary
+Adds a dark theme that follows the system setting, with a manual toggle in Settings.
+
+## Changes
+* Added dark color tokens to the theme
+* Added a theme toggle to the Settings screen
+
+## Testing
+* Added widget tests for the theme toggle
+```
+
+> Claude Code adds its footer by default. To turn it off in every session, set `"attribution": { "commit": "", "pr": "" }` in `~/.claude/settings.json`.
+
+---
+
 ## Dart Model from JSON
 
 Generates Dart model classes from a JSON structure using `json_annotation` and `equatable`. Handles nested objects, arrays, nullable fields, and default values. Each nested object becomes a separate class. Includes `copyWith`, `fromJson`, `toJson`, and `props`.

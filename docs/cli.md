@@ -29,6 +29,7 @@ somnio -q status      # Quiet mode (suppress banner)
 |---------|-------------|
 | `somnio setup` | Detect AI CLIs, install missing ones, install skills to every detected agent |
 | `somnio hooks` | Install Claude Code hooks (e.g. the work-log Stop hook) |
+| `somnio attribution` | Turn Claude Code's AI attribution on commits and PRs off or on |
 | `somnio run <name-or-alias>` | Execute a multi-step audit from the target project directory |
 | `somnio install` | Install skills to a specific agent or all agents |
 | `somnio skills` | Install, update, or remove skills — globally or per project |
@@ -65,6 +66,25 @@ What it does:
 
 > **Note:** `somnio hooks` is intentionally separate from `somnio setup` — hooks modify your Claude Code session behaviour and should be an explicit opt-in. See [docs/work-log-stop-hook.md](work-log-stop-hook.md) for the full hook design.
 
+### somnio attribution
+
+Turns off the AI attribution Claude Code adds by default: the `Co-Authored-By: Claude …` trailer on commits and the "🤖 Generated with [Claude Code](https://claude.com/claude-code)" footer on pull request descriptions.
+
+```bash
+somnio attribution off      # set "attribution": {"commit": "", "pr": ""}
+somnio attribution on       # remove the "attribution" key (Claude Code's default)
+somnio attribution status   # on (default), off, or customized
+```
+
+What it does:
+1. Reads `~/.claude/settings.json` (creates it if absent)
+2. Sets or removes only the `attribution` key, keeping every other setting
+3. Is idempotent: running `off` twice leaves the file as it is
+
+If `settings.json` is not valid JSON, the command stops with an error and does not touch the file.
+
+It applies to every Claude Code session on the machine, in every repository. Other agents have no such setting; the [`git-commit-format`](skills.md#git-commit-format) and [`git-pr-format`](skills.md#git-pr-format) skills keep attribution out of their commits and pull requests.
+
 ### somnio setup
 
 Primary installation command. Detects AI CLIs, installs missing ones, then installs every skill globally to each detected agent with the CLI's own installer. Every install is recorded in the `.somnio-skills.json` manifest, so `somnio skills update` keeps it current. Before installing it offers to remove Somnio skills a previous skills.sh install left behind — see [Cleanup of skills.sh installs](#cleanup-of-skillssh-installs).
@@ -83,6 +103,8 @@ somnio setup --force      # Skip all prompts, including the skills.sh cleanup
 | `--verbose` | `-v` | Show detailed output, including every skills.sh path removed |
 
 > `--legacy` is deprecated since 3.2.0: it is hidden, has no effect and prints a warning, because the built-in installer is now the only one.
+
+When Claude Code is one of the detected agents and its attribution is not already off, setup then asks whether to turn it off (see [somnio attribution](#somnio-attribution)). `--force` and non-interactive runs never change it: they print the `somnio attribution off` command instead.
 
 Setup detects agents and resolves the skill content first; the skills.sh cleanup only runs once it knows the install can go ahead, so a machine with no agents (or a content error) keeps its skills.sh copies.
 
@@ -429,7 +451,7 @@ Claude Code, Cursor, Gemini CLI, Antigravity, Codex, Augment Code, Amp, Aider, C
 **IDE-only agents** (receive skill files via `somnio setup`):
 GitHub Copilot, Windsurf, Roo Code, Kilo Code, Amazon Q
 
-Agents that load skills as `<name>/SKILL.md` directories get one per skill, with its `references/`, `assets/` and `agents/` next to it: Claude Code (`~/.claude/skills`), Codex (`$CODEX_HOME/skills`, default `~/.codex/skills`), Gemini CLI (`~/.gemini/skills`), Augment Code (`~/.augment/skills`), OpenCode (`~/.opencode/skills`), Cline (`~/.cline/skills`), CodeBuddy (`~/.codebuddy/skills`) and Qwen CLI (`~/.qwen/skills`). Releases before 3.2.10 wrote flat `<name>.md` files plus a `somnio_rules/` directory for all of them except Claude Code, which those agents never load. `somnio skills update` replaces that layout: it deletes the old files and rule directories the manifest recorded, then the emptied `somnio_rules/`. `somnio skills remove` deletes what the manifest records in either layout, and `somnio uninstall --skills` also removes unrecorded flat files and `somnio_rules/`. Run `somnio skills update` once after upgrading so `somnio run` finds the references in the skill directories.
+Agents that load skills as `<name>/SKILL.md` directories get one per skill, with its `references/`, `assets/` and `agents/` next to it: Claude Code (`~/.claude/skills`), Codex (`$CODEX_HOME/skills`, default `~/.codex/skills`), Gemini CLI (`~/.gemini/skills`), Augment Code (`~/.augment/skills`), OpenCode (`~/.opencode/skills`), Cline (`~/.cline/skills`), CodeBuddy (`~/.codebuddy/skills`) and Qwen CLI (`~/.qwen/skills`). Releases before 3.2.11 wrote flat `<name>.md` files plus a `somnio_rules/` directory for all of them except Claude Code, which those agents never load. `somnio skills update` replaces that layout: it deletes the old files and rule directories the manifest recorded, then the emptied `somnio_rules/`. `somnio skills remove` deletes what the manifest records in either layout, and `somnio uninstall --skills` also removes unrecorded flat files and `somnio_rules/`. Run `somnio skills update` once after upgrading so `somnio run` finds the references in the skill directories.
 
 ---
 

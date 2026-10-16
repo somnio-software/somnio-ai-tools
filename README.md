@@ -87,6 +87,7 @@ somnio status          # check the CLI version against each installed skill's st
 | [Workflow Builder](docs/skills.md#workflow-builder) | Custom multi-step AI workflows with parallel execution |
 | [Git Branch Format](docs/skills.md#git-branch-format) | Branch naming convention generator |
 | [Git Commit Format](docs/skills.md#git-commit-format) | Conventional Commits message generator |
+| [Git PR Format](docs/skills.md#git-pr-format) | Pull request title and description generator, with no AI attribution |
 | [Dart Model from JSON](docs/skills.md#dart-model-from-json) | Generate Dart model classes from a JSON structure with json_annotation + equatable |
 | [Optimize Claude Config](docs/skills.md#optimize-claude-config) | Audit & optimize a repo's Claude Code config for lazy-loading rules and a lean CLAUDE.md |
 | [DORA Metrics](docs/skills.md#dora-metrics) | Deployment Frequency and Lead Time for Changes, per project and per repo, from GitHub, GitLab, or Bitbucket |
@@ -111,6 +112,22 @@ somnio hooks --force    # skip confirmation
 ```
 
 > [Hook details →](docs/work-log-stop-hook.md) · [CLI reference →](docs/cli.md)
+
+---
+
+## Claude Code Attribution
+
+Claude Code adds a `Co-Authored-By` trailer to commits and a "🤖 Generated with Claude Code" footer to pull requests by default. Turn both off in `~/.claude/settings.json` with one command:
+
+```bash
+somnio attribution off      # remove the trailer and the footer
+somnio attribution on       # restore Claude Code's default
+somnio attribution status   # show the current state
+```
+
+`somnio setup` offers to do this when it installs skills for Claude Code.
+
+> [CLI reference →](docs/cli.md#somnio-attribution)
 
 ---
 

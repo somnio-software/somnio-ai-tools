@@ -199,6 +199,7 @@ dart test --coverage                        # With coverage
 
 - **Branches:** `{type}/{TICKET}_{description}` — see [Git Branch Format](docs/skills.md#git-branch-format)
 - **Commits:** Conventional Commits — see [Git Commit Format](docs/skills.md#git-commit-format)
+- **Pull requests:** Conventional Commits title, no AI attribution — see [Git PR Format](docs/skills.md#git-pr-format)
 
 ---
 

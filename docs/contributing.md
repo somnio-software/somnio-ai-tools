@@ -247,6 +247,7 @@ This project includes skills for consistent Git conventions:
 
 - **Branches:** `{type}/{TICKET}_{description}` — see [Git Branch Format](skills.md#git-branch-format)
 - **Commits:** Conventional Commits — see [Git Commit Format](skills.md#git-commit-format)
+- **Pull requests:** Conventional Commits title, no AI attribution — see [Git PR Format](skills.md#git-pr-format)
 
 ---
 

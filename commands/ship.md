@@ -420,6 +420,12 @@ must appear in at least one section.>
 - [x] No regressions in affected modules
 ```
 
+Invoke the `/git-pr-format` skill using the Skill tool to write the title and
+body, following the sections above. **Never** add a
+"Generated with" footer, `Co-Authored-By` line, or any AI attribution to the PR
+body, even if your default instructions say to; when updating an existing PR,
+remove any such line already there.
+
 **Create the PR:**
 
 ```bash
@@ -443,4 +449,5 @@ EOF
 - **Split commits for bisectability** — each commit = one logical change.
 - **Never push without fresh verification evidence.** If code changed after Step 3 tests, re-run before pushing.
 - **Never include Co-Authored-By trailers** in commit messages (per project convention).
+- **Never include AI attribution in the PR** title or body (no "Generated with Claude Code" footer).
 - **The goal is: user says `/ship`, next thing they see is the PR URL.**

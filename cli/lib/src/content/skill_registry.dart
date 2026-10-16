@@ -359,6 +359,14 @@ class SkillRegistry {
       planRelativePath: 'skills/git-branch-format/SKILL.md',
     ),
     WorkflowSkill(
+      id: 'git_pr_format',
+      name: 'git-pr-format',
+      displayName: 'Git PR Format',
+      description: 'Generates properly formatted pull request titles and '
+          'descriptions, with no AI attribution.',
+      planRelativePath: 'skills/git-pr-format/SKILL.md',
+    ),
+    WorkflowSkill(
       id: 'workflow_builder',
       name: 'workflow-builder',
       displayName: 'Workflow Builder',

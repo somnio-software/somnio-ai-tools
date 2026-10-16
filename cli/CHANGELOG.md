@@ -5,13 +5,26 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.10] - 2026-10-12
+## [3.2.11] - 2026-10-16
 
 ### Fixed
 
 - **Codex and six other agents never loaded the installed skills.** Codex, Gemini CLI, Augment Code, OpenCode, Cline, CodeBuddy and Qwen CLI only load skills as `<name>/SKILL.md` directories with `name`/`description` frontmatter, but the CLI wrote flat `<name>.md` files with no frontmatter into their skill folders, plus the references under a separate `somnio_rules/` directory. They now use the `skillDir` format, like Claude Code: one `<name>/` directory per skill with `SKILL.md`, `references/`, `assets/` and `agents/`. The Codex install honours `CODEX_HOME` (`$CODEX_HOME/skills`, default `~/.codex/skills`), and so do update, remove, uninstall, status and agent detection. `somnio run` now reads the references from the skill directory for these agents, so run `somnio skills update` once after upgrading.
 - **Upgrading replaces the old layout.** When a reinstall (`somnio setup`, `skills install`, `skills update`) no longer writes a path the manifest recorded for a skill, that path is deleted, so the flat `.md` file and `somnio_rules/<skill>/` go, and the emptied `somnio_rules/` is removed. Only recorded paths strictly inside their root are deleted, never through a symlinked directory and never one overlapping a path the reinstall just wrote. Installs made before the manifest existed are not pruned this way. `skills remove` resolves old `rules` entries against `somnio_rules/` and removes it once empty. `uninstall --skills` also removes unrecorded flat files and the whole `somnio_rules/`. With `CODEX_HOME` pointing elsewhere, remove and uninstall also clean the old `~/.codex/skills` install.
 - **A manifest path outside its install root is ignored.** `.somnio-skills.json` entries that are empty, absolute, or contain `.`/`..` segments are dropped when the manifest is read, and install, update, remove and uninstall skip any recorded path that passes through a symlinked directory, so a hand-edited or committed manifest cannot make them delete anything outside the agent's folders.
+
+## [3.2.10] - 2026-10-16
+
+### Added
+
+- **`somnio attribution off|on|status`.** Claude Code adds a `Co-Authored-By` trailer to commits and a "🤖 Generated with Claude Code" footer to pull requests by default. `somnio attribution off` sets `"attribution": {"commit": "", "pr": ""}` in `~/.claude/settings.json`, keeping every other key; `on` removes the key to restore the default, and `status` reports the current state. A settings file that is not valid JSON is reported and left untouched.
+- **`somnio setup` offers to turn off Claude Code attribution.** When Claude Code is a detected agent and its attribution is not already off, setup asks after installing skills. `--force` and non-interactive runs never change it and print the command instead.
+
+## [3.2.9] - 2026-10-16
+
+### Added
+
+- **`git-pr-format` skill.** Generates pull request titles (Conventional Commits) and descriptions, filling in the repository's PR template when there is one. It never adds AI attribution: no "🤖 Generated with Claude Code" footer, no `Co-Authored-By` lines, and it removes them when updating an existing PR. `/ship` now follows it when it creates or updates the PR.
 
 ## [3.2.8] - 2026-10-09
 
