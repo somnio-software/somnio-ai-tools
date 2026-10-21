@@ -13,7 +13,8 @@ class AgentRegistry {
   /// Agents that load skills as `<name>/SKILL.md` directories use
   /// [InstallFormat.skillDir]. Those installed as flat markdown before CLI
   /// 3.2.12 (files these agents never load), as Antigravity workflows before
-  /// 3.2.15, or to a folder the agent never reads before 3.2.17, record that
+  /// 3.2.15, to a folder the agent never reads before 3.2.17, or into a rules
+  /// folder the agent adds to every request before 3.2.18, record that
   /// in `legacyInstallFormat` / `legacyInstallPath` /
   /// `legacyExecutionRulesPath`, so update, remove and uninstall migrate or
   /// delete the old layout.
@@ -424,8 +425,12 @@ class AgentRegistry {
   static const _roo = AgentConfig(
     id: 'roo',
     displayName: 'Roo Code',
-    installFormat: InstallFormat.markdown,
-    installPath: '{home}/.roo/rules',
+    installFormat: InstallFormat.skillDir,
+    // Skills, not rules: Roo Code adds every file under `.roo/rules` to the
+    // system prompt of every request, and loads skills only on demand.
+    installPath: '{home}/.roo/skills',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyInstallPath: '{home}/.roo/rules',
     filePrefix: 'somnio',
     installUrl: 'https://roocode.com',
   );
@@ -433,8 +438,15 @@ class AgentRegistry {
   static const _kilocode = AgentConfig(
     id: 'kilocode',
     displayName: 'Kilo Code',
-    installFormat: InstallFormat.markdown,
-    installPath: '{home}/.kilocode/rules',
+    installFormat: InstallFormat.skillDir,
+    // Skills, not rules: Kilo Code adds every `.md` in `.kilocode/rules` to
+    // the instructions of every request, and loads skills only on demand.
+    // `.kilocode`, not the `.kilo` its docs now show: Kilo still treats
+    // `~/.kilocode` as a config folder and scans `{skill,skills}/**/SKILL.md`
+    // in it (`paths.ts`), and it is where earlier releases installed.
+    installPath: '{home}/.kilocode/skills',
+    legacyInstallFormat: InstallFormat.markdown,
+    legacyInstallPath: '{home}/.kilocode/rules',
     filePrefix: 'somnio',
     installUrl: 'https://kilocode.ai',
   );

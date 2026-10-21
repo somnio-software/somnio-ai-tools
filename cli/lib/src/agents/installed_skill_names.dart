@@ -63,4 +63,49 @@ class InstalledSkillNames {
   static bool matches(AgentConfig agent, String basename) =>
       basenamesFor(agent).contains(basename) ||
       basename.startsWith(agent.filePrefix);
+
+  /// The display names v1.x wrote atop its [legacyNames] files.
+  ///
+  /// `somnio-rh` and `somnio-rp` were only ever aliases, never installed
+  /// under that name, so they have none.
+  static const _legacyDisplayNames = {
+    'somnio-fh': 'Flutter Project Health Audit',
+    'somnio-fp': 'Flutter Best Practices Check',
+    'somnio-nh': 'NestJS Project Health Audit',
+    'somnio-np': 'NestJS Best Practices Check',
+    'somnio-sa': 'Security Audit',
+    'workflow-plan': 'Workflow Planner',
+    'workflow-run': 'Workflow Runner',
+  };
+
+  /// Whether [content], the file [basename] in a markdown-layout folder,
+  /// opens with the header somnio wrote for that skill: a `# ` line with the
+  /// skill's display name, then a `>` description line.
+  ///
+  /// The layout's files carry no other mark, and some agents' folders for
+  /// it are rules folders the user's own rules share (`~/.roo/rules`), so
+  /// this is what tells a skill somnio wrote from the user's rule that
+  /// happens to share its name. Every skill name has kept one display name
+  /// since the layout shipped.
+  static bool hasMarkdownHeader(String basename, String content) {
+    final displayNames = {
+      ..._legacyDisplayNames,
+      for (final bundle in SkillRegistry.skills)
+        bundle.name: bundle.displayName,
+      for (final skill in SkillRegistry.workflowSkills)
+        skill.name: skill.displayName,
+    };
+    final displayName = displayNames.entries
+        .where((entry) => '${entry.key.replaceAll('-', '_')}.md' == basename)
+        .map((entry) => entry.value)
+        .firstOrNull;
+    if (displayName == null) return false;
+    final lines = content.split('\n').map((line) => line.trimRight());
+    if (lines.first != '# $displayName') return false;
+    final description = lines.skip(1).firstWhere(
+          (line) => line.isNotEmpty,
+          orElse: () => '',
+        );
+    return description.startsWith('>');
+  }
 }

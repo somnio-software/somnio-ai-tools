@@ -5,6 +5,13 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.2.18] - 2026-10-20
+
+### Fixed
+
+- **Roo Code and Kilo Code no longer get every Somnio skill in their always-loaded rules.** Releases before 3.2.18 wrote each skill as a flat markdown file into `~/.roo/rules` and `~/.kilocode/rules`. Roo Code adds every file under `~/.roo/rules` to the system prompt of every request, `.somnio-skills.json` included, and Kilo Code adds every `.md` in `~/.kilocode/rules`: with all skills installed that was 26 files, about 2 MB (roughly 500k tokens) per agent. Both now get `<name>/SKILL.md` directories in `~/.roo/skills` and `~/.kilocode/skills` (project: `.roo/skills`, `.kilocode/skills`), which they load on demand; only each skill's name and description stays in the prompt.
+- **The old rules folders are migrated and cleaned** through the `legacyInstallPath` / `legacyInstallFormat` fields used for Windsurf, Amp and Copilot in 3.2.17. `somnio skills update` moves the skills the old manifest records to the new folders and deletes the old files and manifest; `skills remove` and `uninstall --skills` clean the old folders too. The user's own rules in those folders are kept: once the old manifest is gone, `uninstall --skills` removes a file there only when it has a skill's exact name and opens with the header Somnio writes for that skill (its display name as a `# ` title, then a `> ` description), so a rule named `somnio-*.md` or a hand-written `security_audit.md` stays. Skills a release before 2.10.0 wrote there have no manifest, so nothing moves them: `setup`, `skills install` and `skills update` list them for deletion by hand.
+
 ## [3.2.17] - 2026-10-19
 
 ### Fixed

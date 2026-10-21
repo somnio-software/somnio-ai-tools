@@ -7,7 +7,7 @@ import 'transformer.dart';
 /// Transforms plan.md + YAML rules into a generic single markdown file.
 ///
 /// Used for agents that accept markdown files as instructions
-/// (Aider, Roo, Kilo, Amazon Q).
+/// (Aider, Amazon Q; Roo Code and Kilo Code before 3.2.18).
 /// Similar to SingleFileTransformer but without Cursor-specific conventions.
 class MarkdownTransformer implements Transformer {
   @override

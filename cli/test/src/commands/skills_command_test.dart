@@ -343,10 +343,14 @@ void main() {
       final ampGlobal = p.join(home.path, '.config', 'amp', 'skills');
       // Amp's legacy folder, global and project alike from home.
       final ampLegacy = p.join(home.path, '.amp', 'skills');
+      final rooLegacy = p.join(home.path, '.roo', 'rules');
+      final kiloLegacy = p.join(home.path, '.kilocode', 'rules');
       _seed(amazonqLegacy, _auditA);
       _seed(windsurfLegacy, _auditA);
       _seed(copilotGlobal, _auditA);
       _seed(ampLegacy, _auditA);
+      _seed(rooLegacy, _auditA);
+      _seed(kiloLegacy, _auditA);
       final warnings = <String>[];
 
       final units = discoverSkillsUpdateUnits(
@@ -374,12 +378,37 @@ void main() {
           ),
           ('copilot', InstallScope.global, copilotGlobal),
           ('amp', InstallScope.global, ampGlobal),
+          ('roo', InstallScope.global, p.join(home.path, '.roo', 'skills')),
+          (
+            'kilocode',
+            InstallScope.global,
+            p.join(home.path, '.kilocode', 'skills'),
+          ),
         ]),
       );
       expect(warnings, isEmpty);
       for (final dir in strayProjectFolders()) {
         expect(Directory(dir).existsSync(), isFalse, reason: dir);
       }
+    });
+
+    test('warns about skills a release before the manifest left behind', () {
+      final rule = File(p.join(home.path, '.roo', 'rules', 'security_audit.md'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('# Security Audit\n\n> Audits a project.\n');
+      final warnings = <String>[];
+
+      final units = discoverSkillsUpdateUnits(
+        agents: [AgentRegistry.findById('roo')!],
+        home: home.path,
+        projectRoot: project.path,
+        onWarning: warnings.add,
+      );
+
+      expect(units, isEmpty);
+      expect(warnings, [
+        allOf(contains(rule.parent.path), contains('security_audit.md')),
+      ]);
     });
 
     test('merges the current and legacy manifests per agent and scope', () {
@@ -703,8 +732,10 @@ void main() {
     test('run from home reads a shared folder once, as global', () {
       final amazonqLegacy = p.join(home.path, '.amazonq', 'prompts');
       final windsurfLegacy = p.join(home.path, '.windsurf', 'workflows');
+      final rooLegacy = p.join(home.path, '.roo', 'rules');
       _seed(amazonqLegacy, _auditA);
       _seed(windsurfLegacy, _auditA);
+      _seed(rooLegacy, _auditA);
 
       final candidates = discoverSkillsRemoveCandidates(
         agents: AgentRegistry.installableAgents,
@@ -721,6 +752,7 @@ void main() {
         unorderedEquals([
           ('amazonq', InstallScope.global, amazonqLegacy),
           ('windsurf', InstallScope.global, windsurfLegacy),
+          ('roo', InstallScope.global, rooLegacy),
         ]),
       );
       for (final dir in strayProjectFolders()) {

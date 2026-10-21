@@ -24,7 +24,8 @@ enum InstallFormat {
   /// Workflow file + separate somnio_rules/ directory (Antigravity).
   workflow,
 
-  /// Generic single markdown file per skill (Roo, Kilo, Amazon Q, etc.).
+  /// Generic single markdown file per skill (Aider, Amazon Q; Roo Code and
+  /// Kilo Code before 3.2.18).
   markdown,
 }
 

@@ -756,7 +756,19 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
             entry.skill: entry,
         for (final entry in SkillManifest.load(dir).entries) entry.skill: entry,
       };
-      if (entries.isEmpty) continue;
+      if (entries.isEmpty) {
+        // Nothing to refresh, so no install warns about skills a release
+        // before the manifest left in the old folder: say so here.
+        final warning = AgentInstaller.preManifestLegacyWarning(
+          agent,
+          scope: scope,
+          home: home,
+          projectRoot: projectRoot,
+          environment: environment,
+        );
+        if (warning != null) onWarning?.call(warning);
+        continue;
+      }
 
       final audit = <SkillBundle>[];
       final workflow = <WorkflowSkill>[];
