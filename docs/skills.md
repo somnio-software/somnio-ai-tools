@@ -346,6 +346,30 @@ Run a harness audit on this project and score its AI setup.
 
 ---
 
+## Architecture Audit
+
+**Aliases:** `aa`, `somnio-aa`
+
+**Modular Architecture Audit** against a written standard, the Modular Application Architecture Standard shipped with the skill (`skills/architecture-audit/references/architecture-standard.md`). The standard defines module roles (composition root, contract, feature, shared, global service, foundation), an allowed-dependency matrix, ten rules (feature isolation, an acyclic graph, navigation through contracts, substitutable composition, public surfaces, layering, mechanical enforcement, and more), five anti-patterns, the metrics with their thresholds, and the order in which to fix what an audit finds.
+
+The audit is proportionate. It first measures the codebase's profile — Compact, Standard or Large, from handwritten lines, feature count and peak monthly contributors — and expects only the structure that profile calls for: a small app is not asked for physical feature packages, and splitting one into packages it does not need is itself a finding (premature modularisation). Drivers such as code shared by several apps or several owning teams call for physical boundaries whatever the size. The operator can override the profile with a stated reason.
+
+The audit maps every module into a role, extracts the import graph with a fixed metrics script (Dart/Flutter, TypeScript/JavaScript and Python; other stacks by writing the edge list by hand), inspects implementation selection, route assembly and navigation, checks which rules tools enforce, and scores four contours — structural, integration, composition, control — out of 100 with a maturity band (monolithic / partially modular / modular / governed modular) and a staged remediation plan. Checks the profile does not call for leave the score's denominator, so scores are relative to the profile; rule classes are required only where the module graph can break them; a codebase whose required rules no tool enforces is capped at partially modular, and governed modular needs every required class enforced. Only production code is audited, not tests.
+
+**Use when:**
+- A growing codebase needs to know whether its module boundaries hold
+- Planning a modularisation, and deciding what to fix first
+- Tracking architectural drift across releases or repos
+
+**Example prompt:**
+```
+Run an architecture audit on this app and tell me which feature boundaries leak.
+```
+
+**Output:** Architecture report, saved to `./reports/<YYYY-MM-DD>-<project>-architecture-audit.md` (+ a `.json` export). The graph data (`module_map.tsv`, `edges.tsv`, `module_edges.tsv`, `metrics.json`) stays in `./reports/.artifacts/architecture-audit/data/`, and trend state for the next run is kept in `./reports/.history/last_architecture_scores.json`
+
+---
+
 ## Next.js Health Audit
 
 **Aliases:** `nxh`, `somnio-nxh`

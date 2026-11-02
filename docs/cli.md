@@ -178,7 +178,7 @@ reports/2026-09-14-hoopis-backend-security-audit.md
 
 Because the name carries the date, re-running an audit on a later day leaves the
 earlier report in place instead of overwriting it. Two runs on the same day do
-overwrite each other. `harness-audit`, `soc2-audit` and `iso27001-audit` also write a `.json` export
+overwrite each other. `harness-audit`, `architecture-audit`, `soc2-audit` and `iso27001-audit` also write a `.json` export
 with the same base name (`security-audit` writes Markdown only);
 `reports/.history/last_<skill>_scores.json` (for example `last_security_scores.json`) is trend state, not a report, and keeps its
 fixed name. Each audit reads only its own file; the legacy shared `last_scores.json` is ignored,
@@ -439,6 +439,7 @@ See the [Workflow Guide](workflows.md) for details.
 |------|---------|-------------|
 | `flutter-health-audit` | `fh`, `somnio-fh` | Flutter project health audit (13 steps) |
 | `harness-audit` | `ha`, `somnio-ha` | AI harness completeness audit |
+| `architecture-audit` | `aa`, `somnio-aa` | Modular architecture audit against a written standard |
 | `flutter-best-practices` | `fp`, `somnio-fp` | Flutter code quality check |
 | `angular-health-audit` | `ah`, `somnio-ah` | Angular (2+) project health audit (13 steps) |
 | `nestjs-health-audit` | `nh`, `somnio-nh` | NestJS project health audit (13 steps) |
