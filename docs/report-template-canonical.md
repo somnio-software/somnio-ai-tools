@@ -1,7 +1,7 @@
 # Canonical Health-Audit Report Template
 
 **Status:** authoritative reference · **Applies to:** the seven `skills/<stack>-health-audit/`
-bundles (`flutter`, `react`, `angular`, `angularjs`, `python`, `nestjs`, `dotnet`) · **Consumed by:** nobody.
+bundles (`flutter`, `react`, `angular`, `angularjs`, `nextjs`, `python`, `nestjs`, `dotnet`) · **Consumed by:** nobody.
 This file is **not** read by the CLI, the runner, or any `references/*.md` rule. It is the single
 written source of truth a skill author copies from when hand-editing a skill's
 `assets/report-template.md`. Analogous in spirit to `agent-rules/rules/<stack>/*.md` being the
@@ -30,7 +30,7 @@ canonical source for adapters.
  6.     [Repositories & Data Layer | Data Layer | omitted]      (stack-variable, slot B)
  …      Testing                        ← canonical coverage contract
  …      Code Quality (Linter & Warnings)
- …      [Performance]                                          (react/angular/angularjs only)
+ …      [Performance]                                          (react/angular/angularjs/nextjs only)
  …      Documentation & Operations
  …      CI/CD (Configs Found in Repo)
  …      AI Harness & Adoption          ← "### Coverage" renamed "### Harness Coverage"
@@ -42,7 +42,7 @@ canonical source for adapters.
         Report Metadata                (UNNUMBERED, | Field | Value | table)
 ```
 
-Numbering is **relative, not absolute**. Skills without slot B (react/angular/angularjs) don't
+Numbering is **relative, not absolute**. Skills without slot B (react/angular/angularjs/nextjs) don't
 compress the count, because they gain a Performance section that flutter/python/nestjs/dotnet don't have —
 every skill lands on exactly **15** numbered sections, but *which* numbered slot Testing/Code
 Quality/Performance sit in differs. What must be identical across all seven is the **order and the
@@ -68,9 +68,10 @@ Which skill uses which slot, and where each lands after Quality Index is removed
 | react | State Management | — (no slot B) | 6 | 7 | 8 | 15 |
 | angular | State Management | — (no slot B) | 6 | 7 | 8 | 15 |
 | angularjs | State Management | — (no slot B) | 6 | 7 | 8 | 15 |
+| nextjs | State Management | — (no slot B) | 6 | 7 | 8 | 15 |
 
 flutter/python/nestjs/dotnet have both slots and no Performance section (weight family **A**).
-react/angular/angularjs have only slot A, no slot B, and a Performance section (weight family
+react/angular/angularjs/nextjs have only slot A, no slot B, and a Performance section (weight family
 **B** — see [§9](#9-appendix-scoring-methodology)). Both groups still total 15 numbered sections;
 the Performance section fills the numbering gap left by the missing slot B.
 
@@ -107,6 +108,7 @@ Rules:
   | react | `[React/Next.js/Remix/Vite]` (keep react/angular/angularjs's existing value verbatim if one is already present) |
   | angular | `[Angular CLI/Nx]` |
   | angularjs | `[AngularJS 1.x]` |
+  | nextjs | `[Next.js]` |
   | python | `[FastAPI/Django/Flask]` |
   | nestjs | `[NestJS/Node.js]` |
   | dotnet | `[.NET/ASP.NET Core — Web API/Blazor/Worker Service/Class Library]` |
@@ -301,7 +303,7 @@ report. Use your own skill's weight family — **never cross-apply the two famil
 | AI Harness & Adoption | 0.10 |
 | **Total** | **1.00** |
 
-### Weight family B — react, angular, angularjs (with Performance section)
+### Weight family B — react, angular, angularjs, nextjs (with Performance section)
 
 | Section | Weight |
 |---------|--------|

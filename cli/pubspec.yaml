@@ -4,7 +4,7 @@ description: >-
   Reads Flutter audit plans and rules from somnio-ai-tools and installs
   them as native slash commands into Claude Code, Cursor, and Antigravity.
 
-version: 3.2.18
+version: 3.3.1
 publish_to: none
 
 environment:
@@ -23,6 +23,5 @@ dependencies:
   dart_console: ^4.1.4
 
 dev_dependencies:
-  crypto: ^3.0.8
   test: ^1.29.0
   mocktail: ^1.0.4

@@ -1,7 +1,7 @@
 # Canonical Best-Practices Report Template
 
 **Status:** authoritative reference · **Applies to:** the seven `skills/<stack>-best-practices/`
-bundles (`flutter`, `react`, `angular`, `angularjs`, `python`, `nestjs`, `dotnet`) · **Consumed by:** nobody.
+bundles (`flutter`, `react`, `angular`, `angularjs`, `python`, `nestjs`, `dotnet`, `nextjs`) · **Consumed by:** nobody.
 This file is **not** read by the CLI, the runner, or any `references/*.md` rule. It is the single
 written source of truth a skill author copies from when hand-editing a skill's
 `assets/report-template.md`. It plays the same role for the seven `*-best-practices` skills that
@@ -65,6 +65,7 @@ Read from each skill's `assets/report-template.md` and `references/` directory �
 | flutter | Testing Quality, Architecture Compliance, Code Standards | 3 | 5 |
 | nestjs | Testing Quality, Architecture Compliance, Code Standards, DTO Validation, Error Handling | 5 | 7 |
 | dotnet | Testing Quality, Architecture Compliance, SOLID Compliance, Code Standards, DTO Validation, Error Handling | 6 | 8 |
+| nextjs | App Router Architecture, Server & Client Components, Data Fetching & Caching, Server Actions & Route Handlers, Rendering Performance, Testing Quality, TypeScript Standards | 7 | 9 |
 | react | Testing Quality, Component Architecture, Hooks Patterns, State Management, Performance, TypeScript Standards | 6 | 8 |
 | angular | Testing Quality, Component Architecture, Lifecycle & DI Patterns, Services & State Management, Change Detection & Performance, TypeScript Standards | 6 | 8 |
 | angularjs | Testing Quality, Component Architecture, Scope & Binding Patterns, State Management, Performance, JavaScript Standards | 6 | 8 |
@@ -229,6 +230,7 @@ Weights, by skill (each sums to 100 — verified by hand, not taken on an agent'
 | flutter | Testing Quality 30 / Architecture Compliance 40 / Code Standards 30 |
 | nestjs | Testing Quality 20 / Architecture Compliance 25 / Code Standards 20 / DTO Validation 15 / Error Handling 20 |
 | dotnet | Testing Quality 18 / Architecture Compliance 20 / SOLID Compliance 20 / Code Standards 14 / DTO Validation 12 / Error Handling 16 |
+| nextjs | App Router Architecture 15 / Server & Client Components 20 / Data Fetching & Caching 20 / Server Actions & Route Handlers 15 / Rendering Performance 10 / Testing Quality 10 / TypeScript Standards 10 |
 | react | Testing Quality 20 / Component Architecture 25 / Hooks Patterns 15 / State Management 15 / Performance 15 / TypeScript Standards 10 |
 | angular | Testing Quality 20 / Component Architecture 25 / Lifecycle & DI Patterns 15 / Services & State Management 15 / Change Detection & Performance 15 / TypeScript Standards 10 |
 | angularjs | Testing Quality 20 / Component Architecture 25 / Scope & Binding Patterns 15 / State Management 15 / Performance 15 / JavaScript Standards 10 |

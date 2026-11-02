@@ -370,11 +370,70 @@ Run an architecture audit on this app and tell me which feature boundaries leak.
 
 ---
 
+## Next.js Health Audit
+
+**Aliases:** `nxh`, `somnio-nxh`
+
+> You don't need to remember the Next.js aliases: the React audits (`rh`, `rp`) and the Security Audit (`sa`) detect `next` in `package.json` and run the Next.js version instead, both with `somnio run` and in a Claude session. `somnio run ... --no-nextjs` keeps the requested audit.
+
+Next.js project health audit in the unified health-audit format (same sections and weights as React, Performance included). Detects App Router / Pages Router, middleware or proxy, output mode and monorepo layout; installs with pnpm first; checks the installed `next` and `react` versions against live advisory sources (OSV, GitHub Advisory Database, Next.js advisories, endoflife.date) — no version is hardcoded in the skill.
+
+**Use when:**
+- Assessing a Next.js app before a refactor, upgrade or handover
+- Checking whether the release line in use is still supported and patched
+
+**Example prompt:**
+```
+Run a Next.js health audit on this project.
+```
+
+**Output:** Weighted score report, saved to `./reports/<YYYY-MM-DD>-<project>-nextjs-health-audit.md`
+
+---
+
+## Next.js Best Practices
+
+**Aliases:** `nxp`, `somnio-nxp`
+
+Micro-level Next.js code review against the docs of the installed version (bundled `node_modules/next/dist/docs/` or `.next-docs/` when present): App Router architecture, Server/Client Component boundaries, data fetching and caching, Server Actions and Route Handlers, rendering performance, testing and TypeScript. Points to the official Next.js agent skills (`npx skills add vercel/next.js`) where they apply.
+
+**Use when:**
+- Reviewing App Router code or a migration from the Pages Router
+- Checking caching and Server Action patterns against the version in use
+
+**Example prompt:**
+```
+Validate this Next.js project against best practices.
+```
+
+**Output:** Violations report with prioritized action plan, saved to `./reports/<YYYY-MM-DD>-<project>-nextjs-best-practices.md`
+
+---
+
+## Next.js Security Audit
+
+**Aliases:** `nxs`, `somnio-nxs`
+
+Next.js-specific security audit. Resolves the installed versions of `next`, `react`, `react-dom`, `react-server-dom-*` and every dependency from the lockfile and checks them, at run time, against OSV, the GitHub Advisory Database, the `vercel/next.js` security advisories and endoflife.date — the skill holds no vulnerable or patched version, so new advisories are found as soon as they are published. Also checks package-manager hardening (pnpm recommended: frozen lockfile, minimum release age, blocked exotic sub-dependencies, build-script allowlist), secrets and `NEXT_PUBLIC_` exposure, Server Actions, Route Handlers, middleware-only authorization, image optimizer config and security headers.
+
+**Use when:**
+- Before a release, or right after a Next.js / React security announcement
+- Hardening a Next.js app's dependency supply chain
+
+**Example prompt:**
+```
+Run a Next.js security audit on this project.
+```
+
+**Output:** Severity-classified, scored report, saved to `./reports/<YYYY-MM-DD>-<project>-nextjs-security-audit.md`. Trend state is kept in `./reports/.history/last_nextjs_security_scores.json`
+
+---
+
 ## Security Audit
 
 **Aliases:** `sa`, `somnio-sa`
 
-Framework-agnostic security audit with 10 analysis steps. Scans for hardcoded secrets, runs SAST checks, audits dependencies, and integrates with Trivy and Gitleaks. Auto-detects Flutter, NestJS, Node.js, Go, Rust, Python, and generic projects.
+Framework-agnostic security audit with 10 analysis steps. Scans for hardcoded secrets, runs SAST checks, audits dependencies, and integrates with Trivy and Gitleaks. Auto-detects Flutter, NestJS, Node.js, Go, Rust, Python, and generic projects. For Next.js it points to the dedicated [Next.js Security Audit](#nextjs-security-audit).
 
 **Use when:**
 - Preparing for a security review or compliance check

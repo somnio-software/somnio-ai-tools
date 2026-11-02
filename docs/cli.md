@@ -120,6 +120,7 @@ somnio run nh --agent gemini           # NestJS health audit with Gemini CLI
 somnio run sa --model opus             # Security audit with a specific model
 somnio run fh --skip-validation        # Skip project type check
 somnio run fh --no-preflight           # Send all steps to AI
+somnio run rh --no-nextjs              # React audit even on a Next.js project
 somnio run fh --step-timeout 45        # Per-step timeout of 45 minutes
 somnio run fh --project-name hoopis    # Override the name in the report file
 somnio run fh --upload                 # Upload the report to the project's Drive folder
@@ -131,6 +132,7 @@ somnio run fh --upload                 # Upload the report to the project's Driv
 | `--model` | `-m` | Model to use (skips interactive selection) |
 | `--skip-validation` | | Skip project type check |
 | `--no-preflight` | | Skip pre-flight and send all steps to AI |
+| `--[no-]nextjs` | | On a project whose `package.json` depends on `next`, `rh`, `rp` and `sa` run `nxh`, `nxp` and `nxs` (default on); `--no-nextjs` keeps the requested audit |
 | `--step-timeout` | | Per-step timeout in minutes (default: 30) |
 | `--project-name` | | Project name used in the report file name (default: the git repository name) |
 | `--upload` | | Upload the report to the project's Google Drive folder through the Google Drive MCP (Claude Code only). See [Uploading reports to Drive](#uploading-reports-to-drive) |
@@ -450,6 +452,9 @@ See the [Workflow Guide](workflows.md) for details.
 | `python-health-audit` | `ph`, `somnio-ph` | Python project health audit (13 steps) |
 | `python-best-practices` | `pp`, `somnio-pp` | Python code quality check |
 | `angular-best-practices` | `ap`, `somnio-ap` | Angular (2+) code quality check |
+| `nextjs-health-audit` | `nxh`, `somnio-nxh` | Next.js project health audit |
+| `nextjs-best-practices` | `nxp`, `somnio-nxp` | Next.js code quality check |
+| `nextjs-security-audit` | `nxs`, `somnio-nxs` | Next.js security audit (live advisory lookup) |
 | `security-audit` | `sa`, `somnio-sa` | Security audit (any stack, 11 steps) |
 | `iso27001-audit` | `iso`, `somnio-iso` | ISO 27001:2022 readiness audit (any stack, whole project) |
 
@@ -461,8 +466,9 @@ See the [Skills Catalog](skills.md) for full descriptions.
 
 When you run `somnio run <alias>`:
 
-1. **Parse arguments** — `--agent`, `--model`, `--skip-validation`, `--no-preflight`, `--project-name`
-2. **Validate project type** — Flutter needs `pubspec.yaml`, NestJS needs `package.json` + `@nestjs/core`, Python needs `pyproject.toml`
+1. **Parse arguments** — `--agent`, `--model`, `--skip-validation`, `--no-preflight`, `--nextjs`, `--project-name`
+1. **Pick the Next.js audit** — `rh`, `rp` and `sa` switch to `nxh`, `nxp` and `nxs` when `package.json` depends on `next` (unless `--no-nextjs`)
+2. **Validate project type** — Flutter needs `pubspec.yaml`, NestJS needs `package.json` + `@nestjs/core`, Next.js needs `package.json` + `next`, Python needs `pyproject.toml`
 3. **Run pre-flight steps** — Tool installation, version alignment, test coverage (no AI needed)
 4. **Resolve AI agent and model** — Auto-detect or use `--agent` flag
 5. **Parse SKILL.md** — Extract step order from the execution plan

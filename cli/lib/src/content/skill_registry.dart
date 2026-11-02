@@ -294,6 +294,61 @@ class SkillRegistry {
       agentsDirectory: 'skills/dotnet-best-practices/agents',
     ),
     SkillBundle(
+      id: 'nextjs_health',
+      name: 'nextjs-health-audit',
+      aliases: ['somnio-nxh', 'nxh'],
+      displayName: 'Next.js Project Health Audit',
+      description: 'Execute a comprehensive Next.js Project Health Audit. '
+          'Analyzes tech stack (with a live advisory lookup for the '
+          'installed next/react versions), App Router architecture, '
+          'server/client data flow, testing, code quality, performance, '
+          'CI/CD, AI harness, and documentation. Produces a report with '
+          'section scores and a weighted overall score.',
+      planRelativePath: 'skills/nextjs-health-audit/SKILL.md',
+      rulesDirectory: 'skills/nextjs-health-audit/references',
+      workflowPath:
+          'skills/nextjs-health-audit/.agent/workflows/nextjs_health_audit.md',
+      templatePath: 'skills/nextjs-health-audit/assets/report-template.md',
+      agentsDirectory: 'skills/nextjs-health-audit/agents',
+    ),
+    SkillBundle(
+      id: 'nextjs_plan',
+      name: 'nextjs-best-practices',
+      aliases: ['somnio-nxp', 'nxp'],
+      displayName: 'Next.js Best Practices Check',
+      description: 'Execute a micro-level Next.js code quality audit against '
+          'the docs of the installed version. Validates App Router '
+          'architecture, Server/Client Component boundaries, data '
+          'fetching and caching, Server Actions and Route Handlers, '
+          'rendering performance, testing, and TypeScript. Produces a '
+          'detailed violations report with a prioritized action plan.',
+      planRelativePath: 'skills/nextjs-best-practices/SKILL.md',
+      rulesDirectory: 'skills/nextjs-best-practices/references',
+      workflowPath:
+          'skills/nextjs-best-practices/.agent/workflows/nextjs_best_practices.md',
+      templatePath: 'skills/nextjs-best-practices/assets/report-template.md',
+      agentsDirectory: 'skills/nextjs-best-practices/agents',
+    ),
+    SkillBundle(
+      id: 'nextjs_security_audit',
+      name: 'nextjs-security-audit',
+      aliases: ['somnio-nxs', 'nxs'],
+      displayName: 'Next.js Security Audit',
+      description: 'Execute a Next.js Security Audit. Checks the installed '
+          'next, react and dependency versions against live advisory '
+          'sources (OSV, GitHub Advisory Database, Next.js advisories, '
+          'end-of-life data), package manager and supply-chain hardening '
+          '(pnpm), secrets and NEXT_PUBLIC_ exposure, Server Actions, '
+          'Route Handlers, middleware and security headers. Produces a '
+          'severity-classified, scored report.',
+      planRelativePath: 'skills/nextjs-security-audit/SKILL.md',
+      rulesDirectory: 'skills/nextjs-security-audit/references',
+      workflowPath:
+          'skills/nextjs-security-audit/.agent/workflows/nextjs_security_audit.md',
+      templatePath: 'skills/nextjs-security-audit/assets/report-template.md',
+      agentsDirectory: 'skills/nextjs-security-audit/agents',
+    ),
+    SkillBundle(
       id: 'security_audit',
       name: 'security-audit',
       aliases: ['somnio-sa', 'sa'],

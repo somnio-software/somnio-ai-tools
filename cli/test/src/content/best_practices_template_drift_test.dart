@@ -1,10 +1,10 @@
-// Guards the seven `skills/<stack>-best-practices/assets/report-template.md`
+// Guards the eight `skills/<stack>-best-practices/assets/report-template.md`
 // files against re-diverging from the unified skeleton they were just moved
-// onto (flutter, react, angular, angularjs, python, nestjs, dotnet). Unlike
-// the health-audit family (see `report_template_drift_test.dart`), these seven
+// onto (flutter, react, angular, angularjs, python, nestjs, dotnet, nextjs). Unlike
+// the health-audit family (see `report_template_drift_test.dart`), these eight
 // templates legitimately have a different number of scored sections per
 // stack — each stack runs a different set of analysis references — so this
-// test tolerates that variability and asserts only what every one of the seven
+// test tolerates that variability and asserts only what every one of the eight
 // genuinely shares: the section skeleton around the stack-variable middle,
 // the `/100` scale, the scoring legend, the absence of a Weight column in
 // the Score Breakdown table, and that each skill's own appendix weights
@@ -26,6 +26,7 @@ const _stacks = [
   'python',
   'nestjs',
   'dotnet',
+  'nextjs',
 ];
 
 /// Expected total numbered-section count per stack, read from the real
@@ -38,6 +39,7 @@ const _expectedSectionCount = <String, int>{
   'python': 11,
   'nestjs': 9,
   'dotnet': 10,
+  'nextjs': 11,
 };
 
 /// Expected titles of the stack-variable scored sections, in order, between
@@ -93,6 +95,15 @@ const _expectedScoredSections = <String, List<String>>{
     'Code Standards',
     'DTO Validation',
     'Error Handling',
+  ],
+  'nextjs': [
+    'App Router Architecture',
+    'Server & Client Components',
+    'Data Fetching & Caching',
+    'Server Actions & Route Handlers',
+    'Rendering Performance',
+    'Testing Quality',
+    'TypeScript Standards',
   ],
 };
 
@@ -153,9 +164,18 @@ const _expectedWeights = <String, Map<String, double>>{
     'DTO Validation': 12,
     'Error Handling': 16,
   },
+  'nextjs': {
+    'App Router Architecture': 15,
+    'Server & Client Components': 20,
+    'Data Fetching & Caching': 20,
+    'Server Actions & Route Handlers': 15,
+    'Rendering Performance': 10,
+    'Testing Quality': 10,
+    'TypeScript Standards': 10,
+  },
 };
 
-/// The scorecard's scoring-legend blockquote, byte-identical across all seven
+/// The scorecard's scoring-legend blockquote, byte-identical across all eight
 /// — including the en dash (U+2013) and middle dot (U+00B7). Same literal
 /// as `report_template_drift_test.dart`'s `_scoringLegend`.
 const _scoringLegend = '> **Scoring:** Strong (85–100) · Fair (70–84) · '
