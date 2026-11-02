@@ -62,6 +62,7 @@ somnio status          # check the CLI version against each installed skill's st
 |:------|:-----:|:------------|
 | [Flutter Health Audit](docs/skills.md#flutter-health-audit) | `fh` | 13-step project health audit with weighted scoring |
 | [Harness Audit](docs/skills.md#harness-audit) | `ha` | AI-harness completeness score (CLAUDE.md, rules, hooks, agents) |
+| [Architecture Audit](docs/skills.md#architecture-audit) | `aa` | Modular architecture score against a written standard, scaled to project size (boundaries, cycles, composition, enforcement) |
 | [Flutter Best Practices](docs/skills.md#flutter-best-practices) | `fp` | Code quality validation against live GitHub standards |
 | [Angular Health Audit](docs/skills.md#angular-health-audit) | `ah` | 13-step modern Angular (2+) health audit with weighted scoring |
 | [NestJS Health Audit](docs/skills.md#nestjs-health-audit) | `nh` | 14-step backend health audit with weighted scoring |

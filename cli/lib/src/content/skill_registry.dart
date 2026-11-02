@@ -381,6 +381,26 @@ class SkillRegistry {
       templatePath: 'skills/harness-audit/assets/report-template.md',
       agentsDirectory: 'skills/harness-audit/agents',
     ),
+    SkillBundle(
+      id: 'architecture_audit',
+      name: 'architecture-audit',
+      aliases: ['somnio-aa', 'aa'],
+      displayName: 'Architecture Audit',
+      description: 'Audit a codebase against a written modular architecture '
+          'standard — module roles, allowed dependencies, feature '
+          'isolation, composition and navigation, and which rules tools '
+          'enforce — in proportion to its size and team (Compact, '
+          'Standard or Large profile), and return a score out of 100 '
+          'with a maturity band and a staged remediation plan. Measures '
+          'Dart/Flutter, TypeScript/JavaScript and Python import graphs '
+          'with a fixed script.',
+      planRelativePath: 'skills/architecture-audit/SKILL.md',
+      rulesDirectory: 'skills/architecture-audit/references',
+      workflowPath:
+          'skills/architecture-audit/.agent/workflows/architecture_audit.md',
+      templatePath: 'skills/architecture-audit/assets/report-template.md',
+      agentsDirectory: 'skills/architecture-audit/agents',
+    ),
   ];
 
   /// Workflow skill bundles (standalone markdown, no YAML rules).
