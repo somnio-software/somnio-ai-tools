@@ -50,6 +50,9 @@ for f in $(find . -name "package.json" -not -path "*/node_modules/*" 2>/dev/null
     add_project "nestjs" "$d"
   else
     add_project "nodejs" "$d"
+    # Next.js stays a nodejs project here; the report recommends the
+    # dedicated nextjs-security-audit for framework-specific checks.
+    grep -qE '"next"[[:space:]]*:' "$f" 2>/dev/null && echo "NEXTJS_DETECTED: $d"
   fi
 done
 

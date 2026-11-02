@@ -249,5 +249,65 @@ void main() {
       testOn: '!windows',
       timeout: const Timeout(Duration(minutes: 2)),
     );
+
+    Future<String> runSecurityAudit(List<String> extraArgs) async {
+      File(p.join(project, 'package.json'))
+          .writeAsStringSync('{"dependencies":{"next":"^16"}}');
+      final result = await Process.run(
+        Platform.resolvedExecutable,
+        [
+          cliScript(),
+          'run',
+          'sa',
+          ...extraArgs,
+          '--agent',
+          'claude',
+          '--model',
+          'opus',
+          '--project-name',
+          'example-app',
+        ],
+        workingDirectory: project,
+        environment: {
+          'HOME': home,
+          'PATH': '$fakeBin:${Platform.environment['PATH']}',
+          'CLAUDE_CONFIG_DIR': '',
+        },
+      );
+      return '${result.stdout}${result.stderr}';
+    }
+
+    test(
+      'a Next.js project runs nextjs-security-audit for sa and says how to '
+      'install it',
+      () async {
+        final output = await runSecurityAudit([]);
+
+        expect(
+          output,
+          contains('Next.js detected: running nextjs-security-audit instead '
+              'of security-audit'),
+        );
+        expect(
+          output,
+          contains('somnio skills install --agent claude '
+              '--skills nextjs_security_audit'),
+        );
+      },
+      testOn: '!windows',
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
+
+    test(
+      '--no-nextjs keeps security-audit in a Next.js project',
+      () async {
+        final output = await runSecurityAudit(['--no-nextjs']);
+
+        expect(output, isNot(contains('Next.js detected')));
+        expect(output, contains('Installed security-audit skills'));
+      },
+      testOn: '!windows',
+      timeout: const Timeout(Duration(minutes: 2)),
+    );
   });
 }
