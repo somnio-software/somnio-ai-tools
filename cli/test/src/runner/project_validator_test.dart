@@ -50,6 +50,36 @@ void main() {
   });
 
   // ---------------------------------------------------------------------------
+  // _validateNextjs branches
+  // ---------------------------------------------------------------------------
+  group('_validateNextjs', () {
+    test('returns error when package.json missing', () {
+      final error = validator.validate('nextjs', tmpDir.path);
+      expect(error, isNotNull);
+      expect(error, contains('Next.js project root'));
+    });
+
+    test('returns error when next is not a dependency', () {
+      writeFile('package.json', '{"dependencies":{"next-auth":"^5"}}');
+      final error = validator.validate('nextjs', tmpDir.path);
+      expect(error, isNotNull);
+      expect(error, contains('next dependency'));
+    });
+
+    test('accepts a project that depends on next', () {
+      writeFile('package.json', '{"dependencies":{"next": "^16"}}');
+      expect(validator.validate('nextjs', tmpDir.path), isNull);
+    });
+
+    test('the security audit prefix uses the same check', () {
+      final error = validator.validate('nextjs_security', tmpDir.path);
+      expect(error, isNotNull);
+      writeFile('package.json', '{"dependencies":{"next":"^16"}}');
+      expect(validator.validate('nextjs_security', tmpDir.path), isNull);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // _validateNestjs branches
   // ---------------------------------------------------------------------------
   group('_validateNestjs', () {

@@ -12,6 +12,7 @@ import '../content/skill_bundle.dart';
 import '../content/skill_registry.dart';
 import '../runner/agent_resolver.dart';
 import '../runner/drive_upload.dart';
+import '../runner/nextjs_redirect.dart';
 import '../runner/plan_parser.dart';
 import '../runner/preflight.dart';
 import '../runner/project_validator.dart';
@@ -54,6 +55,13 @@ class RunCommand extends Command<int> {
     argParser.addFlag(
       'skip-validation',
       help: 'Skip project type validation.',
+    );
+    argParser.addFlag(
+      'nextjs',
+      defaultsTo: true,
+      help: 'Run the Next.js version of the React and Security audits '
+          '(rh, rp, sa) when package.json depends on next. '
+          '--no-nextjs keeps the audit that was asked for.',
     );
     argParser.addFlag(
       'no-preflight',
@@ -150,6 +158,13 @@ class RunCommand extends Command<int> {
   String _artifactsDirFromBundle(String cwd, SkillBundle bundle) =>
       p.join(cwd, 'reports', '.artifacts', bundle.name);
 
+  /// The Next.js bundle that replaces [bundle] when [cwd] is a Next.js
+  /// project, or `null` when [bundle] has no Next.js counterpart.
+  SkillBundle? _nextjsCounterpart(SkillBundle bundle, String cwd) {
+    final targetId = nextjsRedirectFor(bundle.id, cwd);
+    return targetId == null ? null : SkillRegistry.findById(targetId);
+  }
+
   /// Finds an audit bundle by name, alias, or short code.
   SkillBundle? _findBundleByCode(String code) {
     for (final bundle in _runnableBundles) {
@@ -167,9 +182,9 @@ class RunCommand extends Command<int> {
 
     // 1. Parse and validate the short code
     final code = argResults!.rest.firstOrNull;
-    final bundle = code != null ? _findBundleByCode(code) : null;
+    final requested = code != null ? _findBundleByCode(code) : null;
 
-    if (code == null || bundle == null) {
+    if (code == null || requested == null) {
       _logger.err(
         code == null
             ? 'Missing required argument: audit code.'
@@ -196,8 +211,19 @@ class RunCommand extends Command<int> {
       return ExitCode.usage.code;
     }
 
-    final techPrefix = bundle.techPrefix;
     final cwd = Directory.current.path;
+    final redirectNextjs = argResults!['nextjs'] as bool;
+    final bundle = redirectNextjs
+        ? _nextjsCounterpart(requested, cwd) ?? requested
+        : requested;
+    if (!identical(bundle, requested)) {
+      _logger.info(
+        '${lightGreen.wrap('✓')} Next.js detected: running ${bundle.name} '
+        'instead of ${requested.name} (--no-nextjs to keep it).',
+      );
+    }
+
+    final techPrefix = bundle.techPrefix;
     final projectName =
         argResults!['project-name'] as String? ?? await resolveRepoName(cwd);
 
@@ -371,7 +397,10 @@ class RunCommand extends Command<int> {
     // 7. After a successful health audit, prompt for Best Practices and Security Audit
     if (!aborted && bundle.id.endsWith('_health')) {
       final bestPracticesBundle = SkillRegistry.findById('${techPrefix}_plan');
-      final securityBundle = SkillRegistry.findById('security_audit');
+      final genericSecurity = SkillRegistry.findById('security_audit');
+      final securityBundle = genericSecurity == null || !redirectNextjs
+          ? genericSecurity
+          : _nextjsCounterpart(genericSecurity, cwd) ?? genericSecurity;
       final followUpBundles = <SkillBundle>[];
       if (bestPracticesBundle != null) followUpBundles.add(bestPracticesBundle);
       if (securityBundle != null) followUpBundles.add(securityBundle);
@@ -521,6 +550,17 @@ class RunCommand extends Command<int> {
     );
     if (versionError != null) {
       _logger.err(versionError);
+      if (FileSystemEntity.typeSync(templatePath) ==
+          FileSystemEntityType.notFound) {
+        // `skills update` only refreshes installed skills, so a skill that
+        // was never installed (a Next.js audit reached through rh, rp or
+        // sa, for one) needs an install.
+        _logger.info(
+          'If ${bundle.name} was never installed for ${agent.displayName}, '
+          'install it with: somnio skills install --agent ${agent.id} '
+          '--skills ${bundle.id}',
+        );
+      }
       return _ExecuteBundleResult(aborted: true);
     }
 

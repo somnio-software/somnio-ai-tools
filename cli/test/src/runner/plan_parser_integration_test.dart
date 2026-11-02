@@ -84,6 +84,15 @@ void main() {
       lastRule: 'report-generator',
       mandatoryRules: ['tool-installer'],
     ),
+    // 11: security-audit's shape plus version resolution, live framework
+    // advisories, pnpm hardening, Next.js SAST and headers; gitleaks and
+    // trivy are separate optional steps.
+    'nextjs-security-audit': _SkillExpectation(
+      stepCount: 11,
+      firstRule: 'tool-installer',
+      lastRule: 'report-generator',
+      mandatoryRules: ['tool-installer'],
+    ),
     'python-health-audit': _SkillExpectation(
       stepCount: 14,
       firstRule: 'tool-installer',
@@ -101,6 +110,20 @@ void main() {
     'python-best-practices': _SkillExpectation(
       stepCount: 8,
       firstRule: 'typing',
+      lastRule: 'best-practices-generator',
+      mandatoryRules: [],
+    ),
+    // 14: react's 13 plus dependency-security-analysis, a live advisory
+    // lookup for the installed next/react versions feeding Tech Stack.
+    'nextjs-health-audit': _SkillExpectation(
+      stepCount: 14,
+      firstRule: 'tool-installer',
+      lastRule: 'report-generator',
+      mandatoryRules: ['version-alignment'],
+    ),
+    'nextjs-best-practices': _SkillExpectation(
+      stepCount: 8,
+      firstRule: 'app-router-architecture',
       lastRule: 'best-practices-generator',
       mandatoryRules: [],
     ),
@@ -217,6 +240,7 @@ const _harnessAuditSkills = {
   'dotnet-health-audit',
   'flutter-health-audit',
   'nestjs-health-audit',
+  'nextjs-health-audit',
   'python-health-audit',
   'react-health-audit',
 };

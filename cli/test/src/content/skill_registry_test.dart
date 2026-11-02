@@ -138,7 +138,15 @@ void main() {
       expect(
         techs,
         containsAll(
-          ['.NET', 'Flutter', 'NestJS', 'Python', 'React', 'Security'],
+          [
+            '.NET',
+            'Flutter',
+            'NestJS',
+            'Next.js',
+            'Python',
+            'React',
+            'Security'
+          ],
         ),
       );
       // Sorted and de-duplicated.
@@ -148,6 +156,20 @@ void main() {
   });
 
   group('SkillRegistry.byTechnologies', () {
+    test('returns the three Next.js bundles', () {
+      final bundles = SkillRegistry.byTechnologies(['Next.js']);
+      expect(
+        bundles.map((b) => b.id),
+        unorderedEquals(
+          ['nextjs_health', 'nextjs_plan', 'nextjs_security_audit'],
+        ),
+      );
+      expect(
+        bundles.map((b) => b.techPrefix).toSet(),
+        {'nextjs', 'nextjs_security'},
+      );
+    });
+
     test('returns bundles matching the given technologies', () {
       final bundles = SkillRegistry.byTechnologies(['Flutter']);
       expect(bundles, isNotEmpty);
