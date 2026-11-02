@@ -44,6 +44,7 @@ void main() {
           'flutter',
           'functions',
           'nestjs',
+          'nextjs',
           'python',
           'react',
           'typescript',

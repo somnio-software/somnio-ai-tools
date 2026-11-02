@@ -14,7 +14,7 @@ class AgentRegistry {
   /// [InstallFormat.skillDir]. Those installed as flat markdown before CLI
   /// 3.2.12 (files these agents never load), as Antigravity workflows before
   /// 3.2.15, to a folder the agent never reads before 3.2.17, or into a rules
-  /// folder the agent adds to every request before 3.2.18, record that
+  /// folder the agent adds to every request before 3.3.2, record that
   /// in `legacyInstallFormat` / `legacyInstallPath` /
   /// `legacyExecutionRulesPath`, so update, remove and uninstall migrate or
   /// delete the old layout.

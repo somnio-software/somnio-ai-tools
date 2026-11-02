@@ -4,7 +4,7 @@
 
 **AI-powered audit skills for Claude Code, Cursor, and 40+ other agents.**
 
-Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, React, Python (FastAPI, Django, Flask), and more — directly from your AI coding assistant.
+Run comprehensive health audits, security scans, and best-practices checks on Flutter, NestJS, React, Next.js, Python (FastAPI, Django, Flask), and more — directly from your AI coding assistant.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
@@ -76,6 +76,9 @@ somnio status          # check the CLI version against each installed skill's st
 | [Angular Best Practices](docs/skills.md#angular-best-practices) | `ap` | Angular 2+ code-quality validation (RxJS, change detection, TS) |
 | [.NET Health Audit](docs/skills.md#net-health-audit) | `dh` | .NET / ASP.NET Core Web API health audit with weighted scoring |
 | [.NET Best Practices](docs/skills.md#net-best-practices) | `dp` | Testing, architecture, SOLID, DTO validation, and error handling validation |
+| [Next.js Health Audit](docs/skills.md#nextjs-health-audit) | `nxh` | Next.js health audit with a live advisory lookup for the installed versions |
+| [Next.js Best Practices](docs/skills.md#nextjs-best-practices) | `nxp` | App Router, Server/Client Components, caching, Server Actions, performance |
+| [Next.js Security Audit](docs/skills.md#nextjs-security-audit) | `nxs` | Live CVE lookup for next/react/deps, pnpm hardening, Server Actions, headers |
 | [Security Audit](docs/skills.md#security-audit) | `sa` | Framework-agnostic security scan (secrets, deps, SAST) |
 | [ISO 27001 Readiness Audit](docs/skills.md#iso-27001-readiness-audit) | `iso` | Whole-project ISO/IEC 27001:2022 ISMS & Annex A readiness & gap analysis |
 
@@ -141,6 +144,7 @@ Global coding standards — automatically applied by your AI agent in every proj
 | Firebase Functions Rules | Architecture, module boundaries, Express + auth, secrets, error handling, testing |
 | NestJS Rules | DTOs, services, controllers, repositories, testing, error handling, TypeScript |
 | React Rules | Components, hooks, state management, performance, testing, TypeScript |
+| Next.js Rules | App Router, Server Components, Server Actions, data fetching and caching, security (live advisory checks, pnpm), performance, testing |
 | TypeScript Rules | tsconfig standards, naming, imports, types, nullables, async/await, error handling |
 | Python Rules | Code style (PEP 8/Ruff), strict type hints, function design, module structure, Pydantic validation, EAFP error handling, pytest unit + integration testing |
 | FastAPI Rules | Domain-package structure, APIRouter modularization, Pydantic request/response schemas, Depends injection, async vs sync handler choice, HTTPException boundary translation — layers on Python Rules |

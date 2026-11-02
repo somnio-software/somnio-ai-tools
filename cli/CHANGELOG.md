@@ -5,12 +5,28 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [3.2.18] - 2026-10-20
+## [3.3.2] - 2026-11-02
 
 ### Fixed
 
-- **Roo Code and Kilo Code no longer get every Somnio skill in their always-loaded rules.** Releases before 3.2.18 wrote each skill as a flat markdown file into `~/.roo/rules` and `~/.kilocode/rules`. Roo Code adds every file under `~/.roo/rules` to the system prompt of every request, `.somnio-skills.json` included, and Kilo Code adds every `.md` in `~/.kilocode/rules`: with all skills installed that was 26 files, about 2 MB (roughly 500k tokens) per agent. Both now get `<name>/SKILL.md` directories in `~/.roo/skills` and `~/.kilocode/skills` (project: `.roo/skills`, `.kilocode/skills`), which they load on demand; only each skill's name and description stays in the prompt.
+- **Roo Code and Kilo Code no longer get every Somnio skill in their always-loaded rules.** Releases before 3.3.2 wrote each skill as a flat markdown file into `~/.roo/rules` and `~/.kilocode/rules`. Roo Code adds every file under `~/.roo/rules` to the system prompt of every request, `.somnio-skills.json` included, and Kilo Code adds every `.md` in `~/.kilocode/rules`: with all skills installed that was 26 files, about 2 MB (roughly 500k tokens) per agent. Both now get `<name>/SKILL.md` directories in `~/.roo/skills` and `~/.kilocode/skills` (project: `.roo/skills`, `.kilocode/skills`), which they load on demand; only each skill's name and description stays in the prompt.
 - **The old rules folders are migrated and cleaned** through the `legacyInstallPath` / `legacyInstallFormat` fields used for Windsurf, Amp and Copilot in 3.2.17. `somnio skills update` moves the skills the old manifest records to the new folders and deletes the old files and manifest; `skills remove` and `uninstall --skills` clean the old folders too. The user's own rules in those folders are kept: once the old manifest is gone, `uninstall --skills` removes a file there only when it has a skill's exact name and opens with the header Somnio writes for that skill (its display name as a `# ` title, then a `> ` description), so a rule named `somnio-*.md` or a hand-written `security_audit.md` stays. Skills a release before 2.10.0 wrote there have no manifest, so nothing moves them: `setup`, `skills install` and `skills update` list them for deletion by hand.
+
+## [3.3.0] - 2026-11-02
+
+### Added
+
+- **Next.js audit package: `nextjs-health-audit` (`nxh`), `nextjs-best-practices` (`nxp`) and `nextjs-security-audit` (`nxs`).** Runnable with `somnio run` and installable with `somnio skills install`; the runner checks that `package.json` depends on `next`.
+  - **No vulnerable version lives in the skills.** The installed `next`, `react`, `react-dom`, `react-server-dom-*` and every dependency are resolved from the lockfile and checked at run time against OSV, the GitHub Advisory Database, the `vercel/next.js` security advisories and endoflife.date (`references/live-vulnerability-sources.md`). When no source answers, the report says "Unknown — could not verify" instead of "no vulnerabilities".
+  - **`nextjs-security-audit`** scores five areas: Sensitive File & Env Protection, Secret Detection, Framework & Dependency Security, Supply Chain Integrity and Next.js App Security. It checks package-manager hardening (pnpm recommended: `packageManager` + Corepack, frozen lockfile in CI, `minimumReleaseAge`, `blockExoticSubdeps`, `allowBuilds`), `NEXT_PUBLIC_` secret exposure, authorization done only in middleware/proxy, Server Actions and Route Handlers without authorization or validation, open redirects, SSRF, image optimizer config and security headers. An npm or yarn repo gets a finding and a migration recipe; the audit never changes the repo.
+  - **`nextjs-health-audit`** uses the unified health-audit report (weight family B, with Performance), installs with pnpm first, and adds a dependency-security step that feeds Tech Stack.
+  - **`nextjs-best-practices`** reviews App Router architecture, Server & Client Components, Data Fetching & Caching, Server Actions & Route Handlers, Rendering Performance, Testing Quality and TypeScript Standards against the docs of the installed version (`node_modules/next/dist/docs/` or `.next-docs/`), and points to the official Next.js agent skills (`npx skills add vercel/next.js`).
+- **The React and Security audits run the Next.js version on a Next.js project.** `somnio run rh`, `rp` and `sa` switch to `nxh`, `nxp` and `nxs` when `package.json` depends on `next` (`next-auth` or `@next/*` alone do not count), and say so; a health audit's security follow-up does the same. `--no-nextjs` keeps the requested audit. In a session, `react-health-audit`, `react-best-practices` and `security-audit` check `package.json` first and hand off to the Next.js skill. When the Next.js skill was never installed, the run names the `somnio skills install` command, since `somnio skills update` only refreshes installed skills.
+- **`nextjs` agent-rules stack** (`somnio rules install`): App Router, Server Components, Server Actions, data fetching and caching, security, performance and testing.
+
+### Changed
+
+- **The report templates carry the 3.3.0 stamp.** `dart run tool/stamp_version.dart` rewrote the `Generated by` row.
 
 ## [3.2.17] - 2026-10-19
 

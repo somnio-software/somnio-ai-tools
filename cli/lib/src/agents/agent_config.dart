@@ -25,7 +25,7 @@ enum InstallFormat {
   workflow,
 
   /// Generic single markdown file per skill (Aider, Amazon Q; Roo Code and
-  /// Kilo Code before 3.2.18).
+  /// Kilo Code before 3.3.2).
   markdown,
 }
 

@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 
+import 'nextjs_redirect.dart';
+
 /// Validates the current working directory is the correct project type
 /// before running a health audit.
 ///
@@ -41,6 +43,9 @@ class ProjectValidator {
         return _validateFlutter(cwd);
       case 'nestjs':
         return _validateNestjs(cwd);
+      case 'nextjs':
+      case 'nextjs_security':
+        return _validateNextjs(cwd);
       case 'security':
         return null; // Framework-agnostic, works on any project
       default:
@@ -67,6 +72,20 @@ class ProjectValidator {
     if (!content.contains('@nestjs/core')) {
       return 'package.json does not contain @nestjs/core dependency.\n'
           'This does not appear to be a NestJS project.';
+    }
+    return null;
+  }
+
+  String? _validateNextjs(String cwd) {
+    final packageJson = File(p.join(cwd, 'package.json'));
+    if (!packageJson.existsSync()) {
+      return 'No package.json found in current directory.\n'
+          'Please run this command from a Next.js project root.';
+    }
+    final content = packageJson.readAsStringSync();
+    if (!dependsOnNext(content)) {
+      return 'package.json does not contain the next dependency.\n'
+          'This does not appear to be a Next.js project.';
     }
     return null;
   }

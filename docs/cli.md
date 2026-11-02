@@ -120,6 +120,7 @@ somnio run nh --agent gemini           # NestJS health audit with Gemini CLI
 somnio run sa --model opus             # Security audit with a specific model
 somnio run fh --skip-validation        # Skip project type check
 somnio run fh --no-preflight           # Send all steps to AI
+somnio run rh --no-nextjs              # React audit even on a Next.js project
 somnio run fh --step-timeout 45        # Per-step timeout of 45 minutes
 somnio run fh --project-name hoopis    # Override the name in the report file
 somnio run fh --upload                 # Upload the report to the project's Drive folder
@@ -131,6 +132,7 @@ somnio run fh --upload                 # Upload the report to the project's Driv
 | `--model` | `-m` | Model to use (skips interactive selection) |
 | `--skip-validation` | | Skip project type check |
 | `--no-preflight` | | Skip pre-flight and send all steps to AI |
+| `--[no-]nextjs` | | On a project whose `package.json` depends on `next`, `rh`, `rp` and `sa` run `nxh`, `nxp` and `nxs` (default on); `--no-nextjs` keeps the requested audit |
 | `--step-timeout` | | Per-step timeout in minutes (default: 30) |
 | `--project-name` | | Project name used in the report file name (default: the git repository name) |
 | `--upload` | | Upload the report to the project's Google Drive folder through the Google Drive MCP (Claude Code only). See [Uploading reports to Drive](#uploading-reports-to-drive) |
@@ -449,6 +451,9 @@ See the [Workflow Guide](workflows.md) for details.
 | `python-health-audit` | `ph`, `somnio-ph` | Python project health audit (13 steps) |
 | `python-best-practices` | `pp`, `somnio-pp` | Python code quality check |
 | `angular-best-practices` | `ap`, `somnio-ap` | Angular (2+) code quality check |
+| `nextjs-health-audit` | `nxh`, `somnio-nxh` | Next.js project health audit |
+| `nextjs-best-practices` | `nxp`, `somnio-nxp` | Next.js code quality check |
+| `nextjs-security-audit` | `nxs`, `somnio-nxs` | Next.js security audit (live advisory lookup) |
 | `security-audit` | `sa`, `somnio-sa` | Security audit (any stack, 11 steps) |
 | `iso27001-audit` | `iso`, `somnio-iso` | ISO 27001:2022 readiness audit (any stack, whole project) |
 
@@ -460,8 +465,9 @@ See the [Skills Catalog](skills.md) for full descriptions.
 
 When you run `somnio run <alias>`:
 
-1. **Parse arguments** — `--agent`, `--model`, `--skip-validation`, `--no-preflight`, `--project-name`
-2. **Validate project type** — Flutter needs `pubspec.yaml`, NestJS needs `package.json` + `@nestjs/core`, Python needs `pyproject.toml`
+1. **Parse arguments** — `--agent`, `--model`, `--skip-validation`, `--no-preflight`, `--nextjs`, `--project-name`
+1. **Pick the Next.js audit** — `rh`, `rp` and `sa` switch to `nxh`, `nxp` and `nxs` when `package.json` depends on `next` (unless `--no-nextjs`)
+2. **Validate project type** — Flutter needs `pubspec.yaml`, NestJS needs `package.json` + `@nestjs/core`, Next.js needs `package.json` + `next`, Python needs `pyproject.toml`
 3. **Run pre-flight steps** — Tool installation, version alignment, test coverage (no AI needed)
 4. **Resolve AI agent and model** — Auto-detect or use `--agent` flag
 5. **Parse SKILL.md** — Extract step order from the execution plan
@@ -497,7 +503,7 @@ Antigravity IDE workflows stop working on 2026-10-19, so Antigravity now gets sk
 
 Since 3.2.17, Amp (`~/.config/amp/skills`, global only), GitHub Copilot (`~/.copilot/skills`, project `.github/skills`) and Windsurf (`~/.codeium/windsurf/skills`, project `.windsurf/skills`) get skill directories too, and Amazon Q's global prompts go to `~/.aws/amazonq/prompts` (project prompts stay in `.amazonq/prompts`). Earlier releases wrote them to `~/.amp/skills` (plus `~/.amp/somnio_rules`), `~/.copilot/agents`, `~/.windsurf/workflows` and `~/.amazonq/prompts`, where these agents don't load them as skills. `somnio skills update` moves the recorded skills to the new folders; `somnio skills remove` and `somnio uninstall --skills` also clean the old ones. Amp skills an earlier release put in a project's `.amp/skills` are not refreshed: `skills update` warns, and `skills remove --project` deletes them. `skills update` and `skills remove` skip an old folder that is really another agent's current skills or rules folder, or the agent's own global one, through a symlink in either direction (`~/.amp` → `~/.claude`, `~/.claude` → `~/.amp`, or a project's `.amp` → `~/.config/amp`), since its manifest records those skills, and such a folder does not make the agent count as installed either. `uninstall --skills` still clears it, removing each recorded rule from the rules folder of every agent that may have written it. Only the current project's folders are compared, so a link from another project's agent folder into an old one goes unnoticed. An old folder symlinked anywhere else (e.g. `~/.amazonq` → `~/dotfiles/amazonq` with GNU stow) is still migrated and removed.
 
-Since 3.2.18, Roo Code (`~/.roo/skills`, project `.roo/skills`) and Kilo Code (`~/.kilocode/skills`, project `.kilocode/skills`) get skill directories too, which they load on demand. Earlier releases wrote every skill as a flat markdown file into their rules folders, `~/.roo/rules` and `~/.kilocode/rules`, which both agents add to the instructions of every request: about 2 MB per agent with all skills installed. `somnio skills update` moves the recorded skills to the new folders and deletes the old files and manifest; your own rules in those folders stay. `somnio skills remove` and `somnio uninstall --skills` also clean the old folders, as for the agents above; without a manifest, `uninstall --skills` deletes a file there only when it has a skill's exact name and opens with the header Somnio writes for that skill (its display name as a `# ` title, then a `> ` description). Skills a release before 2.10.0 wrote there have no manifest, so `skills update` cannot move them: `setup`, `skills install` and `skills update` list them, and you delete them by hand.
+Since 3.3.2, Roo Code (`~/.roo/skills`, project `.roo/skills`) and Kilo Code (`~/.kilocode/skills`, project `.kilocode/skills`) get skill directories too, which they load on demand. Earlier releases wrote every skill as a flat markdown file into their rules folders, `~/.roo/rules` and `~/.kilocode/rules`, which both agents add to the instructions of every request: about 2 MB per agent with all skills installed. `somnio skills update` moves the recorded skills to the new folders and deletes the old files and manifest; your own rules in those folders stay. `somnio skills remove` and `somnio uninstall --skills` also clean the old folders, as for the agents above; without a manifest, `uninstall --skills` deletes a file there only when it has a skill's exact name and opens with the header Somnio writes for that skill (its display name as a `# ` title, then a `> ` description). Skills a release before 2.10.0 wrote there have no manifest, so `skills update` cannot move them: `setup`, `skills install` and `skills update` list them, and you delete them by hand.
 
 ---
 
