@@ -18,7 +18,7 @@ void main() {
   final aider =
       AgentRegistry.findById('aider')!; // default + executionRulesPath
   final codex = AgentRegistry.findById('codex')!; // skillDir + CODEX_HOME
-  final roo = AgentRegistry.findById('roo')!; // no executionRulesPath
+  final amazonq = AgentRegistry.findById('amazonq')!; // no executionRulesPath
   final antigravity = AgentRegistry.findById('antigravity')!; // binary == null
   const yamlAgent = AgentConfig(
     id: 'yaml-agent',
@@ -84,8 +84,8 @@ void main() {
     });
 
     test('default without executionRulesPath returns resolved base path', () {
-      final path = resolver.ruleBasePath(roo, 'flutter-health', 'flutter');
-      final base = roo.resolvedExecutionRulesPath(
+      final path = resolver.ruleBasePath(amazonq, 'flutter-health', 'flutter');
+      final base = amazonq.resolvedExecutionRulesPath(
         home: home,
         name: 'flutter-health',
       );
@@ -135,8 +135,8 @@ void main() {
 
     test('default without executionRulesPath uses base/assets/{file}', () {
       final path =
-          resolver.templatePath(roo, 'flutter-health', 'flutter', 't.md');
-      final base = roo.resolvedExecutionRulesPath(
+          resolver.templatePath(amazonq, 'flutter-health', 'flutter', 't.md');
+      final base = amazonq.resolvedExecutionRulesPath(
         home: home,
         name: 'flutter-health',
       );

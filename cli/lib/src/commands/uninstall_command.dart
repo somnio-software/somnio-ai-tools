@@ -692,14 +692,29 @@ bool _removeGenericInstall(
               projectRoot: home,
             )!,
         ];
+  final layout = agent.legacyInstallPath == null
+      ? agent.installFormat
+      : agent.legacyInstallFormat ?? agent.installFormat;
+  final markdownLayout = layout == InstallFormat.markdown;
   for (final location in locations) {
     final dir = Directory(location);
     if (!dir.existsSync() || _hasManifest(location)) continue;
     for (final entity in dir.listSync(followLinks: false)) {
       final name = p.basename(entity.path);
-      if (!InstalledSkillNames.matches(agent, name)) continue;
+      // A markdown-layout file or link must have a skill's exact name: the
+      // bare prefix would also match the user's own `somnio-*.md` rules,
+      // and somnio never wrote links there.
+      final named = markdownLayout && entity is! Directory
+          ? InstalledSkillNames.basenamesFor(agent).contains(name)
+          : InstalledSkillNames.matches(agent, name);
+      if (!named) continue;
 
-      final keepReason = _legacyKeepReason(entity, location, name);
+      final keepReason = _legacyKeepReason(
+        entity,
+        location,
+        name,
+        markdownLayout: markdownLayout,
+      );
       if (keepReason != null) {
         onWarning?.call('Kept ${entity.path}: $keepReason.');
         continue;
@@ -728,13 +743,17 @@ bool _hasManifest(String location) =>
 /// - A symlink is removed (only the link) when it resolves inside
 ///   [location]; one pointing outside is not somnio's to touch.
 /// - A directory must hold a `SKILL.md` whose frontmatter `name` is [name].
-/// - A plain file is removed: the installer writes those under the exact
-///   Somnio name and they carry no marker to check.
+/// - A plain file in the [markdownLayout] must open with the header that
+///   layout writes ([InstalledSkillNames.hasMarkdownHeader]): its folder
+///   may be a rules folder the user's own rules share (`~/.roo/rules`).
+///   Any other plain file is removed: the installer writes those under the
+///   exact Somnio name and they carry no marker to check.
 String? _legacyKeepReason(
   FileSystemEntity entity,
   String location,
-  String name,
-) {
+  String name, {
+  required bool markdownLayout,
+}) {
   if (entity is Link) {
     final String target;
     try {
@@ -764,7 +783,17 @@ String? _legacyKeepReason(
         ? null
         : 'its SKILL.md does not name the Somnio skill $name';
   }
-  return null;
+  if (!markdownLayout || entity is! File) return null;
+  final String content;
+  try {
+    content = entity.readAsStringSync();
+  } on FileSystemException catch (e) {
+    return 'it could not be read (${e.message})';
+  }
+  return InstalledSkillNames.hasMarkdownHeader(name, content)
+      ? null
+      : 'it lacks the header Somnio writes for that skill (its display '
+          'name as a "# " title, then a "> " description)';
 }
 
 /// Removes the somnio-owned execution rules directory written by

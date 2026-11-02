@@ -211,6 +211,60 @@ class AgentInstaller extends Installer {
           legacy,
       }.toList();
 
+  /// A warning that [agent]'s legacy folder for [scope] still holds skills a
+  /// release before 2.10.0 wrote there in the markdown layout, or null when
+  /// it holds none.
+  ///
+  /// Those releases kept no `.somnio-skills.json`, so nothing records the
+  /// files and no migration moves them; for Roo Code and Kilo Code they sit
+  /// in a rules folder the agent adds to every request. Only files with a
+  /// skill's exact name and the layout's header count
+  /// ([InstalledSkillNames.hasMarkdownHeader]).
+  static String? preManifestLegacyWarning(
+    AgentConfig agent, {
+    required InstallScope scope,
+    required String home,
+    required String projectRoot,
+    Map<String, String> environment = const {},
+  }) {
+    if (agent.legacyInstallFormat != InstallFormat.markdown) return null;
+    final legacy = ownLegacyInstallDir(
+      agent,
+      scope: scope,
+      home: home,
+      projectRoot: projectRoot,
+      environment: environment,
+    );
+    if (legacy == null ||
+        !Directory(legacy).existsSync() ||
+        File(p.join(legacy, SkillManifest.fileName)).existsSync()) {
+      return null;
+    }
+    final names = InstalledSkillNames.basenamesFor(agent);
+    final found = <String>[];
+    try {
+      for (final file
+          in Directory(legacy).listSync(followLinks: false).whereType<File>()) {
+        final name = p.basename(file.path);
+        if (names.contains(name) &&
+            InstalledSkillNames.hasMarkdownHeader(
+              name,
+              file.readAsStringSync(),
+            )) {
+          found.add(name);
+        }
+      }
+    } on FileSystemException catch (e) {
+      return '  ${agent.displayName}: could not check $legacy for skills a '
+          'release before 2.10.0 left there (${e.message}).';
+    }
+    if (found.isEmpty) return null;
+    found.sort();
+    return '  ${agent.displayName}: $legacy still holds ${found.length} '
+        'Somnio skill files a release before 2.10.0 wrote without a record, '
+        'so they cannot be moved; delete them by hand: ${found.join(', ')}.';
+  }
+
   /// The manifest an earlier release kept at [_legacyInstallDir], when there
   /// is one and this installer records manifests (so it may migrate).
   SkillManifest? _loadLegacyManifest() {
@@ -231,6 +285,16 @@ class AgentInstaller extends Installer {
     // one of ours must never be touched).
     final manifest = SkillManifest.load(baseDir);
     final legacyManifest = _loadLegacyManifest();
+    if (recordManifest) {
+      final warning = preManifestLegacyWarning(
+        agentConfig,
+        scope: scope,
+        home: _home,
+        projectRoot: projectRoot,
+        environment: environment,
+      );
+      if (warning != null) logger.warn(warning);
+    }
 
     var skillCount = 0;
     var ruleCount = 0;

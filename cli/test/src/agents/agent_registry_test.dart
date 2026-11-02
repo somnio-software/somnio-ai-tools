@@ -253,8 +253,9 @@ void main() {
     });
 
     test('agents moved to the folder they read record the old one', () {
-      // Each was installed to a folder the agent never reads; the old folder
-      // stays recorded so update migrates it and remove/uninstall clean it.
+      // Each was installed to a folder the agent never reads, or (Roo, Kilo)
+      // to a rules folder it adds to every request; the old folder stays
+      // recorded so update migrates it and remove/uninstall clean it.
       // A null project path means project installs go global.
       const expected =
           <String, ({String global, String? project, String legacy})>{
@@ -272,6 +273,16 @@ void main() {
           global: '/h/.copilot/skills',
           project: '/p/.github/skills',
           legacy: '/h/.copilot/agents',
+        ),
+        'roo': (
+          global: '/h/.roo/skills',
+          project: '/p/.roo/skills',
+          legacy: '/h/.roo/rules',
+        ),
+        'kilocode': (
+          global: '/h/.kilocode/skills',
+          project: '/p/.kilocode/skills',
+          legacy: '/h/.kilocode/rules',
         ),
       };
       for (final MapEntry(key: id, value: paths) in expected.entries) {
@@ -311,6 +322,22 @@ void main() {
         '/h/.amp/somnio_rules',
       );
     });
+
+    for (final (id, legacy) in [
+      ('roo', '/p/.roo/rules'),
+      ('kilocode', '/p/.kilocode/rules'),
+    ]) {
+      test('$id records its old project rules folder', () {
+        expect(
+          AgentRegistry.findById(id)!.resolvedScopedLegacyInstallPath(
+            scope: InstallScope.project,
+            home: '/h',
+            projectRoot: '/p',
+          ),
+          legacy,
+        );
+      });
+    }
 
     test('amazonq installs prompts where the Q CLI reads them', () {
       final amazonq = AgentRegistry.findById('amazonq')!;

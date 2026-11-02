@@ -4,6 +4,7 @@ import 'package:mason_logger/mason_logger.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:path/path.dart' as p;
 import 'package:somnio/src/agents/agent_config.dart';
+import 'package:somnio/src/agents/agent_registry.dart';
 import 'package:somnio/src/content/content_loader.dart';
 import 'package:somnio/src/content/skill_bundle.dart';
 import 'package:somnio/src/content/workflow_skill.dart';
@@ -1517,6 +1518,83 @@ void main() {
             .existsSync(),
         isFalse,
       );
+    });
+
+    test('moves Roo Code skills out of a project rules folder', () async {
+      final bundle = _seedBundle(repoRoot);
+      final project = p.join(tmp.path, 'project');
+      final rules = p.join(project, '.roo', 'rules');
+      _writeFile(rules, 'flutter_health.md', 'OLD');
+      _writeFile(rules, 'team-conventions.md', 'Use tabs.');
+      SkillManifest.load(rules)
+        ..record(
+          skill: bundle.name,
+          kind: 'audit',
+          paths: const [
+            ManifestPath(ManifestRoot.install, 'flutter_health.md'),
+          ],
+        )
+        ..save();
+
+      await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: AgentRegistry.findById('roo')!,
+        scope: InstallScope.project,
+        projectRoot: project,
+        environment: const {},
+      ).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(project, '.roo', 'skills', bundle.name, 'SKILL.md'))
+            .existsSync(),
+        isTrue,
+      );
+      expect(
+        Directory(rules).listSync().map((e) => p.basename(e.path)),
+        ['team-conventions.md'],
+      );
+    });
+
+    test('warns about skills a release before the manifest left behind',
+        () async {
+      _writeFile(
+          legacyDir, 'security_audit.md', '# Security Audit\n\n> Audits.\n');
+      _writeFile(legacyDir, 'notes.md', '# Notes\n\n> Mine.\n');
+
+      await installerFor(movedAgent())
+          .install(bundles: [_seedBundle(repoRoot)]);
+
+      verify(
+        () => logger.warn(
+          any(
+            that: allOf(
+              contains(legacyDir),
+              contains('security_audit.md'),
+              isNot(contains('notes.md')),
+            ),
+          ),
+        ),
+      ).called(1);
+    });
+
+    test('does not warn about a legacy folder its manifest records', () async {
+      _writeFile(
+          legacyDir, 'security_audit.md', '# Security Audit\n\n> Audits.\n');
+      SkillManifest.load(legacyDir)
+        ..record(
+          skill: 'security-audit',
+          kind: 'audit',
+          paths: const [
+            ManifestPath(ManifestRoot.install, 'security_audit.md'),
+          ],
+        )
+        ..save();
+
+      await installerFor(movedAgent())
+          .install(bundles: [_seedBundle(repoRoot)]);
+
+      verifyNever(() => logger.warn(any()));
     });
 
     test('migrates through a legacy folder linked to dotfiles', () async {

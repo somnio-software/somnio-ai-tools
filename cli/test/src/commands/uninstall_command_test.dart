@@ -12,6 +12,9 @@ void _writeFile(String path, [String contents = 'x']) {
   File(path).writeAsStringSync(contents);
 }
 
+/// The header Somnio's markdown layout writes above every skill.
+const _markdownSkill = '# Security Audit\n\n> Audits a project.\n\nBody.\n';
+
 /// Writes a Somnio-style `<dir>/SKILL.md` whose frontmatter names [name].
 void _writeSkill(String dir, String name) {
   _writeFile(p.join(dir, name, 'SKILL.md'), '---\nname: $name\n---\n');
@@ -294,6 +297,73 @@ void main() {
           File(p.join(prompts, 'git_commit_format.md')).existsSync(), isTrue);
     });
 
+    test('removes pre-manifest Roo Code rules from its old rules folder', () {
+      final rules = p.join(home.path, '.roo', 'rules');
+      _writeFile(p.join(rules, 'security_audit.md'), _markdownSkill);
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(File(p.join(rules, 'security_audit.md')).existsSync(), isFalse);
+    });
+
+    test("keeps the user's own rules in Roo Code's old rules folder", () {
+      final rules = p.join(home.path, '.roo', 'rules');
+      _writeFile(p.join(rules, 'security_audit.md'), _markdownSkill);
+      _writeFile(p.join(rules, 'team-conventions.md'));
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(File(p.join(rules, 'team-conventions.md')).existsSync(), isTrue);
+    });
+
+    test("keeps a user's rule with Somnio's prefix in Roo Code's rules folder",
+        () {
+      // Even with Somnio's header: only a skill's exact name is Somnio's.
+      final rule = p.join(home.path, '.roo', 'rules', 'somnio-team.md');
+      _writeFile(rule, _markdownSkill);
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(File(rule).existsSync(), isTrue);
+    });
+
+    test("keeps a user's rule titled other than the skill it is named for", () {
+      final rule =
+          p.join(home.path, '.roo', 'rules', 'react_best_practices.md');
+      _writeFile(rule, '# React rules\n\n> keep hooks pure\n');
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(File(rule).existsSync(), isTrue);
+    });
+
+    test("keeps a user's link with Somnio's prefix in Roo Code's rules folder",
+        () {
+      final rules = p.join(home.path, '.roo', 'rules');
+      _writeFile(p.join(rules, 'team', 'shared.md'));
+      final link = Link(p.join(rules, 'somnio-shared.md'))
+        ..createSync(p.join('team', 'shared.md'));
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(link.existsSync(), isTrue);
+    });
+
+    test("keeps a user's rule named like a skill without Somnio's header", () {
+      final rule = p.join(home.path, '.kilocode', 'rules', 'security_audit.md');
+      _writeFile(rule, '# Our audit\n\nCheck the changelog.\n');
+      final warnings = <String>[];
+
+      removeAgentInstalls(
+        home: home.path,
+        environment: const {},
+        onWarning: warnings.add,
+      );
+
+      expect(File(rule).existsSync(), isTrue);
+      expect(warnings, [contains(rule)]);
+    });
+
     test('removes Gemini skills and its execution rules', () {
       _writeFile(
         p.join(home.path, '.gemini', 'skills', 'security_audit.md'),
@@ -386,7 +456,7 @@ void main() {
         'amazonq': p.join(home.path, '.amazonq', 'prompts'),
       };
       for (final dir in legacy.values) {
-        _writeFile(p.join(dir, 'security_audit.md'));
+        _writeFile(p.join(dir, 'security_audit.md'), _markdownSkill);
         _writeFile(p.join(dir, 'notes.md'), 'THEIRS');
       }
       final ampRules = p.join(home.path, '.amp', 'somnio_rules');
