@@ -233,7 +233,8 @@ vector init
 |:--|:--|:--|
 | [Installation Guide](docs/installation.md) | [Skills Catalog](docs/skills.md) | [CLI Reference](docs/cli.md) |
 | [Plugin System](docs/plugins.md) | [Workflow Builder](docs/workflows.md) | [Architecture](docs/architecture.md) |
-| [Agent Rules](docs/agent-rules.md) | [Hooks](docs/work-log-stop-hook.md) | [Contributing](CONTRIBUTING.md) |
+| [Supported Agents](docs/agents.md) | [Agent Rules](docs/agent-rules.md) | [Hooks](docs/work-log-stop-hook.md) |
+| [Contributing](CONTRIBUTING.md) | | |
 
 ---
 
