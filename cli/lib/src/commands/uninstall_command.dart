@@ -10,6 +10,7 @@ import '../agents/agent_registry.dart';
 import '../agents/installed_skill_names.dart';
 import '../content/agent_rule.dart';
 import '../content/agent_rule_registry.dart';
+import '../installers/protected_paths.dart';
 import '../installers/rules_installer.dart';
 import '../installers/skill_manifest.dart';
 import '../installers/skills_sh_cleaner.dart';
@@ -416,9 +417,19 @@ bool removeAgentInstalls({
   skillsSh.warnings.forEach(onWarning ?? (_) {});
   var removed = skillsShPaths.isNotEmpty;
 
+  final protected = protectedInstallPaths(home: home, environment: env);
+  final protectedHomes = protectedConfigHomes(home: home, environment: env);
   for (final agent in AgentRegistry.installableAgents) {
-    removed |= _removeWorkflowInstall(agent, home, onRemoved) |
-        _removeGenericInstall(agent, home, env, onRemoved, onWarning);
+    removed |= _removeWorkflowInstall(agent, home, protectedHomes, onRemoved) |
+        _removeGenericInstall(
+          agent,
+          home,
+          env,
+          protected,
+          protectedHomes,
+          onRemoved,
+          onWarning,
+        );
   }
 
   return removed;
@@ -447,6 +458,11 @@ bool removeManifestTrackedInstalls({
   void Function(String message)? onRemoved,
 }) {
   var removed = false;
+  final protected = protectedInstallPaths(home: home, environment: environment);
+  final protectedHomes = protectedConfigHomes(
+    home: home,
+    environment: environment,
+  );
 
   for (final agent in AgentRegistry.installableAgents) {
     // Legacy folders are read even where they are really another agent's
@@ -469,25 +485,24 @@ bool removeManifestTrackedInstalls({
     ];
     // Run from the home directory, the project scope is the global one,
     // or a protected default location (another Claude Code account's
-    // ~/.claude) that must be left alone.
-    final seen = {
-      ...agent.resolvedProtectedInstallPaths(
-        home: home,
-        environment: environment,
-      ),
-    };
+    // ~/.claude) that must be left alone, also where another agent's folder
+    // links to, holds or lies inside it.
+    final seen = <String>{};
 
     for (final (:scope, dir: installDir) in locations) {
+      if (overlapsProtected(installDir, protected)) continue;
       if (!seen.add(realPathOf(installDir))) continue;
       final manifest = SkillManifest.load(installDir);
       if (manifest.isEmpty) continue;
+      // A rules folder linked into the protected config folder
+      // (`~/.cursor/somnio_rules -> ~/.claude/somnio_rules`) is left alone.
       final rulesDirs = _rulesDirsFor(
         installDir,
         scope: scope,
         home: home,
         projectRoot: projectRoot,
         environment: environment,
-      );
+      ).where((dir) => !insideProtected(dir, protectedHomes)).toList();
 
       for (final entry in manifest.entries.toList()) {
         for (final path in entry.paths) {
@@ -612,6 +627,7 @@ bool _deleteEntity(String path) {
 bool _removeWorkflowInstall(
   AgentConfig agent,
   String home,
+  Set<String> protectedHomes,
   void Function(String)? onRemoved,
 ) {
   final baseDir = switch (agent) {
@@ -625,7 +641,9 @@ bool _removeWorkflowInstall(
       ),
     _ => null,
   };
-  if (baseDir == null) return false;
+  if (baseDir == null || insideProtected(baseDir, protectedHomes)) {
+    return false;
+  }
   var removed = false;
 
   // Remove workflow files — unless a manifest records exactly which ones
@@ -672,6 +690,8 @@ bool _removeGenericInstall(
   AgentConfig agent,
   String home,
   Map<String, String> environment,
+  Set<String> protectedPaths,
+  Set<String> protectedHomes,
   void Function(String)? onRemoved,
   void Function(String)? onWarning,
 ) {
@@ -699,12 +719,19 @@ bool _removeGenericInstall(
   for (final location in locations) {
     final dir = Directory(location);
     if (!dir.existsSync() || _hasManifest(location)) continue;
+    if (overlapsProtected(location, protectedPaths)) continue;
     for (final entity in dir.listSync(followLinks: false)) {
+      // Skill directories that a release 3.2.12 to 3.3.2 wrote here are
+      // recorded in a manifest, which the manifest pass cleans. With none
+      // left (`skills update` deletes it once empty), a directory is the
+      // user's own, beside the skills that update moved; the flat-file
+      // layout before 3.2.12 wrote no directories.
+      if (markdownLayout && entity is Directory) continue;
       final name = p.basename(entity.path);
       // A markdown-layout file or link must have a skill's exact name: the
       // bare prefix would also match the user's own `somnio-*.md` rules,
       // and somnio never wrote links there.
-      final named = markdownLayout && entity is! Directory
+      final named = markdownLayout
           ? InstalledSkillNames.basenamesFor(agent).contains(name)
           : InstalledSkillNames.matches(agent, name);
       if (!named) continue;
@@ -729,7 +756,13 @@ bool _removeGenericInstall(
     }
   }
 
-  removed |= _removeExecutionRulesFor(agent, home, environment, onRemoved);
+  removed |= _removeExecutionRulesFor(
+    agent,
+    home,
+    environment,
+    protectedHomes,
+    onRemoved,
+  );
   return removed;
 }
 
@@ -803,6 +836,7 @@ bool _removeExecutionRulesFor(
   AgentConfig agent,
   String home,
   Map<String, String> environment,
+  Set<String> protectedHomes,
   void Function(String)? onRemoved,
 ) {
   if (agent.executionRulesPath == null &&
@@ -812,7 +846,10 @@ bool _removeExecutionRulesFor(
   final rulesDir = Directory(
     agent.resolvedExecutionRulesPath(home: home, environment: environment),
   );
-  if (!rulesDir.existsSync()) return false;
+  if (!rulesDir.existsSync() ||
+      insideProtected(rulesDir.path, protectedHomes)) {
+    return false;
+  }
 
   rulesDir.deleteSync(recursive: true);
   onRemoved?.call(

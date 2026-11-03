@@ -417,6 +417,26 @@ void main() {
 
       expect(resolved, '/Users/me/.copilot/skills');
     });
+
+    test('is never relocated by the config-home variable', () {
+      const underConfigHome = AgentConfig(
+        id: 'test-agent',
+        displayName: 'Test Agent',
+        installPath: '{home}/.config/test/skills',
+        projectInstallPath: '{home}/.config/test/project-skills',
+        configHome: '{home}/.config',
+        configHomeVariable: 'TEST_CONFIG_HOME',
+      );
+
+      final resolved = underConfigHome.resolvedScopedInstallPath(
+        scope: InstallScope.project,
+        home: '/Users/me',
+        projectRoot: '/Users/me/projects/app',
+        environment: const {'TEST_CONFIG_HOME': '/custom'},
+      );
+
+      expect(resolved, '/Users/me/projects/app/.config/test/project-skills');
+    });
   });
 
   group('resolvedProjectInstallPaths', () {

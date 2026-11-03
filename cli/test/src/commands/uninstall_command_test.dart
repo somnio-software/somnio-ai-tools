@@ -448,6 +448,25 @@ void main() {
       );
     });
 
+    test(
+        "leaves the protected ~/.claude alone when OpenCode's old folder "
+        'links to it', () {
+      final claudeSkills = p.join(home.path, '.claude', 'skills');
+      _writeFile(p.join(claudeSkills, 'security_audit.md'), _markdownSkill);
+      Link(p.join(home.path, '.opencode', 'skills'))
+          .createSync(claudeSkills, recursive: true);
+
+      removeAgentInstalls(
+        home: home.path,
+        environment: {'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work')},
+      );
+
+      expect(
+        File(p.join(claudeSkills, 'security_audit.md')).existsSync(),
+        isTrue,
+      );
+    });
+
     test('removes pre-manifest installs from folders agents never read', () {
       final legacy = {
         'windsurf': p.join(home.path, '.windsurf', 'workflows'),
@@ -473,6 +492,123 @@ void main() {
         expect(File(p.join(dir, 'notes.md')).existsSync(), isTrue, reason: id);
       }
       expect(Directory(ampRules).existsSync(), isFalse);
+    });
+    test('removes a pre-manifest OpenCode install from ~/.opencode/skills', () {
+      final oldSkills = p.join(home.path, '.opencode', 'skills');
+      _writeFile(
+        p.join(oldSkills, 'flutter_health_audit.md'),
+        '# Flutter Project Health Audit\n\n> Audits a Flutter project.\n',
+      );
+      _writeSkill(oldSkills, 'security-audit');
+      _writeSkill(oldSkills, 'somnio-team-style');
+      _writeSkill(oldSkills, 'my-skill');
+      _writeFile(p.join(oldSkills, 'git_commit_format.md'));
+      _writeFile(
+        p.join(
+          home.path,
+          '.opencode',
+          'somnio_rules',
+          'flutter-health-audit',
+          'references',
+          'rule.md',
+        ),
+      );
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(
+        File(p.join(oldSkills, 'flutter_health_audit.md')).existsSync(),
+        isFalse,
+      );
+      expect(
+        Directory(p.join(home.path, '.opencode', 'somnio_rules')).existsSync(),
+        isFalse,
+      );
+      for (final kept in ['security-audit', 'somnio-team-style', 'my-skill']) {
+        expect(
+          Directory(p.join(oldSkills, kept)).existsSync(),
+          isTrue,
+          reason: 'the layout was flat files, so a folder $kept is the '
+              "user's own, whatever its name",
+        );
+      }
+      expect(
+        File(p.join(oldSkills, 'git_commit_format.md')).existsSync(),
+        isTrue,
+        reason: 'a flat file without the header Somnio writes is kept',
+      );
+    });
+
+    test('still sweeps ~/.opencode/skills while CLAUDE_CONFIG_DIR is set', () {
+      final oldSkills = p.join(home.path, '.opencode', 'skills');
+      _writeFile(p.join(oldSkills, 'security_audit.md'), _markdownSkill);
+
+      removeAgentInstalls(
+        home: home.path,
+        environment: {'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work')},
+      );
+
+      expect(
+          File(p.join(oldSkills, 'security_audit.md')).existsSync(), isFalse);
+    });
+
+    for (final target in ['.claude/skills/shared', '.claude']) {
+      test('leaves ~/.claude alone when ~/.opencode/skills links to ~/$target',
+          () {
+        final linked = p.join(home.path, target);
+        _writeFile(p.join(linked, 'security_audit.md'), _markdownSkill);
+        Link(p.join(home.path, '.opencode', 'skills'))
+            .createSync(linked, recursive: true);
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: {
+            'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work'),
+          },
+        );
+
+        expect(
+          File(p.join(linked, 'security_audit.md')).existsSync(),
+          isTrue,
+        );
+      });
+    }
+
+    test('leaves ~/.claude/somnio_rules alone when ~/.amp links to ~/.claude',
+        () {
+      final rules = p.join(home.path, '.claude', 'somnio_rules', 'r.md');
+      _writeFile(rules);
+      Link(p.join(home.path, '.amp')).createSync(
+        p.join(home.path, '.claude'),
+        recursive: true,
+      );
+
+      removeAgentInstalls(
+        home: home.path,
+        environment: {'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work')},
+      );
+
+      expect(File(rules).existsSync(), isTrue);
+    });
+
+    test('leaves ~/.claude alone when Antigravity\'s old folder links to it',
+        () {
+      final claude = p.join(home.path, '.claude');
+      _writeFile(p.join(claude, 'somnio_rules', 'r.md'));
+      _writeFile(p.join(claude, 'global_workflows', 'somnio_x.md'));
+      Link(p.join(home.path, '.gemini', 'antigravity'))
+          .createSync(claude, recursive: true);
+
+      removeAgentInstalls(
+        home: home.path,
+        environment: {'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work')},
+      );
+
+      expect(File(p.join(claude, 'somnio_rules', 'r.md')).existsSync(), isTrue);
+      expect(
+        File(p.join(claude, 'global_workflows', 'somnio_x.md')).existsSync(),
+        isTrue,
+      );
     });
   });
 
@@ -607,6 +743,38 @@ void main() {
           File(p.join(skills, SkillManifest.fileName)).existsSync(),
           isFalse,
         );
+      }
+
+      for (final (:skills, :rules) in [
+        (skills: '.amp/skills', rules: '.amp/somnio_rules'),
+        (skills: '.cursor/commands', rules: '.cursor/somnio_rules'),
+      ]) {
+        test('leaves ~/.claude/somnio_rules alone when ~/$rules links to it',
+            () {
+          final claudeRules = p.join(home.path, '.claude', 'somnio_rules');
+          final skillsDir = p.join(home.path, skills);
+          seedShared(skillsDir, 'security-audit', rulesDirs: [claudeRules]);
+          Link(p.join(home.path, rules)).createSync(claudeRules);
+
+          removeManifestTrackedInstalls(
+            home: home.path,
+            projectRoot: project.path,
+            environment: {
+              'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work'),
+            },
+          );
+
+          expect(
+            File(p.join(claudeRules, 'security-audit', 'references', 'r.md'))
+                .existsSync(),
+            isTrue,
+          );
+          expect(
+            File(p.join(skillsDir, 'somnio_security-audit.md')).existsSync(),
+            isFalse,
+            reason: 'the agent\'s own install is still removed',
+          );
+        });
       }
 
       test('clears the rules of both agents (.amp/skills -> .aider/skills)',
@@ -965,6 +1133,107 @@ void main() {
       );
     });
 
+    group('an OpenCode manifest written before 3.3.3', () {
+      /// Records a somnio skill directory in the manifest of [skillsDir].
+      void seedSkill(String skillsDir, String skill) {
+        _writeSkill(skillsDir, skill);
+        SkillManifest.load(skillsDir)
+          ..record(
+            skill: skill,
+            kind: 'audit',
+            paths: [ManifestPath(ManifestRoot.install, skill)],
+          )
+          ..save();
+      }
+
+      test('removes the skills recorded in ~/.opencode/skills', () {
+        final oldSkills = p.join(home.path, '.opencode', 'skills');
+        seedSkill(oldSkills, 'security-audit');
+        _writeSkill(oldSkills, 'my-skill');
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+        );
+
+        expect(
+          Directory(p.join(oldSkills, 'security-audit')).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(p.join(oldSkills, SkillManifest.fileName)).existsSync(),
+          isFalse,
+        );
+        expect(Directory(p.join(oldSkills, 'my-skill')).existsSync(), isTrue);
+      });
+
+      test('removes the skills recorded in the new folder too', () {
+        final newSkills = p.join(home.path, '.config', 'opencode', 'skills');
+        seedSkill(newSkills, 'security-audit');
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+        );
+
+        expect(
+          Directory(p.join(newSkills, 'security-audit')).existsSync(),
+          isFalse,
+        );
+      });
+
+      test(
+          'removes the skills recorded in ~/.opencode/skills with a relocated '
+          'Claude Code', () {
+        final oldSkills = p.join(home.path, '.opencode', 'skills');
+        seedSkill(oldSkills, 'security-audit');
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+          environment: {
+            'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work'),
+          },
+        );
+
+        expect(
+          Directory(p.join(oldSkills, 'security-audit')).existsSync(),
+          isFalse,
+        );
+      });
+
+      test(r'finds the new folder under $XDG_CONFIG_HOME', () {
+        final xdgSkills = p.join(home.path, 'xdg', 'opencode', 'skills');
+        seedSkill(xdgSkills, 'security-audit');
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+          environment: {'XDG_CONFIG_HOME': p.join(home.path, 'xdg')},
+        );
+
+        expect(
+          Directory(p.join(xdgSkills, 'security-audit')).existsSync(),
+          isFalse,
+        );
+      });
+
+      test('removes the skills recorded in a project .opencode/skills', () {
+        final projectSkills = p.join(project.path, '.opencode', 'skills');
+        seedSkill(projectSkills, 'security-audit');
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+        );
+
+        expect(
+          Directory(p.join(projectSkills, 'security-audit')).existsSync(),
+          isFalse,
+        );
+      });
+    });
+
     test('never deletes through a symlinked directory a manifest records', () {
       // A cloned repo could commit `.claude/skills/evil -> ../..` plus a
       // manifest entry `evil/src`; following it would delete <project>/src.
@@ -1050,6 +1319,69 @@ void main() {
         isTrue,
       );
     });
+
+    test(
+        "leaves the protected ~/.claude alone when OpenCode's old folder "
+        'links to it', () {
+      final claudeSkills = p.join(home.path, '.claude', 'skills');
+      _writeSkill(claudeSkills, 'security-audit');
+      SkillManifest.load(claudeSkills)
+        ..record(
+          skill: 'security-audit',
+          kind: 'audit',
+          paths: const [ManifestPath(ManifestRoot.install, 'security-audit')],
+        )
+        ..save();
+      Link(p.join(home.path, '.opencode', 'skills'))
+          .createSync(claudeSkills, recursive: true);
+
+      removeManifestTrackedInstalls(
+        home: home.path,
+        projectRoot: project.path,
+        environment: {'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work')},
+      );
+
+      expect(
+        Directory(p.join(claudeSkills, 'security-audit')).existsSync(),
+        isTrue,
+      );
+      expect(
+        File(p.join(claudeSkills, SkillManifest.fileName)).existsSync(),
+        isTrue,
+      );
+    });
+
+    for (final target in ['.claude/skills/shared', '.claude']) {
+      test('leaves ~/.claude alone when ~/.opencode/skills links to ~/$target',
+          () {
+        final linked = p.join(home.path, target);
+        _writeSkill(linked, 'security-audit');
+        SkillManifest.load(linked)
+          ..record(
+            skill: 'security-audit',
+            kind: 'audit',
+            paths: const [
+              ManifestPath(ManifestRoot.install, 'security-audit'),
+            ],
+          )
+          ..save();
+        Link(p.join(home.path, '.opencode', 'skills'))
+            .createSync(linked, recursive: true);
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: project.path,
+          environment: {
+            'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work'),
+          },
+        );
+
+        expect(
+          Directory(p.join(linked, 'security-audit')).existsSync(),
+          isTrue,
+        );
+      });
+    }
 
     test('finds the global Codex manifest under CODEX_HOME', () {
       final codexHome = p.join(home.path, 'custom-codex');
