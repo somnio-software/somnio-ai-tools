@@ -20,6 +20,18 @@ void main() {
       );
     });
 
+    test('only Claude Code wrote skill folders before the manifest', () {
+      expect(
+        AgentRegistry.agents
+            .where((a) => a.hasPreManifestSkillDirs)
+            .map((a) => a.id),
+        ['claude'],
+        reason: 'uninstall --skills removes unrecorded folders by name for '
+            "these agents, where a user's own skill can't be told from an "
+            'install; a later agent never had an install without a manifest',
+      );
+    });
+
     test('agents list is not empty', () {
       expect(AgentRegistry.agents, isNotEmpty);
     });

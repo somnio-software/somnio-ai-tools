@@ -393,9 +393,9 @@ class UninstallCommand extends Command<int> {
 ///
 /// Returns `true` if anything was removed. [onRemoved] receives one message per
 /// removed entry, for `--verbose` output, and [onWarning] one per skills.sh
-/// item that could not be removed. Exposed at the top level (not as a class
-/// member) so it can be exercised directly in unit tests without spinning up
-/// the full command.
+/// item that could not be removed and per entry the name sweep kept. Exposed
+/// at the top level (not as a class member) so it can be exercised directly in
+/// unit tests without spinning up the full command.
 bool removeAgentInstalls({
   required String home,
   Map<String, String>? environment,
@@ -684,8 +684,10 @@ bool _removeWorkflowInstall(
 /// [removeManifestTrackedInstalls] deletes exactly what it records, so a
 /// third-party entry that merely shares a Somnio skill's name survives.
 /// Without a manifest, an entry named like a Somnio skill is removed only
-/// when it looks like a Somnio install (see [_legacyKeepReason]); anything
-/// else is kept and reported to [onWarning]. Links are never followed.
+/// when it looks like a Somnio install (see [_legacyKeepReason]), which a
+/// directory can only do in the default folder of an agent with
+/// [AgentConfig.hasPreManifestSkillDirs]; anything else is kept and reported
+/// to [onWarning]. Links are never followed.
 bool _removeGenericInstall(
   AgentConfig agent,
   String home,
@@ -696,10 +698,10 @@ bool _removeGenericInstall(
   void Function(String)? onWarning,
 ) {
   var removed = false;
-  // Only folders written before the manifest existed are swept by name: for
-  // an agent that moved, its legacy folder alone, since the new one only
-  // ever held manifest-recorded installs and may hold the user's own files
-  // (e.g. Amazon Q's prompt library). A legacy folder in the workflow
+  // An agent that moved is swept by name in its legacy folder alone, since the
+  // new one only ever held manifest-recorded installs and may hold the user's
+  // own files (e.g. Amazon Q's prompt library); any other agent in its current
+  // folders, relocated ones included. A legacy folder in the workflow
   // layout is the agent's own config folder (Antigravity's
   // `~/.gemini/antigravity`); [_removeWorkflowInstall] handles it.
   final locations = agent.legacyInstallPath == null
@@ -721,12 +723,6 @@ bool _removeGenericInstall(
     if (!dir.existsSync() || _hasManifest(location)) continue;
     if (overlapsProtected(location, protectedPaths)) continue;
     for (final entity in dir.listSync(followLinks: false)) {
-      // Skill directories that a release 3.2.12 to 3.3.2 wrote here are
-      // recorded in a manifest, which the manifest pass cleans. With none
-      // left (`skills update` deletes it once empty), a directory is the
-      // user's own, beside the skills that update moved; the flat-file
-      // layout before 3.2.12 wrote no directories.
-      if (markdownLayout && entity is Directory) continue;
       final name = p.basename(entity.path);
       // A markdown-layout file or link must have a skill's exact name: the
       // bare prefix would also match the user's own `somnio-*.md` rules,
@@ -741,6 +737,9 @@ bool _removeGenericInstall(
         location,
         name,
         markdownLayout: markdownLayout,
+        preManifestDirs: agent.hasPreManifestSkillDirs &&
+            realPathOf(location) ==
+                realPathOf(agent.resolvedInstallPath(home: home)),
       );
       if (keepReason != null) {
         onWarning?.call('Kept ${entity.path}: $keepReason.');
@@ -775,7 +774,11 @@ bool _hasManifest(String location) =>
 ///
 /// - A symlink is removed (only the link) when it resolves inside
 ///   [location]; one pointing outside is not somnio's to touch.
-/// - A directory must hold a `SKILL.md` whose frontmatter `name` is [name].
+/// - A directory must lie in a folder a release wrote directories to before
+///   the manifest ([preManifestDirs]) and hold a `SKILL.md` whose frontmatter
+///   `name` is [name]. Anywhere else it is treated as the user's own, since the
+///   installer records the directories it writes (or, after `skills update`
+///   emptied the manifest, moved them away).
 /// - A plain file in the [markdownLayout] must open with the header that
 ///   layout writes ([InstalledSkillNames.hasMarkdownHeader]): its folder
 ///   may be a rules folder the user's own rules share (`~/.roo/rules`).
@@ -786,6 +789,7 @@ String? _legacyKeepReason(
   String location,
   String name, {
   required bool markdownLayout,
+  required bool preManifestDirs,
 }) {
   if (entity is Link) {
     final String target;
@@ -802,6 +806,10 @@ String? _legacyKeepReason(
         : 'it is a symlink to $target, outside $location';
   }
   if (entity is Directory) {
+    if (!preManifestDirs) {
+      return 'no manifest records it, so it is treated as your own; delete it '
+          'by hand if Somnio installed it';
+    }
     final skillFile = File(p.join(entity.path, 'SKILL.md'));
     if (!skillFile.existsSync()) {
       return 'it has no SKILL.md identifying it as the Somnio skill $name';

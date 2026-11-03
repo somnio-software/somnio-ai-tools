@@ -430,7 +430,6 @@ void main() {
           'rule.md',
         ),
       );
-      _writeSkill(codexSkills, 'security-audit');
 
       removeAgentInstalls(home: home.path, environment: const {});
 
@@ -442,10 +441,246 @@ void main() {
         Directory(p.join(home.path, '.codex', 'somnio_rules')).existsSync(),
         isFalse,
       );
-      expect(
-        Directory(p.join(codexSkills, 'security-audit')).existsSync(),
-        isFalse,
+    });
+
+    group('an agent that wrote flat files before the manifest', () {
+      // Gemini CLI's prefix is `somnio_`, the others' `somnio`.
+      const agents = {
+        'Gemini CLI': ('.gemini', 'somnio_team_style'),
+        'Codex CLI': ('.codex', 'somnio-team-style'),
+        'Augment Code': ('.augment', 'somnio-team-style'),
+        'Cline': ('.cline', 'somnio-team-style'),
+        'CodeBuddy': ('.codebuddy', 'somnio-team-style'),
+        'Qwen CLI': ('.qwen', 'somnio-team-style'),
+      };
+
+      for (final MapEntry(key: agent, value: (config, prefixed))
+          in agents.entries) {
+        test("$agent keeps the user's skill folders", () {
+          final skills = p.join(home.path, config, 'skills');
+          _writeSkill(skills, 'security-audit');
+          _writeSkill(skills, prefixed);
+          final warnings = <String>[];
+
+          removeAgentInstalls(
+            home: home.path,
+            environment: const {},
+            onWarning: warnings.add,
+          );
+
+          for (final name in ['security-audit', prefixed]) {
+            expect(
+              File(p.join(skills, name, 'SKILL.md')).existsSync(),
+              isTrue,
+              reason: 'no release wrote the folder $name without a manifest',
+            );
+            expect(
+              warnings,
+              contains(contains(p.join(skills, name))),
+              reason: 'a kept folder is reported, in case it is an install '
+                  'whose manifest was lost',
+            );
+          }
+        });
+
+        test('$agent still loses what a release before the manifest wrote', () {
+          final skills = p.join(home.path, config, 'skills');
+          _writeFile(p.join(skills, 'security_audit.md'), _markdownSkill);
+          final rules = p.join(home.path, config, 'somnio_rules');
+          _writeFile(p.join(rules, 'security-audit', 'references', 'r.md'));
+
+          expect(
+            removeAgentInstalls(home: home.path, environment: const {}),
+            isTrue,
+          );
+
+          expect(
+              File(p.join(skills, 'security_audit.md')).existsSync(), isFalse);
+          expect(Directory(rules).existsSync(), isFalse);
+        });
+      }
+
+      test('keeps them under CODEX_HOME and in the default ~/.codex', () {
+        final relocated = p.join(home.path, 'codex-work', 'skills');
+        final byDefault = p.join(home.path, '.codex', 'skills');
+        _writeSkill(relocated, 'security-audit');
+        _writeSkill(byDefault, 'security-audit');
+        final warnings = <String>[];
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: {'CODEX_HOME': p.join(home.path, 'codex-work')},
+          onWarning: warnings.add,
+        );
+
+        for (final skills in [relocated, byDefault]) {
+          final kept = p.join(skills, 'security-audit');
+          expect(Directory(kept).existsSync(), isTrue, reason: kept);
+          expect(warnings, contains(contains(kept)));
+        }
+      });
+
+      test('keeps and reports a real folder skills.sh copied there', () {
+        _writeFile(
+          p.join(home.path, '.agents', '.skill-lock.json'),
+          jsonEncode({
+            'version': 3,
+            'skills': {
+              'security-audit': {'source': 'somnio-software/somnio-ai-tools'},
+            },
+          }),
+        );
+        final canonical = p.join(home.path, '.agents', 'skills');
+        _writeSkill(canonical, 'security-audit');
+        final skills = p.join(home.path, '.codex', 'skills');
+        _writeSkill(skills, 'security-audit');
+        final warnings = <String>[];
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: const {},
+          onWarning: warnings.add,
+        );
+
+        expect(
+          Directory(p.join(canonical, 'security-audit')).existsSync(),
+          isFalse,
+        );
+        final copy = p.join(skills, 'security-audit');
+        expect(Directory(copy).existsSync(), isTrue);
+        expect(warnings, contains(contains(copy)));
+      });
+
+      test('leaves a folder its manifest records to the manifest removal', () {
+        final skills = p.join(home.path, '.gemini', 'skills');
+        _writeSkill(skills, 'security-audit');
+        _writeSkill(skills, 'flutter-health-audit');
+        SkillManifest.load(skills)
+          ..record(
+            skill: 'security-audit',
+            kind: 'audit',
+            paths: [ManifestPath(ManifestRoot.install, 'security-audit')],
+          )
+          ..save();
+
+        removeAgentInstalls(home: home.path, environment: const {});
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: p.join(home.path, 'project'),
+        );
+
+        expect(
+          Directory(p.join(skills, 'security-audit')).existsSync(),
+          isFalse,
+          reason: 'the manifest records it',
+        );
+        expect(
+          Directory(p.join(skills, 'flutter-health-audit')).existsSync(),
+          isTrue,
+          reason: 'the manifest does not record it',
+        );
+      });
+    });
+
+    test("Cursor keeps a user's skill folder with Somnio's prefix", () {
+      final commands = p.join(home.path, '.cursor', 'commands');
+      _writeSkill(commands, 'somnio-team-style');
+      _writeFile(p.join(commands, 'security-audit.md'));
+      final warnings = <String>[];
+
+      removeAgentInstalls(
+        home: home.path,
+        environment: const {},
+        onWarning: warnings.add,
       );
+
+      final kept = p.join(commands, 'somnio-team-style');
+      expect(Directory(kept).existsSync(), isTrue);
+      expect(warnings, contains(contains(kept)));
+      expect(File(p.join(commands, 'security-audit.md')).existsSync(), isFalse);
+    });
+
+    test("reports a skill's namesake in an old flat-markdown folder", () {
+      final oldSkills = p.join(home.path, '.amp', 'skills');
+      _writeSkill(oldSkills, 'security-audit');
+      _writeSkill(oldSkills, 'somnio-team-style');
+      final warnings = <String>[];
+
+      removeAgentInstalls(
+        home: home.path,
+        environment: const {},
+        onWarning: warnings.add,
+      );
+
+      for (final kept in ['security-audit', 'somnio-team-style']) {
+        expect(Directory(p.join(oldSkills, kept)).existsSync(), isTrue);
+      }
+      expect(warnings, hasLength(1));
+      expect(warnings.single, contains(p.join(oldSkills, 'security-audit')));
+    });
+
+    group('Claude Code skill folders under CLAUDE_CONFIG_DIR', () {
+      test('are kept and reported: releases wrote there only after 2.10.0', () {
+        final configDir = p.join(home.path, '.claude-work');
+        final skills = p.join(configDir, 'skills');
+        _writeSkill(skills, 'security-audit');
+        _writeSkill(skills, 'somnio-team-style');
+        final warnings = <String>[];
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: {'CLAUDE_CONFIG_DIR': configDir},
+          onWarning: warnings.add,
+        );
+
+        for (final name in ['security-audit', 'somnio-team-style']) {
+          final kept = p.join(skills, name);
+          expect(Directory(kept).existsSync(), isTrue, reason: kept);
+          expect(warnings, contains(contains(kept)));
+        }
+      });
+
+      test('are removed when the variable names the default folder', () {
+        final configDir = p.join(home.path, '.claude');
+        final skills = p.join(configDir, 'skills');
+        _writeSkill(skills, 'security-audit');
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: {'CLAUDE_CONFIG_DIR': configDir},
+        );
+
+        expect(
+            Directory(p.join(skills, 'security-audit')).existsSync(), isFalse);
+      });
+
+      test('are removed when the variable links to the default folder', () {
+        final skills = p.join(home.path, '.claude', 'skills');
+        _writeSkill(skills, 'security-audit');
+        final link = p.join(home.path, '.claude-work');
+        Link(link).createSync(p.join(home.path, '.claude'));
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: {'CLAUDE_CONFIG_DIR': link},
+        );
+
+        expect(
+            Directory(p.join(skills, 'security-audit')).existsSync(), isFalse);
+      });
+    });
+
+    test('still removes Claude Code skill folders older than the manifest', () {
+      final skills = p.join(home.path, '.claude', 'skills');
+      _writeSkill(skills, 'security-audit');
+      _writeSkill(skills, 'somnio-fh');
+      _writeSkill(skills, 'my-skill');
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(Directory(p.join(skills, 'security-audit')).existsSync(), isFalse);
+      expect(Directory(p.join(skills, 'somnio-fh')).existsSync(), isFalse);
+      expect(Directory(p.join(skills, 'my-skill')).existsSync(), isTrue);
     });
 
     test(

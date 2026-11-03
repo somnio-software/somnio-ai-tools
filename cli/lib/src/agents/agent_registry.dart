@@ -87,6 +87,7 @@ class AgentRegistry {
     configHomeVariable: 'CLAUDE_CONFIG_DIR',
     // `~/.claude` may be another account's live config directory.
     cleansDefaultConfigHome: false,
+    hasPreManifestSkillDirs: true,
     ruleExtension: '.md',
     tokenUsageParser: parseClaudeUsage,
     filePrefix: 'somnio-',
