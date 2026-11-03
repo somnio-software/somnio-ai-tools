@@ -178,7 +178,8 @@ class AgentConfig {
 
   /// The agent's global config directory as a template prefix of
   /// [installPath] (e.g. `{home}/.codex`), relocatable through
-  /// [configHomeVariable].
+  /// [configHomeVariable]. It may be a parent shared with other programs
+  /// (OpenCode: `{home}/.config`, its own folder being `opencode/` below).
   ///
   /// Both must be set for the override to apply.
   final String? configHome;

@@ -36,7 +36,7 @@ Every agent has one install format (`AgentConfig.installFormat`). It decides wha
 | Amp | `amp` | `skillDir` | `~/.config/amp/skills` | global only | | `amp` |
 | Aider | `aider` | `markdown` | `~/.aider/skills` | `.aider/skills` | | `aider` |
 | Cline | `cline` | `skillDir` | `~/.cline/skills` | `.cline/skills` | | `cline` |
-| OpenCode | `opencode` | `skillDir` | `~/.opencode/skills` | `.opencode/skills` | | `opencode` |
+| OpenCode | `opencode` | `skillDir` | `~/.config/opencode/skills` | `.opencode/skills` | `XDG_CONFIG_HOME` | `opencode` |
 | CodeBuddy | `codebuddy` | `skillDir` | `~/.codebuddy/skills` | `.codebuddy/skills` | | `codebuddy` |
 | Qwen CLI | `qwen` | `skillDir` | `~/.qwen/skills` | `.qwen/skills` | | `qwen` |
 | GitHub Copilot | `copilot` | `skillDir` | `~/.copilot/skills` | `.github/skills` | | |
@@ -53,22 +53,23 @@ The registry records where the CLI installs. What an agent loads, and from where
 
 ## Config home overrides
 
-Two agents let an environment variable relocate their config directory, and the CLI follows it for the **global** scope:
+Three agents let an environment variable relocate their config directory, and the CLI follows it for the **global** scope:
 
 | Agent | Variable | Global skills folder when set | Since |
 |-------|----------|-------------------------------|-------|
 | Claude Code | `CLAUDE_CONFIG_DIR` | `$CLAUDE_CONFIG_DIR/skills` | 3.2.14 |
 | Codex CLI | `CODEX_HOME` | `$CODEX_HOME/skills` | 3.2.12 |
+| OpenCode | `XDG_CONFIG_HOME` | `$XDG_CONFIG_HOME/opencode/skills` | 3.3.3 |
 
-A blank value is ignored. Project installs are anchored at the project root and ignore the variable. `update`, `remove`, `uninstall`, `status` and agent detection use the relocated folder, and for Claude Code so does `somnio run`; `somnio hooks` writes under `$CLAUDE_CONFIG_DIR` too.
+A blank value is ignored; a relative value is used as typed, against the directory the CLI runs in, so set it to an absolute path. Project installs are anchored at the project root and ignore the variable. `update`, `remove`, `uninstall`, `status` and agent detection use the relocated folder, and so does `somnio run`; `somnio hooks` writes under `$CLAUDE_CONFIG_DIR` too.
 
-Earlier releases installed to the default folder regardless of the variable. For Codex, `skills remove` and `uninstall --skills` also clean the default `~/.codex/skills` while `CODEX_HOME` points elsewhere. For Claude Code they leave `~/.claude` alone (`cleansDefaultConfigHome: false` in the registry), because it is often another Claude Code account's live directory.
+Earlier releases installed to the default folder regardless of the variable. For Codex, `skills remove` and `uninstall --skills` also clean the default `~/.codex/skills` while `CODEX_HOME` points elsewhere, and for OpenCode the default `~/.config/opencode/skills` while `XDG_CONFIG_HOME` points elsewhere (no release before 3.3.3 wrote there; this covers an install made before the variable was set). For Claude Code they leave `~/.claude` alone (`cleansDefaultConfigHome: false` in the registry), because it is often another Claude Code account's live directory.
 
 ---
 
 ## Folders earlier releases used
 
-Several agents were installed in a layout or folder the agent did not read as skills. The registry keeps the old location in `legacyInstallFormat`, `legacyInstallPath` and `legacyExecutionRulesPath`, so the commands below can migrate or remove what an earlier release wrote. The release that changed each one is in [`cli/CHANGELOG.md`](../cli/CHANGELOG.md).
+Several agents were installed in a layout or folder the agent does not read as skills, or does not document (OpenCode). The registry keeps the old location in `legacyInstallFormat`, `legacyInstallPath` and `legacyExecutionRulesPath`, so the commands below can migrate or remove what an earlier release wrote. The release that changed each one is in [`cli/CHANGELOG.md`](../cli/CHANGELOG.md).
 
 ### Moved to a new folder
 
@@ -81,12 +82,13 @@ Several agents were installed in a layout or folder the agent did not read as sk
 | Amazon Q | `~/.amazonq/prompts` | `~/.aws/amazonq/prompts`; project prompts stay in `.amazonq/prompts` | 3.2.17 |
 | Roo Code | `~/.roo/rules` (`markdown`) | `~/.roo/skills`, project `.roo/skills` | 3.3.2 |
 | Kilo Code | `~/.kilocode/rules` (`markdown`) | `~/.kilocode/skills`, project `.kilocode/skills` | 3.3.2 |
+| OpenCode | `~/.opencode/skills` (`skillDir`; `markdown` before 3.2.12) | `$XDG_CONFIG_HOME/opencode/skills` (default `~/.config/opencode/skills`); project installs stay in `.opencode/skills` | 3.3.3 |
 
 The old folder is also checked in the project scope, anchored at the project root. Antigravity IDE workflows stopped working on 2026-10-19; Roo Code and Kilo Code add every file in their rules folders to the instructions of every request, which is why skills moved out of them.
 
 ### Same folder, new layout
 
-Seven agents kept their skills folder, but releases before 3.2.12 wrote flat `<name>.md` files there, plus the references in a separate `somnio_rules/` directory. The agents load skills only as `<name>/SKILL.md` directories, so they now use `skillDir`.
+Seven agents kept their skills folder in 3.2.12 (OpenCode left its in 3.3.3, see above), but releases before 3.2.12 wrote flat `<name>.md` files there, plus the references in a separate `somnio_rules/` directory. The agents load skills only as `<name>/SKILL.md` directories, so they now use `skillDir`.
 
 | Agent | Old rules folder | Release |
 |-------|------------------|---------|
@@ -108,15 +110,17 @@ Every install since 2.10.0 records what it wrote in a `.somnio-skills.json` mani
 | `somnio skills remove` | Deletes what the manifests of the new and the old folders record, in the scope you choose. Files the manifests do not record are never touched. |
 | `somnio uninstall --skills` | Does the same for every recorded manifest, then sweeps by name, for an agent that moved, its old folder when that has **no** manifest, because releases before 2.10.0 wrote there without one (for Antigravity: `somnio_`-prefixed files in `global_workflows/` and the whole `somnio_rules/`). Global scope only. The new folder is never swept by name: no release wrote there before the manifest existed. |
 
-Your own files in an old folder stay. A folder that is also a rules folder (`~/.roo/rules`, `~/.kilocode/rules`) can hold rules you wrote, so the name sweep has stricter rules for the `markdown` layout:
+Your own files in an old folder stay. The `markdown` layout was flat files only, so the name sweep never touches a directory in such a folder: after `skills update` has moved the recorded skills and deleted the manifest, the skill folders you keep beside them are safe. A folder that is also a rules folder (`~/.roo/rules`, `~/.kilocode/rules`) can hold rules you wrote, so the name sweep has stricter rules for the `markdown` layout:
 
 - A file or link is a candidate only if its name is a Somnio skill's name (written with underscores and `.md`, as the layout does). A bare `somnio` prefix does not count, so `somnio-team-conventions.md` stays.
 - A file is deleted only if it opens with the header Somnio wrote for that skill: its display name as a `# ` title, then a `> ` description. A rule that shares a skill's name but has another title is kept and reported.
 - A link is removed (only the link) when it resolves inside that folder; one pointing outside is kept.
 
-**Skills from releases before 2.10.0.** Those releases wrote no manifest, so `skills update` has nothing to move. For an agent with an old folder in the `markdown` layout (Amp, GitHub Copilot, Windsurf, Roo Code, Kilo Code), `setup` and `skills install` (when they install that agent), and `skills update` (when the location has no manifest to refresh), list the files in an old folder without a manifest that match a skill's name and header and say they must be deleted by hand; nothing is deleted. `uninstall --skills` removes them by the rules above.
+**Skills from releases before 2.10.0.** Those releases wrote no manifest, so `skills update` has nothing to move. For an agent with an old folder in the `markdown` layout (Amp, GitHub Copilot, Windsurf, OpenCode, Roo Code, Kilo Code), `setup` and `skills install` (when they install that agent), and `skills update` (when the location has no manifest to refresh), list the files in an old folder without a manifest that match a skill's name and header and say they must be deleted by hand; nothing is deleted. `uninstall --skills` removes them by the rules above.
 
-**Folders that belong to another agent.** `skills update` and `skills remove` skip an old folder whose real path is, holds or lies inside another agent's current skills or rules folder, or the agent's own global one, through a symlink either way (`~/.amp` → `~/.claude`, `~/.claude` → `~/.amp`), because the manifest there records that agent's skills. Such a folder does not make the agent count as installed either. An old folder symlinked anywhere else (for example `~/.amazonq` → `~/dotfiles/amazonq` with GNU stow) is still migrated and removed. `uninstall --skills` reads every old folder regardless, since it removes every agent's installs. Amp skills an earlier release put in a project's `.amp/skills` are not refreshed: `skills update` warns, and `skills remove --project` deletes them.
+**Your skill in the new folder.** For an agent that moved its global folder to skill directories (Amp, GitHub Copilot, Roo Code, Kilo Code, OpenCode), `setup`, `skills install` and `skills update` write a skill into the new folder only if it has no directory of that name, or one its manifest records, or a skills.sh link, or one that holds only the start of the files the new copy would write (a copy killed part way, its last file possibly empty or cut off, which they finish). A directory of your own there is kept, with a warning, on every run, with or without an old manifest entry for the skill. If the old manifest records the skill, the old copy and the entry stay until you move yours, and the next run then moves the skill; otherwise the next run installs it. A file that cannot be read as text (a binary file, or a text file cut inside a multibyte character) and a subfolder that cannot be listed make the directory yours. Project installs are not affected. A move whose old copy could not be deleted keeps its manifest entry, so the next `skills update` finishes it.
+
+**Folders that belong to another agent.** `skills update` and `skills remove` skip an old folder whose real path is, holds or lies inside another agent's current skills or rules folder, or the protected default `~/.claude/skills` while `CLAUDE_CONFIG_DIR` relocates Claude Code, or the agent's own global one, through a symlink either way (`~/.amp` → `~/.claude`, `~/.claude` → `~/.amp`, `~/.opencode/skills` → `~/.claude/skills`), because the manifest there records that agent's skills. Such a folder does not make the agent count as installed either. An old folder symlinked anywhere else (for example `~/.amazonq` → `~/dotfiles/amazonq` with GNU stow) is still migrated and removed. `uninstall --skills` reads every old folder regardless, since it removes every agent's installs, except one that is really the protected default `~/.claude/skills` while `CLAUDE_CONFIG_DIR` relocates Claude Code (`~/.opencode/skills` → `~/.claude/skills`), which it leaves alone; the same goes for any folder that holds or lies inside it, for every agent's current and old folders. `skills update`, `skills remove` and `skills install` apply the same rule to the agent's current folder: one that links into the protected `~/.claude/skills` is skipped, and `install` refuses to write there. The protection is for the skills folder; the rest of `~/.claude` (`commands`, `rules`, `agents`, `global_workflows`) is not covered when another agent's folder links to it. Amp skills an earlier release put in a project's `.amp/skills` are not refreshed: `skills update` warns, and `skills remove --project` deletes them.
 
 ---
 
