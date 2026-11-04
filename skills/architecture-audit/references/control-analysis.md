@@ -130,9 +130,10 @@ the check:
 - a **baseline or allowlist** file the check reads (path, entry count);
 - whether the check fails on growth, and whether it fails on, or
   automatically prunes, entries that no longer occur (a ratchet that can
-  only shrink). Judge growth from what an entry keys on: when a new
-  violation can land without failing the check, the baseline misses
-  growth. An entry per module pair, or per file, with no count lets a new
+  only shrink). Judge growth from what an entry keys on: when the number
+  of violations can rise without failing the check, the baseline misses
+  growth (a swap of one violation for another at the same count is not
+  growth). An entry per module pair, or per file, with no count lets a new
   import inside a listed key pass; an entry per violation site, or a key
   with a count the check compares, does not. K3 scores a baseline that
   misses growth 2, not 5;
