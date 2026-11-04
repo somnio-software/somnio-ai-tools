@@ -25,6 +25,17 @@ READ-ONLY DISCIPLINE:
 
 ## 1. Stack and workspace
 
+First check where the audited application lives. Resolve its real path
+(`pwd -P`) and see whether it is under a temporary directory (`/tmp`,
+`/private/tmp`, `/var/tmp`, `/var/folders`, `/private/var/folders`, or
+`$TMPDIR` resolved the same way). If it is, tell the user in one line and
+carry on, since it is a warning and not a stop: "Warning: the audited path
+is in a temporary directory; the report and the score history are written
+inside it and are lost when it is deleted, so the next audit of this
+repository will find no history." Record it in the artifact, from where
+the report carries it to Section 2. It is never written before the report's
+title.
+
 Record, with the file that proves it:
 - **Manifests**: `pubspec.yaml`, `package.json`, `pyproject.toml` /
   `setup.cfg` / `requirements*.txt`, `go.mod`, `build.gradle(.kts)`,
@@ -235,7 +246,8 @@ Write, under `reports/.artifacts/architecture-audit/`:
   `data/module_map.tsv`;
 - `step_01_module-map.md`, holding:
   - **Stack and workspace** with evidence paths, the script language and
-    the source roots;
+    the source roots, and whether the audited path is in a temporary
+    directory;
   - **Script extraction**: that the script ran without a digest error;
   - **Architecture documentation found**: each path and, in one line, what
     it covers (module map, allowed dependencies, layering, navigation);
