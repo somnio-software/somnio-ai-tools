@@ -178,7 +178,8 @@ Rules for the map:
   neutral relabelling.
 - A barrel (a file that only re-exports) belongs to the module of the
   directory it indexes, whatever it re-exports. A module importing it
-  depends on that module: a feature that imports the root's barrel to
+  depends on that module, and reaches whatever package it re-exports (R8,
+  step 3 follows re-exports): a feature that imports the root's barrel to
   reach shared code is an R5 site, and the remedy is importing the shared
   module directly.
 - Assign each file by what it holds before you look at the edges, and
