@@ -94,6 +94,14 @@ Large: two more teams join next quarter"), step 1 records it with the
 reason and step 2 passes it to the script; the report shows both the
 measured and the effective profile.
 
+## Before Step 1. Disposable checkouts
+
+`reports/` and `reports/.history/last_architecture_scores.json` are written
+inside the audited checkout, so a temporary clone takes them away when it
+is deleted. Step 1 (`references/module-map.md`, section 1) checks the
+audited path for this, which every way of running the audit reads, and
+records the warning so the report shows it in Section 2. A warning is not a stop: the audit carries on.
+
 ## Step 1. Module Map
 
 Goal: Detect the stack and workspace, inventory the source files with the
@@ -307,7 +315,7 @@ REPORT="reports/$(date +%F)-$(printf '%s' "$REPO" \
 Everywhere this skill writes `reports/<YYYY-MM-DD>-<project>-architecture-audit.md`, it
 means that resolved path.
 
-The JSON export uses the same base name with a `.json` extension. `reports/.history/last_architecture_scores.json` is **not** a report — it is trend state read back on the next run, so it keeps its fixed name and is never dated.
+The JSON export uses the same base name with a `.json` extension. `reports/.history/last_architecture_scores.json` is **not** a report — it is trend state read back on the next run from the same checkout, so it keeps its fixed name and is never dated. A temporary clone takes it away when it is deleted.
 
 **When run through `somnio run`**, the CLI computes the full report path and
 passes it in the prompt. Use the path it gives you verbatim — do not recompute
@@ -328,6 +336,7 @@ Include this block at the very end of the report:
 | Field | Value |
 |-------|-------|
 | Scan date | [Date] |
+| Project | [the `<project>` name used in the report file name] |
 | Project path | [absolute path of the audited repository] |
 | Profile | [effective] (measured: [measured]) |
 | Scope | Production code; tests are not audited |

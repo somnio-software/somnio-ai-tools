@@ -50,10 +50,11 @@ These references are the single source of truth for the rubric, the section stru
 
 Read each artifact that exists under `reports/.artifacts/architecture-audit/`:
 
-- `step_01_module-map.md` - stack, modules, roles, drivers, ownership, profile override; drives Section 7 and S1, S4.
+- `step_01_module-map.md` - stack, modules, roles, drivers, ownership, profile override, temporary-directory flag; drives Section 7 and S1, S4, and the Section 2 warning.
 - `step_02_dependency-graph.md`, `data/metrics.json` - profile, coupling, violations, cycles, sizes, locality; drive S1-S4, I1-I3, C2, C4 and Section 4. Read no other file under `data/`.
 - `step_03_composition-analysis.md` - implementation selection, root, routes, navigation, layering; drives I4, I5, C1-C4.
 - `step_04_control-analysis.md` - written rules, enforcement, baselines, hooks; drives K1-K4.
+- `reports/.history/last_architecture_scores.json` (optional) - the previous audit's scores; read only for the Section 2 `Previous` line and the M4 trend.
 
 For any missing artifact, score the checks that depend on it as 0 with "Not measured: <artifact> missing". Never omit a check and never estimate a value.
 
@@ -68,7 +69,7 @@ Run before writing: `mkdir -p reports reports/.history reports/.artifacts/archit
 
 ## Critical Rules
 
-- **Never re-read or modify the audited repository.** Operate on artifact files only; the one exception is the read-only `git` command `SKILL.md` uses to name the report.
+- **Never re-read or modify the audited repository.** Operate on artifact files only; the exceptions are the optional history file and the read-only `git` command `SKILL.md` uses to name the report.
 - **Score before writing.** A report without computed check scores, contour scores, Total and band is invalid.
 - **Point arithmetic**: each contour's earned and possible points are the sums of its checks, with N/A checks left out of both; Total = round(100 × Σ earned ÷ Σ possible) with halves rounded up, capped at 64 when K2 earns 0 and at 84 when K2 earns 3 or 6 or is N/A; the Total matches Section 2 and the JSON export; the band matches the Total's range.
 - **Self-validate before writing**: apply the validation checklist from `references/report-generator.md` and every structural check from `references/report-format-enforcer.md`, and fix issues in place before saving.

@@ -25,7 +25,8 @@ Read these artifacts for this run under `reports/.artifacts/architecture-audit/`
 Of the `data/` directory read only `data/metrics.json`: the TSV files and
 the script there are raw inputs of the earlier steps, and can be large.
 - `step_*_module-map.md` - stack, documentation found, module table, mixed
-  modules, drivers, ownership, profile override; drives Section 7.
+  modules, drivers, ownership, profile override, temporary-directory
+  warning; drives Section 7 and the Section 2 warning line.
 - `step_*_dependency-graph.md` and `data/metrics.json` - profile,
   coupling, violations, cycles, sizes, change locality, AP1, AP4 and AP5
   signals; drive Sections 1, 2, 3 and 4.
@@ -112,7 +113,12 @@ Maturity Band mapping:
   or the plan's one line when it has no action.
 - If `reports/.history/last_architecture_scores.json` exists, add
   `Previous: [N]/100, Change: [+/-M] ([improving|declining|unchanged])`,
-  and say when the previous audit used a different profile.
+  and say when the previous audit used a different profile. If it does not
+  exist, add `**Previous:** no history file found at
+  reports/.history/last_architecture_scores.json in the audited path`; never
+  write that no previous audit exists, because an earlier audit may have
+  run in a checkout that was deleted. If step 1 recorded the
+  temporary-directory warning, add it as a line after `Previous`.
 
 ### Section 3 - Contour Detail
 
@@ -128,7 +134,8 @@ Composition, Control. Each block has:
 
 One row per metric M1-M11 of standard section 7: criterion, metric, value,
 and Healthy / Watch / Risk / N/A / Not measured; then each criterion's
-status. Change locality carries its trend when a previous audit exists.
+status. Change locality carries the M4 trend when the history file was found
+(M5 has no stored previous value), and says so when it was not.
 
 ### Section 5 - Rule Compliance
 
@@ -172,8 +179,8 @@ Never leave a group blank and never fabricate a path.
 
 ### Section 10 - Report Metadata
 
-Scan date, project path, profile, scope (production code; tests are not
-audited), modules mapped (and features), total score, band, generated-by
+Scan date, project (the `<project>` name used in the report file name),
+project path, profile, scope (production code; tests are not audited), modules mapped (and features), total score, band, generated-by
 line, skill name, and the Somnio AI Tools URL.
 
 ## FORMATTING RULES
@@ -247,6 +254,7 @@ After writing the report, write `reports/<YYYY-MM-DD>-<project>-architecture-aud
       },
       "remediation": ["[action 1]", "[action 2]", "..."],
       "timestamp": "[ISO8601 datetime]",
+      "project": "[the <project> name used in the report file name]",
       "projectPath": "[absolute path of the audited repository]"
     }
 

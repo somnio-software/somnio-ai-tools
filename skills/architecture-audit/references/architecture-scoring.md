@@ -17,6 +17,10 @@ INPUT (artifacts in `reports/.artifacts/architecture-audit/`):
   `step_*_control-analysis.md`.
 - `data/metrics.json` (written by step 2). Read no other file under
   `data/`; the TSV files there are raw data for the earlier steps.
+- Optionally, `reports/.history/last_architecture_scores.json`, the
+  previous audit's scores in the audited checkout. It is read only for
+  the change-locality trend in Step E; it never decides a check's outcome,
+  a contour or the Total.
 - `architecture-standard.md`, in the same directory as this file. Every
   metric ID (M1–M11), rule (R1–R10), anti-pattern (AP1–AP5), profile and
   driver below is defined there.
@@ -52,7 +56,7 @@ drivers from the step 1 artifact before awarding anything.
 | **S1. Boundary form fits the profile** (R10, AP5) | 8 | Base by profile. **Compact**: 8. **Standard**: features each map to their own directory or directories → 8; some feature code lives in layer-wide or shared directories → 4; fewer than two features can be told apart → 0. **Large**: M10 ≥ 90 % → 8; ≥ 50 % → 4; < 50 % → 0. Then subtract 4 if code a driver concerns does not meet the driver's requirement (R10), and 4 if AP5 is Confirmed. Floor at 0. | never |
 | **S2. Feature size balance** (M7, AP4) | 6 | M7 ≤ 2 → 6; ≤ 3 → 3; > 3 → 0. | fewer than four features |
 | **S3. File size** (M8) | 5 | M8 = 0 → 5; ≤ 1 % → 3; > 1 % → 0. | never |
-| **S4. Lower roles point down** (R7, AP1) | 6 | Count the sites of violation kinds whose `rule` is R7 or R3 (`contract->feature`) in `metrics.json`. Judge AP1 here on its signals other than "depends on a feature", which these sites already count. 0 sites and no such AP1 signal → 6; 1–5 sites, or one such signal → 3; more sites, or two or more such signals → 0. | never |
+| **S4. Lower roles point down** (R7, AP1) | 6 | Count the sites of violation kinds whose `rule` is R7 or R3 (`contract->feature`) in `metrics.json`. Judge AP1 here on its signals other than "depends on a feature", which these sites already count. 0 sites and no such AP1 signal → 6; 1–5 sites, or one such signal → 3; more sites, or two or more such signals → 0. Signals count by kind, as AP1 lists them: the same signal in several modules is one signal. | never |
 
 ### Integration contour — 25
 
@@ -125,7 +129,10 @@ Step E. **Quality criteria reading**: for every metric M1–M11 in standard
 section 7, state the value and Healthy, Watch, Risk, N/A or Not measured.
 A criterion's status is the worst status among its applicable metrics; a
 criterion with no applicable metric is N/A. Change locality (M4, M5) is
-read, not scored; when a previous audit's history exists, state the trend.
+read, not scored; when `reports/.history/last_architecture_scores.json`
+exists, state the trend of M4 (the file stores `meanFeaturesPerChange`
+only; M5 has no stored previous value); when it does not, say no history file was found,
+not that no previous audit exists.
 
 Step F. **Rule compliance**: for each of R1–R10, state **Met** (nothing
 breaks it), **Partial** (only a SHOULD clause is broken), **Violated** (a
