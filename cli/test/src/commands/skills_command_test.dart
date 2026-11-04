@@ -168,6 +168,7 @@ void main() {
       String claudeConfigDir = '',
       String xdgConfigHome = '',
       String kimiCodeHome = '',
+      Map<String, String> extraEnvironment = const {},
     }) =>
         Process.run(
           Platform.resolvedExecutable,
@@ -189,6 +190,7 @@ void main() {
             // Keep pub reading the real cache instead of creating one under
             // the fake home.
             'PUB_CACHE': _pubCache,
+            ...extraEnvironment,
           },
         );
 
@@ -410,6 +412,390 @@ void main() {
           isTrue,
         );
       }, timeout: const Timeout.factor(2));
+
+      group("whose current folder is really another agent's",
+          timeout: const Timeout.factor(2), () {
+        const auditName = 'security-audit';
+
+        Future<ProcessResult> run(List<String> args) => runSkills(
+              args,
+              extraEnvironment: {
+                'CODEX_HOME': '',
+                // `kimi` is found here, so --all-agents selects Kimi Code.
+                'PATH': '${p.join(home.path, 'bin')}:/usr/bin:/bin',
+              },
+            );
+
+        setUp(() {
+          final stub = File(p.join(home.path, 'bin', 'kimi'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('#!/bin/sh\n');
+          Process.runSync('chmod', ['+x', stub.path]);
+        });
+
+        /// The models the Claude Code copy of the skill's agents ask for.
+        Set<String> claudeModels() => {
+              for (final file in Directory(
+                p.join(home.path, '.claude', 'skills', auditName, 'agents'),
+              ).listSync().whereType<File>())
+                for (final line in file.readAsLinesSync())
+                  if (line.startsWith('model:')) line,
+            };
+
+        for (final (label, link, target) in [
+          (
+            '~/.kimi-code/skills -> ~/.claude/skills',
+            '.kimi-code/skills',
+            '.claude/skills',
+          ),
+          (
+            '~/.claude/skills -> ~/.kimi-code/skills',
+            '.claude/skills',
+            '.kimi-code/skills',
+          ),
+        ]) {
+          group(label, () {
+            setUp(() async {
+              final real = p.join(home.path, target);
+              Directory(real).createSync(recursive: true);
+              Link(p.join(home.path, link)).createSync(real, recursive: true);
+              final result = await run(
+                ['install', '--agent', 'claude', '--skills', 'sa', '--global'],
+              );
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+            });
+
+            test('Claude Code alone gets the skill from --all-agents',
+                () async {
+              final result = await run(
+                ['install', '--all-agents', '--skills', 'sa', '--global'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), isNotEmpty);
+              expect(
+                claudeModels(),
+                everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+              );
+            });
+
+            test('--all-agents reports the skip', () async {
+              final result = await run(
+                ['install', '--all-agents', '--skills', 'sa', '--global'],
+              );
+
+              expect(
+                '${result.stdout}${result.stderr}',
+                allOf(
+                  contains('Kimi Code: skipped,'),
+                  contains("really Claude Code's folder"),
+                ),
+              );
+            });
+
+            test('an all-agent skills update refreshes it as Claude Code alone',
+                () async {
+              final result = await run(['update']);
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), isNotEmpty);
+              expect(
+                claudeModels(),
+                everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+              );
+              expect(
+                '${result.stdout}${result.stderr}',
+                contains('Kimi Code: skipped,'),
+              );
+            });
+
+            test('an all-agent skills remove counts the skill once', () async {
+              final result = await run(['remove', '--global', '--force']);
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(
+                '${result.stdout}${result.stderr}',
+                allOf(
+                  contains('Removed 1 skill(s).'),
+                  contains('Kimi Code: skipped,'),
+                ),
+              );
+            });
+
+            test('--agent kimi installs there and warns', () async {
+              final result = await run(
+                ['install', '--agent', 'kimi', '--skills', 'sa', '--global'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), contains(matches('cheap|mid|frontier')));
+              expect(
+                '${result.stdout}${result.stderr}',
+                allOf(
+                  contains('.kimi-code/skills is really'),
+                  contains("Claude Code's folder"),
+                  contains('also changes what Claude Code reads'),
+                ),
+              );
+            });
+
+            test('skills update --agent kimi refreshes it and warns', () async {
+              final result = await run(['update', '--agent', 'kimi']);
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), contains(matches('cheap|mid|frontier')));
+              expect(
+                '${result.stdout}${result.stderr}',
+                contains('also changes what Claude Code reads'),
+              );
+            });
+
+            test('skills remove --agent kimi removes it and warns', () async {
+              final result = await run(
+                ['remove', '--global', '--agent', 'kimi', '--force'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(
+                Directory(p.join(home.path, target, auditName)).existsSync(),
+                isFalse,
+              );
+              expect(
+                '${result.stdout}${result.stderr}',
+                contains('also changes what Claude Code reads'),
+              );
+            });
+          });
+        }
+
+        group('~/.kimi-code/skills -> ~/.cursor/commands', () {
+          late File cursorCopy;
+          late String cursorText;
+
+          setUp(() async {
+            final commands = p.join(home.path, '.cursor', 'commands');
+            Directory(commands).createSync(recursive: true);
+            Link(skills).createSync(commands, recursive: true);
+            final result = await run(
+              ['install', '--agent', 'cursor', '--skills', 'sa', '--global'],
+            );
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            cursorCopy = Directory(commands)
+                .listSync()
+                .whereType<File>()
+                .firstWhere((file) => file.path.endsWith('.md'));
+            cursorText = cursorCopy.readAsStringSync();
+          });
+
+          test('--all-agents keeps Cursor\'s file', () async {
+            final result = await run(
+              ['install', '--all-agents', '--skills', 'sa', '--global'],
+            );
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(cursorCopy.readAsStringSync(), cursorText);
+            expect(
+              '${result.stdout}${result.stderr}',
+              contains("really Cursor's folder"),
+            );
+          });
+
+          test('an all-agent skills update keeps Cursor\'s file', () async {
+            final result = await run(['update']);
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(cursorCopy.readAsStringSync(), cursorText);
+            expect(
+              Directory(p.join(p.dirname(cursorCopy.path), auditName))
+                  .existsSync(),
+              isFalse,
+            );
+          });
+
+          test('an all-agent skills remove counts the skill once', () async {
+            final result = await run(['remove', '--global', '--force']);
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(
+              '${result.stdout}${result.stderr}',
+              contains('Removed 1 skill(s).'),
+            );
+          });
+        });
+
+        group('~/.kimi-code/skills -> ~/dotfiles/skills, which no agent uses',
+            () {
+          late String dotfiles;
+
+          setUp(() {
+            dotfiles = p.join(home.path, 'dotfiles', 'skills');
+            Directory(dotfiles).createSync(recursive: true);
+            Link(skills).createSync(dotfiles, recursive: true);
+          });
+
+          test('--all-agents installs for Kimi Code with no report', () async {
+            final result = await run(
+              ['install', '--all-agents', '--skills', 'sa', '--global'],
+            );
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(
+              File(p.join(dotfiles, auditName, 'SKILL.md')).existsSync(),
+              isTrue,
+            );
+            expect(
+              '${result.stdout}${result.stderr}',
+              isNot(contains('is really')),
+            );
+          });
+
+          test('an all-agent skills update refreshes it with no report',
+              () async {
+            await run(
+              ['install', '--agent', 'kimi', '--skills', 'sa', '--global'],
+            );
+            final copy = File(p.join(dotfiles, auditName, 'SKILL.md'))
+              ..writeAsStringSync('stale');
+
+            final result = await run(['update']);
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(copy.readAsStringSync(), isNot('stale'));
+            expect(
+              '${result.stdout}${result.stderr}',
+              isNot(contains('is really')),
+            );
+          });
+        });
+
+        test('no other agent is skipped on a folder it shares', () async {
+          final gemini = p.join(home.path, '.gemini', 'skills');
+          Directory(gemini).createSync(recursive: true);
+          Link(p.join(home.path, '.qwen', 'skills'))
+              .createSync(gemini, recursive: true);
+          await run(
+            ['install', '--agent', 'gemini', '--skills', 'sa', '--global'],
+          );
+
+          final result = await run(['update']);
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            allOf(
+              contains('Gemini CLI (global)  1 skills updated'),
+              contains('Qwen CLI (global)  1 skills updated'),
+              isNot(contains('skipped,')),
+              isNot(contains('is really')),
+            ),
+          );
+        });
+
+        test('--all-agents --project keeps out of a linked project folder',
+            () async {
+          final claude = p.join(workDir, '.claude', 'skills');
+          Directory(claude).createSync(recursive: true);
+          Link(p.join(workDir, '.kimi-code', 'skills'))
+              .createSync(claude, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--project'],
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(Directory(p.join(claude, auditName)).existsSync(), isFalse);
+        });
+      });
+
+      group('a real, unlinked ~/.kimi-code/skills while it is protected', () {
+        late String relocated;
+        late File own;
+
+        setUp(() {
+          relocated = p.join(home.path, 'alt');
+          own = File(p.join(skills, skill.name, 'SKILL.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('---\nname: ${skill.name}\n---\nHAND\n');
+        });
+
+        for (final (agent, variable) in [
+          ('codex', 'CODEX_HOME'),
+          ('claude', 'CLAUDE_CONFIG_DIR'),
+        ]) {
+          group('with $variable=~/.kimi-code', () {
+            Future<ProcessResult> run(List<String> args) => runSkills(
+                  args,
+                  kimiCodeHome: relocated,
+                  extraEnvironment: {
+                    variable: p.join(home.path, '.kimi-code'),
+                  },
+                );
+
+            test('skills install --agent $agent refuses it', () async {
+              final result = await run(
+                [
+                  'install',
+                  '--agent',
+                  agent,
+                  '--skills',
+                  skill.id,
+                  '--global',
+                ],
+              );
+
+              expect(result.exitCode, 70, reason: '${result.stdout}');
+              expect(own.readAsStringSync(), contains('HAND'));
+            });
+
+            test('skills remove --agent $agent leaves it', () async {
+              _seed(skills, skill.name);
+
+              final result = await run(
+                ['remove', '--global', '--agent', agent, '--force'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(own.readAsStringSync(), contains('HAND'));
+              expect(SkillManifest.load(skills).isEmpty, isFalse);
+            });
+
+            test('uninstall --skills leaves it', () {
+              _seed(skills, skill.name);
+              final environment = {
+                'KIMI_CODE_HOME': relocated,
+                variable: p.join(home.path, '.kimi-code'),
+              };
+
+              removeAgentInstalls(home: home.path, environment: environment);
+              removeManifestTrackedInstalls(
+                home: home.path,
+                projectRoot: workDir,
+                environment: environment,
+              );
+
+              expect(own.readAsStringSync(), contains('HAND'));
+              expect(SkillManifest.load(skills).isEmpty, isFalse);
+            });
+          });
+        }
+
+        test('skills install refuses a relative CODEX_HOME from \$HOME',
+            () async {
+          final result = await runSkills(
+            ['install', '--agent', 'codex', '--skills', skill.id, '--global'],
+            workingDirectory: home.path,
+            kimiCodeHome: relocated,
+            extraEnvironment: {'CODEX_HOME': '.kimi-code'},
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(own.readAsStringSync(), contains('HAND'));
+        });
+      });
 
       group("~/.kimi-code/skills linked to Claude Code's real folder", () {
         late String claudeSkills;

@@ -71,7 +71,7 @@ class AgentConfig {
     this.cleansDefaultConfigHome = true,
     this.hasPreManifestSkillDirs = false,
     this.installsOnlyWithManifest = false,
-    this.yieldsLinkedDefaultToOwner = false,
+    this.yieldsSharedFolder = false,
     this.legacyInstallFormat,
     this.legacyInstallPath,
     this.legacyExecutionRulesPath,
@@ -227,15 +227,19 @@ class AgentConfig {
   /// the flat files their old releases wrote.
   final bool installsOnlyWithManifest;
 
-  /// Whether the protected default location gives way to the agent whose own
-  /// folder it really is.
+  /// Whether this agent gives way on a folder that is really another agent's.
+  ///
+  /// While its current folder is really another agent's current one
+  /// (`~/.kimi-code/skills -> ~/.claude/skills`, or the reverse), a run over
+  /// several agents leaves it to that agent, and an explicit `--agent` warns.
   ///
   /// With `~/.kimi-code/skills -> ~/.claude/skills` and `KIMI_CODE_HOME` set,
   /// Claude Code still works on `~/.claude/skills`, as long as that folder is
   /// no link itself. Another agent's folder linked into the protected one stays
-  /// refused. Claude Code does not set this: its `~/.claude/skills` may be
-  /// another account's live folder wherever it really is.
-  final bool yieldsLinkedDefaultToOwner;
+  /// refused, and so does one that reaches a real `~/.kimi-code/skills`. Claude
+  /// Code does not set this: its `~/.claude/skills` may be another account's
+  /// live folder wherever it really is.
+  final bool yieldsSharedFolder;
 
   /// The [InstallFormat] an earlier CLI release installed this agent's
   /// skills in, when that differs from [installFormat].

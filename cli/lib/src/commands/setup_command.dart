@@ -91,8 +91,14 @@ class SetupCommand extends Command<int> {
 
     // Only clean up skills.sh installs once we know the install can go
     // ahead: removing them and then failing would leave no skills at all.
-    final agents = await CommandHelpers.detectInstallTargets(_logger);
-    if (agents.isEmpty) return ExitCode.software.code;
+    final detected = await CommandHelpers.detectInstallTargets(_logger);
+    if (detected.isEmpty) return ExitCode.software.code;
+    final agents = CommandHelpers.withoutSharedFolders(
+      _logger,
+      detected,
+      explicit: false,
+    );
+    if (agents.isEmpty) return ExitCode.success.code;
 
     final ResolvedContent content;
     try {

@@ -219,6 +219,14 @@ class _SkillsInstallCommand extends Command<int> {
       scope = InstallScope.global;
     }
 
+    final targets = CommandHelpers.withoutSharedFolders(
+      _logger,
+      agents,
+      explicit: !(argResults!['all-agents'] as bool) && agents.length == 1,
+      scope: scope,
+    );
+    if (targets.isEmpty) return ExitCode.success.code;
+
     runSkillsShCleanup(
       logger: _logger,
       cleaner: SkillsShCleaner(),
@@ -231,7 +239,7 @@ class _SkillsInstallCommand extends Command<int> {
       ),
     );
 
-    return _installTo(agents, scope, selection, content);
+    return _installTo(targets, scope, selection, content);
   }
 
   // ── Agent resolution ────────────────────────────────────────────────────
@@ -547,6 +555,7 @@ class _SkillsUpdateCommand extends Command<int> {
       projectRoot: Directory.current.path,
       environment: PlatformUtils.environment,
       onWarning: _logger.warn,
+      skipSharedFolders: agentId == null,
     );
 
     // Only what the discovered manifests cover is refreshed below; any other
@@ -679,12 +688,16 @@ class _SkillsUpdateCommand extends Command<int> {
 /// knows to run `somnio skills remove` to clean it up. Top-level rather
 /// than a member of `somnio skills update` so it can be tested against
 /// temp directories, like `removeManifestTrackedInstalls`.
+///
+/// An agent whose folder is really another agent's (see [sharedFolderOwner])
+/// is reported through [onWarning], and left out when [skipSharedFolders].
 List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
   required List<AgentConfig> agents,
   required String home,
   required String projectRoot,
   Map<String, String> environment = const {},
   void Function(String message)? onWarning,
+  bool skipSharedFolders = false,
 }) {
   final units = <SkillsUpdateUnit>[];
 
@@ -707,7 +720,7 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
     );
     // Run from the home directory, the project scope is the global one:
     // refresh that location once, as global. Never touch a protected
-    // default location (another Claude Code account's ~/.claude), nor a
+    // default location (another profile's ~/.claude or ~/.kimi-code), nor a
     // folder that links to, holds or lies inside it.
     final seen = <String>{};
 
@@ -771,6 +784,20 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
         );
         if (warning != null) onWarning?.call(warning);
         continue;
+      }
+
+      if (sharedFolderOwner(
+        agent,
+        scope: scope,
+        home: home,
+        projectRoot: projectRoot,
+        environment: environment,
+      )
+          case final owner?) {
+        onWarning?.call(
+          sharedFolderNotice(agent, owner, dir, skipped: skipSharedFolders),
+        );
+        if (skipSharedFolders) continue;
       }
 
       final audit = <SkillBundle>[];
@@ -947,6 +974,8 @@ class _SkillsRemoveCommand extends Command<int> {
       home: PlatformUtils.homeDirectory,
       projectRoot: Directory.current.path,
       environment: PlatformUtils.environment,
+      onWarning: _logger.warn,
+      skipSharedFolders: agentId == null,
     );
 
     // skills.sh copies live only in the global scope and are shared by every
@@ -1123,13 +1152,16 @@ class _SkillsRemoveCommand extends Command<int> {
 /// The global scope resolves against [home] (relocated through
 /// [environment]) and the project scope against [projectRoot]; a location
 /// both resolve to (run from the home directory) is read once. Top-level
-/// for the same reason as [discoverSkillsUpdateUnits].
+/// for the same reason as [discoverSkillsUpdateUnits], which also explains
+/// [onWarning] and [skipSharedFolders].
 List<SkillsRemoveCandidate> discoverSkillsRemoveCandidates({
   required List<AgentConfig> agents,
   required List<InstallScope> scopes,
   required String home,
   required String projectRoot,
   Map<String, String> environment = const {},
+  void Function(String message)? onWarning,
+  bool skipSharedFolders = false,
 }) {
   final candidates = <SkillsRemoveCandidate>[];
 
@@ -1141,8 +1173,8 @@ List<SkillsRemoveCandidate> discoverSkillsRemoveCandidates({
     );
     // Global and project can be the same directory (run from home); its
     // manifest must be processed once. A protected default location
-    // (another Claude Code account's ~/.claude), or a folder that links to,
-    // holds or lies inside it, is never a candidate.
+    // (another profile's ~/.claude or ~/.kimi-code), or a folder that links
+    // to, holds or lies inside it, is never a candidate.
     final seen = <String>{};
     for (final scope in scopes) {
       // A relocated global install (CODEX_HOME) may still have an older
@@ -1176,6 +1208,20 @@ List<SkillsRemoveCandidate> discoverSkillsRemoveCandidates({
         if (overlapsProtected(dir, protected)) continue;
         if (!seen.add(realPathOf(dir))) continue;
         final manifest = SkillManifest.load(dir);
+        if (manifest.isEmpty) continue;
+        if (sharedFolderOwner(
+          agent,
+          scope: scope,
+          home: home,
+          projectRoot: projectRoot,
+          environment: environment,
+        )
+            case final owner?) {
+          onWarning?.call(
+            sharedFolderNotice(agent, owner, dir, skipped: skipSharedFolders),
+          );
+          if (skipSharedFolders) continue;
+        }
         for (final entry in manifest.entries) {
           candidates.add((
             agent: agent,

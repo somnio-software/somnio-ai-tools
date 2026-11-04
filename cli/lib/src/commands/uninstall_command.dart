@@ -487,14 +487,25 @@ bool removeManifestTrackedInstalls({
           (scope: scope, dir: dir),
     ];
     // Run from the home directory, the project scope is the global one,
-    // or a protected default location (another Claude Code account's
-    // ~/.claude) that must be left alone, also where another agent's folder
+    // or a protected default location (another profile's ~/.claude or
+    // ~/.kimi-code) that must be left alone, also where another agent's folder
     // links to, holds or lies inside it.
     final seen = <String>{};
 
     for (final (:scope, dir: installDir) in locations) {
       if (overlapsProtected(installDir, protected)) continue;
       if (!seen.add(realPathOf(installDir))) continue;
+      // The agent whose folder it really is removes what is recorded there.
+      if (sharedFolderOwner(
+            agent,
+            scope: scope,
+            home: home,
+            projectRoot: projectRoot,
+            environment: environment,
+          ) !=
+          null) {
+        continue;
+      }
       final manifest = SkillManifest.load(installDir);
       if (manifest.isEmpty) continue;
       // A rules folder linked into the protected config folder
@@ -723,9 +734,18 @@ bool _removeGenericInstall(
       ? agent.installFormat
       : agent.legacyInstallFormat ?? agent.installFormat;
   final markdownLayout = layout == InstallFormat.markdown;
+  // A folder that is really another agent's is swept as that agent's alone.
+  final yieldsFolder = sharedFolderOwner(
+        agent,
+        scope: InstallScope.global,
+        home: home,
+        projectRoot: home,
+        environment: environment,
+      ) !=
+      null;
   for (final location in locations) {
     final dir = Directory(location);
-    if (!dir.existsSync() || _hasManifest(location)) continue;
+    if (yieldsFolder || !dir.existsSync() || _hasManifest(location)) continue;
     if (overlapsProtected(location, protectedPaths)) continue;
     for (final entity in dir.listSync(followLinks: false)) {
       final name = p.basename(entity.path);

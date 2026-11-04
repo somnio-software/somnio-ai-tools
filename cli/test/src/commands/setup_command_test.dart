@@ -46,6 +46,115 @@ void main() {
     expect(manifest.skillNames, isNotEmpty);
   });
 
+  group('with Kimi Code on a folder that is really another agent\'s', () {
+    Future<ProcessResult> setup({String path = ''}) => Process.run(
+          Platform.resolvedExecutable,
+          [p.absolute('bin', 'somnio.dart'), 'setup', '--skip-cli', '--force'],
+          workingDirectory: home.path,
+          includeParentEnvironment: false,
+          environment: {
+            'HOME': home.path,
+            'USERPROFILE': home.path,
+            // No agent binary is found, so only the folders select the agents.
+            'PATH': path,
+          },
+        );
+
+    /// The `model:` lines of Claude Code's copy of the security audit.
+    Set<String> claudeModels() => {
+          for (final file in Directory(
+            p.join(home.path, '.claude', 'skills', 'security-audit', 'agents'),
+          ).listSync().whereType<File>())
+            for (final line in file.readAsLinesSync())
+              if (line.startsWith('model:')) line,
+        };
+
+    for (final (label, link, target) in [
+      (
+        '~/.kimi-code/skills -> ~/.claude/skills',
+        '.kimi-code/skills',
+        '.claude/skills',
+      ),
+      (
+        '~/.claude/skills -> ~/.kimi-code/skills',
+        '.claude/skills',
+        '.kimi-code/skills',
+      ),
+    ]) {
+      test('leaves $label to Claude Code and reports it', () async {
+        final real = p.join(home.path, target);
+        File(p.join(real, 'mine', 'SKILL.md')).createSync(recursive: true);
+        Link(p.join(home.path, link)).createSync(real, recursive: true);
+
+        final result = await setup();
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(
+          claudeModels(),
+          everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+        );
+        expect(claudeModels(), isNotEmpty);
+        expect(
+          '${result.stdout}${result.stderr}',
+          contains('Kimi Code: skipped,'),
+        );
+      }, timeout: const Timeout.factor(2));
+    }
+
+    test('leaves ~/.cursor/commands to Cursor', () async {
+      final commands = p.join(home.path, '.cursor', 'commands');
+      File(p.join(commands, 'mine.md')).createSync(recursive: true);
+      Link(p.join(home.path, '.kimi-code', 'skills'))
+          .createSync(commands, recursive: true);
+
+      final result = await setup();
+
+      expect(result.exitCode, 0, reason: '${result.stdout}');
+      expect(
+        Directory(p.join(commands, 'security-audit')).existsSync(),
+        isFalse,
+      );
+      expect(
+        '${result.stdout}${result.stderr}',
+        contains("really Cursor's folder"),
+      );
+    }, timeout: const Timeout.factor(2));
+
+    test('exits 0 with the report when Kimi Code was the only agent', () async {
+      final claude = p.join(home.path, '.claude', 'skills');
+      Directory(claude).createSync(recursive: true);
+      Link(p.join(home.path, '.kimi-code', 'skills'))
+          .createSync(claude, recursive: true);
+      final stub = File(p.join(home.path, 'bin', 'kimi'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('#!/bin/sh\n');
+      Process.runSync('chmod', ['+x', stub.path]);
+
+      final result = await setup(path: '${stub.parent.path}:/usr/bin:/bin');
+
+      expect(result.exitCode, 0, reason: '${result.stdout}');
+      expect(
+        '${result.stdout}${result.stderr}',
+        contains('Kimi Code: skipped,'),
+      );
+      expect(Directory(claude).listSync(), isEmpty);
+    });
+
+    test('installs into ~/dotfiles/skills, which no other agent uses',
+        () async {
+      final dotfiles = p.join(home.path, 'dotfiles', 'skills');
+      File(p.join(dotfiles, 'mine', 'SKILL.md')).createSync(recursive: true);
+      Link(p.join(home.path, '.kimi-code', 'skills'))
+          .createSync(dotfiles, recursive: true);
+
+      final result = await setup();
+
+      expect(result.exitCode, 0, reason: '${result.stdout}');
+      expect(SkillManifest.load(dotfiles).skillNames, isNotEmpty);
+      expect('${result.stdout}${result.stderr}', isNot(contains('is really')));
+    }, timeout: const Timeout.factor(2));
+  });
+
   group('with KIMI_CODE_HOME set', () {
     Future<ProcessResult> setup() => Process.run(
           Platform.resolvedExecutable,

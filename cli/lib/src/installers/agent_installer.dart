@@ -277,7 +277,7 @@ class AgentInstaller extends Installer {
   /// Whether this install's folder is, holds or lies inside a protected
   /// default one (`~/.claude/skills` while `CLAUDE_CONFIG_DIR` relocates
   /// Claude Code), reached through a symlink: writing there would replace
-  /// another account's skills and manifest.
+  /// another profile's skills and manifest.
   bool get _installDirIsProtected => overlapsProtected(
         _installDir,
         protectedInstallPaths(

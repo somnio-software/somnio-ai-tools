@@ -533,6 +533,84 @@ void main() {
         });
       }
 
+      group("with ~/.kimi-code/skills really Cursor's folder", () {
+        late String commands;
+
+        setUp(() {
+          commands = p.join(home.path, '.cursor', 'commands');
+          _writeFile(p.join(commands, 'security-audit.md'));
+          Link(p.join(home.path, '.kimi-code', 'skills'))
+              .createSync(commands, recursive: true);
+        });
+
+        test('the sweep reports nothing as Kimi Code keeping it', () {
+          _writeSkill(commands, 'security-audit');
+          final warnings = <String>[];
+
+          removeAgentInstalls(
+            home: home.path,
+            environment: const {},
+            onWarning: warnings.add,
+          );
+
+          expect(warnings, isNot(contains(contains('.kimi-code'))));
+        });
+
+        test('the manifest is removed through Cursor\'s path', () {
+          SkillManifest.load(commands)
+            ..record(
+              skill: 'security-audit',
+              kind: 'audit',
+              paths: const [
+                ManifestPath(ManifestRoot.install, 'security-audit.md'),
+              ],
+            )
+            ..save();
+          final removed = <String>[];
+
+          removeManifestTrackedInstalls(
+            home: home.path,
+            projectRoot: home.path,
+            onRemoved: removed.add,
+          );
+
+          expect(
+            removed,
+            contains(contains(p.join('.cursor', 'commands'))),
+          );
+          expect(removed, isNot(contains(contains('.kimi-code'))));
+        });
+      });
+
+      test(
+          "a manifest in ~/.kimi-code/skills -> Windsurf's folder is removed "
+          "through Windsurf's path, which the registry lists after Kimi Code",
+          () {
+        final skills = p.join(home.path, '.codeium', 'windsurf', 'skills');
+        _writeSkill(skills, 'security-audit');
+        Link(p.join(home.path, '.kimi-code', 'skills'))
+            .createSync(skills, recursive: true);
+        SkillManifest.load(skills)
+          ..record(
+            skill: 'security-audit',
+            kind: 'audit',
+            paths: const [
+              ManifestPath(ManifestRoot.install, 'security-audit'),
+            ],
+          )
+          ..save();
+        final removed = <String>[];
+
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: home.path,
+          onRemoved: removed.add,
+        );
+
+        expect(removed, contains(contains(p.join('windsurf', 'skills'))));
+        expect(removed, isNot(contains(contains('.kimi-code'))));
+      });
+
       group('with no manifest and a link from another agent', () {
         late String skills;
 

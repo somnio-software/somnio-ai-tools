@@ -1,4 +1,6 @@
 // coverage:ignore-file
+import 'dart:io';
+
 import 'package:mason_logger/mason_logger.dart';
 
 import '../agents/agent_config.dart';
@@ -9,8 +11,10 @@ import '../content/skill_registry.dart';
 import '../content/workflow_skill.dart';
 import '../installers/agent_installer.dart';
 import '../installers/installer.dart';
+import '../installers/protected_paths.dart';
 import 'agent_detector.dart';
 import 'package_resolver.dart';
+import 'platform_utils.dart';
 
 /// Shared helpers used across multiple CLI commands.
 ///
@@ -124,6 +128,46 @@ class CommandHelpers {
 
     if (detectedAgents.isEmpty) printNoAgentsError(logger);
     return detectedAgents;
+  }
+
+  /// The [agents] an install in [scope] may write for, reporting every agent
+  /// whose folder is really another agent's (see [sharedFolderOwner]).
+  ///
+  /// Such an agent is left out, unless the user asked for it alone ([explicit]):
+  /// then it stays, with a warning.
+  static List<AgentConfig> withoutSharedFolders(
+    Logger logger,
+    List<AgentConfig> agents, {
+    required bool explicit,
+    InstallScope scope = InstallScope.global,
+  }) {
+    final home = PlatformUtils.homeDirectory;
+    final projectRoot = Directory.current.path;
+    final environment = PlatformUtils.environment;
+    final targets = <AgentConfig>[];
+    for (final agent in agents) {
+      final owner = sharedFolderOwner(
+        agent,
+        scope: scope,
+        home: home,
+        projectRoot: projectRoot,
+        environment: environment,
+      );
+      if (owner != null) {
+        final folder = agent.resolvedScopedInstallPath(
+          scope: scope,
+          home: home,
+          projectRoot: projectRoot,
+          environment: environment,
+        );
+        logger.warn(
+          sharedFolderNotice(agent, owner, folder, skipped: !explicit),
+        );
+        if (!explicit) continue;
+      }
+      targets.add(agent);
+    }
+    return targets;
   }
 
   /// Installs every registered skill to [agents] and prints a summary.

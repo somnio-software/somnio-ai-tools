@@ -36,7 +36,7 @@ void main() {
         () {
       expect(
         AgentRegistry.agents
-            .where((a) => a.yieldsLinkedDefaultToOwner)
+            .where((a) => a.yieldsSharedFolder)
             .map((a) => a.id),
         ['kimi'],
         reason: "Claude Code's protection also covers another agent's real "

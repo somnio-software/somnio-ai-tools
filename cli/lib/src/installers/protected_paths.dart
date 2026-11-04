@@ -11,7 +11,7 @@ import '../utils/real_path.dart';
 /// protected default (`~/.claude/skills` while `CLAUDE_CONFIG_DIR` relocates
 /// Claude Code, see `AgentConfig.resolvedProtectedInstallPaths`), except one
 /// that gives way to [agent] as the owner of the real folder (see
-/// [AgentConfig.yieldsLinkedDefaultToOwner]).
+/// [AgentConfig.yieldsSharedFolder]) and is itself reached through a link.
 Set<String> protectedInstallPaths(
   AgentConfig agent, {
   required String home,
@@ -27,13 +27,16 @@ Set<String> protectedInstallPaths(
         home: home,
         environment: environment,
       ))
-        if (!other.yieldsLinkedDefaultToOwner || path != ownFolder) path,
+        if (!other.yieldsSharedFolder ||
+            path != ownFolder ||
+            !_reachedThroughLink(other.resolvedInstallPath(home: home), home))
+          path,
   };
 }
 
 /// Real paths of the config folders that hold a protected install folder
 /// (`~/.claude`), where more than skills lives. A config folder that gives way
-/// (see [AgentConfig.yieldsLinkedDefaultToOwner]) and is itself a link is left
+/// (see [AgentConfig.yieldsSharedFolder]) and is itself a link is left
 /// out: what lives at its real path is not that agent's.
 Set<String> protectedConfigHomes({
   required String home,
@@ -45,10 +48,65 @@ Set<String> protectedConfigHomes({
             .resolvedProtectedInstallPaths(home: home, environment: environment)
             .isNotEmpty)
           if (agent.resolvedConfigHome(home: home) case final configHome?)
-            if (!agent.yieldsLinkedDefaultToOwner ||
+            if (!agent.yieldsSharedFolder ||
                 !_reachedThroughLink(configHome, home))
               realPathOf(configHome),
     };
+
+/// The other agent whose current folder, global or under [projectRoot], is
+/// really [agent]'s current folder in [scope], when [agent] gives way on such a
+/// folder (see [AgentConfig.yieldsSharedFolder]).
+AgentConfig? sharedFolderOwner(
+  AgentConfig agent, {
+  required InstallScope scope,
+  required String home,
+  required String projectRoot,
+  Map<String, String> environment = const {},
+}) {
+  if (!agent.yieldsSharedFolder) return null;
+  final own = realPathOf(
+    agent.resolvedScopedInstallPath(
+      scope: scope,
+      home: home,
+      projectRoot: projectRoot,
+      environment: environment,
+    ),
+  );
+  for (final other in AgentRegistry.installableAgents) {
+    if (other.id == agent.id) continue;
+    final scopes = [
+      InstallScope.global,
+      if (other.supportsProjectScope) InstallScope.project,
+    ];
+    for (final otherScope in scopes) {
+      final folder = other.resolvedScopedInstallPath(
+        scope: otherScope,
+        home: home,
+        projectRoot: projectRoot,
+        environment: environment,
+      );
+      if (realPathOf(folder) == own) return other;
+    }
+  }
+  return null;
+}
+
+/// The line that reports [agent] leaving [folder] to its [owner] when
+/// [skipped], or else working on it because the user asked for [agent].
+String sharedFolderNotice(
+  AgentConfig agent,
+  AgentConfig owner,
+  String folder, {
+  required bool skipped,
+}) {
+  final shared = "$folder is really ${owner.displayName}'s folder "
+      '(${realPathOf(folder)})';
+  return skipped
+      ? '  ${agent.displayName}: skipped, $shared. Only --agent ${agent.id} '
+          'acts on it.'
+      : '  ${agent.displayName}: $shared, so this also changes what '
+          '${owner.displayName} reads.';
+}
 
 /// Whether [path], or a folder between it and [home], is a symlink. Outside
 /// [home] the walk goes up to the root, so a link above the folder (macOS's
