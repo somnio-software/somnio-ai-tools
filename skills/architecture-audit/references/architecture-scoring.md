@@ -145,7 +145,8 @@ which class becomes required first (R1 with a second feature, R2 with a
 third module).
 
 Step G. **Anti-patterns**: for each of AP1–AP5, list its signals from steps
-1 to 3. Two or more → **Confirmed**; one → **Warning**; none → **Not
+1 to 3 (AP1 signals count by kind, as in S4: the same signal in several
+modules is one). Two or more → **Confirmed**; one → **Warning**; none → **Not
 found**. A signal that does not apply (the AP4 size signal with fewer than
 four features, its fan-out signal with one) is left out, and an
 anti-pattern the standard calls not applicable (AP3 with fewer than two

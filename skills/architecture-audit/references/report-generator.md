@@ -24,6 +24,8 @@ STEP ARTIFACT INTEGRATION:
 Read these artifacts for this run under `reports/.artifacts/architecture-audit/`.
 Of the `data/` directory read only `data/metrics.json`: the TSV files and
 the script there are raw inputs of the earlier steps, and can be large.
+Also read `reports/.history/last_architecture_scores.json` if it exists
+(optional, read-only): it gives the Section 2 `Previous` line.
 - `step_*_module-map.md` - stack, documentation found, module table, mixed
   modules, drivers, ownership, profile override, temporary-directory
   warning; drives Section 7 and the Section 2 warning line.
