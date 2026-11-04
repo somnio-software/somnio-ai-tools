@@ -198,6 +198,28 @@ repository module); open the
 importing files (`grep` for the package within the module) to decide
 which layer they sit in.
 
+Those two maps record the direct imports of each file and do not follow
+exports. A module that imports a barrel or another file re-exporting a
+kept package reaches the package as if it imported it, so list the
+re-exports too. `grep` every module's files for a statement that
+republishes a kept package (an export directive naming it, `export ...
+from`, or the stack's equivalent: in Python, a package `__init__.py`
+importing names from the package, or a module listing them in
+`__all__`), and keep the files found. A plain `import` that the file
+only uses is not a re-export. Take each
+one's importers from `data/module_edges.tsv` (rows whose target file it
+is, with their modules). When an importer itself re-exports the kept file
+(an export directive, `export ... from`, or the Python form above, naming
+it), keep that importer
+too and take its importers in turn, until no new file is kept: an exempt
+barrel passes the package on, it does not end the chain. An importer in
+code the exemptions above do not cover is a containment site for that
+package, counted once per (module, package) pair, also when the module
+imports the package directly or through several files, and not for an
+edge already counted as a layering site, or one whose `module_edges.tsv`
+status is a violated rule (R1, R3, R5, R7), which I1, S4 and C2 score. Record the re-exporting file,
+the package and one importing `file:line`.
+
 For the layer direction, use `data/module_edges.tsv`: every row already
 carries its source and target modules and roles, and same-module edges
 have status `internal`. The file carries no layers: classify each file of
@@ -224,7 +246,8 @@ Write `reports/.artifacts/architecture-audit/step_03_composition-analysis.md`:
   route sites (count, examples), AP3 signals present/absent, or "Not
   applicable" with the reason.
 - **Layering and containment**: R8 violations by kind with sites, and the
-  total.
+  total; the containment sites reached through a re-export, each with the
+  re-exporting file, the package and the importing `file:line`.
 
 If the runner gave you a different artifact path for this step, write the
 artifact there instead.

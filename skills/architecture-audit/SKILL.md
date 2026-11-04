@@ -213,7 +213,9 @@ possible), halves rounded up. A check that applies but lacks evidence is
 module graph can break them. When none of the required classes is
 enforced (K2 earns 0), the Total is capped at 64; when only some are, or
 none is required yet, at 84, so Governed modular needs every required
-class enforced. Scores are relative to the profile.
+class enforced. When S1 earns 0, the Total is also capped at 84, so
+Governed modular needs S1 above 0, a boundary form that fits the
+profile; the lowest cap that applies sets the Total. Scores are relative to the profile.
 
 **Maturity Bands** (mapped from Total Score):
 - **0–39 — Monolithic**: boundaries are conventions at best; the codebase
@@ -222,8 +224,8 @@ class enforced. Scores are relative to the profile.
   coupled or the rules are not enforced.
 - **65–84 — Modular**: modules, roles and dependencies mostly follow the
   standard for this profile; gaps remain in enforcement or in a contour.
-- **85–100 — Governed modular**: the standard holds for this profile and
-  tools enforce every rule class it requires.
+- **85–100 — Governed modular**: the standard holds for this profile, the
+  boundary form fits it and tools enforce every rule class it requires.
 
 **Benefits of Modular Approach**:
 - Each rule can be executed independently.
