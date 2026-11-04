@@ -687,7 +687,6 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
   void Function(String message)? onWarning,
 }) {
   final units = <SkillsUpdateUnit>[];
-  final protected = protectedInstallPaths(home: home, environment: environment);
 
   void warnOrphaned(AgentConfig agent, InstallScope scope, String skill) {
     onWarning?.call(
@@ -701,6 +700,11 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
       InstallScope.global,
       if (agent.supportsProjectScope) InstallScope.project,
     ];
+    final protected = protectedInstallPaths(
+      agent,
+      home: home,
+      environment: environment,
+    );
     // Run from the home directory, the project scope is the global one:
     // refresh that location once, as global. Never touch a protected
     // default location (another Claude Code account's ~/.claude), nor a
@@ -1128,9 +1132,13 @@ List<SkillsRemoveCandidate> discoverSkillsRemoveCandidates({
   Map<String, String> environment = const {},
 }) {
   final candidates = <SkillsRemoveCandidate>[];
-  final protected = protectedInstallPaths(home: home, environment: environment);
 
   for (final agent in agents) {
+    final protected = protectedInstallPaths(
+      agent,
+      home: home,
+      environment: environment,
+    );
     // Global and project can be the same directory (run from home); its
     // manifest must be processed once. A protected default location
     // (another Claude Code account's ~/.claude), or a folder that links to,

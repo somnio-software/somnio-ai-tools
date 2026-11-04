@@ -280,7 +280,11 @@ class AgentInstaller extends Installer {
   /// another account's skills and manifest.
   bool get _installDirIsProtected => overlapsProtected(
         _installDir,
-        protectedInstallPaths(home: _home, environment: environment),
+        protectedInstallPaths(
+          agentConfig,
+          home: _home,
+          environment: environment,
+        ),
       );
 
   /// Whether an install must leave the directory of [skill] in

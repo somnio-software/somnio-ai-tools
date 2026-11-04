@@ -32,6 +32,18 @@ void main() {
       );
     });
 
+    test('only Kimi Code gives its protected default up to the folder owner',
+        () {
+      expect(
+        AgentRegistry.agents
+            .where((a) => a.yieldsLinkedDefaultToOwner)
+            .map((a) => a.id),
+        ['kimi'],
+        reason: "Claude Code's protection also covers another agent's real "
+            'folder that ~/.claude/skills links to',
+      );
+    });
+
     test('only Kimi Code keeps everything no manifest records', () {
       expect(
         AgentRegistry.agents

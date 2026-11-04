@@ -427,6 +427,7 @@ class AgentRegistry {
     // Kimi Code loads flat `<name>.md` skills as well as directories, and no
     // release wrote here without a manifest.
     installsOnlyWithManifest: true,
+    yieldsLinkedDefaultToOwner: true,
     filePrefix: 'somnio',
     npmPackage: '@moonshot-ai/kimi-code',
     installUrl: 'https://github.com/MoonshotAI/kimi-code',

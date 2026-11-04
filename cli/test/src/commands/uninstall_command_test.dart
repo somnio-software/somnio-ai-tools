@@ -532,6 +532,90 @@ void main() {
           }
         });
       }
+
+      group('with no manifest and a link from another agent', () {
+        late String skills;
+
+        setUp(() {
+          skills = p.join(home.path, '.kimi-code', 'skills');
+          _writeSkill(skills, 'security-audit');
+          _writeSkill(skills, 'somnio-team-style');
+          _writeSkill(skills, 'my-own');
+          _writeFile(p.join(skills, 'somnio-flat.md'));
+        });
+
+        test("Claude Code's sweep deletes matching folders and files", () {
+          Link(p.join(home.path, '.claude', 'skills'))
+              .createSync(skills, recursive: true);
+
+          removeAgentInstalls(home: home.path, environment: const {});
+
+          expect(
+            Directory(p.join(skills, 'security-audit')).existsSync(),
+            isFalse,
+          );
+          expect(
+            Directory(p.join(skills, 'somnio-team-style')).existsSync(),
+            isFalse,
+          );
+          expect(File(p.join(skills, 'somnio-flat.md')).existsSync(), isFalse);
+          expect(
+            File(p.join(skills, 'my-own', 'SKILL.md')).existsSync(),
+            isTrue,
+          );
+        });
+
+        test("Qwen CLI's sweep deletes matching files and keeps folders", () {
+          Link(p.join(home.path, '.qwen', 'skills'))
+              .createSync(skills, recursive: true);
+
+          removeAgentInstalls(home: home.path, environment: const {});
+
+          expect(File(p.join(skills, 'somnio-flat.md')).existsSync(), isFalse);
+          for (final name in [
+            'security-audit',
+            'somnio-team-style',
+            'my-own'
+          ]) {
+            expect(
+              File(p.join(skills, name, 'SKILL.md')).existsSync(),
+              isTrue,
+              reason: name,
+            );
+          }
+        });
+
+        test('KIMI_CODE_HOME keeps both sweeps out of the folder', () {
+          Link(p.join(home.path, '.claude', 'skills'))
+              .createSync(skills, recursive: true);
+          Link(p.join(home.path, '.qwen', 'skills'))
+              .createSync(skills, recursive: true);
+
+          removeAgentInstalls(
+            home: home.path,
+            environment: {'KIMI_CODE_HOME': p.join(home.path, 'alt')},
+          );
+
+          expect(File(p.join(skills, 'somnio-flat.md')).existsSync(), isTrue);
+          expect(
+            File(p.join(skills, 'security-audit', 'SKILL.md')).existsSync(),
+            isTrue,
+          );
+        });
+      });
+
+      test('removes the rules of a folder ~/.kimi-code merely links to', () {
+        final cursor = p.join(home.path, '.cursor');
+        _writeFile(p.join(cursor, 'somnio_rules', 'rule.md'));
+        Link(p.join(home.path, '.kimi-code')).createSync(cursor);
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: {'KIMI_CODE_HOME': p.join(home.path, 'alt')},
+        );
+
+        expect(Directory(p.join(cursor, 'somnio_rules')).existsSync(), isFalse);
+      });
     });
 
     group('an agent that wrote flat files before the manifest', () {

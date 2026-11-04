@@ -417,7 +417,6 @@ bool removeAgentInstalls({
   skillsSh.warnings.forEach(onWarning ?? (_) {});
   var removed = skillsShPaths.isNotEmpty;
 
-  final protected = protectedInstallPaths(home: home, environment: env);
   final protectedHomes = protectedConfigHomes(home: home, environment: env);
   for (final agent in AgentRegistry.installableAgents) {
     removed |= _removeWorkflowInstall(agent, home, protectedHomes, onRemoved) |
@@ -425,7 +424,7 @@ bool removeAgentInstalls({
           agent,
           home,
           env,
-          protected,
+          protectedInstallPaths(agent, home: home, environment: env),
           protectedHomes,
           onRemoved,
           onWarning,
@@ -458,13 +457,17 @@ bool removeManifestTrackedInstalls({
   void Function(String message)? onRemoved,
 }) {
   var removed = false;
-  final protected = protectedInstallPaths(home: home, environment: environment);
   final protectedHomes = protectedConfigHomes(
     home: home,
     environment: environment,
   );
 
   for (final agent in AgentRegistry.installableAgents) {
+    final protected = protectedInstallPaths(
+      agent,
+      home: home,
+      environment: environment,
+    );
     // Legacy folders are read even where they are really another agent's
     // install, unlike `skills remove` and `skills update` (see
     // AgentInstaller.ownLegacyInstallDir): this removes every agent's somnio
