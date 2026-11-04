@@ -32,6 +32,17 @@ void main() {
       );
     });
 
+    test('only Kimi Code keeps everything no manifest records', () {
+      expect(
+        AgentRegistry.agents
+            .where((a) => a.installsOnlyWithManifest)
+            .map((a) => a.id),
+        ['kimi'],
+        reason: 'the earlier agents still have flat files from releases '
+            'without a manifest for uninstall --skills to sweep',
+      );
+    });
+
     test('agents list is not empty', () {
       expect(AgentRegistry.agents, isNotEmpty);
     });
@@ -328,6 +339,52 @@ void main() {
       );
     });
 
+    test('kimi runs a single prompt with kimi -p', () {
+      final kimi = AgentRegistry.findById('kimi')!;
+      expect(kimi.displayName, 'Kimi Code');
+      expect(kimi.canExecute, isTrue);
+      expect(kimi.binary, 'kimi');
+      // `-p` already applies the auto permission policy and rejects `--yolo`.
+      expect(kimi.buildArgs('prompt'), ['-p', 'prompt']);
+    });
+
+    test('kimi installs skill directories under \$KIMI_CODE_HOME/skills', () {
+      final kimi = AgentRegistry.findById('kimi')!;
+      expect(kimi.installFormat, InstallFormat.skillDir);
+      expect(kimi.executionRulesPath, isNull);
+      expect(kimi.legacyInstallFormat, isNull);
+      expect(kimi.resolvedInstallPath(home: '/h'), '/h/.kimi-code/skills');
+      expect(
+        kimi.resolvedInstallPath(
+          home: '/h',
+          environment: const {'KIMI_CODE_HOME': '/h/.config/kimi-code'},
+        ),
+        '/h/.config/kimi-code/skills',
+      );
+      expect(
+        kimi.resolvedScopedInstallPath(
+          scope: InstallScope.project,
+          home: '/h',
+          projectRoot: '/repo',
+          environment: const {'KIMI_CODE_HOME': '/h/.config/kimi-code'},
+        ),
+        '/repo/.kimi-code/skills',
+      );
+    });
+
+    test('kimi leaves ~/.kimi-code alone while KIMI_CODE_HOME relocates it',
+        () {
+      // No earlier release installed there, and it may be another profile.
+      final kimi = AgentRegistry.findById('kimi')!;
+      expect(
+        kimi.resolvedGlobalInstallPaths(
+          home: '/h',
+          environment: const {'KIMI_CODE_HOME': '/h/.config/kimi-code'},
+        ),
+        ['/h/.config/kimi-code/skills'],
+      );
+    });
+
     test('agents that load <name>/SKILL.md install skill directories', () {
       // Each of these only loads `<name>/SKILL.md` directories from its
       // install path, so the flat markdown files earlier releases wrote there
@@ -500,7 +557,7 @@ void main() {
     });
 
     test('agents without auto-approve have empty flags', () {
-      for (final id in ['amp', 'opencode']) {
+      for (final id in ['amp', 'opencode', 'kimi']) {
         final agent = AgentRegistry.findById(id)!;
         expect(agent.autoApproveFlags, isEmpty,
             reason: '$id should have no autoApproveFlags');
@@ -588,6 +645,7 @@ void main() {
         'cline',
         'opencode',
         'codebuddy',
+        'kimi',
         'antigravity',
         'copilot',
         'windsurf',
@@ -603,7 +661,14 @@ void main() {
     test('executable agents with no models resolve every tier to null', () {
       // No modelTiers, defaultModel, or fallbackModel to resolve against, so
       // the tier must not leak to the CLI as `--model cheap`.
-      for (final id in ['amp', 'aider', 'cline', 'opencode', 'codebuddy']) {
+      for (final id in [
+        'amp',
+        'aider',
+        'cline',
+        'opencode',
+        'codebuddy',
+        'kimi',
+      ]) {
         final agent = AgentRegistry.findById(id)!;
         for (final tier in ['cheap', 'mid', 'frontier']) {
           expect(agent.resolveTier(tier), isNull, reason: '$id $tier');

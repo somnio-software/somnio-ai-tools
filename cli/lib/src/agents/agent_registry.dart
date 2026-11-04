@@ -33,6 +33,7 @@ class AgentRegistry {
     _opencode,
     _codebuddy,
     _qwen,
+    _kimi,
     // ── IDE-only agents (canExecute: false) ────────────────────────
     _copilot,
     _windsurf,
@@ -403,6 +404,35 @@ class AgentRegistry {
     filePrefix: 'somnio',
     npmPackage: 'qwen-code',
     installUrl: 'https://qwen.ai',
+  );
+
+  static const _kimi = AgentConfig(
+    id: 'kimi',
+    displayName: 'Kimi Code',
+    binary: 'kimi',
+    canExecute: true,
+    promptStyle: PromptStyle.flag,
+    // `kimi -p` runs under the `auto` permission policy and rejects `--yolo`
+    // and `--auto`, so it takes no approve flags.
+    promptFlag: '-p',
+    installFormat: InstallFormat.skillDir,
+    // Kimi Code's own user skills folder. It also reads `~/.agents/skills`,
+    // which skills.sh and other agents share.
+    installPath: '{home}/.kimi-code/skills',
+    configHome: '{home}/.kimi-code',
+    configHomeVariable: 'KIMI_CODE_HOME',
+    // `KIMI_CODE_HOME` isolates profiles, and no earlier release installed
+    // into `~/.kimi-code`, so its skills are left alone while it is relocated.
+    cleansDefaultConfigHome: false,
+    // Kimi Code loads flat `<name>.md` skills as well as directories, and no
+    // release wrote here without a manifest.
+    installsOnlyWithManifest: true,
+    filePrefix: 'somnio',
+    npmPackage: '@moonshot-ai/kimi-code',
+    installUrl: 'https://github.com/MoonshotAI/kimi-code',
+    installInstructions:
+        '  curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash\n'
+        '  Or: npm install -g @moonshot-ai/kimi-code',
   );
 
   // ── IDE-only agent definitions ──────────────────────────────────

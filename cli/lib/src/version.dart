@@ -1,3 +1,3 @@
 // coverage:ignore-file
 /// Single source of truth for the CLI version.
-const packageVersion = '3.3.4';
+const packageVersion = '3.3.5';

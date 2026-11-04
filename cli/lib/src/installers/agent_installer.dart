@@ -289,8 +289,10 @@ class AgentInstaller extends Installer {
   /// `~/.config/opencode/skills`), which pruning would replace.
   ///
   /// Only for an agent that moved its global folder (it has a
-  /// `legacyInstallPath`): the folder it moved to is shared with other
-  /// tools, while one that was always Somnio's own is replaced as before.
+  /// `legacyInstallPath`), since the folder it moved to is shared with other
+  /// tools, or that installs only with a manifest
+  /// ([AgentConfig.installsOnlyWithManifest]). In any other agent's folder a
+  /// directory of that name is replaced as before.
   ///
   /// [written] maps each path relative to [_installDir] to the content this
   /// run would write for the skill. A directory that holds nothing but
@@ -310,7 +312,8 @@ class AgentInstaller extends Installer {
     if (agentConfig.installFormat != InstallFormat.skillDir ||
         !recordManifest ||
         scope != InstallScope.global ||
-        agentConfig.legacyInstallPath == null ||
+        (agentConfig.legacyInstallPath == null &&
+            !agentConfig.installsOnlyWithManifest) ||
         manifest.entryFor(skill) != null) {
       return false;
     }
@@ -380,7 +383,7 @@ class AgentInstaller extends Installer {
 
   void _logProtectedRefusal(String baseDir) => logger.err(
         '  ${agentConfig.displayName}: $baseDir is really a protected '
-        "folder (another Claude Code account's config), so nothing was "
+        "folder (another profile's config), so nothing was "
         'installed.',
       );
 

@@ -70,6 +70,7 @@ class AgentConfig {
     this.configHomeVariable,
     this.cleansDefaultConfigHome = true,
     this.hasPreManifestSkillDirs = false,
+    this.installsOnlyWithManifest = false,
     this.legacyInstallFormat,
     this.legacyInstallPath,
     this.legacyExecutionRulesPath,
@@ -211,6 +212,17 @@ class AgentConfig {
   /// after the manifest, so a directory anywhere else is treated as the user's
   /// even when its `SKILL.md` names a Somnio skill.
   final bool hasPreManifestSkillDirs;
+
+  /// Whether every install of this agent's skills was recorded in a manifest,
+  /// so that nothing unrecorded in its folders can be Somnio's.
+  ///
+  /// `uninstall --skills` then removes nothing by name from those folders, and
+  /// a global install keeps a directory of a skill's name that no manifest
+  /// records, unless it holds only the start of what the install would write.
+  /// Only for an agent first supported with the manifest whose folder may hold
+  /// the user's own skills in any form: the earlier agents keep their sweep for
+  /// the flat files their old releases wrote.
+  final bool installsOnlyWithManifest;
 
   /// The [InstallFormat] an earlier CLI release installed this agent's
   /// skills in, when that differs from [installFormat].

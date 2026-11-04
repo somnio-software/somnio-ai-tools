@@ -167,6 +167,7 @@ void main() {
       String? workingDirectory,
       String claudeConfigDir = '',
       String xdgConfigHome = '',
+      String kimiCodeHome = '',
     }) =>
         Process.run(
           Platform.resolvedExecutable,
@@ -180,6 +181,11 @@ void main() {
             'CLAUDE_CONFIG_DIR': claudeConfigDir,
             // Blank by default for the same reason (OpenCode's skills).
             'XDG_CONFIG_HOME': xdgConfigHome,
+            // And for Kimi Code's.
+            'KIMI_CODE_HOME': kimiCodeHome,
+            // Blank, so the skills.sh cleanup reads the fake home's lock and
+            // never the caller's.
+            'XDG_STATE_HOME': '',
             // Keep pub reading the real cache instead of creating one under
             // the fake home.
             'PUB_CACHE': _pubCache,
@@ -188,6 +194,136 @@ void main() {
 
     Future<ProcessResult> runUpdate(List<String> args) =>
         runSkills(['update', '--agent', 'claude', ...args]);
+
+    group('Kimi Code', () {
+      final skill = SkillRegistry.skills[0];
+      late String skills;
+      late File ownSkill;
+
+      setUp(() {
+        skills = p.join(home.path, '.kimi-code', 'skills');
+        // Named like a Somnio skill this run does not install, so only the
+        // manifest tells it from Somnio's own.
+        ownSkill = File(p.join(skills, _auditB, 'SKILL.md'));
+      });
+
+      void writeOwnSkill() => ownSkill
+        ..createSync(recursive: true)
+        ..writeAsStringSync('---\nname: $_auditB\ndescription: x\n---\n');
+
+      Future<void> install({String kimiCodeHome = ''}) async {
+        final result = await runSkills(
+          [
+            'install',
+            '--agent',
+            'kimi',
+            '--skills',
+            skill.id,
+            '--global',
+          ],
+          kimiCodeHome: kimiCodeHome,
+        );
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+      }
+
+      test('install writes the skill directory and no shared folder', () async {
+        await install();
+
+        expect(
+          File(p.join(skills, skill.name, 'SKILL.md')).existsSync(),
+          isTrue,
+        );
+        expect(Directory(p.join(home.path, '.agents')).existsSync(), isFalse);
+      });
+
+      test('install keeps a hand-written folder with the skill\'s name',
+          () async {
+        final own = File(p.join(skills, skill.name, 'SKILL.md'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('mine');
+        final notes = File(p.join(skills, skill.name, 'notes', 'n.md'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('mine');
+
+        final result = await runSkills(
+          ['install', '--agent', 'kimi', '--skills', skill.id, '--global'],
+        );
+
+        expect('${result.stdout}${result.stderr}', contains('kept'));
+        expect(own.readAsStringSync(), 'mine');
+        expect(notes.existsSync(), isTrue);
+        expect(SkillManifest.load(skills).entryFor(skill.name), isNull);
+      });
+
+      test('install finishes a copy killed part way', () async {
+        final killed = File(p.join(skills, skill.name, 'SKILL.md'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('');
+
+        await install();
+
+        expect(killed.readAsStringSync(), contains('name: ${skill.name}'));
+        expect(SkillManifest.load(skills).entryFor(skill.name), isNotNull);
+      });
+
+      test('skills remove --global keeps a hand-written skill folder',
+          () async {
+        await install();
+        writeOwnSkill();
+
+        final result = await runSkills(
+          ['remove', '--global', '--agent', 'kimi', '--force'],
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(Directory(p.join(skills, skill.name)).existsSync(), isFalse);
+        expect(ownSkill.existsSync(), isTrue);
+      });
+
+      test('uninstall --skills keeps a hand-written skill folder', () async {
+        await install();
+        writeOwnSkill();
+
+        removeAgentInstalls(home: home.path, environment: const {});
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: workDir,
+        );
+
+        expect(Directory(p.join(skills, skill.name)).existsSync(), isFalse);
+        expect(
+          File(p.join(skills, SkillManifest.fileName)).existsSync(),
+          isFalse,
+        );
+        expect(ownSkill.existsSync(), isTrue);
+      });
+
+      test('KIMI_CODE_HOME leaves the skills in ~/.kimi-code alone', () async {
+        await install();
+        final relocated = p.join(home.path, '.config', 'kimi-code');
+        await install(kimiCodeHome: relocated);
+
+        final result = await runSkills(
+          ['remove', '--global', '--agent', 'kimi', '--force'],
+          kimiCodeHome: relocated,
+        );
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: workDir,
+          environment: {'KIMI_CODE_HOME': relocated},
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(
+          Directory(p.join(relocated, 'skills', skill.name)).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(p.join(skills, skill.name, 'SKILL.md')).existsSync(),
+          isTrue,
+        );
+      });
+    });
 
     test('prints the updated skill names after the progress lines', () async {
       seedManifest({

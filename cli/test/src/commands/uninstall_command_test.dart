@@ -443,6 +443,97 @@ void main() {
       );
     });
 
+    group('Kimi Code, which no release wrote to before the manifest', () {
+      test("keeps the user's skill folders and reports them", () {
+        final skills = p.join(home.path, '.kimi-code', 'skills');
+        _writeSkill(skills, 'security-audit');
+        _writeSkill(skills, 'somnio-team-style');
+        _writeSkill(skills, 'my-own');
+        final warnings = <String>[];
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: const {},
+          onWarning: warnings.add,
+        );
+
+        for (final name in ['security-audit', 'somnio-team-style', 'my-own']) {
+          expect(
+            File(p.join(skills, name, 'SKILL.md')).existsSync(),
+            isTrue,
+            reason: name,
+          );
+        }
+        expect(warnings, hasLength(2));
+        expect(warnings, contains(contains('security-audit')));
+        expect(warnings, contains(contains('somnio-team-style')));
+      });
+
+      test('leaves ~/.kimi-code alone while KIMI_CODE_HOME relocates it', () {
+        final defaults = p.join(home.path, '.kimi-code', 'skills');
+        _writeFile(p.join(defaults, 'somnio-team-style.md'));
+        final warnings = <String>[];
+
+        removeAgentInstalls(
+          home: home.path,
+          environment: {
+            'KIMI_CODE_HOME': p.join(home.path, '.config', 'kimi-code'),
+          },
+          onWarning: warnings.add,
+        );
+
+        expect(
+          File(p.join(defaults, 'somnio-team-style.md')).existsSync(),
+          isTrue,
+        );
+        expect(warnings, isEmpty);
+      });
+
+      for (final (label, skillsDir, relocated) in [
+        ('~/.kimi-code/skills', ['.kimi-code', 'skills'], false),
+        ('\$KIMI_CODE_HOME/skills', ['.config', 'kimi-code', 'skills'], true),
+      ]) {
+        test('keeps the files and links of yours in $label and reports them',
+            () {
+          final skills = p.joinAll([home.path, ...skillsDir]);
+          const named = [
+            'somnio-team-style.md',
+            'somnio_notes.txt',
+            'security-audit',
+          ];
+          const unnamed = ['security-audit.md', 'security_audit.md'];
+          for (final name in [...named, ...unnamed]) {
+            _writeFile(p.join(skills, name));
+          }
+          Directory(p.join(skills, 'my-skill')).createSync();
+          final link = Link(p.join(skills, 'somnio-link'))
+            ..createSync('my-skill');
+          final warnings = <String>[];
+
+          removeAgentInstalls(
+            home: home.path,
+            environment: relocated
+                ? {'KIMI_CODE_HOME': p.join(home.path, '.config', 'kimi-code')}
+                : const {},
+            onWarning: warnings.add,
+          );
+
+          for (final name in [...named, ...unnamed]) {
+            expect(
+              File(p.join(skills, name)).existsSync(),
+              isTrue,
+              reason: name,
+            );
+          }
+          expect(link.existsSync(), isTrue);
+          expect(warnings, hasLength(4));
+          for (final name in [...named, 'somnio-link']) {
+            expect(warnings, contains(contains(p.join(skills, name))));
+          }
+        });
+      }
+    });
+
     group('an agent that wrote flat files before the manifest', () {
       // Gemini CLI's prefix is `somnio_`, the others' `somnio`.
       const agents = {

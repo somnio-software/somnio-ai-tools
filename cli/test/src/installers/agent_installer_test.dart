@@ -1409,6 +1409,33 @@ void main() {
       expect(
           result.targetDirectory, p.join(tmp.path, 'default-home', 'skills'));
     });
+
+    test('writes Kimi Code skills where KIMI_CODE_HOME points', () async {
+      // Kimi Code rejects a SKILL.md without `name` or `description`.
+      final bundle = _seedBundle(repoRoot);
+      final kimiHome = p.join(tmp.path, 'kimi-home');
+      final kimi = AgentRegistry.findById('kimi')!;
+      final environment = {'KIMI_CODE_HOME': kimiHome};
+      // The real entry resolves `{home}` at the user's home, so stop before
+      // writing anything if the override no longer applies.
+      expect(
+        kimi.resolvedInstallPath(home: '/unused', environment: environment),
+        p.join(kimiHome, 'skills'),
+      );
+
+      await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: kimi,
+        environment: environment,
+      ).install(bundles: [bundle]);
+
+      final skill = File(p.join(kimiHome, 'skills', bundle.name, 'SKILL.md'));
+      expect(
+        skill.readAsStringSync(),
+        matches(RegExp(r'^---\nname: flutter-health\ndescription: >-\n  \S')),
+      );
+    });
   });
 
   // ---------------------------------------------------------------------------

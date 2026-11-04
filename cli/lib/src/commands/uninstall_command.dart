@@ -687,7 +687,9 @@ bool _removeWorkflowInstall(
 /// when it looks like a Somnio install (see [_legacyKeepReason]), which a
 /// directory can only do in the default folder of an agent with
 /// [AgentConfig.hasPreManifestSkillDirs]; anything else is kept and reported
-/// to [onWarning]. Links are never followed.
+/// to [onWarning]. An agent with [AgentConfig.installsOnlyWithManifest] has
+/// every such entry kept and reported, files and links too. Links are never
+/// followed.
 bool _removeGenericInstall(
   AgentConfig agent,
   String home,
@@ -732,15 +734,17 @@ bool _removeGenericInstall(
           : InstalledSkillNames.matches(agent, name);
       if (!named) continue;
 
-      final keepReason = _legacyKeepReason(
-        entity,
-        location,
-        name,
-        markdownLayout: markdownLayout,
-        preManifestDirs: agent.hasPreManifestSkillDirs &&
-            realPathOf(location) ==
-                realPathOf(agent.resolvedInstallPath(home: home)),
-      );
+      final keepReason = agent.installsOnlyWithManifest
+          ? _unrecordedKeepReason
+          : _legacyKeepReason(
+              entity,
+              location,
+              name,
+              markdownLayout: markdownLayout,
+              preManifestDirs: agent.hasPreManifestSkillDirs &&
+                  realPathOf(location) ==
+                      realPathOf(agent.resolvedInstallPath(home: home)),
+            );
       if (keepReason != null) {
         onWarning?.call('Kept ${entity.path}: $keepReason.');
         continue;
@@ -764,6 +768,10 @@ bool _removeGenericInstall(
   );
   return removed;
 }
+
+const _unrecordedKeepReason =
+    'no manifest records it, so it is treated as your own; delete it by hand '
+    'if Somnio installed it';
 
 /// Whether [location] has a `.somnio-skills.json` manifest.
 bool _hasManifest(String location) =>
@@ -806,10 +814,7 @@ String? _legacyKeepReason(
         : 'it is a symlink to $target, outside $location';
   }
   if (entity is Directory) {
-    if (!preManifestDirs) {
-      return 'no manifest records it, so it is treated as your own; delete it '
-          'by hand if Somnio installed it';
-    }
+    if (!preManifestDirs) return _unrecordedKeepReason;
     final skillFile = File(p.join(entity.path, 'SKILL.md'));
     if (!skillFile.existsSync()) {
       return 'it has no SKILL.md identifying it as the Somnio skill $name';
