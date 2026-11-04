@@ -205,7 +205,9 @@ re-exports too. `grep` every module's files for a statement that
 republishes a kept package (an export directive naming it, `export ...
 from`, or the stack's equivalent: in Python, a package `__init__.py`
 importing names from the package, or a module listing them in
-`__all__`), and keep the files found. A plain `import` that the file
+`__all__`; in TypeScript or JavaScript also an import followed by a
+separate `export { name }`, `export default` or `module.exports =` of the
+imported name), and keep the files found. A plain `import` that the file
 only uses is not a re-export. Take each
 one's importers from `data/module_edges.tsv` (rows whose target file it
 is, with their modules). When an importer itself re-exports the kept file
