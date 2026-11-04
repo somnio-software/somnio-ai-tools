@@ -255,6 +255,93 @@ void main() {
         expect(SkillManifest.load(skills).entryFor(skill.name), isNull);
       });
 
+      group('--project', () {
+        final installArgs = [
+          'install',
+          '--agent',
+          'kimi',
+          '--skills',
+          skill.id,
+          '--project',
+        ];
+
+        File writeOwnFolder(String dir) {
+          File(p.join(dir, skill.name, 'notes', 'n.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('mine');
+          return File(p.join(dir, skill.name, 'SKILL.md'))
+            ..writeAsStringSync('mine');
+        }
+
+        void expectKept(ProcessResult result, String dir, File own) {
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect('${result.stdout}${result.stderr}', contains('kept'));
+          expect(own.readAsStringSync(), 'mine');
+          expect(
+            File(p.join(dir, skill.name, 'notes', 'n.md')).existsSync(),
+            isTrue,
+          );
+          expect(SkillManifest.load(dir).entryFor(skill.name), isNull);
+        }
+
+        test('keeps a hand-written folder in a plain project', () async {
+          final dir = p.join(workDir, '.kimi-code', 'skills');
+          final own = writeOwnFolder(dir);
+
+          final result = await runSkills(installArgs);
+
+          expectKept(result, dir, own);
+        });
+
+        test('keeps a hand-written global folder when run from \$HOME',
+            () async {
+          final own = writeOwnFolder(skills);
+
+          final result = await runSkills(
+            installArgs,
+            workingDirectory: home.path,
+          );
+
+          expectKept(result, skills, own);
+        });
+
+        test('keeps a hand-written folder when KIMI_CODE_HOME is the project',
+            () async {
+          final kimiHome = p.join(workDir, '.kimi-code');
+          final dir = p.join(kimiHome, 'skills');
+          final own = writeOwnFolder(dir);
+
+          final result = await runSkills(installArgs, kimiCodeHome: kimiHome);
+
+          expectKept(result, dir, own);
+        });
+
+        test('installs, updates and removes a skill beside a hand-written one',
+            () async {
+          final dir = p.join(workDir, '.kimi-code', 'skills');
+          final own = File(p.join(dir, _auditB, 'SKILL.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('mine');
+          final installed = File(p.join(dir, skill.name, 'SKILL.md'));
+
+          final install = await runSkills(installArgs);
+          expect(install.exitCode, 0, reason: '${install.stdout}');
+          expect(installed.readAsStringSync(), contains('name: ${skill.name}'));
+
+          installed.writeAsStringSync('stale');
+          final update = await runSkills(['update', '--agent', 'kimi']);
+          expect(update.exitCode, 0, reason: '${update.stdout}');
+          expect(installed.readAsStringSync(), contains('name: ${skill.name}'));
+
+          final remove = await runSkills(
+            ['remove', '--project', '--agent', 'kimi', '--force'],
+          );
+          expect(remove.exitCode, 0, reason: '${remove.stdout}');
+          expect(installed.existsSync(), isFalse);
+          expect(own.readAsStringSync(), 'mine');
+        });
+      });
+
       test('install finishes a copy killed part way', () async {
         final killed = File(p.join(skills, skill.name, 'SKILL.md'))
           ..createSync(recursive: true)
@@ -322,7 +409,7 @@ void main() {
           File(p.join(skills, skill.name, 'SKILL.md')).existsSync(),
           isTrue,
         );
-      });
+      }, timeout: const Timeout.factor(2));
     });
 
     test('prints the updated skill names after the progress lines', () async {

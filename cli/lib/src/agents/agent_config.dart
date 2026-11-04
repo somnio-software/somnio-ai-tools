@@ -213,12 +213,14 @@ class AgentConfig {
   /// even when its `SKILL.md` names a Somnio skill.
   final bool hasPreManifestSkillDirs;
 
-  /// Whether every install of this agent's skills was recorded in a manifest,
-  /// so that nothing unrecorded in its folders can be Somnio's.
+  /// Whether this agent's skills were only ever installed with a manifest, so
+  /// that anything unrecorded in its folders is treated as the user's.
   ///
-  /// `uninstall --skills` then removes nothing by name from those folders, and
-  /// a global install keeps a directory of a skill's name that no manifest
-  /// records, unless it holds only the start of what the install would write.
+  /// A killed install or a lost manifest can leave a Somnio copy unrecorded; it
+  /// is kept too, to delete by hand. `uninstall --skills` removes nothing by
+  /// name from those folders, and an install in any scope keeps a directory of
+  /// a skill's name that no manifest records, unless it holds only the start of
+  /// what the install would write.
   /// Only for an agent first supported with the manifest whose folder may hold
   /// the user's own skills in any form: the earlier agents keep their sweep for
   /// the flat files their old releases wrote.

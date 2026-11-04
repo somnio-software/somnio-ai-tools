@@ -288,11 +288,12 @@ class AgentInstaller extends Installer {
   /// skill of the same name in a folder the agent documents (OpenCode's
   /// `~/.config/opencode/skills`), which pruning would replace.
   ///
-  /// Only for an agent that moved its global folder (it has a
-  /// `legacyInstallPath`), since the folder it moved to is shared with other
-  /// tools, or that installs only with a manifest
-  /// ([AgentConfig.installsOnlyWithManifest]). In any other agent's folder a
-  /// directory of that name is replaced as before.
+  /// In every scope for an agent that installs only with a manifest
+  /// ([AgentConfig.installsOnlyWithManifest]), whose project folder can be its
+  /// global one. Otherwise only in the global scope of an agent that moved its
+  /// global folder (it has a `legacyInstallPath`), since the folder it moved to
+  /// is shared with other tools. Anywhere else a directory of that name is
+  /// replaced as before.
   ///
   /// [written] maps each path relative to [_installDir] to the content this
   /// run would write for the skill. A directory that holds nothing but
@@ -311,9 +312,9 @@ class AgentInstaller extends Installer {
   ) {
     if (agentConfig.installFormat != InstallFormat.skillDir ||
         !recordManifest ||
-        scope != InstallScope.global ||
-        (agentConfig.legacyInstallPath == null &&
-            !agentConfig.installsOnlyWithManifest) ||
+        (!agentConfig.installsOnlyWithManifest &&
+            (scope != InstallScope.global ||
+                agentConfig.legacyInstallPath == null)) ||
         manifest.entryFor(skill) != null) {
       return false;
     }
