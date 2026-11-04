@@ -13,8 +13,9 @@ class AgentRegistry {
   /// Agents that load skills as `<name>/SKILL.md` directories use
   /// [InstallFormat.skillDir]. Those installed as flat markdown before CLI
   /// 3.2.12 (files these agents never load), as Antigravity workflows before
-  /// 3.2.15, to a folder the agent never reads before 3.2.17, or into a rules
-  /// folder the agent adds to every request before 3.3.2, record that
+  /// 3.2.15, to a folder the agent never reads (or, for OpenCode, does not
+  /// document) before 3.2.17 or 3.3.3, or into a rules folder the agent adds
+  /// to every request before 3.3.2, record that
   /// in `legacyInstallFormat` / `legacyInstallPath` /
   /// `legacyExecutionRulesPath`, so update, remove and uninstall migrate or
   /// delete the old layout.
@@ -86,6 +87,7 @@ class AgentRegistry {
     configHomeVariable: 'CLAUDE_CONFIG_DIR',
     // `~/.claude` may be another account's live config directory.
     cleansDefaultConfigHome: false,
+    hasPreManifestSkillDirs: true,
     ruleExtension: '.md',
     tokenUsageParser: parseClaudeUsage,
     filePrefix: 'somnio-',
@@ -337,8 +339,16 @@ class AgentRegistry {
     promptFlag: '-p',
     outputFlags: ['-f', 'json'],
     installFormat: InstallFormat.skillDir,
-    installPath: '{home}/.opencode/skills',
+    // OpenCode's documented global skills folder, under its config folder
+    // `$XDG_CONFIG_HOME/opencode`. Releases before 3.3.3 wrote to
+    // `~/.opencode/skills`, which OpenCode only reads through undocumented
+    // config-folder discovery. The project folder stays `.opencode/skills`.
+    installPath: '{home}/.config/opencode/skills',
+    projectInstallPath: '{home}/.opencode/skills',
+    configHome: '{home}/.config',
+    configHomeVariable: 'XDG_CONFIG_HOME',
     legacyInstallFormat: InstallFormat.markdown,
+    legacyInstallPath: '{home}/.opencode/skills',
     legacyExecutionRulesPath: '{home}/.opencode/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://opencode.ai',

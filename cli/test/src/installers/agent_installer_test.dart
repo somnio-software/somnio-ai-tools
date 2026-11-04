@@ -10,6 +10,7 @@ import 'package:somnio/src/content/skill_bundle.dart';
 import 'package:somnio/src/content/workflow_skill.dart';
 import 'package:somnio/src/installers/agent_installer.dart';
 import 'package:somnio/src/installers/skill_manifest.dart';
+import 'package:somnio/src/utils/platform_utils.dart';
 import 'package:test/test.dart';
 import 'package:yaml/yaml.dart';
 
@@ -1941,6 +1942,844 @@ void main() {
             .existsSync(),
         isTrue,
       );
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Moved skill folder (OpenCode: ~/.opencode/skills -> ~/.config/opencode)
+  // ---------------------------------------------------------------------------
+  group('moved skill folder', () {
+    late String legacyDir;
+    late String legacyRulesDir;
+    late String installDir;
+
+    setUp(() {
+      legacyDir = p.join(tmp.path, 'opencode', 'skills');
+      legacyRulesDir = p.join(tmp.path, 'opencode', 'somnio_rules');
+      installDir = p.join(tmp.path, 'config', 'opencode', 'skills');
+    });
+
+    /// The skill-directory layout releases 3.2.12 to 3.3.2 wrote to the
+    /// old folder.
+    AgentConfig oldFolderAgent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.skillDir,
+          installPath: legacyDir,
+          legacyInstallFormat: InstallFormat.markdown,
+          legacyExecutionRulesPath: legacyRulesDir,
+        );
+
+    /// The flat-markdown layout releases before 3.2.12 wrote there.
+    AgentConfig flatMarkdownAgent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.markdown,
+          installPath: legacyDir,
+          executionRulesPath: legacyRulesDir,
+        );
+
+    /// The same agent after its move to the new folder.
+    AgentConfig movedAgent({String? legacyInstallPath}) => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.skillDir,
+          installPath: installDir,
+          legacyInstallFormat: InstallFormat.markdown,
+          legacyInstallPath: legacyInstallPath ?? legacyDir,
+          legacyExecutionRulesPath: legacyRulesDir,
+        );
+
+    /// The new folder with no old one to migrate from, which writes a full
+    /// copy of a skill that no manifest records.
+    AgentConfig newFolderOnlyAgent() => AgentConfig(
+          id: 'test-agent',
+          displayName: 'Test Agent',
+          installFormat: InstallFormat.skillDir,
+          installPath: installDir,
+        );
+
+    AgentInstaller installerFor(AgentConfig agent) => AgentInstaller(
+          logger: logger,
+          loader: loader,
+          agentConfig: agent,
+          environment: const {},
+        );
+
+    test('moves a skill directory from the old folder to the new one',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+
+      await installerFor(movedAgent()).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      expect(Directory(p.join(legacyDir, bundle.name)).existsSync(), isFalse);
+      expect(
+        File(p.join(legacyDir, SkillManifest.fileName)).existsSync(),
+        isFalse,
+        reason: 'the emptied legacy manifest is deleted',
+      );
+    });
+
+    test('moves a flat-markdown install and deletes its rules folder',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(flatMarkdownAgent()).install(bundles: [bundle]);
+      expect(Directory(legacyRulesDir).existsSync(), isTrue);
+
+      await installerFor(movedAgent()).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      expect(SkillManifest.load(legacyDir).isEmpty, isTrue);
+      expect(Directory(legacyRulesDir).existsSync(), isFalse);
+      expect(
+        Directory(legacyDir).listSync(),
+        isEmpty,
+        reason: 'the recorded flat file is deleted too',
+      );
+    });
+
+    test('leaves skills somnio did not install in the old folder', () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      _writeFile(legacyDir, 'my-skill/SKILL.md', 'THEIRS');
+
+      await installerFor(movedAgent()).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(legacyDir, 'my-skill', 'SKILL.md')).readAsStringSync(),
+        'THEIRS',
+      );
+    });
+
+    test("keeps the user's own skill of the same name in the new folder",
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      _writeFile(installDir, '${bundle.name}/SKILL.md', 'THEIRS');
+      _writeFile(installDir, '${bundle.name}/references/mine.md', 'MINE');
+
+      final result = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(result.skillCount, 0);
+      expect(result.skippedCount, 1);
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).readAsStringSync(),
+        'THEIRS',
+      );
+      expect(
+        File(p.join(installDir, bundle.name, 'references', 'mine.md'))
+            .readAsStringSync(),
+        'MINE',
+      );
+      expect(SkillManifest.load(installDir).isEmpty, isTrue);
+      expect(
+        SkillManifest.load(legacyDir).skillNames,
+        [bundle.name],
+        reason: 'the legacy entry stays, so a later run can still move it',
+      );
+      expect(
+        File(p.join(legacyDir, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      verify(() => logger.warn(any(that: contains('kept')))).called(1);
+
+      // Once the user's copy is out of the way, the next run moves it.
+      Directory(p.join(installDir, bundle.name)).deleteSync(recursive: true);
+      final again = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+      expect(again.skillCount, 1);
+      expect(Directory(p.join(legacyDir, bundle.name)).existsSync(), isFalse);
+    });
+
+    test('finishes a migration that was interrupted after the new copy',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      // The run died with the new copy half written and the old one
+      // deleted, before either manifest was saved.
+      await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: newFolderOnlyAgent(),
+        environment: const {},
+        recordManifest: false,
+      ).install(bundles: [bundle]);
+      Directory(p.join(installDir, bundle.name, 'references'))
+          .deleteSync(recursive: true);
+      Directory(p.join(legacyDir, bundle.name)).deleteSync(recursive: true);
+
+      final result = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(result.skillCount, 1);
+      expect(
+        File(p.join(installDir, bundle.name, 'references', 'architecture.md'))
+            .existsSync(),
+        isTrue,
+        reason: 'the missing file is written',
+      );
+      expect(SkillManifest.load(installDir).skillNames, [bundle.name]);
+      expect(SkillManifest.load(legacyDir).isEmpty, isTrue);
+    });
+
+    test("keeps the user's own skill once the old copy is gone", () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      _writeFile(installDir, '${bundle.name}/SKILL.md', 'THEIRS');
+      _writeFile(installDir, '${bundle.name}/extra.md', 'MINE');
+      Directory(p.join(legacyDir, bundle.name)).deleteSync(recursive: true);
+
+      final result = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(result.skillCount, 0);
+      expect(result.skippedCount, 1);
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).readAsStringSync(),
+        'THEIRS',
+      );
+      expect(
+        File(p.join(installDir, bundle.name, 'extra.md')).readAsStringSync(),
+        'MINE',
+      );
+      expect(SkillManifest.load(installDir).isEmpty, isTrue);
+      expect(
+        SkillManifest.load(legacyDir).skillNames,
+        [bundle.name],
+        reason: 'the entry stays while the folder is there',
+      );
+      verify(() => logger.warn(any(that: contains('kept')))).called(1);
+
+      // Every run keeps it, not just the first.
+      for (var i = 0; i < 2; i++) {
+        final again = await installerFor(movedAgent()).install(
+          bundles: [bundle],
+        );
+        expect(again.skillCount, 0);
+      }
+      expect(
+        File(p.join(installDir, bundle.name, 'extra.md')).readAsStringSync(),
+        'MINE',
+      );
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).readAsStringSync(),
+        'THEIRS',
+      );
+
+      // Once it is out of the way, the next run installs the skill.
+      Directory(p.join(installDir, bundle.name)).deleteSync(recursive: true);
+      final finished = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+      expect(finished.skillCount, 1);
+      expect(SkillManifest.load(legacyDir).isEmpty, isTrue);
+    });
+
+    test('finishes a copy killed part way, with the old copy still there',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: newFolderOnlyAgent(),
+        environment: const {},
+        recordManifest: false,
+      ).install(bundles: [bundle]);
+      // The kill left the last file empty and the references folder cut off.
+      File(p.join(installDir, bundle.name, 'references', 'architecture.md'))
+          .writeAsStringSync('');
+      File(p.join(installDir, bundle.name, 'assets', 'report-template.md'))
+          .deleteSync();
+
+      final result = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(result.skillCount, 1);
+      expect(result.skippedCount, 0);
+      expect(
+        File(p.join(installDir, bundle.name, 'references', 'architecture.md'))
+            .readAsStringSync(),
+        isNotEmpty,
+      );
+      expect(
+        File(p.join(installDir, bundle.name, 'assets', 'report-template.md'))
+            .existsSync(),
+        isTrue,
+      );
+      expect(Directory(p.join(legacyDir, bundle.name)).existsSync(), isFalse);
+      expect(SkillManifest.load(legacyDir).isEmpty, isTrue);
+    });
+
+    test('keeps a user folder with a binary file without failing', () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      Directory(p.join(installDir, bundle.name)).createSync(recursive: true);
+      File(p.join(installDir, bundle.name, 'logo.png'))
+          .writeAsBytesSync([0xff, 0xfe, 0x00, 0x80]);
+      Directory(p.join(legacyDir, bundle.name)).deleteSync(recursive: true);
+
+      final result = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(result.failedCount, 0);
+      expect(result.skippedCount, 1);
+      expect(
+        File(p.join(installDir, bundle.name, 'logo.png')).existsSync(),
+        isTrue,
+      );
+    });
+
+    test("keeps a user's folder with the skill's own files plus an extra one",
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      await AgentInstaller(
+        logger: logger,
+        loader: loader,
+        agentConfig: newFolderOnlyAgent(),
+        environment: const {},
+        recordManifest: false,
+      ).install(bundles: [bundle]);
+      _writeFile(installDir, '${bundle.name}/extra.md', 'MINE');
+      Directory(p.join(legacyDir, bundle.name)).deleteSync(recursive: true);
+
+      final result = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(result.skillCount, 0);
+      expect(
+        File(p.join(installDir, bundle.name, 'extra.md')).existsSync(),
+        isTrue,
+      );
+    });
+
+    group('a first-time install over a same-named folder', () {
+      void seedTheirs(String name) {
+        _writeFile(installDir, '$name/SKILL.md', 'THEIRS');
+        _writeFile(installDir, '$name/extra.md', 'MINE');
+      }
+
+      void expectTheirs(String name) {
+        expect(
+          File(p.join(installDir, name, 'SKILL.md')).readAsStringSync(),
+          'THEIRS',
+        );
+        expect(
+          File(p.join(installDir, name, 'extra.md')).readAsStringSync(),
+          'MINE',
+        );
+        expect(SkillManifest.load(installDir).isEmpty, isTrue);
+      }
+
+      test('A: keeps it with no legacy manifest at all', () async {
+        final bundle = _seedBundle(repoRoot);
+        seedTheirs(bundle.name);
+
+        for (var i = 0; i < 2; i++) {
+          final result = await installerFor(movedAgent()).install(
+            bundles: [bundle],
+          );
+          expect(result.skillCount, 0);
+          expect(result.skippedCount, 1);
+          expect(result.failedCount, 0);
+        }
+
+        expectTheirs(bundle.name);
+        verify(() => logger.warn(any(that: contains('kept')))).called(2);
+      });
+
+      test('B: keeps it once an uninstall cleared the legacy entry', () async {
+        final bundle = _seedBundle(repoRoot);
+        await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+        seedTheirs(bundle.name);
+        await installerFor(movedAgent()).install(bundles: [bundle]);
+        SkillManifest.load(legacyDir)
+          ..removeEntry(bundle.name)
+          ..save();
+
+        final result = await installerFor(movedAgent()).install(
+          bundles: [bundle],
+        );
+
+        expect(result.skillCount, 0);
+        expectTheirs(bundle.name);
+      });
+
+      test('C: keeps it when the legacy manifest records another skill',
+          () async {
+        final other = _seedBundle(repoRoot, name: 'other-skill');
+        final bundle = _seedBundle(repoRoot);
+        await installerFor(oldFolderAgent()).install(bundles: [other]);
+        seedTheirs(bundle.name);
+
+        final result = await installerFor(movedAgent()).install(
+          bundles: [bundle],
+        );
+
+        expect(result.skillCount, 0);
+        expectTheirs(bundle.name);
+        expect(SkillManifest.load(legacyDir).skillNames, [other.name]);
+      });
+
+      test('finishes a fresh install that was killed part way', () async {
+        final bundle = _seedBundle(repoRoot);
+        await AgentInstaller(
+          logger: logger,
+          loader: loader,
+          agentConfig: newFolderOnlyAgent(),
+          environment: const {},
+          recordManifest: false,
+        ).install(bundles: [bundle]);
+        File(p.join(installDir, bundle.name, 'SKILL.md'))
+            .writeAsStringSync('---\nname: flu');
+        File(p.join(installDir, bundle.name, 'assets', 'report-template.md'))
+            .deleteSync();
+
+        final result = await installerFor(movedAgent()).install(
+          bundles: [bundle],
+        );
+
+        expect(result.skillCount, 1);
+        expect(SkillManifest.load(installDir).skillNames, [bundle.name]);
+        expect(
+          File(p.join(installDir, bundle.name, 'SKILL.md')).readAsStringSync(),
+          contains('Plan body.'),
+        );
+      });
+
+      test('keeps a folder with a subfolder that cannot be listed', () async {
+        final bundle = _seedBundle(repoRoot);
+        seedTheirs(bundle.name);
+        _writeFile(installDir, '${bundle.name}/private/notes.md', 'MINE');
+        final hidden = p.join(installDir, bundle.name, 'private');
+        Process.runSync('chmod', ['000', hidden]);
+        addTearDown(() => Process.runSync('chmod', ['755', hidden]));
+
+        final result = await installerFor(movedAgent()).install(
+          bundles: [bundle],
+        );
+
+        expect(result.failedCount, 0);
+        expect(result.skippedCount, 1);
+        expectTheirs(bundle.name);
+      }, testOn: 'posix');
+
+      group('workflow skills', () {
+        WorkflowSkill seedWorkflow(String name) {
+          _writeFile(repoRoot, 'skills/$name/SKILL.md', '# Workflow\n\nBody.');
+          return WorkflowSkill(
+            id: name.replaceAll('-', '_'),
+            name: name,
+            displayName: 'Workflow Builder',
+            description: 'Builds workflows.',
+            planRelativePath: 'skills/$name/SKILL.md',
+          );
+        }
+
+        void expectKept(int installed, int failed, String name) {
+          expect(installed, 0);
+          expect(failed, 0);
+          expectTheirs(name);
+        }
+
+        test('A: keeps it with no legacy manifest at all', () {
+          final skill = seedWorkflow('workflow-builder');
+          seedTheirs(skill.name);
+
+          final counts =
+              installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+
+          expectKept(counts.installed, counts.failed, skill.name);
+        });
+
+        test('B: keeps it once an uninstall cleared the legacy entry', () {
+          final skill = seedWorkflow('workflow-builder');
+          installerFor(oldFolderAgent()).installWorkflowSkillsDetailed([skill]);
+          seedTheirs(skill.name);
+          installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+          SkillManifest.load(legacyDir)
+            ..removeEntry(skill.name)
+            ..save();
+
+          final counts =
+              installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+
+          expectKept(counts.installed, counts.failed, skill.name);
+        });
+
+        test('C: keeps it when the legacy manifest records another skill', () {
+          final other = seedWorkflow('other-workflow');
+          final skill = seedWorkflow('workflow-builder');
+          installerFor(oldFolderAgent()).installWorkflowSkillsDetailed([other]);
+          seedTheirs(skill.name);
+
+          final counts =
+              installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+
+          expectKept(counts.installed, counts.failed, skill.name);
+          expect(SkillManifest.load(legacyDir).skillNames, [other.name]);
+        });
+      });
+    });
+
+    test('finishes a move whose first run could not delete the old copy',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      final undeletable = p.join(legacyDir, bundle.name, 'references');
+      Process.runSync('chmod', ['555', undeletable]);
+      addTearDown(() => Process.runSync('chmod', ['755', undeletable]));
+
+      final first = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(first.failedCount, 1);
+      expect(
+        SkillManifest.load(legacyDir).skillNames,
+        [bundle.name],
+        reason: 'the entry stays while the old copy is not fully deleted',
+      );
+
+      Process.runSync('chmod', ['755', undeletable]);
+      final second = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(second.skillCount, 1);
+      expect(second.failedCount, 0);
+      expect(Directory(p.join(legacyDir, bundle.name)).existsSync(), isFalse);
+      expect(SkillManifest.load(legacyDir).isEmpty, isTrue);
+      expect(SkillManifest.load(installDir).skillNames, [bundle.name]);
+    }, testOn: 'posix');
+
+    group('workflow skills', () {
+      WorkflowSkill seedWorkflow() {
+        _writeFile(
+          repoRoot,
+          'skills/workflow-builder/SKILL.md',
+          '# Workflow\n\nBody.',
+        );
+        return const WorkflowSkill(
+          id: 'workflow_builder',
+          name: 'workflow-builder',
+          displayName: 'Workflow Builder',
+          description: 'Builds workflows.',
+          planRelativePath: 'skills/workflow-builder/SKILL.md',
+        );
+      }
+
+      test("keeps the user's own skill of the same name in the new folder",
+          () async {
+        final skill = seedWorkflow();
+        installerFor(oldFolderAgent()).installWorkflowSkillsDetailed([skill]);
+        _writeFile(installDir, '${skill.name}/SKILL.md', 'THEIRS');
+
+        final counts =
+            installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+
+        expect(counts.installed, 0);
+        expect(
+          File(p.join(installDir, skill.name, 'SKILL.md')).readAsStringSync(),
+          'THEIRS',
+        );
+        expect(SkillManifest.load(installDir).isEmpty, isTrue);
+        expect(SkillManifest.load(legacyDir).skillNames, [skill.name]);
+        expect(
+          File(p.join(legacyDir, skill.name, 'SKILL.md')).existsSync(),
+          isTrue,
+        );
+        verify(() => logger.warn(any(that: contains('kept')))).called(1);
+
+        Directory(p.join(installDir, skill.name)).deleteSync(recursive: true);
+        final again =
+            installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+        expect(again.installed, 1);
+        expect(Directory(p.join(legacyDir, skill.name)).existsSync(), isFalse);
+      });
+
+      test("keeps the user's skill once the old copy is gone", () async {
+        final skill = seedWorkflow();
+        installerFor(oldFolderAgent()).installWorkflowSkillsDetailed([skill]);
+        Directory(p.join(legacyDir, skill.name)).deleteSync(recursive: true);
+        _writeFile(installDir, '${skill.name}/SKILL.md', 'THEIRS');
+
+        final kept =
+            installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+
+        expect(kept.installed, 0);
+        expect(
+          File(p.join(installDir, skill.name, 'SKILL.md')).readAsStringSync(),
+          'THEIRS',
+        );
+        expect(SkillManifest.load(legacyDir).skillNames, [skill.name]);
+
+        final again =
+            installerFor(movedAgent()).installWorkflowSkillsDetailed([skill]);
+        expect(again.installed, 0);
+        expect(
+          File(p.join(installDir, skill.name, 'SKILL.md')).readAsStringSync(),
+          'THEIRS',
+        );
+      });
+    });
+
+    test('replaces a skills.sh link in the new folder', () async {
+      final bundle = _seedBundle(repoRoot);
+      await installerFor(oldFolderAgent()).install(bundles: [bundle]);
+      Directory(installDir).createSync(recursive: true);
+      Link(p.join(installDir, bundle.name)).createSync(
+        p.join(PlatformUtils.homeDirectory, '.agents', 'skills', bundle.name),
+      );
+
+      final result = await installerFor(movedAgent()).install(
+        bundles: [bundle],
+      );
+
+      expect(result.skillCount, 1);
+      expect(
+        FileSystemEntity.isLinkSync(p.join(installDir, bundle.name)),
+        isFalse,
+      );
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+    });
+
+    test('keeps the install when the old folder links to the new one',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      Directory(installDir).createSync(recursive: true);
+      final linkedDir = p.join(tmp.path, 'linked', 'skills');
+      Link(linkedDir).createSync(installDir, recursive: true);
+      final agent = movedAgent(legacyInstallPath: linkedDir);
+      await installerFor(agent).install(bundles: [bundle]);
+
+      await installerFor(agent).install(bundles: [bundle]);
+
+      expect(
+        File(p.join(installDir, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      expect(SkillManifest.load(installDir).skillNames, [bundle.name]);
+    });
+
+    test('keeps a project install whose folder is also the legacy one',
+        () async {
+      final bundle = _seedBundle(repoRoot);
+      final project = p.join(tmp.path, 'project');
+      const agent = AgentConfig(
+        id: 'test-agent',
+        displayName: 'Test Agent',
+        installFormat: InstallFormat.skillDir,
+        installPath: '{home}/.config/opencode/skills',
+        projectInstallPath: '{home}/.opencode/skills',
+        legacyInstallFormat: InstallFormat.markdown,
+        legacyInstallPath: '{home}/.opencode/skills',
+        legacyExecutionRulesPath: '{home}/.opencode/somnio_rules',
+      );
+      AgentInstaller projectInstaller() => AgentInstaller(
+            logger: logger,
+            loader: loader,
+            agentConfig: agent,
+            scope: InstallScope.project,
+            projectRoot: project,
+            environment: const {},
+          );
+      await projectInstaller().install(bundles: [bundle]);
+
+      final result = await projectInstaller().install(bundles: [bundle]);
+
+      final projectSkills = p.join(project, '.opencode', 'skills');
+      expect(result.targetDirectory, projectSkills);
+      expect(
+        File(p.join(projectSkills, bundle.name, 'SKILL.md')).existsSync(),
+        isTrue,
+      );
+      expect(SkillManifest.load(projectSkills).skillNames, [bundle.name]);
+    });
+  });
+
+  group('ownLegacyInstallDir for OpenCode', () {
+    late String home;
+    late String project;
+    late AgentConfig opencode;
+
+    setUp(() {
+      home = p.join(tmp.path, 'home');
+      project = p.join(tmp.path, 'project');
+      Directory(project).createSync(recursive: true);
+      opencode = AgentRegistry.findById('opencode')!;
+    });
+
+    /// Links OpenCode's legacy `~/.opencode/skills` to [target].
+    void linkLegacyTo(String target) {
+      Directory(target).createSync(recursive: true);
+      Link(p.join(home, '.opencode', 'skills'))
+          .createSync(target, recursive: true);
+    }
+
+    String? legacyDir([Map<String, String> environment = const {}]) =>
+        AgentInstaller.ownLegacyInstallDir(
+          opencode,
+          scope: InstallScope.global,
+          home: home,
+          projectRoot: project,
+          environment: environment,
+        );
+
+    test('is ~/.opencode/skills for a real folder of its own', () {
+      Directory(p.join(home, '.opencode', 'skills'))
+          .createSync(recursive: true);
+
+      expect(legacyDir(), p.join(home, '.opencode', 'skills'));
+    });
+
+    test('is its own folder while CLAUDE_CONFIG_DIR relocates Claude Code', () {
+      Directory(p.join(home, '.opencode', 'skills'))
+          .createSync(recursive: true);
+
+      expect(
+        legacyDir({'CLAUDE_CONFIG_DIR': p.join(home, '.claude-work')}),
+        p.join(home, '.opencode', 'skills'),
+      );
+    });
+
+    test("is null for a folder linked to Claude Code's skills", () {
+      linkLegacyTo(p.join(home, '.claude', 'skills'));
+
+      expect(legacyDir(), isNull);
+    });
+
+    test("is null for a link to the default ~/.claude while it's relocated",
+        () {
+      linkLegacyTo(p.join(home, '.claude', 'skills'));
+
+      expect(
+        legacyDir({'CLAUDE_CONFIG_DIR': p.join(home, '.claude-work')}),
+        isNull,
+      );
+    });
+
+    test('is null for a folder linked to its own install folder', () {
+      linkLegacyTo(p.join(home, '.config', 'opencode', 'skills'));
+
+      expect(legacyDir(), isNull);
+    });
+  });
+  group('preManifestLegacyWarning for OpenCode', () {
+    late String home;
+    late String project;
+    late String legacy;
+    late AgentConfig opencode;
+
+    setUp(() {
+      home = p.join(tmp.path, 'home');
+      project = p.join(tmp.path, 'project');
+      legacy = p.join(home, '.opencode', 'skills');
+      Directory(project).createSync(recursive: true);
+      opencode = AgentRegistry.findById('opencode')!;
+    });
+
+    String? warning({
+      InstallScope scope = InstallScope.global,
+      Map<String, String> environment = const {},
+    }) =>
+        AgentInstaller.preManifestLegacyWarning(
+          opencode,
+          scope: scope,
+          home: home,
+          projectRoot: project,
+          environment: environment,
+        );
+
+    test('lists only files with a skill\'s exact name and header', () {
+      _writeFile(
+        legacy,
+        'flutter_health_audit.md',
+        '# Flutter Project Health Audit\n\n> Audits a Flutter project.\n',
+      );
+      _writeFile(legacy, 'security_audit.md', 'x');
+      _writeFile(
+        legacy,
+        'somnio-team.md',
+        '# Flutter Project Health Audit\n\n> Audits a Flutter project.\n',
+      );
+      _writeFile(legacy, 'notes.md', 'THEIRS');
+
+      final text = warning();
+
+      expect(text, contains('OpenCode: $legacy still holds 1 Somnio'));
+      expect(text, endsWith('delete them by hand: flutter_health_audit.md.'));
+    });
+
+    test('is quiet when the folder holds no such file', () {
+      _writeFile(legacy, 'security_audit.md', 'x');
+
+      expect(warning(), isNull);
+    });
+
+    test('is quiet when a manifest records the folder', () {
+      _writeFile(
+        legacy,
+        'flutter_health_audit.md',
+        '# Flutter Project Health Audit\n\n> Audits a Flutter project.\n',
+      );
+      SkillManifest.load(legacy)
+        ..record(
+          skill: 'flutter-health-audit',
+          kind: 'audit',
+          paths: const [ManifestPath(ManifestRoot.install, 'x')],
+        )
+        ..save();
+
+      expect(warning(), isNull);
+    });
+
+    test('is quiet for a folder linked to another agent\'s skills', () {
+      final claudeSkills = p.join(home, '.claude', 'skills');
+      _writeFile(
+        claudeSkills,
+        'flutter_health_audit.md',
+        '# Flutter Project Health Audit\n\n> Audits a Flutter project.\n',
+      );
+      Link(legacy).createSync(claudeSkills, recursive: true);
+
+      expect(warning(), isNull);
+      expect(
+        warning(
+            environment: {'CLAUDE_CONFIG_DIR': p.join(home, '.claude-work')}),
+        isNull,
+      );
+    });
+
+    test('is quiet in the project scope, where the old folder is the new one',
+        () {
+      _writeFile(
+        project,
+        '.opencode/skills/flutter_health_audit.md',
+        '# Flutter Project Health Audit\n\n> Audits a Flutter project.\n',
+      );
+
+      expect(warning(scope: InstallScope.project), isNull);
     });
   });
 }
