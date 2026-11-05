@@ -408,6 +408,279 @@ void main() {
       );
     }
 
+    test('blocks legacy Clockify without writing a replacement or manifest',
+        () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final legacy = File(p.join(base.path, 'clockify-tracker.md'))
+        ..writeAsStringSync('custom');
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.failed, 1);
+      expect(legacy.readAsStringSync(), 'custom');
+      expect(File(p.join(base.path, 'clockify', 'SKILL.md')).existsSync(),
+          isFalse);
+      expect(File(p.join(base.path, SkillManifest.fileName)).existsSync(),
+          isFalse);
+    });
+
+    test('a blocked Clockify install does not block unrelated skills', () {
+      final clockify = seedWorkflow(name: 'clockify');
+      final other = seedWorkflow(name: 'workflow-builder');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final legacy = File(p.join(base.path, 'clockify-tracker.md'))
+        ..writeAsStringSync('custom');
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([clockify, other]);
+
+      expect(result.failedNames, ['clockify']);
+      expect(result.installedNames, ['workflow-builder']);
+      expect(legacy.readAsStringSync(), 'custom');
+      expect(File(p.join(base.path, 'clockify', 'SKILL.md')).existsSync(),
+          isFalse);
+      expect(
+          File(p.join(base.path, 'workflow-builder', 'SKILL.md')).existsSync(),
+          isTrue);
+    });
+
+    test('retires stale manifest metadata after successful replacement', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      SkillManifest.load(base.path)
+        ..record(
+          skill: 'clockify-tracker',
+          kind: 'workflow',
+          paths: [ManifestPath(ManifestRoot.install, 'clockify-tracker.md')],
+        )
+        ..save();
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+      final updated = SkillManifest.load(base.path);
+
+      expect(result.installed, 1);
+      expect(updated.entryFor('clockify-tracker'), isNull);
+      expect(updated.entryFor('clockify'), isNotNull);
+      expect(
+          File(p.join(base.path, 'clockify', 'SKILL.md')).existsSync(), isTrue);
+    });
+
+    test('preserves malformed manifest before loading or saving', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final manifest = File(p.join(base.path, SkillManifest.fileName))
+        ..writeAsStringSync('{invalid');
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.failed, 1);
+      expect(manifest.readAsStringSync(), '{invalid');
+      expect(Directory(p.join(base.path, 'clockify')).existsSync(), isFalse);
+    });
+
+    test('preserves a symlinked manifest and its target', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final target = File(p.join(tmp.path, 'external.json'))
+        ..writeAsStringSync('{"version":1,"skills":{}}');
+      final link = Link(p.join(base.path, SkillManifest.fileName))
+        ..createSync(target.path);
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.failed, 1);
+      expect(link.existsSync(), isTrue);
+      expect(target.readAsStringSync(), '{"version":1,"skills":{}}');
+      expect(Directory(p.join(base.path, 'clockify')).existsSync(), isFalse);
+    });
+
+    test('preserves an existing independently installed Clockify skill', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final existing = Directory(p.join(base.path, 'clockify'))..createSync();
+      final extra = File(p.join(existing.path, 'custom.txt'))
+        ..writeAsStringSync('custom');
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.failed, 1);
+      expect(extra.readAsStringSync(), 'custom');
+      expect(File(p.join(base.path, SkillManifest.fileName)).existsSync(),
+          isFalse);
+    });
+
+    test('preserves unexpected paths recorded for the current skill', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final custom = File(p.join(base.path, 'custom.md'))
+        ..writeAsStringSync('custom');
+      SkillManifest.load(base.path)
+        ..record(
+          skill: 'clockify',
+          kind: 'workflow',
+          paths: [ManifestPath(ManifestRoot.install, 'custom.md')],
+        )
+        ..save();
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.failed, 1);
+      expect(custom.readAsStringSync(), 'custom');
+      expect(Directory(p.join(base.path, 'clockify')).existsSync(), isFalse);
+      expect(
+          SkillManifest.load(base.path).entryFor('clockify')!.paths.single.path,
+          'custom.md');
+    });
+
+    test('blocks the selected project legacy command without changing it', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final project = Directory(p.join(tmp.path, 'project'))..createSync();
+      final command = File(
+          p.join(project.path, '.claude', 'commands', 'clockify-tracker.md'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('custom command');
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: p.join(tmp.path, 'home'),
+        projectRoot: project.path,
+        agentConfig: AgentConfig(
+          id: 'claude',
+          displayName: 'Claude',
+          installFormat: InstallFormat.skillDir,
+          installPath: p.join(tmp.path, 'install'),
+        ),
+      );
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.failed, 1);
+      expect(command.readAsStringSync(), 'custom command');
+      expect(Directory(p.join(tmp.path, 'install', 'clockify')).existsSync(),
+          isFalse);
+    });
+
+    test('reuses an identical owned Clockify skill without overwriting', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+      expect(installer.installWorkflowSkillsDetailed([skill]).installed, 1);
+      final file = File(p.join(base.path, 'clockify', 'SKILL.md'));
+      final original = file.readAsStringSync();
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.installed, 1);
+      expect(file.readAsStringSync(), original);
+    });
+
+    test('preserves an owned Clockify skill modified after installation', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+      expect(installer.installWorkflowSkillsDetailed([skill]).installed, 1);
+      final extra = File(p.join(base.path, 'clockify', 'custom.txt'))
+        ..writeAsStringSync('custom');
+
+      final result = installer.installWorkflowSkillsDetailed([skill]);
+
+      expect(result.failed, 1);
+      expect(extra.readAsStringSync(), 'custom');
+    });
+
+    test('preserves the Bash-only restriction on Clockify', () {
+      final skill = seedWorkflow(name: 'clockify');
+      _writeFile(repoRoot, 'skills/clockify/SKILL.md',
+          '---\ndescription: Clockify\nallowed-tools: ["Bash"]\n---\n\n# Clockify');
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.skillDir),
+      );
+      expect(installer.installWorkflowSkillsDetailed([skill]).installed, 1);
+      final output = File(p.join(tmp.path, 'install', 'clockify', 'SKILL.md'))
+          .readAsStringSync();
+      expect(output, contains('allowed-tools: Bash\n'));
+      expect(output, isNot(contains('allowed-tools: Read')));
+    });
+
+    test('blocks formats that cannot preserve tool restrictions', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      for (final format in [
+        InstallFormat.singleFile,
+        InstallFormat.workflow,
+        InstallFormat.markdown
+      ]) {
+        for (final scope in [InstallScope.global, InstallScope.project]) {
+          final installer = AgentInstaller(
+            logger: logger,
+            loader: loader,
+            home: tmp.path,
+            projectRoot: tmp.path,
+            scope: scope,
+            agentConfig: agentFor(format: format),
+          );
+          final result = installer.installWorkflowSkillsDetailed([skill]);
+          expect(result.failed, 1, reason: '$format $scope');
+          expect(base.listSync(), isEmpty, reason: '$format $scope');
+        }
+      }
+    });
+
     group('symlinked skill directory', () {
       late Directory shared;
       late String target;

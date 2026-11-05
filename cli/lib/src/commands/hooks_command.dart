@@ -118,7 +118,7 @@ exit 0
       'it in ~/.claude/settings.json (\$CLAUDE_CONFIG_DIR instead of\n'
       '~/.claude when set). After each Claude Code session turn, the hook\n'
       'appends a 2-3 sentence summary to ~/.work-log/YYYY-MM-DD.md which\n'
-      'the clockify-tracker skill can use to auto-fill time entries.';
+      'you can review independently of time tracking.';
 
   @override
   Future<int> run() async {
@@ -191,11 +191,6 @@ exit 0
     _logger.info('');
     _logger.success(
       'Hook active — summaries will appear in ~/.work-log/ after each turn.',
-    );
-    _logger.info('');
-    _logger.info(
-      'Use ${lightCyan.wrap('/clockify-tracker')} with "use logs" to '
-      'auto-fill Clockify from those summaries.',
     );
     _logger.info('');
 

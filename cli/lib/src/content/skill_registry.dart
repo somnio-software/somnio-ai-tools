@@ -408,14 +408,11 @@ class SkillRegistry {
   /// Installed to all agents as slash commands.
   static const List<WorkflowSkill> workflowSkills = [
     WorkflowSkill(
-      id: 'clockify_tracker',
-      name: 'clockify-tracker',
-      displayName: 'Clockify Tracker',
-      description:
-          'Manages Clockify time tracking via the official Clockify REST '
-          'API (v1): list workspaces and projects, create time entries '
-          'with correct UTC timestamps.',
-      planRelativePath: 'skills/clockify-tracker/SKILL.md',
+      id: 'clockify',
+      name: 'clockify',
+      displayName: 'Clockify',
+      description: 'Read hours and safely log time with explicit accounts.',
+      planRelativePath: 'skills/clockify/SKILL.md',
     ),
     WorkflowSkill(
       id: 'git_commit_format',

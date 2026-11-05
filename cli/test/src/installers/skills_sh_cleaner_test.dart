@@ -105,6 +105,27 @@ void main() {
   });
 
   group('SkillsShCleaner', () {
+    test('preserves modified retired Clockify skills and lock entries', () {
+      _writeLock(lockPath,
+          _lockWith({'clockify-tracker': _entry('clockify-tracker')}));
+      final dir =
+          Directory(p.join(home, '.agents', 'skills', 'clockify-tracker'))
+            ..createSync(recursive: true);
+      final custom = File(p.join(dir.path, 'custom.txt'))
+        ..writeAsStringSync('custom');
+      final before = File(lockPath).readAsStringSync();
+      final c = cleaner();
+
+      final plan = c.plan();
+      final result = c.apply(plan);
+
+      expect(plan.skills, isEmpty);
+      expect(plan.warnings, contains(contains('clockify-tracker')));
+      expect(result.removedSkills, isEmpty);
+      expect(custom.readAsStringSync(), 'custom');
+      expect(File(lockPath).readAsStringSync(), before);
+    });
+
     test('defaults to the user home directory', () {
       expect(SkillsShCleaner().homeDirectory, PlatformUtils.homeDirectory);
     });

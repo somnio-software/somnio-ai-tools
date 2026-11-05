@@ -71,6 +71,12 @@ void main() {
       );
     });
 
+    test('does not claim unsupported Clockify files', () {
+      expect(InstalledSkillNames.matches(cursor, 'clockify.md'), isFalse);
+      expect(InstalledSkillNames.matches(copilot, 'clockify.md'), isFalse);
+      expect(InstalledSkillNames.matches(codex, 'clockify.md'), isFalse);
+    });
+
     test('markdown underscores the bundle name', () {
       expect(
         InstalledSkillNames.basenamesFor(copilot),
@@ -158,7 +164,7 @@ void main() {
         () {
       final dir = Directory.systemTemp.createTempSync('markdown_header_test_');
       addTearDown(() => dir.deleteSync(recursive: true));
-      AgentInstaller(
+      final result = AgentInstaller(
         logger: _MockLogger(),
         loader: loader,
         agentConfig: AgentConfig(
@@ -175,7 +181,8 @@ void main() {
           .whereType<File>()
           .where((file) => file.path.endsWith('.md'))
           .toList();
-      expect(files, hasLength(SkillRegistry.workflowSkills.length));
+      expect(result.failedNames, ['clockify']);
+      expect(files, hasLength(SkillRegistry.workflowSkills.length - 1));
       for (final file in files) {
         final name = p.basename(file.path);
         expect(

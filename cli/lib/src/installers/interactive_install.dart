@@ -135,6 +135,8 @@ class InteractiveInstall {
         logger: _logger,
         loader: loader,
         agentConfig: agent,
+        protectClockify:
+            selection.workflow.any((skill) => skill.name == 'clockify'),
       );
 
       final result = await installer.install(bundles: selection.audit);

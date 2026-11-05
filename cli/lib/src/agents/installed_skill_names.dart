@@ -52,9 +52,13 @@ class InstalledSkillNames {
 
   static Set<String> _basenamesIn(InstallFormat format) => switch (format) {
         InstallFormat.skillDir => all.toSet(),
-        InstallFormat.singleFile => {for (final name in all) '$name.md'},
+        InstallFormat.singleFile => {
+            for (final name in all.where((name) => name != 'clockify'))
+              '$name.md'
+          },
         InstallFormat.markdown => {
-            for (final name in all) '${name.replaceAll('-', '_')}.md',
+            for (final name in all.where((name) => name != 'clockify'))
+              '${name.replaceAll('-', '_')}.md',
           },
         InstallFormat.workflow => const <String>{},
       };

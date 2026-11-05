@@ -19,6 +19,11 @@ String _repoRoot() {
 }
 
 void main() {
+  test('registers only the CLI-backed Clockify workflow', () {
+    expect(SkillRegistry.findWorkflowById('clockify')?.name, 'clockify');
+    expect(SkillRegistry.findWorkflowById('clockify_tracker'), isNull);
+  });
+
   group('SkillRegistry.findWorkflowById', () {
     test('resolves a workflow skill by id', () {
       final skill = SkillRegistry.findWorkflowById('git_commit_format');

@@ -13,6 +13,7 @@ import '../content/skill_registry.dart';
 import '../content/workflow_skill.dart';
 import '../installers/agent_installer.dart';
 import '../installers/interactive_install.dart';
+import '../installers/legacy_clockify_guard.dart';
 import '../installers/skill_manifest.dart';
 import '../installers/skills_sh_cleaner.dart';
 import '../installers/skills_sh_cleanup_flow.dart';
@@ -388,6 +389,8 @@ class _SkillsInstallCommand extends Command<int> {
         agentConfig: agent,
         scope: effectiveScope,
         projectRoot: Directory.current.path,
+        protectClockify:
+            selection.workflow.any((skill) => skill.name == 'clockify'),
       );
 
       final result = await installer.install(bundles: selection.audit);
@@ -602,6 +605,8 @@ class _SkillsUpdateCommand extends Command<int> {
         agentConfig: unit.agent,
         scope: unit.scope,
         projectRoot: Directory.current.path,
+        protectClockify:
+            unit.selection.workflow.any((skill) => skill.name == 'clockify'),
       );
 
       final result = await installer.install(bundles: unit.selection.audit);
@@ -695,6 +700,13 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
   }
 
   for (final agent in agents) {
+    final clockifyProtectedRoots = [
+      for (final path in agent.resolvedProtectedInstallPaths(
+        home: home,
+        environment: environment,
+      ))
+        p.dirname(path),
+    ];
     final scopes = [
       InstallScope.global,
       if (agent.supportsProjectScope) InstallScope.project,
@@ -750,6 +762,42 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
         projectRoot: projectRoot,
         environment: environment,
       );
+      final rulesDir = agent.resolvedScopedExecutionRulesPath(
+        scope: scope,
+        home: home,
+        projectRoot: projectRoot,
+        environment: environment,
+      );
+      try {
+        LegacyClockifyGuard.verifyManifests(
+          installRoot: dir,
+          rulesRoot: rulesDir,
+          legacyInstallRoot: legacyDir,
+          protectedRoots: clockifyProtectedRoots,
+        );
+      } catch (e) {
+        onWarning?.call('  Cannot safely inspect skill manifests: $e');
+        continue;
+      }
+      Object? clockifyConflict;
+      try {
+        LegacyClockifyGuard.check(
+          installRoot: dir,
+          rulesRoot: rulesDir,
+          home: home,
+          legacyInstallRoot: legacyDir,
+          protectedRoots: clockifyProtectedRoots,
+          projectCommandDir: LegacyClockifyGuard.projectCommandDir(
+            agent.id,
+            projectRoot,
+            home,
+            protectedRoots: clockifyProtectedRoots,
+          ),
+        );
+      } catch (e) {
+        clockifyConflict = e;
+        onWarning?.call('  Clockify migration blocked: $e');
+      }
       final entries = {
         if (legacyDir != null && seen.add(realPathOf(legacyDir)))
           for (final entry in SkillManifest.load(legacyDir).entries)
@@ -775,12 +823,18 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
 
       for (final entry in entries.values) {
         if (entry.kind == 'workflow') {
-          final wf = _findWorkflowByName(entry.skill);
+          var wf = _findWorkflowByName(entry.skill);
+          if (entry.skill == 'clockify-tracker') {
+            if (clockifyConflict != null) continue;
+            wf = _findWorkflowByName('clockify');
+          }
           if (wf == null) {
             warnOrphaned(agent, scope, entry.skill);
             continue;
           }
-          workflow.add(wf);
+          if (!workflow.any((skill) => skill.name == wf!.name)) {
+            workflow.add(wf);
+          }
         } else {
           final bundle = _findAuditByName(entry.skill);
           if (bundle == null) {

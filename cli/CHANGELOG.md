@@ -5,6 +5,15 @@ All notable changes to the Somnio CLI will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [4.0.0] - 2026-11-05
+
+### Breaking changes
+
+- Replace the legacy Clockify tracker and command with a CLI-backed `clockify` skill.
+  It requires the separately installed, account-explicit Clockify CLI; automatic
+  work-log import is no longer provided. Existing legacy files are preserved and must
+  be inspected and removed by their owner before installing the replacement.
+
 ## [3.3.2] - 2026-11-02
 
 ### Fixed

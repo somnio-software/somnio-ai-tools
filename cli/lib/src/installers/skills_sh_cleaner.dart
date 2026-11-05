@@ -594,6 +594,11 @@ class SkillsShCleaner {
     for (final MapEntry(key: name, value: entry) in lockSkills.entries) {
       if (!_isSomnioEntry(entry)) continue;
       final folder = skillsShSanitizeName(name);
+      if (folder == 'clockify-tracker' || folder == 'clockify_tracker') {
+        warnings.add(
+            'Preserved retired Clockify skill "$name"; inspect and remove it manually before installing the replacement.');
+        continue;
+      }
       if (folder.isEmpty) {
         warnings.add('Skipped lock entry "$name": unusable skill name.');
         continue;

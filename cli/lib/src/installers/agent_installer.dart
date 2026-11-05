@@ -14,6 +14,7 @@ import '../utils/platform_utils.dart';
 import '../utils/real_path.dart';
 import '../utils/yaml_frontmatter.dart';
 import 'installer.dart';
+import 'legacy_clockify_guard.dart';
 import 'skill_manifest.dart';
 
 /// Generic installer that works for any [AgentConfig].
@@ -28,6 +29,8 @@ class AgentInstaller extends Installer {
     this.scope = InstallScope.global,
     String? projectRoot,
     this.recordManifest = true,
+    this.home,
+    this.protectClockify = false,
     Map<String, String>? environment,
   })  : projectRoot = projectRoot ?? Directory.current.path,
         environment = environment ?? PlatformUtils.environment;
@@ -49,11 +52,25 @@ class AgentInstaller extends Installer {
   /// escape hatch exists for callers that only probe paths.
   final bool recordManifest;
 
+  /// Optional home override for isolated installations and tests.
+  final String? home;
+
+  /// Preserve untrusted manifests before a combined Clockify install.
+  final bool protectClockify;
+
   /// Environment the agent's config-home override (e.g. `CODEX_HOME`) is
   /// read from. Defaults to the process environment.
   final Map<String, String> environment;
 
-  String get _home => PlatformUtils.homeDirectory;
+  String get _home => home ?? PlatformUtils.homeDirectory;
+
+  List<String> get _clockifyProtectedRoots => [
+        for (final path in agentConfig.resolvedProtectedInstallPaths(
+          home: _home,
+          environment: environment,
+        ))
+          p.dirname(path),
+      ];
 
   /// Resolves the base install directory for this agent, honouring [scope].
   String get _installDir => agentConfig.resolvedScopedInstallPath(
@@ -277,6 +294,25 @@ class AgentInstaller extends Installer {
   Future<InstallResult> install({required List<SkillBundle> bundles}) async {
     final baseDir = _installDir;
     final transformer = transformerFor(agentConfig.installFormat);
+    if (protectClockify) {
+      try {
+        LegacyClockifyGuard.verifyManifests(
+          installRoot: baseDir,
+          rulesRoot: _rulesDir,
+          legacyInstallRoot: _legacyInstallDir,
+          protectedRoots: _clockifyProtectedRoots,
+        );
+      } catch (e) {
+        logger.err('Cannot safely inspect skill manifests: $e');
+        return InstallResult(
+          skillCount: 0,
+          ruleCount: 0,
+          targetDirectory: baseDir,
+          failedCount: bundles.length,
+          failedSkills: [for (final bundle in bundles) bundle.name],
+        );
+      }
+    }
 
     // Loaded once up front and saved once at the end: `remove`/`update` need
     // an exact record of what somnio wrote so they can delete precisely
@@ -427,6 +463,27 @@ class AgentInstaller extends Installer {
     final installedNames = <String>[];
     final failedNames = <String>[];
 
+    if (skills.any((skill) => skill.name == 'clockify')) {
+      try {
+        LegacyClockifyGuard.verifyManifests(
+          installRoot: baseDir,
+          rulesRoot: _rulesDir,
+          legacyInstallRoot: _legacyInstallDir,
+          protectedRoots: _clockifyProtectedRoots,
+        );
+      } catch (e) {
+        for (final skill in skills) {
+          logger.err('  Failed to install ${skill.name}: $e');
+        }
+        return (
+          installed: 0,
+          failed: skills.length,
+          installedNames: <String>[],
+          failedNames: [for (final skill in skills) skill.name],
+        );
+      }
+    }
+
     // Loaded fresh from disk (not carried over from `install()`) so this
     // method also works standalone; when the two run back-to-back on the
     // same instance/baseDir, `SkillManifest.load` re-reading here picks up
@@ -441,6 +498,29 @@ class AgentInstaller extends Installer {
         final planFile = File(planPath);
         if (!planFile.existsSync()) continue;
 
+        if (skill.name == 'clockify') {
+          if (legacyManifest?.entryFor('clockify') != null) {
+            throw StateError(
+                'Existing Clockify paths in the legacy manifest were preserved. Confirm ownership before moving or removing them');
+          }
+          if (agentConfig.installFormat != InstallFormat.skillDir) {
+            throw StateError(
+                'This agent format cannot preserve the Clockify tool restriction');
+          }
+          LegacyClockifyGuard.check(
+            installRoot: baseDir,
+            rulesRoot: _rulesDir,
+            home: _home,
+            legacyInstallRoot: _legacyInstallDir,
+            protectedRoots: _clockifyProtectedRoots,
+            projectCommandDir: LegacyClockifyGuard.projectCommandDir(
+              agentConfig.id,
+              projectRoot,
+              _home,
+              protectedRoots: _clockifyProtectedRoots,
+            ),
+          );
+        }
         final previous = manifest.entryFor(skill.name);
         var content = planFile.readAsStringSync();
 
@@ -499,12 +579,28 @@ class AgentInstaller extends Installer {
             // Pruning unlinks a symlinked skill dir (e.g. one skills.sh put
             // there) instead of writing through it into the shared copy, and
             // drops files a content update renamed or removed.
-            _prune(p.join(baseDir, skill.name));
-            _writeFile(
-              baseDir,
-              p.join(baseDir, skill.name, 'SKILL.md'),
-              skillMd,
-            );
+            if (skill.name == 'clockify') {
+              final identical = LegacyClockifyGuard.currentSkillIsIdentical(
+                baseDir,
+                skillMd,
+                previous,
+                protectedRoots: _clockifyProtectedRoots,
+              );
+              if (!identical) {
+                final dir = Directory(p.join(baseDir, skill.name));
+                dir.createSync(recursive: true);
+                final file = File(p.join(dir.path, 'SKILL.md'));
+                file.createSync(exclusive: true);
+                file.writeAsStringSync(skillMd);
+              }
+            } else {
+              _prune(p.join(baseDir, skill.name));
+              _writeFile(
+                baseDir,
+                p.join(baseDir, skill.name, 'SKILL.md'),
+                skillMd,
+              );
+            }
             _installAssetDirectories(skill, baseDir);
             for (final entry in refFiles.entries) {
               _writeFile(
@@ -598,6 +694,11 @@ class AgentInstaller extends Installer {
         }
 
         _pruneObsolete(previous, manifest.entryFor(skill.name)!.paths);
+        if (skill.name == 'clockify') {
+          // The guard established that all retired paths are already absent.
+          manifest.removeEntry('clockify-tracker');
+          legacyManifest?.removeEntry('clockify-tracker');
+        }
         _migrateLegacyEntry(legacyManifest, skill.name);
         count++;
         installedNames.add(skill.name);

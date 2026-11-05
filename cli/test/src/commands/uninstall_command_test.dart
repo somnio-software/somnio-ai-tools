@@ -79,6 +79,15 @@ void main() {
       }
     });
 
+    test('preserves an unmanifested foreign Clockify skill', () {
+      final root = p.join(home.path, '.claude', 'skills');
+      _writeSkill(root, 'clockify');
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(File(p.join(root, 'clockify', 'SKILL.md')).existsSync(), isTrue);
+    });
+
     test('removes legacy v1.x Claude skills including somnio-rh/somnio-rp', () {
       for (final name in const ['somnio-fh', 'somnio-rh', 'somnio-rp']) {
         _writeSkill(p.join(home.path, '.claude', 'skills'), name);

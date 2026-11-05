@@ -336,6 +336,86 @@ void main() {
       ];
 
   group('discoverSkillsUpdateUnits', () {
+    test('warns about an unmanifested retired Clockify skill', () {
+      final dir = p.join(home.path, '.codeium', 'windsurf', 'skills');
+      final legacy = File(p.join(dir, 'clockify-tracker', 'SKILL.md'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('custom');
+      final warnings = <String>[];
+
+      final units = discoverSkillsUpdateUnits(
+        agents: [_windsurf],
+        home: home.path,
+        projectRoot: home.path,
+        onWarning: warnings.add,
+      );
+
+      expect(units, isEmpty);
+      expect(warnings, contains(contains(p.dirname(legacy.path))));
+      expect(legacy.readAsStringSync(), 'custom');
+    });
+
+    test('warns about unmanifested legacy alongside another installed skill',
+        () {
+      final dir = p.join(home.path, '.codeium', 'windsurf', 'skills');
+      _seed(dir, _auditA);
+      final legacy = File(p.join(dir, 'clockify-tracker', 'SKILL.md'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('custom');
+      final warnings = <String>[];
+
+      final units = discoverSkillsUpdateUnits(
+        agents: [_windsurf],
+        home: home.path,
+        projectRoot: home.path,
+        onWarning: warnings.add,
+      );
+
+      expect(units, hasLength(1));
+      expect(_names(units.single), contains(_auditA));
+      expect(warnings, contains(contains(p.dirname(legacy.path))));
+      expect(legacy.readAsStringSync(), 'custom');
+    });
+
+    test('maps an absent retired Clockify entry without mutating the manifest',
+        () {
+      final dir = p.join(home.path, '.codeium', 'windsurf', 'skills');
+      _seed(dir, 'clockify-tracker', kind: 'workflow');
+      final warnings = <String>[];
+
+      final units = discoverSkillsUpdateUnits(
+        agents: [_windsurf],
+        home: home.path,
+        projectRoot: project.path,
+        onWarning: warnings.add,
+      );
+
+      expect(units, hasLength(1));
+      expect(_names(units.single), contains('clockify'));
+      expect(SkillManifest.load(dir).entryFor('clockify-tracker'), isNotNull);
+      expect(warnings, isEmpty);
+    });
+
+    test('warns and preserves an installed retired Clockify entry', () {
+      final dir = p.join(home.path, '.codeium', 'windsurf', 'skills');
+      _seed(dir, 'clockify-tracker', kind: 'workflow');
+      final old = File(p.join(dir, 'clockify-tracker'))
+        ..writeAsStringSync('custom');
+      final warnings = <String>[];
+
+      final units = discoverSkillsUpdateUnits(
+        agents: [_windsurf],
+        home: home.path,
+        projectRoot: project.path,
+        onWarning: warnings.add,
+      );
+
+      expect(units, isEmpty);
+      expect(warnings.single, contains(old.path));
+      expect(old.readAsStringSync(), 'custom');
+      expect(SkillManifest.load(dir).entryFor('clockify-tracker'), isNotNull);
+    });
+
     test('run from home refreshes each location once, as global', () {
       final amazonqLegacy = p.join(home.path, '.amazonq', 'prompts');
       final windsurfLegacy = p.join(home.path, '.windsurf', 'workflows');

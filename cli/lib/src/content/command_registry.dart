@@ -34,11 +34,11 @@ class CommandRegistry {
       sourceRelativePath: 'commands/quick-check.md',
     ),
     CommandBundle(
-      id: 'clockify-tracker',
-      name: 'clockify-tracker',
-      displayName: 'Clockify Tracker',
-      description: 'Log or manage Clockify time entries via the Clockify API.',
-      sourceRelativePath: 'commands/clockify-tracker.md',
+      id: 'clockify',
+      name: 'clockify',
+      displayName: 'Clockify',
+      description: 'Preview and safely log time using the Clockify CLI.',
+      sourceRelativePath: 'commands/clockify.md',
     ),
   ];
 

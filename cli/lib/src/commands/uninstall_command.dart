@@ -701,6 +701,8 @@ bool _removeGenericInstall(
     if (!dir.existsSync() || _hasManifest(location)) continue;
     for (final entity in dir.listSync(followLinks: false)) {
       final name = p.basename(entity.path);
+      // Clockify was introduced with manifests; an unrecorded copy is foreign.
+      if (name == 'clockify' || name == 'clockify.md') continue;
       // A markdown-layout file or link must have a skill's exact name: the
       // bare prefix would also match the user's own `somnio-*.md` rules,
       // and somnio never wrote links there.

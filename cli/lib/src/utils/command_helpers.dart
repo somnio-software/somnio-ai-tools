@@ -147,6 +147,7 @@ class CommandHelpers {
         logger: logger,
         loader: content.loader,
         agentConfig: agentConfig,
+        protectClockify: true,
       );
       final result = await installer.install(bundles: content.bundles);
       final wf = installer.installWorkflowSkillsDetailed(

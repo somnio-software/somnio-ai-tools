@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:path/path.dart' as p;
 
 import '../content/command_bundle.dart';
+import 'legacy_clockify_guard.dart';
 
 /// Result of a command installation attempt.
 class CommandInstallResult {
@@ -37,15 +38,28 @@ class CommandInstaller {
   /// Reads the source file at `<repoRoot>/<bundle.sourceRelativePath>` and
   /// writes it as-is to `<targetDir>/<bundle.name>.md`, creating parent
   /// directories as needed.
-  CommandInstallResult install(CommandBundle bundle, String targetDir) {
+  CommandInstallResult install(CommandBundle bundle, String targetDir,
+      {String? agentId}) {
     final targetPath = p.join(targetDir, '${bundle.name}.md');
     try {
+      if (bundle.name == 'clockify') {
+        if (agentId != null && agentId != 'claude') {
+          throw StateError(
+              'Clockify commands require a supported skill-directory agent');
+        }
+        LegacyClockifyGuard.checkCommand(targetDir);
+      }
       final source = File(p.join(repoRoot, bundle.sourceRelativePath));
       if (!source.existsSync()) {
         throw Exception('Command file not found: ${source.path}');
       }
 
       final content = source.readAsStringSync();
+      if (bundle.name == 'clockify' &&
+          LegacyClockifyGuard.currentCommandIsIdentical(targetDir, content)) {
+        return CommandInstallResult(
+            name: bundle.name, targetPath: targetPath, success: true);
+      }
       final targetFile = File(targetPath);
       targetFile.parent.createSync(recursive: true);
       targetFile.writeAsStringSync(content);

@@ -42,7 +42,7 @@ somnio -q status      # Quiet mode (suppress banner)
 
 ### somnio hooks
 
-Opt-in installer for Claude Code hooks. Currently installs the **work-log Stop hook**, which appends a Haiku-generated 2-3 sentence summary of each Claude Code session turn to `~/.work-log/YYYY-MM-DD.md`. These logs feed directly into the `clockify-tracker` skill's log-based mode.
+Opt-in installer for Claude Code hooks. Currently installs the **work-log Stop hook**, which appends a Haiku-generated 2-3 sentence summary of each Claude Code session turn to `~/.work-log/YYYY-MM-DD.md`. The new Clockify skill does not automatically convert these logs into entries.
 
 ```bash
 somnio hooks            # Interactive: shows what will be installed, prompts for confirmation
