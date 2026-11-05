@@ -101,6 +101,69 @@ void main() {
       }, timeout: const Timeout.factor(2));
     }
 
+    group('whose link has no target yet', () {
+      late String binaries;
+
+      setUp(() {
+        binaries = p.join(home.path, 'bin');
+        for (final name in ['kimi', 'claude']) {
+          final stub = File(p.join(binaries, name))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('#!/bin/sh\n');
+          Process.runSync('chmod', ['+x', stub.path]);
+        }
+        Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+          p.join(home.path, '.claude', 'skills'),
+          recursive: true,
+        );
+      });
+
+      test('leaves the folder to Claude Code and reports it', () async {
+        final result = await setup(path: '$binaries:/usr/bin:/bin');
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(
+          claudeModels(),
+          allOf(
+            isNotEmpty,
+            everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+          ),
+        );
+        expect(
+          '${result.stdout}${result.stderr}',
+          contains('Kimi Code: skipped,'),
+        );
+      }, timeout: const Timeout.factor(2));
+
+      test('does the same with KIMI_CODE_HOME=~/.kimi-code', () async {
+        final result = await Process.run(
+          Platform.resolvedExecutable,
+          [p.absolute('bin', 'somnio.dart'), 'setup', '--skip-cli', '--force'],
+          workingDirectory: home.path,
+          includeParentEnvironment: false,
+          environment: {
+            'HOME': home.path,
+            'USERPROFILE': home.path,
+            'KIMI_CODE_HOME': p.join(home.path, '.kimi-code'),
+            'PATH': '$binaries:/usr/bin:/bin',
+          },
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(
+          claudeModels(),
+          allOf(
+            isNotEmpty,
+            everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+          ),
+        );
+        expect(
+          '${result.stdout}${result.stderr}',
+          contains('Kimi Code: skipped,'),
+        );
+      }, timeout: const Timeout.factor(2));
+    });
+
     test('leaves ~/.cursor/commands to Cursor', () async {
       final commands = p.join(home.path, '.cursor', 'commands');
       File(p.join(commands, 'mine.md')).createSync(recursive: true);

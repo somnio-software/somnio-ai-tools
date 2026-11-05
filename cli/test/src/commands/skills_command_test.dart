@@ -711,6 +711,259 @@ void main() {
         });
       });
 
+      group('whose link has no target yet', timeout: const Timeout.factor(2),
+          () {
+        const auditName = 'security-audit';
+
+        Future<ProcessResult> run(
+          List<String> args, {
+          String? workingDirectory,
+        }) =>
+            runSkills(
+              args,
+              workingDirectory: workingDirectory,
+              extraEnvironment: {
+                'CODEX_HOME': '',
+                'PATH': '${p.join(home.path, 'bin')}:/usr/bin:/bin',
+              },
+            );
+
+        void stubBinaries(List<String> names) {
+          for (final name in names) {
+            final stub = File(p.join(home.path, 'bin', name))
+              ..createSync(recursive: true)
+              ..writeAsStringSync('#!/bin/sh\n');
+            Process.runSync('chmod', ['+x', stub.path]);
+          }
+        }
+
+        Set<String> modelsIn(String skillsDir) => {
+              for (final file in Directory(
+                p.join(skillsDir, auditName, 'agents'),
+              ).listSync().whereType<File>())
+                for (final line in file.readAsLinesSync())
+                  if (line.startsWith('model:')) line,
+            };
+
+        void expectClaudeKept(ProcessResult result, String skillsDir) {
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(
+            modelsIn(skillsDir),
+            allOf(
+              isNotEmpty,
+              everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+            ),
+          );
+        }
+
+        setUp(() => stubBinaries(['kimi', 'claude']));
+
+        for (final (label, target) in [
+          ('absolute', '~/.claude/skills'),
+          ('relative', '../.claude/skills'),
+        ]) {
+          test('--all-agents skips Kimi Code on a $label link', () async {
+            Directory(p.join(home.path, '.claude')).createSync();
+            Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+              target.replaceFirst('~', home.path),
+              recursive: true,
+            );
+
+            final result = await run(
+              ['install', '--all-agents', '--skills', 'sa', '--global'],
+            );
+
+            expectClaudeKept(result, p.join(home.path, '.claude', 'skills'));
+            final real = home.resolveSymbolicLinksSync();
+            expect(
+              '${result.stdout}${result.stderr}',
+              contains(
+                "Claude Code's folder (${p.join(real, '.claude', 'skills')})",
+              ),
+            );
+          });
+        }
+
+        test('--all-agents skips Kimi Code on a whole ~/.kimi-code link',
+            () async {
+          Link(p.join(home.path, '.kimi-code'))
+              .createSync(p.join(home.path, '.claude'));
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expectClaudeKept(result, p.join(home.path, '.claude', 'skills'));
+        });
+
+        test("--all-agents keeps Cursor's file a file", () async {
+          stubBinaries(['agent']);
+          final commands = p.join(home.path, '.cursor', 'commands');
+          Link(p.join(home.path, '.kimi-code', 'skills'))
+              .createSync(commands, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(File(p.join(commands, '$auditName.md')).existsSync(), isTrue);
+          expect(Directory(p.join(commands, auditName)).existsSync(), isFalse);
+        });
+
+        test('--all-agents skips Kimi Code on the reverse link', () async {
+          stubBinaries(['qwen']);
+          final kimi = p.join(home.path, '.kimi-code', 'skills');
+          Link(p.join(home.path, '.qwen', 'skills'))
+              .createSync(kimi, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          // Qwen CLI cannot create its folder through the link, as before.
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(Directory(kimi).existsSync(), isFalse);
+        });
+
+        test('--all-agents --project skips Kimi Code on a project link',
+            () async {
+          final claude = p.join(workDir, '.claude', 'skills');
+          Link(p.join(workDir, '.kimi-code', 'skills'))
+              .createSync(claude, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--project'],
+          );
+
+          expectClaudeKept(result, claude);
+        });
+
+        test('`somnio install --all` skips Kimi Code', () async {
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, '.claude', 'skills'),
+            recursive: true,
+          );
+
+          final result = await Process.run(
+            Platform.resolvedExecutable,
+            [
+              p.absolute('bin', 'somnio.dart'),
+              'install',
+              '--all',
+              '--skills',
+              'sa',
+              '--yes',
+            ],
+            workingDirectory: workDir,
+            includeParentEnvironment: false,
+            environment: {
+              'HOME': home.path,
+              'USERPROFILE': home.path,
+              'PATH': '${p.join(home.path, 'bin')}:/usr/bin:/bin',
+            },
+          );
+
+          expectClaudeKept(result, p.join(home.path, '.claude', 'skills'));
+        });
+
+        test('--all-agents exits 0 with the line when only Kimi Code is found',
+            () async {
+          File(p.join(home.path, 'bin', 'claude')).deleteSync();
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, '.claude', 'skills'),
+            recursive: true,
+          );
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(
+            Directory(p.join(home.path, '.claude', 'skills')).existsSync(),
+            isFalse,
+          );
+        });
+
+        test('--agent kimi warns and fails, since nothing creates the folder',
+            () async {
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, '.claude', 'skills'),
+            recursive: true,
+          );
+
+          final result = await run(
+            ['install', '--agent', 'kimi', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            allOf(
+              contains("is really Claude Code's folder"),
+              contains('so this also changes what Claude Code reads'),
+              isNot(contains('skipped,')),
+            ),
+          );
+        });
+
+        test('a link to a folder no agent uses still fails Kimi Code alone',
+            () async {
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, 'nowhere', 'skills'),
+            recursive: true,
+          );
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            isNot(contains('is really')),
+          );
+          expect(
+            modelsIn(p.join(home.path, '.claude', 'skills')),
+            isNotEmpty,
+          );
+        });
+
+        test('a link cycle still fails Kimi Code alone', () async {
+          final kimi = p.join(home.path, '.kimi-code');
+          Link(p.join(kimi, 'skills'))
+              .createSync(p.join(kimi, 'other'), recursive: true);
+          Link(p.join(kimi, 'other')).createSync(p.join(kimi, 'skills'));
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            isNot(contains('is really')),
+          );
+          expect(
+            modelsIn(p.join(home.path, '.claude', 'skills')),
+            isNotEmpty,
+          );
+        });
+      });
+
       group('a real, unlinked ~/.kimi-code/skills while it is protected', () {
         late String relocated;
         late File own;

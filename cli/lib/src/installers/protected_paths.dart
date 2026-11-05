@@ -55,7 +55,8 @@ Set<String> protectedConfigHomes({
 
 /// The other agent whose current folder, global or under [projectRoot], is
 /// really [agent]'s current folder in [scope], when [agent] gives way on such a
-/// folder (see [AgentConfig.yieldsSharedFolder]).
+/// folder (see [AgentConfig.yieldsSharedFolder]). A link whose target does not
+/// exist yet counts, since the other agent's install creates that folder.
 AgentConfig? sharedFolderOwner(
   AgentConfig agent, {
   required InstallScope scope,
@@ -64,7 +65,7 @@ AgentConfig? sharedFolderOwner(
   Map<String, String> environment = const {},
 }) {
   if (!agent.yieldsSharedFolder) return null;
-  final own = realPathOf(
+  final own = followedPathOf(
     agent.resolvedScopedInstallPath(
       scope: scope,
       home: home,
@@ -85,7 +86,7 @@ AgentConfig? sharedFolderOwner(
         projectRoot: projectRoot,
         environment: environment,
       );
-      if (realPathOf(folder) == own) return other;
+      if (followedPathOf(folder) == own) return other;
     }
   }
   return null;
@@ -100,7 +101,7 @@ String sharedFolderNotice(
   required bool skipped,
 }) {
   final shared = "$folder is really ${owner.displayName}'s folder "
-      '(${realPathOf(folder)})';
+      '(${followedPathOf(folder)})';
   return skipped
       ? '  ${agent.displayName}: skipped, $shared. Only --agent ${agent.id} '
           'acts on it.'
