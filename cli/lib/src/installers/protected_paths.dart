@@ -56,7 +56,10 @@ Set<String> protectedConfigHomes({
 /// The other agent whose current folder, global or under [projectRoot], is
 /// really [agent]'s current folder in [scope], when [agent] gives way on such a
 /// folder (see [AgentConfig.yieldsSharedFolder]). A link whose target does not
-/// exist yet counts, since the other agent's install creates that folder.
+/// exist yet counts too. When [agent]'s link points to the other agent's
+/// missing folder, that agent's install creates it. When the other agent's link
+/// points to [agent]'s missing folder, that agent's install still fails, and
+/// [agent] is skipped instead of creating a folder the other agent reads.
 AgentConfig? sharedFolderOwner(
   AgentConfig agent, {
   required InstallScope scope,
