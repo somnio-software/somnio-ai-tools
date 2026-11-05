@@ -30,9 +30,10 @@ class CommandsCommand extends Command<int> {
   String get name => 'commands';
 
   @override
-  String get description =>
-      'Install Somnio slash commands (ship / audit / quick-check / '
-      'clockify-tracker) to Claude and/or Cursor, in the current project.';
+  String get description => 'Install Somnio slash commands '
+      '(${CommandRegistry.commands.map((command) => command.name).join(' / ')}) '
+      'to Claude and/or Cursor, in the current project. '
+      'Install Clockify with somnio skills install.';
 }
 
 // ── Install subcommand ──────────────────────────────────────────────────────
@@ -208,7 +209,9 @@ class _CommandsInstallCommand extends Command<int> {
       _logger.err('No commands were installed.');
     }
 
-    return successCount > 0 ? ExitCode.success.code : ExitCode.software.code;
+    return successCount == attemptCount && successCount > 0
+        ? ExitCode.success.code
+        : ExitCode.software.code;
   }
 }
 

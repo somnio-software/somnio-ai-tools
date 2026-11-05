@@ -635,7 +635,9 @@ bool _removeWorkflowInstall(
     final files = workflowsDir
         .listSync()
         .whereType<File>()
-        .where((f) => p.basename(f.path).startsWith('somnio_'))
+        .where((f) =>
+            p.basename(f.path).startsWith('somnio_') &&
+            p.basename(f.path) != 'somnio_clockify.md')
         .toList();
 
     for (final file in files) {
