@@ -503,10 +503,6 @@ class AgentInstaller extends Installer {
             throw StateError(
                 'Existing Clockify paths in the legacy manifest were preserved. Confirm ownership before moving or removing them');
           }
-          if (agentConfig.installFormat != InstallFormat.skillDir) {
-            throw StateError(
-                'This agent format cannot preserve the Clockify tool restriction');
-          }
           LegacyClockifyGuard.check(
             installRoot: baseDir,
             rulesRoot: _rulesDir,
@@ -619,11 +615,13 @@ class AgentInstaller extends Installer {
 
           case InstallFormat.singleFile:
             // Cursor: single .md command file
-            _writeFile(
-              baseDir,
-              p.join(baseDir, '${skill.name}.md'),
-              _withInlineReferences(content, refFiles),
-            );
+            final singlePath = '${skill.name}.md';
+            final singleContent = _withInlineReferences(content, refFiles);
+            if (skill.name == 'clockify') {
+              _writeClockifyFile(baseDir, singlePath, singleContent, previous);
+            } else {
+              _writeFile(baseDir, p.join(baseDir, singlePath), singleContent);
+            }
             manifest.record(
               skill: skill.name,
               kind: 'workflow',
@@ -644,7 +642,11 @@ class AgentInstaller extends Installer {
                 '${_withInlineReferences(content, refFiles)}';
             final workflowPath =
                 p.join('global_workflows', 'somnio_$underscored.md');
-            _writeFile(baseDir, p.join(baseDir, workflowPath), wrapped);
+            if (skill.name == 'clockify') {
+              _writeClockifyFile(baseDir, workflowPath, wrapped, previous);
+            } else {
+              _writeFile(baseDir, p.join(baseDir, workflowPath), wrapped);
+            }
             // Only the specific file is recorded, never the
             // `global_workflows/` directory itself — it's shared with other
             // skills' workflow files, so it must never be deleted wholesale.
@@ -679,11 +681,14 @@ class AgentInstaller extends Installer {
               ..writeln(quoted)
               ..writeln()
               ..write(_withInlineReferences(content, refFiles));
-            _writeFile(
-              baseDir,
-              p.join(baseDir, '$underscored.md'),
-              buffer.toString(),
-            );
+            final markdownPath = '$underscored.md';
+            if (skill.name == 'clockify') {
+              _writeClockifyFile(
+                  baseDir, markdownPath, buffer.toString(), previous);
+            } else {
+              _writeFile(
+                  baseDir, p.join(baseDir, markdownPath), buffer.toString());
+            }
             manifest.record(
               skill: skill.name,
               kind: 'workflow',
@@ -908,6 +913,28 @@ class AgentInstaller extends Installer {
   /// the write fail rather than go through it into someone else's tree
   /// (e.g. the shared `~/.agents/skills` copy skills.sh links to). [root]
   /// itself may be a symlink — that is the user's own setup.
+  void _writeClockifyFile(
+      String root, String relative, String content, ManifestEntry? previous) {
+    if (LegacyClockifyGuard.currentFileIsIdentical(
+      root,
+      relative,
+      content,
+      previous,
+      protectedRoots: _clockifyProtectedRoots,
+    )) return;
+    final file = File(p.join(root, relative));
+    file.parent.createSync(recursive: true);
+    LegacyClockifyGuard.currentFileIsIdentical(
+      root,
+      relative,
+      content,
+      previous,
+      protectedRoots: _clockifyProtectedRoots,
+    );
+    file.createSync(exclusive: true);
+    file.writeAsStringSync(content);
+  }
+
   void _writeFile(String root, String path, String content) {
     final relative = p.relative(path, from: root);
     if (p.isAbsolute(relative) || p.split(relative).first == '..') {

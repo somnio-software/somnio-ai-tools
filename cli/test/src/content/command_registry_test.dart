@@ -24,7 +24,7 @@ void main() {
       final names = CommandRegistry.commands.map((c) => c.name).toList();
       expect(
         names,
-        containsAll(['ship', 'audit', 'quick-check', 'clockify']),
+        containsAll(['ship', 'audit', 'quick-check']),
       );
     });
   });
@@ -38,13 +38,10 @@ void main() {
       expect(bundle.sourceRelativePath, 'commands/ship.md');
     });
 
-    test('resolves audit, quick-check, and clockify', () {
+    test('resolves audit and quick-check', () {
       expect(CommandRegistry.findByName('audit')?.id, 'audit');
       expect(CommandRegistry.findByName('quick-check')?.id, 'quick-check');
-      expect(
-        CommandRegistry.findByName('clockify')?.id,
-        'clockify',
-      );
+      expect(CommandRegistry.findByName('clockify'), isNull);
     });
 
     test('does not expose the retired Clockify command', () {

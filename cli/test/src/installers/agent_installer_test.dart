@@ -657,26 +657,93 @@ void main() {
       expect(output, isNot(contains('allowed-tools: Read')));
     });
 
-    test('blocks formats that cannot preserve tool restrictions', () {
+    test('installs and preserves Clockify in each format and scope', () {
       final skill = seedWorkflow(name: 'clockify');
-      final base = Directory(p.join(tmp.path, 'install'))..createSync();
+      _writeFile(repoRoot, 'skills/clockify/SKILL.md',
+          '---\ndescription: Clockify\nallowed-tools: ["Bash"]\n---\n\nUse clockify-cli --account NAME. Never read credentials. Confirm the exact preview.');
       for (final format in [
         InstallFormat.singleFile,
         InstallFormat.workflow,
-        InstallFormat.markdown
+        InstallFormat.markdown,
       ]) {
         for (final scope in [InstallScope.global, InstallScope.project]) {
+          final testRoot = p.join(tmp.path, '${format.name}-${scope.name}');
+          final installRoot = p.join(testRoot, 'install');
+          final target = p.join(
+              installRoot,
+              format == InstallFormat.workflow
+                  ? 'global_workflows/somnio_clockify.md'
+                  : 'clockify.md');
           final installer = AgentInstaller(
             logger: logger,
             loader: loader,
-            home: tmp.path,
-            projectRoot: tmp.path,
+            home: testRoot,
+            projectRoot: testRoot,
             scope: scope,
-            agentConfig: agentFor(format: format),
+            environment: const {},
+            agentConfig: AgentConfig(
+              id: 'test-agent',
+              displayName: 'Test',
+              installFormat: format,
+              installPath: '{home}/install',
+            ),
+          );
+          expect(installer.installWorkflowSkillsDetailed([skill]).installed, 1,
+              reason: '$format $scope');
+          final file = File(target);
+          expect(file.readAsStringSync(), contains('Never read credentials'));
+          expect(
+              file.readAsStringSync(), contains('Confirm the exact preview'));
+          expect(installer.installWorkflowSkillsDetailed([skill]).installed, 1);
+          file.writeAsStringSync('user edit');
+          expect(installer.installWorkflowSkillsDetailed([skill]).failed, 1);
+          expect(file.readAsStringSync(), 'user edit');
+        }
+      }
+    });
+
+    test('does not adopt an unmanifested flat Clockify file', () {
+      final skill = seedWorkflow(name: 'clockify');
+      final file = File(p.join(tmp.path, 'install', 'clockify.md'))
+        ..createSync(recursive: true)
+        ..writeAsStringSync('foreign');
+      final installer = AgentInstaller(
+        logger: logger,
+        loader: loader,
+        home: tmp.path,
+        agentConfig: agentFor(format: InstallFormat.singleFile),
+      );
+      expect(installer.installWorkflowSkillsDetailed([skill]).failed, 1);
+      expect(file.readAsStringSync(), 'foreign');
+    });
+
+    test('installs for every registered agent and supported scope', () {
+      final skill = seedWorkflow(name: 'clockify');
+      for (final agent in AgentRegistry.installableAgents) {
+        for (final scope in [
+          InstallScope.global,
+          if (agent.supportsProjectScope) InstallScope.project,
+        ]) {
+          final testRoot = p.join(tmp.path, '${agent.id}-${scope.name}');
+          final project = p.join(testRoot, 'project');
+          final target = agent.resolvedScopedInstallPath(
+            scope: scope,
+            home: testRoot,
+            projectRoot: project,
+            environment: const {},
+          );
+          expect(p.isWithin(testRoot, target), isTrue, reason: agent.id);
+          final installer = AgentInstaller(
+            logger: logger,
+            loader: loader,
+            agentConfig: agent,
+            home: testRoot,
+            projectRoot: project,
+            scope: scope,
+            environment: const {},
           );
           final result = installer.installWorkflowSkillsDetailed([skill]);
-          expect(result.failed, 1, reason: '$format $scope');
-          expect(base.listSync(), isEmpty, reason: '$format $scope');
+          expect(result.installed, 1, reason: '${agent.id} ${scope.name}');
         }
       }
     });

@@ -125,6 +125,48 @@ class LegacyClockifyGuard {
     return true;
   }
 
+  /// Preserves unowned, modified and symlinked flat-format skills.
+  static bool currentFileIsIdentical(
+      String root, String relative, String content, ManifestEntry? owned,
+      {List<String> protectedRoots = const []}) {
+    if (owned != null &&
+        (owned.kind != 'workflow' ||
+            owned.paths.length != 1 ||
+            owned.paths.single.root != ManifestRoot.install ||
+            owned.paths.single.path != relative)) {
+      throw StateError(
+          'Unexpected Clockify manifest paths were preserved in $root');
+    }
+    final safeRoot = _safeDirectory(root, protectedRoots: protectedRoots);
+    if (safeRoot == null) return false;
+    var current = safeRoot;
+    final parts = p.split(relative);
+    for (var i = 0; i < parts.length; i++) {
+      final child = _findChild(current, parts[i]);
+      if (child == null) return false;
+      final type = FileSystemEntity.typeSync(child.path, followLinks: false);
+      if (p.basename(child.path) != parts[i]) {
+        throw StateError('Existing Clockify path ${child.path} was preserved');
+      }
+      if (i < parts.length - 1) {
+        if (type != FileSystemEntityType.directory) {
+          throw StateError('Cannot safely inspect ${child.path}');
+        }
+        current = child.path;
+      } else {
+        if (type != FileSystemEntityType.file ||
+            owned == null ||
+            File(child.path).lengthSync() > 1024 * 1024 ||
+            File(child.path).readAsStringSync() != content) {
+          throw StateError(
+              'Existing Clockify path ${child.path} was preserved. Confirm ownership before moving or removing it');
+        }
+        return true;
+      }
+    }
+    return false;
+  }
+
   /// Validates complete manifests before the normal loader can rewrite them.
   static void verifyManifests({
     required String installRoot,

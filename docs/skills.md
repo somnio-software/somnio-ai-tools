@@ -473,10 +473,12 @@ Read hours and prepare retroactive time entries with the account-explicit `clock
 The compatible CLI must already be installed; it is not currently distributed by Somnio.
 The skill checks the v1 JSON contract before use and asks which account to use if none was
 specified. Writes require an exact preview and operator confirmation.
-Installation is supported only for agents using skill directories, which preserve the
-skill's tool restriction; other agent formats report an installation failure for Clockify.
-An existing Clockify skill is preserved unless it matches the installed manifest and
-the shipped content exactly. Inspect changed files before removing them to update.
+Clockify is installed through the skill installer. Cursor receives a self-contained
+`/clockify` command through that installer; other agents receive their normal skill
+format. Some formats do not enforce per-skill tool restrictions: configure tool
+permissions in the agent separately. An existing Clockify skill is preserved unless
+it matches the installed manifest and shipped content exactly. Inspect changed files
+before removing them to update.
 
 The former `/clockify-tracker` log-based workflow is no longer provided. Existing legacy
 copies are not deleted automatically. If installation reports a retired copy, inspect the

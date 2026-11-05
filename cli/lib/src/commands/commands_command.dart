@@ -32,7 +32,7 @@ class CommandsCommand extends Command<int> {
   @override
   String get description =>
       'Install Somnio slash commands (ship / audit / quick-check / '
-      'clockify) to Claude and/or Cursor, in the current project.';
+      'clockify-tracker) to Claude and/or Cursor, in the current project.';
 }
 
 // ── Install subcommand ──────────────────────────────────────────────────────
@@ -69,7 +69,6 @@ class _CommandsInstallCommand extends Command<int> {
       '\n'
       'Commands install at project scope only — under `.claude/commands/` '
       'and/or `.cursor/commands/` in the current directory.\n'
-      'The Clockify command is supported only for Claude.\n'
       '\n'
       'Examples:\n'
       '  somnio commands install                                  # interactive\n'
@@ -184,7 +183,7 @@ class _CommandsInstallCommand extends Command<int> {
       for (final bundle in selectedCommands) {
         attemptCount++;
         final progress = _logger.progress('$agentName — ${bundle.name}');
-        final result = installer.install(bundle, targetDir, agentId: agent);
+        final result = installer.install(bundle, targetDir);
 
         if (result.success) {
           progress.complete('$agentName — ${bundle.name}  installed');
@@ -209,9 +208,7 @@ class _CommandsInstallCommand extends Command<int> {
       _logger.err('No commands were installed.');
     }
 
-    return successCount == attemptCount && successCount > 0
-        ? ExitCode.success.code
-        : ExitCode.software.code;
+    return successCount > 0 ? ExitCode.success.code : ExitCode.software.code;
   }
 }
 

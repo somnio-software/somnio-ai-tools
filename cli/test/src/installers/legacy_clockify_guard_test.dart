@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path/path.dart' as p;
 import 'package:somnio/src/installers/legacy_clockify_guard.dart';
+import 'package:somnio/src/installers/skill_manifest.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -183,5 +184,39 @@ void main() {
           protectedRoots: [protected]),
       isNull,
     );
+  });
+
+  test('preserves a flat skill with unexpected recorded paths', () {
+    final entry = ManifestEntry(
+      skill: 'clockify',
+      kind: 'workflow',
+      paths: [const ManifestPath(ManifestRoot.install, 'other.md')],
+    );
+    expect(
+      () => LegacyClockifyGuard.currentFileIsIdentical(
+          root, 'clockify.md', 'expected', entry),
+      throwsStateError,
+    );
+  });
+
+  test('preserves a symlink in a flat workflow path', () {
+    final outside = Directory(p.join(tmp.path, 'outside'))..createSync();
+    Link(p.join(root, 'global_workflows')).createSync(outside.path);
+    expect(
+      () => LegacyClockifyGuard.currentFileIsIdentical(
+          root, 'global_workflows/somnio_clockify.md', 'expected', null),
+      throwsStateError,
+    );
+    expect(outside.listSync(), isEmpty);
+  });
+
+  test('preserves an existing differently cased flat skill', () {
+    final file = File(p.join(root, 'Clockify.md'))..writeAsStringSync('custom');
+    expect(
+      () => LegacyClockifyGuard.currentFileIsIdentical(
+          root, 'clockify.md', 'expected', null),
+      throwsStateError,
+    );
+    expect(file.readAsStringSync(), 'custom');
   });
 }

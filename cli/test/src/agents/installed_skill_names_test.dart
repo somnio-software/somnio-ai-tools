@@ -71,10 +71,9 @@ void main() {
       );
     });
 
-    test('does not claim unsupported Clockify files', () {
-      expect(InstalledSkillNames.matches(cursor, 'clockify.md'), isFalse);
-      expect(InstalledSkillNames.matches(copilot, 'clockify.md'), isFalse);
-      expect(InstalledSkillNames.matches(codex, 'clockify.md'), isFalse);
+    test('recognizes Clockify in the supported layouts', () {
+      expect(InstalledSkillNames.matches(cursor, 'clockify.md'), isTrue);
+      expect(InstalledSkillNames.matches(copilot, 'clockify.md'), isTrue);
     });
 
     test('markdown underscores the bundle name', () {
@@ -181,8 +180,8 @@ void main() {
           .whereType<File>()
           .where((file) => file.path.endsWith('.md'))
           .toList();
-      expect(result.failedNames, ['clockify']);
-      expect(files, hasLength(SkillRegistry.workflowSkills.length - 1));
+      expect(result.failedNames, isEmpty);
+      expect(files, hasLength(SkillRegistry.workflowSkills.length));
       for (final file in files) {
         final name = p.basename(file.path);
         expect(

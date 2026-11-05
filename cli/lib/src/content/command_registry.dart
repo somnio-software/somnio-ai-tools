@@ -33,13 +33,6 @@ class CommandRegistry {
       description: 'Quick project health assessment (2-3 min).',
       sourceRelativePath: 'commands/quick-check.md',
     ),
-    CommandBundle(
-      id: 'clockify',
-      name: 'clockify',
-      displayName: 'Clockify',
-      description: 'Preview and safely log time using the Clockify CLI.',
-      sourceRelativePath: 'commands/clockify.md',
-    ),
   ];
 
   /// Find a command bundle by its [CommandBundle.name].

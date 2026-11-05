@@ -63,61 +63,6 @@ void main() {
   group('install', () {
     final bundle = CommandRegistry.findByName('ship')!;
 
-    test('does not install the Clockify command for Cursor', () {
-      final target = p.join(tmp.path, 'commands');
-      final result = installer.install(
-          CommandRegistry.findByName('clockify')!, target,
-          agentId: 'cursor');
-      expect(result.success, isFalse);
-      expect(File(p.join(target, 'clockify.md')).existsSync(), isFalse);
-    });
-
-    test('preserves an existing retired Clockify command and blocks install',
-        () {
-      final targetDir = p.join(tmp.path, 'commands');
-      Directory(targetDir).createSync(recursive: true);
-      final old = File(p.join(targetDir, 'clockify-tracker.md'))
-        ..writeAsStringSync('custom content');
-
-      final result =
-          installer.install(CommandRegistry.findByName('clockify')!, targetDir);
-
-      expect(result.success, isFalse);
-      expect(result.error, contains(old.path));
-      expect(old.readAsStringSync(), 'custom content');
-      expect(File(p.join(targetDir, 'clockify.md')).existsSync(), isFalse);
-    });
-
-    test('blocks a retired Clockify command symlink without following it', () {
-      final targetDir = p.join(tmp.path, 'commands');
-      Directory(targetDir).createSync(recursive: true);
-      final external = File(p.join(tmp.path, 'external'))
-        ..writeAsStringSync('owned');
-      Link(p.join(targetDir, 'clockify-tracker.md')).createSync(external.path);
-
-      final result =
-          installer.install(CommandRegistry.findByName('clockify')!, targetDir);
-
-      expect(result.success, isFalse);
-      expect(external.readAsStringSync(), 'owned');
-      expect(File(p.join(targetDir, 'clockify.md')).existsSync(), isFalse);
-    });
-
-    test('reuses an identical Clockify command and preserves modifications',
-        () {
-      final targetDir = p.join(tmp.path, 'commands');
-      final bundle = CommandRegistry.findByName('clockify')!;
-      expect(installer.install(bundle, targetDir).success, isTrue);
-      expect(installer.install(bundle, targetDir).success, isTrue);
-      final existing = File(p.join(targetDir, 'clockify.md'))
-        ..writeAsStringSync('custom');
-
-      final result = installer.install(bundle, targetDir);
-
-      expect(result.success, isFalse);
-      expect(existing.readAsStringSync(), 'custom');
-    });
-
     test('copies the ship command byte-for-byte into .claude/commands', () {
       final targetDir =
           CommandInstaller.resolveTargetDir('claude', projectDir: tmp.path);
