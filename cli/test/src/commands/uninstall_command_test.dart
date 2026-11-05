@@ -292,6 +292,16 @@ void main() {
       expect(File(path).readAsStringSync(), 'custom');
     });
 
+    test('preserves differently cased foreign Clockify workflows', () {
+      final path = p.join(home.path, '.gemini', 'antigravity',
+          'global_workflows', 'somnio_Clockify.md');
+      _writeFile(path, 'custom');
+
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      expect(File(path).readAsStringSync(), 'custom');
+    });
+
     test('does not sweep the folder a moved agent installs to now', () {
       // No release wrote there before the manifest existed, so anything
       // unrecorded there is the user's; recorded installs are removed by
