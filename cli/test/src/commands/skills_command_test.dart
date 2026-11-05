@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:somnio/src/agents/agent_config.dart';
 import 'package:somnio/src/agents/agent_registry.dart';
 import 'package:somnio/src/commands/skills_command.dart';
+import 'package:somnio/src/commands/uninstall_command.dart';
 import 'package:somnio/src/content/skill_registry.dart';
 import 'package:somnio/src/installers/agent_installer.dart';
 import 'package:somnio/src/installers/skill_manifest.dart';
@@ -18,6 +19,7 @@ final _amazonq = AgentRegistry.findById('amazonq')!;
 final _amp = AgentRegistry.findById('amp')!;
 final _copilot = AgentRegistry.findById('copilot')!;
 final _windsurf = AgentRegistry.findById('windsurf')!;
+final _opencode = AgentRegistry.findById('opencode')!;
 
 /// Registered skill names, so the manifests map back to the registry.
 final _auditA = SkillRegistry.skills[0].name;
@@ -164,6 +166,9 @@ void main() {
       List<String> args, {
       String? workingDirectory,
       String claudeConfigDir = '',
+      String xdgConfigHome = '',
+      String kimiCodeHome = '',
+      Map<String, String> extraEnvironment = const {},
     }) =>
         Process.run(
           Platform.resolvedExecutable,
@@ -175,14 +180,1172 @@ void main() {
             // Blank by default, so a caller's Claude config dir never
             // relocates the install out of the fake home.
             'CLAUDE_CONFIG_DIR': claudeConfigDir,
+            // Blank by default for the same reason (OpenCode's skills).
+            'XDG_CONFIG_HOME': xdgConfigHome,
+            // And for Kimi Code's.
+            'KIMI_CODE_HOME': kimiCodeHome,
+            // Blank, so the skills.sh cleanup reads the fake home's lock and
+            // never the caller's.
+            'XDG_STATE_HOME': '',
             // Keep pub reading the real cache instead of creating one under
             // the fake home.
             'PUB_CACHE': _pubCache,
+            ...extraEnvironment,
           },
         );
 
     Future<ProcessResult> runUpdate(List<String> args) =>
         runSkills(['update', '--agent', 'claude', ...args]);
+
+    group('Kimi Code', () {
+      final skill = SkillRegistry.skills[0];
+      late String skills;
+      late File ownSkill;
+
+      setUp(() {
+        skills = p.join(home.path, '.kimi-code', 'skills');
+        // Named like a Somnio skill this run does not install, so only the
+        // manifest tells it from Somnio's own.
+        ownSkill = File(p.join(skills, _auditB, 'SKILL.md'));
+      });
+
+      void writeOwnSkill() => ownSkill
+        ..createSync(recursive: true)
+        ..writeAsStringSync('---\nname: $_auditB\ndescription: x\n---\n');
+
+      Future<void> install({String kimiCodeHome = ''}) async {
+        final result = await runSkills(
+          [
+            'install',
+            '--agent',
+            'kimi',
+            '--skills',
+            skill.id,
+            '--global',
+          ],
+          kimiCodeHome: kimiCodeHome,
+        );
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+      }
+
+      test('install writes the skill directory and no shared folder', () async {
+        await install();
+
+        expect(
+          File(p.join(skills, skill.name, 'SKILL.md')).existsSync(),
+          isTrue,
+        );
+        expect(Directory(p.join(home.path, '.agents')).existsSync(), isFalse);
+      });
+
+      test('install keeps a hand-written folder with the skill\'s name',
+          () async {
+        final own = File(p.join(skills, skill.name, 'SKILL.md'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('mine');
+        final notes = File(p.join(skills, skill.name, 'notes', 'n.md'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('mine');
+
+        final result = await runSkills(
+          ['install', '--agent', 'kimi', '--skills', skill.id, '--global'],
+        );
+
+        expect('${result.stdout}${result.stderr}', contains('kept'));
+        expect(own.readAsStringSync(), 'mine');
+        expect(notes.existsSync(), isTrue);
+        expect(SkillManifest.load(skills).entryFor(skill.name), isNull);
+      });
+
+      group('--project', () {
+        final installArgs = [
+          'install',
+          '--agent',
+          'kimi',
+          '--skills',
+          skill.id,
+          '--project',
+        ];
+
+        File writeOwnFolder(String dir) {
+          File(p.join(dir, skill.name, 'notes', 'n.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('mine');
+          return File(p.join(dir, skill.name, 'SKILL.md'))
+            ..writeAsStringSync('mine');
+        }
+
+        void expectKept(ProcessResult result, String dir, File own) {
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect('${result.stdout}${result.stderr}', contains('kept'));
+          expect(own.readAsStringSync(), 'mine');
+          expect(
+            File(p.join(dir, skill.name, 'notes', 'n.md')).existsSync(),
+            isTrue,
+          );
+          expect(SkillManifest.load(dir).entryFor(skill.name), isNull);
+        }
+
+        test('keeps a hand-written folder in a plain project', () async {
+          final dir = p.join(workDir, '.kimi-code', 'skills');
+          final own = writeOwnFolder(dir);
+
+          final result = await runSkills(installArgs);
+
+          expectKept(result, dir, own);
+        });
+
+        test('keeps a hand-written global folder when run from \$HOME',
+            () async {
+          final own = writeOwnFolder(skills);
+
+          final result = await runSkills(
+            installArgs,
+            workingDirectory: home.path,
+          );
+
+          expectKept(result, skills, own);
+        });
+
+        test('keeps a hand-written folder when KIMI_CODE_HOME is the project',
+            () async {
+          final kimiHome = p.join(workDir, '.kimi-code');
+          final dir = p.join(kimiHome, 'skills');
+          final own = writeOwnFolder(dir);
+
+          final result = await runSkills(installArgs, kimiCodeHome: kimiHome);
+
+          expectKept(result, dir, own);
+        });
+
+        test('installs, updates and removes a skill beside a hand-written one',
+            () async {
+          final dir = p.join(workDir, '.kimi-code', 'skills');
+          final own = File(p.join(dir, _auditB, 'SKILL.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('mine');
+          final installed = File(p.join(dir, skill.name, 'SKILL.md'));
+
+          final install = await runSkills(installArgs);
+          expect(install.exitCode, 0, reason: '${install.stdout}');
+          expect(installed.readAsStringSync(), contains('name: ${skill.name}'));
+
+          installed.writeAsStringSync('stale');
+          final update = await runSkills(['update', '--agent', 'kimi']);
+          expect(update.exitCode, 0, reason: '${update.stdout}');
+          expect(installed.readAsStringSync(), contains('name: ${skill.name}'));
+
+          final remove = await runSkills(
+            ['remove', '--project', '--agent', 'kimi', '--force'],
+          );
+          expect(remove.exitCode, 0, reason: '${remove.stdout}');
+          expect(installed.existsSync(), isFalse);
+          expect(own.readAsStringSync(), 'mine');
+        });
+      });
+
+      test('install finishes a copy killed part way', () async {
+        final killed = File(p.join(skills, skill.name, 'SKILL.md'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('');
+
+        await install();
+
+        expect(killed.readAsStringSync(), contains('name: ${skill.name}'));
+        expect(SkillManifest.load(skills).entryFor(skill.name), isNotNull);
+      });
+
+      test('skills remove --global keeps a hand-written skill folder',
+          () async {
+        await install();
+        writeOwnSkill();
+
+        final result = await runSkills(
+          ['remove', '--global', '--agent', 'kimi', '--force'],
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(Directory(p.join(skills, skill.name)).existsSync(), isFalse);
+        expect(ownSkill.existsSync(), isTrue);
+      });
+
+      test('uninstall --skills keeps a hand-written skill folder', () async {
+        await install();
+        writeOwnSkill();
+
+        removeAgentInstalls(home: home.path, environment: const {});
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: workDir,
+        );
+
+        expect(Directory(p.join(skills, skill.name)).existsSync(), isFalse);
+        expect(
+          File(p.join(skills, SkillManifest.fileName)).existsSync(),
+          isFalse,
+        );
+        expect(ownSkill.existsSync(), isTrue);
+      });
+
+      test('KIMI_CODE_HOME leaves the skills in ~/.kimi-code alone', () async {
+        await install();
+        final relocated = p.join(home.path, '.config', 'kimi-code');
+        await install(kimiCodeHome: relocated);
+
+        final result = await runSkills(
+          ['remove', '--global', '--agent', 'kimi', '--force'],
+          kimiCodeHome: relocated,
+        );
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: workDir,
+          environment: {'KIMI_CODE_HOME': relocated},
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(
+          Directory(p.join(relocated, 'skills', skill.name)).existsSync(),
+          isFalse,
+        );
+        expect(
+          File(p.join(skills, skill.name, 'SKILL.md')).existsSync(),
+          isTrue,
+        );
+      }, timeout: const Timeout.factor(2));
+
+      group("whose current folder is really another agent's",
+          timeout: const Timeout.factor(2), () {
+        const auditName = 'security-audit';
+
+        Future<ProcessResult> run(List<String> args) => runSkills(
+              args,
+              extraEnvironment: {
+                'CODEX_HOME': '',
+                // `kimi` is found here, so --all-agents selects Kimi Code.
+                'PATH': '${p.join(home.path, 'bin')}:/usr/bin:/bin',
+              },
+            );
+
+        setUp(() {
+          final stub = File(p.join(home.path, 'bin', 'kimi'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('#!/bin/sh\n');
+          Process.runSync('chmod', ['+x', stub.path]);
+        });
+
+        /// The models the Claude Code copy of the skill's agents ask for.
+        Set<String> claudeModels() => {
+              for (final file in Directory(
+                p.join(home.path, '.claude', 'skills', auditName, 'agents'),
+              ).listSync().whereType<File>())
+                for (final line in file.readAsLinesSync())
+                  if (line.startsWith('model:')) line,
+            };
+
+        for (final (label, link, target) in [
+          (
+            '~/.kimi-code/skills -> ~/.claude/skills',
+            '.kimi-code/skills',
+            '.claude/skills',
+          ),
+          (
+            '~/.claude/skills -> ~/.kimi-code/skills',
+            '.claude/skills',
+            '.kimi-code/skills',
+          ),
+        ]) {
+          group(label, () {
+            setUp(() async {
+              final real = p.join(home.path, target);
+              Directory(real).createSync(recursive: true);
+              Link(p.join(home.path, link)).createSync(real, recursive: true);
+              final result = await run(
+                ['install', '--agent', 'claude', '--skills', 'sa', '--global'],
+              );
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+            });
+
+            test('Claude Code alone gets the skill from --all-agents',
+                () async {
+              final result = await run(
+                ['install', '--all-agents', '--skills', 'sa', '--global'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), isNotEmpty);
+              expect(
+                claudeModels(),
+                everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+              );
+            });
+
+            test('--all-agents reports the skip', () async {
+              final result = await run(
+                ['install', '--all-agents', '--skills', 'sa', '--global'],
+              );
+
+              expect(
+                '${result.stdout}${result.stderr}',
+                allOf(
+                  contains('Kimi Code: skipped,'),
+                  contains("really Claude Code's folder"),
+                ),
+              );
+            });
+
+            test('an all-agent skills update refreshes it as Claude Code alone',
+                () async {
+              final result = await run(['update']);
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), isNotEmpty);
+              expect(
+                claudeModels(),
+                everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+              );
+              expect(
+                '${result.stdout}${result.stderr}',
+                contains('Kimi Code: skipped,'),
+              );
+            });
+
+            test('an all-agent skills remove counts the skill once', () async {
+              final result = await run(['remove', '--global', '--force']);
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(
+                '${result.stdout}${result.stderr}',
+                allOf(
+                  contains('Removed 1 skill(s).'),
+                  contains('Kimi Code: skipped,'),
+                ),
+              );
+            });
+
+            test('--agent kimi installs there and warns', () async {
+              final result = await run(
+                ['install', '--agent', 'kimi', '--skills', 'sa', '--global'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), contains(matches('cheap|mid|frontier')));
+              expect(
+                '${result.stdout}${result.stderr}',
+                allOf(
+                  contains('.kimi-code/skills is really'),
+                  contains("Claude Code's folder"),
+                  contains('also changes what Claude Code reads'),
+                ),
+              );
+            });
+
+            test('skills update --agent kimi refreshes it and warns', () async {
+              final result = await run(['update', '--agent', 'kimi']);
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(claudeModels(), contains(matches('cheap|mid|frontier')));
+              expect(
+                '${result.stdout}${result.stderr}',
+                contains('also changes what Claude Code reads'),
+              );
+            });
+
+            test('skills remove --agent kimi removes it and warns', () async {
+              final result = await run(
+                ['remove', '--global', '--agent', 'kimi', '--force'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(
+                Directory(p.join(home.path, target, auditName)).existsSync(),
+                isFalse,
+              );
+              expect(
+                '${result.stdout}${result.stderr}',
+                contains('also changes what Claude Code reads'),
+              );
+            });
+          });
+        }
+
+        group('~/.kimi-code/skills -> ~/.cursor/commands', () {
+          late File cursorCopy;
+          late String cursorText;
+
+          setUp(() async {
+            final commands = p.join(home.path, '.cursor', 'commands');
+            Directory(commands).createSync(recursive: true);
+            Link(skills).createSync(commands, recursive: true);
+            final result = await run(
+              ['install', '--agent', 'cursor', '--skills', 'sa', '--global'],
+            );
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            cursorCopy = Directory(commands)
+                .listSync()
+                .whereType<File>()
+                .firstWhere((file) => file.path.endsWith('.md'));
+            cursorText = cursorCopy.readAsStringSync();
+          });
+
+          test('--all-agents keeps Cursor\'s file', () async {
+            final result = await run(
+              ['install', '--all-agents', '--skills', 'sa', '--global'],
+            );
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(cursorCopy.readAsStringSync(), cursorText);
+            expect(
+              '${result.stdout}${result.stderr}',
+              contains("really Cursor's folder"),
+            );
+          });
+
+          test('an all-agent skills update keeps Cursor\'s file', () async {
+            final result = await run(['update']);
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(cursorCopy.readAsStringSync(), cursorText);
+            expect(
+              Directory(p.join(p.dirname(cursorCopy.path), auditName))
+                  .existsSync(),
+              isFalse,
+            );
+          });
+
+          test('an all-agent skills remove counts the skill once', () async {
+            final result = await run(['remove', '--global', '--force']);
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(
+              '${result.stdout}${result.stderr}',
+              contains('Removed 1 skill(s).'),
+            );
+          });
+        });
+
+        group('~/.kimi-code/skills -> ~/dotfiles/skills, which no agent uses',
+            () {
+          late String dotfiles;
+
+          setUp(() {
+            dotfiles = p.join(home.path, 'dotfiles', 'skills');
+            Directory(dotfiles).createSync(recursive: true);
+            Link(skills).createSync(dotfiles, recursive: true);
+          });
+
+          test('--all-agents installs for Kimi Code with no report', () async {
+            final result = await run(
+              ['install', '--all-agents', '--skills', 'sa', '--global'],
+            );
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(
+              File(p.join(dotfiles, auditName, 'SKILL.md')).existsSync(),
+              isTrue,
+            );
+            expect(
+              '${result.stdout}${result.stderr}',
+              isNot(contains('is really')),
+            );
+          });
+
+          test('an all-agent skills update refreshes it with no report',
+              () async {
+            await run(
+              ['install', '--agent', 'kimi', '--skills', 'sa', '--global'],
+            );
+            final copy = File(p.join(dotfiles, auditName, 'SKILL.md'))
+              ..writeAsStringSync('stale');
+
+            final result = await run(['update']);
+
+            expect(result.exitCode, 0, reason: '${result.stdout}');
+            expect(copy.readAsStringSync(), isNot('stale'));
+            expect(
+              '${result.stdout}${result.stderr}',
+              isNot(contains('is really')),
+            );
+          });
+        });
+
+        test('no other agent is skipped on a folder it shares', () async {
+          final gemini = p.join(home.path, '.gemini', 'skills');
+          Directory(gemini).createSync(recursive: true);
+          Link(p.join(home.path, '.qwen', 'skills'))
+              .createSync(gemini, recursive: true);
+          await run(
+            ['install', '--agent', 'gemini', '--skills', 'sa', '--global'],
+          );
+
+          final result = await run(['update']);
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            allOf(
+              contains('Gemini CLI (global)  1 skills updated'),
+              contains('Qwen CLI (global)  1 skills updated'),
+              isNot(contains('skipped,')),
+              isNot(contains('is really')),
+            ),
+          );
+        });
+
+        test('--all-agents --project keeps out of a linked project folder',
+            () async {
+          final claude = p.join(workDir, '.claude', 'skills');
+          Directory(claude).createSync(recursive: true);
+          Link(p.join(workDir, '.kimi-code', 'skills'))
+              .createSync(claude, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--project'],
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(Directory(p.join(claude, auditName)).existsSync(), isFalse);
+        });
+      });
+
+      group('whose link has no target yet', timeout: const Timeout.factor(2),
+          () {
+        const auditName = 'security-audit';
+
+        Future<ProcessResult> run(
+          List<String> args, {
+          String? workingDirectory,
+        }) =>
+            runSkills(
+              args,
+              workingDirectory: workingDirectory,
+              extraEnvironment: {
+                'CODEX_HOME': '',
+                'PATH': '${p.join(home.path, 'bin')}:/usr/bin:/bin',
+              },
+            );
+
+        void stubBinaries(List<String> names) {
+          for (final name in names) {
+            final stub = File(p.join(home.path, 'bin', name))
+              ..createSync(recursive: true)
+              ..writeAsStringSync('#!/bin/sh\n');
+            Process.runSync('chmod', ['+x', stub.path]);
+          }
+        }
+
+        Set<String> modelsIn(String skillsDir) => {
+              for (final file in Directory(
+                p.join(skillsDir, auditName, 'agents'),
+              ).listSync().whereType<File>())
+                for (final line in file.readAsLinesSync())
+                  if (line.startsWith('model:')) line,
+            };
+
+        void expectClaudeKept(ProcessResult result, String skillsDir) {
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(
+            modelsIn(skillsDir),
+            allOf(
+              isNotEmpty,
+              everyElement(isNot(contains(RegExp('cheap|mid|frontier')))),
+            ),
+          );
+        }
+
+        setUp(() => stubBinaries(['kimi', 'claude']));
+
+        for (final (label, target) in [
+          ('absolute', '~/.claude/skills'),
+          ('relative', '../.claude/skills'),
+        ]) {
+          test('--all-agents skips Kimi Code on a $label link', () async {
+            Directory(p.join(home.path, '.claude')).createSync();
+            Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+              target.replaceFirst('~', home.path),
+              recursive: true,
+            );
+
+            final result = await run(
+              ['install', '--all-agents', '--skills', 'sa', '--global'],
+            );
+
+            expectClaudeKept(result, p.join(home.path, '.claude', 'skills'));
+            final real = home.resolveSymbolicLinksSync();
+            expect(
+              '${result.stdout}${result.stderr}',
+              contains(
+                "Claude Code's folder (${p.join(real, '.claude', 'skills')})",
+              ),
+            );
+          });
+        }
+
+        test('--all-agents skips Kimi Code on a whole ~/.kimi-code link',
+            () async {
+          Link(p.join(home.path, '.kimi-code'))
+              .createSync(p.join(home.path, '.claude'));
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expectClaudeKept(result, p.join(home.path, '.claude', 'skills'));
+        });
+
+        test("--all-agents keeps Cursor's file a file", () async {
+          stubBinaries(['agent']);
+          final commands = p.join(home.path, '.cursor', 'commands');
+          Link(p.join(home.path, '.kimi-code', 'skills'))
+              .createSync(commands, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(File(p.join(commands, '$auditName.md')).existsSync(), isTrue);
+          expect(Directory(p.join(commands, auditName)).existsSync(), isFalse);
+        });
+
+        test('--all-agents skips Kimi Code on the reverse link', () async {
+          stubBinaries(['qwen']);
+          final kimi = p.join(home.path, '.kimi-code', 'skills');
+          Link(p.join(home.path, '.qwen', 'skills'))
+              .createSync(kimi, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          // Qwen CLI cannot create its folder through the link, as before.
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(Directory(kimi).existsSync(), isFalse);
+        });
+
+        test('--all-agents --project skips Kimi Code on a project link',
+            () async {
+          final claude = p.join(workDir, '.claude', 'skills');
+          Link(p.join(workDir, '.kimi-code', 'skills'))
+              .createSync(claude, recursive: true);
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--project'],
+          );
+
+          expectClaudeKept(result, claude);
+        });
+
+        test('`somnio install --all` skips Kimi Code', () async {
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, '.claude', 'skills'),
+            recursive: true,
+          );
+
+          final result = await Process.run(
+            Platform.resolvedExecutable,
+            [
+              p.absolute('bin', 'somnio.dart'),
+              'install',
+              '--all',
+              '--skills',
+              'sa',
+              '--yes',
+            ],
+            workingDirectory: workDir,
+            includeParentEnvironment: false,
+            environment: {
+              'HOME': home.path,
+              'USERPROFILE': home.path,
+              'PATH': '${p.join(home.path, 'bin')}:/usr/bin:/bin',
+            },
+          );
+
+          expectClaudeKept(result, p.join(home.path, '.claude', 'skills'));
+        });
+
+        test('--all-agents exits 0 with the line when only Kimi Code is found',
+            () async {
+          File(p.join(home.path, 'bin', 'claude')).deleteSync();
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, '.claude', 'skills'),
+            recursive: true,
+          );
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            contains('Kimi Code: skipped,'),
+          );
+          expect(
+            Directory(p.join(home.path, '.claude', 'skills')).existsSync(),
+            isFalse,
+          );
+        });
+
+        test('--agent kimi warns and fails, since nothing creates the folder',
+            () async {
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, '.claude', 'skills'),
+            recursive: true,
+          );
+
+          final result = await run(
+            ['install', '--agent', 'kimi', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            allOf(
+              contains("is really Claude Code's folder"),
+              contains('so this also changes what Claude Code reads'),
+              isNot(contains('skipped,')),
+            ),
+          );
+        });
+
+        test('a link to a folder no agent uses still fails Kimi Code alone',
+            () async {
+          Link(p.join(home.path, '.kimi-code', 'skills')).createSync(
+            p.join(home.path, 'nowhere', 'skills'),
+            recursive: true,
+          );
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            isNot(contains('is really')),
+          );
+          expect(
+            modelsIn(p.join(home.path, '.claude', 'skills')),
+            isNotEmpty,
+          );
+        });
+
+        test('a link cycle still fails Kimi Code alone', () async {
+          final kimi = p.join(home.path, '.kimi-code');
+          Link(p.join(kimi, 'skills'))
+              .createSync(p.join(kimi, 'other'), recursive: true);
+          Link(p.join(kimi, 'other')).createSync(p.join(kimi, 'skills'));
+
+          final result = await run(
+            ['install', '--all-agents', '--skills', 'sa', '--global'],
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(
+            '${result.stdout}${result.stderr}',
+            isNot(contains('is really')),
+          );
+          expect(
+            modelsIn(p.join(home.path, '.claude', 'skills')),
+            isNotEmpty,
+          );
+        });
+      });
+
+      group('a real, unlinked ~/.kimi-code/skills while it is protected', () {
+        late String relocated;
+        late File own;
+
+        setUp(() {
+          relocated = p.join(home.path, 'alt');
+          own = File(p.join(skills, skill.name, 'SKILL.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('---\nname: ${skill.name}\n---\nHAND\n');
+        });
+
+        for (final (agent, variable) in [
+          ('codex', 'CODEX_HOME'),
+          ('claude', 'CLAUDE_CONFIG_DIR'),
+        ]) {
+          group('with $variable=~/.kimi-code', () {
+            Future<ProcessResult> run(List<String> args) => runSkills(
+                  args,
+                  kimiCodeHome: relocated,
+                  extraEnvironment: {
+                    variable: p.join(home.path, '.kimi-code'),
+                  },
+                );
+
+            test('skills install --agent $agent refuses it', () async {
+              final result = await run(
+                [
+                  'install',
+                  '--agent',
+                  agent,
+                  '--skills',
+                  skill.id,
+                  '--global',
+                ],
+              );
+
+              expect(result.exitCode, 70, reason: '${result.stdout}');
+              expect(own.readAsStringSync(), contains('HAND'));
+            });
+
+            test('skills remove --agent $agent leaves it', () async {
+              _seed(skills, skill.name);
+
+              final result = await run(
+                ['remove', '--global', '--agent', agent, '--force'],
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expect(own.readAsStringSync(), contains('HAND'));
+              expect(SkillManifest.load(skills).isEmpty, isFalse);
+            });
+
+            test('uninstall --skills leaves it', () {
+              _seed(skills, skill.name);
+              final environment = {
+                'KIMI_CODE_HOME': relocated,
+                variable: p.join(home.path, '.kimi-code'),
+              };
+
+              removeAgentInstalls(home: home.path, environment: environment);
+              removeManifestTrackedInstalls(
+                home: home.path,
+                projectRoot: workDir,
+                environment: environment,
+              );
+
+              expect(own.readAsStringSync(), contains('HAND'));
+              expect(SkillManifest.load(skills).isEmpty, isFalse);
+            });
+          });
+        }
+
+        test('skills install refuses a relative CODEX_HOME from \$HOME',
+            () async {
+          final result = await runSkills(
+            ['install', '--agent', 'codex', '--skills', skill.id, '--global'],
+            workingDirectory: home.path,
+            kimiCodeHome: relocated,
+            extraEnvironment: {'CODEX_HOME': '.kimi-code'},
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expect(own.readAsStringSync(), contains('HAND'));
+        });
+      });
+
+      group("~/.kimi-code/skills linked to Claude Code's real folder", () {
+        late String claudeSkills;
+        late String relocated;
+        late File mine;
+
+        setUp(() {
+          claudeSkills = p.join(home.path, '.claude', 'skills');
+          mine = File(p.join(claudeSkills, 'mine', 'SKILL.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('mine');
+          Link(skills).createSync(claudeSkills, recursive: true);
+          relocated = p.join(home.path, 'alt');
+        });
+
+        Future<void> installForClaude() async {
+          final result = await runSkills(
+            ['install', '--agent', 'claude', '--skills', skill.id, '--global'],
+            kimiCodeHome: relocated,
+          );
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+        }
+
+        test('skills install writes to the folder', () async {
+          await installForClaude();
+
+          expect(
+            File(p.join(claudeSkills, skill.name, 'SKILL.md')).existsSync(),
+            isTrue,
+          );
+          expect(mine.existsSync(), isTrue);
+        });
+
+        test('skills update refreshes the folder', () async {
+          await installForClaude();
+          File(p.join(claudeSkills, skill.name, 'SKILL.md'))
+              .writeAsStringSync('stale');
+
+          final result = await runSkills(
+            ['update', '--agent', 'claude'],
+            kimiCodeHome: relocated,
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            File(p.join(claudeSkills, skill.name, 'SKILL.md'))
+                .readAsStringSync(),
+            isNot('stale'),
+          );
+        });
+
+        test('skills remove --global empties the folder', () async {
+          await installForClaude();
+
+          final result = await runSkills(
+            ['remove', '--global', '--agent', 'claude', '--force'],
+            kimiCodeHome: relocated,
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            Directory(p.join(claudeSkills, skill.name)).existsSync(),
+            isFalse,
+          );
+          expect(mine.existsSync(), isTrue);
+        });
+
+        test('uninstall --skills empties the folder', () async {
+          await installForClaude();
+          final environment = {'KIMI_CODE_HOME': relocated};
+
+          removeAgentInstalls(home: home.path, environment: environment);
+          removeManifestTrackedInstalls(
+            home: home.path,
+            projectRoot: workDir,
+            environment: environment,
+          );
+
+          expect(
+            Directory(p.join(claudeSkills, skill.name)).existsSync(),
+            isFalse,
+          );
+          expect(
+            File(p.join(claudeSkills, SkillManifest.fileName)).existsSync(),
+            isFalse,
+          );
+          expect(mine.existsSync(), isTrue);
+        });
+
+        test('holds for a whole ~/.kimi-code linked to ~/.claude', () async {
+          Directory(p.join(home.path, '.kimi-code'))
+              .deleteSync(recursive: true);
+          Link(p.join(home.path, '.kimi-code'))
+              .createSync(p.join(home.path, '.claude'));
+
+          await installForClaude();
+
+          expect(
+            File(p.join(claudeSkills, skill.name, 'SKILL.md')).existsSync(),
+            isTrue,
+          );
+        });
+
+        test('Kimi Code itself still leaves the folder alone', () async {
+          await installForClaude();
+
+          final result = await runSkills(
+            ['remove', '--global', '--agent', 'kimi', '--force'],
+            kimiCodeHome: relocated,
+          );
+
+          expect(result.exitCode, 0, reason: '${result.stdout}');
+          expect(
+            File(p.join(claudeSkills, skill.name, 'SKILL.md')).existsSync(),
+            isTrue,
+          );
+        });
+      });
+
+      group('a folder linked into ~/.kimi-code/skills while it is protected',
+          () {
+        late String relocated;
+        late String manifest;
+        late File theirs;
+
+        setUp(() {
+          _seed(skills, skill.name);
+          manifest =
+              File(p.join(skills, SkillManifest.fileName)).readAsStringSync();
+          theirs = File(p.join(skills, skill.name, 'SKILL.md'))
+            ..createSync(recursive: true)
+            ..writeAsStringSync('THEIRS');
+          relocated = p.join(home.path, 'alt');
+        });
+
+        void expectUntouched() {
+          expect(theirs.readAsStringSync(), 'THEIRS');
+          expect(
+            File(p.join(skills, SkillManifest.fileName)).readAsStringSync(),
+            manifest,
+          );
+        }
+
+        for (final (id, config) in [
+          ('gemini', '.gemini'),
+          ('qwen', '.qwen'),
+        ]) {
+          group('~/$config/skills', () {
+            setUp(() {
+              Link(p.join(home.path, config, 'skills'))
+                  .createSync(skills, recursive: true);
+            });
+
+            test('skills install refuses it', () async {
+              final result = await runSkills(
+                ['install', '--agent', id, '--skills', skill.id, '--global'],
+                kimiCodeHome: relocated,
+              );
+
+              expect(result.exitCode, 70, reason: '${result.stdout}');
+              expect(
+                '${result.stdout}${result.stderr}',
+                contains(
+                  "is really a protected folder (another profile's config)",
+                ),
+              );
+              expectUntouched();
+            });
+
+            test('skills update skips it', () async {
+              final result = await runSkills(
+                ['update', '--agent', id],
+                kimiCodeHome: relocated,
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expectUntouched();
+            });
+
+            test('skills remove --global skips it', () async {
+              final result = await runSkills(
+                ['remove', '--global', '--agent', id, '--force'],
+                kimiCodeHome: relocated,
+              );
+
+              expect(result.exitCode, 0, reason: '${result.stdout}');
+              expectUntouched();
+            });
+
+            test('uninstall --skills skips it', () {
+              final environment = {'KIMI_CODE_HOME': relocated};
+
+              removeAgentInstalls(home: home.path, environment: environment);
+              removeManifestTrackedInstalls(
+                home: home.path,
+                projectRoot: workDir,
+                environment: environment,
+              );
+
+              expectUntouched();
+            });
+          });
+        }
+
+        test('skills install refuses a whole ~/.gemini linked to ~/.kimi-code',
+            () async {
+          Link(p.join(home.path, '.gemini'))
+              .createSync(p.join(home.path, '.kimi-code'));
+
+          final result = await runSkills(
+            ['install', '--agent', 'gemini', '--skills', skill.id, '--global'],
+            kimiCodeHome: relocated,
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expectUntouched();
+        });
+
+        test('skills install refuses a link to a folder both share', () async {
+          final shared = p.join(home.path, 'shared');
+          Directory(skills).renameSync(shared);
+          Link(skills).createSync(shared);
+          Link(p.join(home.path, '.gemini', 'skills'))
+              .createSync(shared, recursive: true);
+
+          final result = await runSkills(
+            ['install', '--agent', 'gemini', '--skills', skill.id, '--global'],
+            kimiCodeHome: relocated,
+          );
+
+          expect(result.exitCode, 70, reason: '${result.stdout}');
+          expectUntouched();
+        });
+      });
+    });
+
+    group('~/.claude/skills linked to the real ~/.gemini/skills', () {
+      final skill = SkillRegistry.skills[0];
+      late String geminiSkills;
+      late String claudeConfigDir;
+      late File theirs;
+
+      setUp(() {
+        geminiSkills = p.join(home.path, '.gemini', 'skills');
+        _seed(geminiSkills, skill.name);
+        theirs = File(p.join(geminiSkills, skill.name, 'SKILL.md'))
+          ..createSync(recursive: true)
+          ..writeAsStringSync('THEIRS');
+        Link(p.join(home.path, '.claude', 'skills'))
+            .createSync(geminiSkills, recursive: true);
+        claudeConfigDir = p.join(home.path, '.claude-work');
+      });
+
+      test('CLAUDE_CONFIG_DIR keeps Gemini CLI out of skills install',
+          () async {
+        final result = await runSkills(
+          ['install', '--agent', 'gemini', '--skills', skill.id, '--global'],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, 70, reason: '${result.stdout}');
+        expect(theirs.readAsStringSync(), 'THEIRS');
+      });
+
+      test('CLAUDE_CONFIG_DIR keeps Gemini CLI out of skills update', () async {
+        final result = await runSkills(
+          ['update', '--agent', 'gemini'],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(theirs.readAsStringSync(), 'THEIRS');
+      });
+
+      test('CLAUDE_CONFIG_DIR keeps Gemini CLI out of skills remove', () async {
+        final result = await runSkills(
+          ['remove', '--global', '--agent', 'gemini', '--force'],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stdout}');
+        expect(theirs.readAsStringSync(), 'THEIRS');
+      });
+
+      test('CLAUDE_CONFIG_DIR keeps Gemini CLI out of uninstall', () {
+        final environment = {'CLAUDE_CONFIG_DIR': claudeConfigDir};
+
+        removeAgentInstalls(home: home.path, environment: environment);
+        removeManifestTrackedInstalls(
+          home: home.path,
+          projectRoot: workDir,
+          environment: environment,
+        );
+
+        expect(theirs.readAsStringSync(), 'THEIRS');
+      });
+    });
 
     test('prints the updated skill names after the progress lines', () async {
       seedManifest({
@@ -248,6 +1411,183 @@ void main() {
 
         expect(result.exitCode, 0, reason: '${result.stderr}');
         expectOtherAccountUntouched();
+      });
+    });
+
+    test('moves OpenCode skills out of ~/.opencode/skills', () async {
+      final oldSkills = p.join(home.path, '.opencode', 'skills');
+      Directory(p.join(oldSkills, 'git-commit-format'))
+          .createSync(recursive: true);
+      File(p.join(oldSkills, 'git-commit-format', 'SKILL.md'))
+          .writeAsStringSync('old');
+      Directory(p.join(oldSkills, 'my-skill')).createSync();
+      File(p.join(oldSkills, '.somnio-skills.json')).writeAsStringSync(
+        jsonEncode({
+          'version': 1,
+          'skills': {
+            'git-commit-format': {
+              'kind': 'workflow',
+              'paths': [
+                {'root': 'install', 'path': 'git-commit-format'},
+              ],
+            },
+          },
+        }),
+      );
+      final xdg = p.join(home.path, 'xdg');
+
+      final result = await runSkills(
+        ['update', '--agent', 'opencode'],
+        xdgConfigHome: xdg,
+      );
+
+      expect(result.exitCode, 0, reason: '${result.stderr}');
+      expect(result.stdout,
+          contains('Updated skills (1):\n  - git-commit-format'));
+      expect(
+        File(p.join(xdg, 'opencode', 'skills', 'git-commit-format', 'SKILL.md'))
+            .readAsStringSync(),
+        startsWith('---\nname: git-commit-format\n'),
+      );
+      expect(
+        Directory(oldSkills).listSync().map((e) => p.basename(e.path)),
+        ['my-skill'],
+      );
+    });
+
+    for (final relocated in [false, true]) {
+      test(
+          "leaves Claude Code's skills alone when ~/.opencode/skills links to "
+          'them${relocated ? ' with CLAUDE_CONFIG_DIR set' : ''}', () async {
+        seedManifest({'git-commit-format': 'workflow'});
+        final claudeSkills = p.join(home.path, '.claude', 'skills');
+        Directory(p.join(claudeSkills, 'git-commit-format')).createSync();
+        final manifest = File(p.join(claudeSkills, '.somnio-skills.json'))
+            .readAsStringSync();
+        Link(p.join(home.path, '.opencode', 'skills'))
+            .createSync(claudeSkills, recursive: true);
+
+        final result = await runSkills(
+          ['update', '--agent', 'opencode'],
+          claudeConfigDir: relocated ? p.join(home.path, '.claude-work') : '',
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expect(
+          Directory(p.join(claudeSkills, 'git-commit-format')).existsSync(),
+          isTrue,
+        );
+        expect(
+          File(p.join(claudeSkills, '.somnio-skills.json')).readAsStringSync(),
+          manifest,
+        );
+      });
+    }
+
+    test(
+        "keeps the user's own skills beside the ones skills update moved, "
+        'through uninstall --skills', () async {
+      final oldSkills = p.join(home.path, '.opencode', 'skills');
+      for (final mine in ['security-audit', 'somnio-team-style']) {
+        Directory(p.join(oldSkills, mine)).createSync(recursive: true);
+        File(p.join(oldSkills, mine, 'SKILL.md'))
+            .writeAsStringSync('---\nname: $mine\n---\n');
+      }
+      Directory(p.join(oldSkills, 'git-commit-format')).createSync();
+      File(p.join(oldSkills, '.somnio-skills.json')).writeAsStringSync(
+        jsonEncode({
+          'version': 1,
+          'skills': {
+            'git-commit-format': {
+              'kind': 'workflow',
+              'paths': [
+                {'root': 'install', 'path': 'git-commit-format'},
+              ],
+            },
+          },
+        }),
+      );
+
+      final result = await runSkills(['update', '--agent', 'opencode']);
+      expect(result.exitCode, 0, reason: '${result.stderr}');
+      expect(
+        File(p.join(oldSkills, '.somnio-skills.json')).existsSync(),
+        isFalse,
+        reason: 'the migration empties and deletes the legacy manifest',
+      );
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      for (final mine in ['security-audit', 'somnio-team-style']) {
+        expect(Directory(p.join(oldSkills, mine)).existsSync(), isTrue);
+      }
+    });
+
+    group('~/.config/opencode/skills linked to the protected ~/.claude/skills',
+        () {
+      late String claudeSkills;
+      late String manifest;
+      late String claudeConfigDir;
+
+      setUp(() {
+        seedManifest({'git-commit-format': 'workflow'});
+        claudeSkills = p.join(home.path, '.claude', 'skills');
+        Directory(p.join(claudeSkills, 'git-commit-format')).createSync();
+        File(p.join(claudeSkills, 'git-commit-format', 'SKILL.md'))
+            .writeAsStringSync('THEIRS');
+        manifest = File(p.join(claudeSkills, '.somnio-skills.json'))
+            .readAsStringSync();
+        Link(p.join(home.path, '.config', 'opencode', 'skills'))
+            .createSync(claudeSkills, recursive: true);
+        claudeConfigDir = p.join(home.path, '.claude-work');
+      });
+
+      void expectUntouched() {
+        expect(
+          File(p.join(claudeSkills, 'git-commit-format', 'SKILL.md'))
+              .readAsStringSync(),
+          'THEIRS',
+        );
+        expect(
+          File(p.join(claudeSkills, '.somnio-skills.json')).readAsStringSync(),
+          manifest,
+        );
+      }
+
+      test('skills update leaves it alone', () async {
+        final result = await runSkills(
+          ['update', '--agent', 'opencode'],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expectUntouched();
+      });
+
+      test('skills remove leaves it alone', () async {
+        final result = await runSkills(
+          ['remove', '--global', '--agent', 'opencode', '--force'],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expectUntouched();
+      });
+
+      test('skills install refuses to write there', () async {
+        final result = await runSkills(
+          [
+            'install',
+            '--agent',
+            'opencode',
+            '--global',
+            '--skills',
+            'git-commit-format',
+          ],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, isNot(0));
+        expectUntouched();
       });
     });
 
@@ -677,15 +2017,54 @@ void main() {
           home: home.path,
           projectRoot: project.path,
         );
-        // Amazon Q's project prompts never moved: its legacy project folder
-        // is its current one, which ownProjectInstallDirs keeps anyway.
+        // Amazon Q's project prompts and OpenCode's project skills never
+        // moved: their legacy project folder is their current one, which
+        // ownProjectInstallDirs keeps anyway.
         expect(
           legacy,
-          agent == _amazonq ? isNull : isNotNull,
+          agent == _amazonq || agent.id == 'opencode' ? isNull : isNotNull,
           reason: agent.id,
         );
       }
     });
+  });
+
+  group('a current folder linked into the protected ~/.claude', () {
+    for (final target in [
+      '.claude/skills',
+      '.claude/skills/shared',
+      '.claude'
+    ]) {
+      test('is neither refreshed nor removed when it links to ~/$target', () {
+        final linked = p.join(home.path, target);
+        _seed(linked, _auditA);
+        Link(p.join(home.path, '.config', 'opencode', 'skills'))
+            .createSync(linked, recursive: true);
+        final environment = {
+          'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work'),
+        };
+
+        expect(
+          discoverSkillsUpdateUnits(
+            agents: [_opencode],
+            home: home.path,
+            projectRoot: project.path,
+            environment: environment,
+          ),
+          isEmpty,
+        );
+        expect(
+          discoverSkillsRemoveCandidates(
+            agents: [_opencode],
+            scopes: [InstallScope.global],
+            home: home.path,
+            projectRoot: project.path,
+            environment: environment,
+          ),
+          isEmpty,
+        );
+      });
+    }
   });
 
   group('discoverSkillsRemoveCandidates', () {

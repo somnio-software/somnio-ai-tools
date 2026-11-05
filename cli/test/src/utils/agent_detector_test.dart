@@ -170,6 +170,22 @@ void main() {
         expect(info.path, p.join(codexHome, 'skills'));
       });
 
+      test('detects Kimi Code skills under KIMI_CODE_HOME', () async {
+        final kimi = AgentRegistry.findById('kimi')!;
+        final kimiHome = p.join(home, '.config', 'kimi-code');
+        Directory(p.join(kimiHome, 'skills', 'mine'))
+            .createSync(recursive: true);
+
+        final detector = AgentDetector(
+          homeDirectory: home,
+          environment: {'KIMI_CODE_HOME': kimiHome},
+          whichBinary: (_) async => null,
+        );
+        final info = (await detector.detect())[kimi]!;
+
+        expect(info.path, p.join(kimiHome, 'skills'));
+      });
+
       group('Antigravity', () {
         final antigravity = AgentRegistry.findById('antigravity')!;
 

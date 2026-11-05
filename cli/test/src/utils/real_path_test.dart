@@ -44,6 +44,80 @@ void main() {
       );
     });
   });
+  group('followedPathOf', () {
+    late String real;
+
+    setUp(() {
+      real = temp.resolveSymbolicLinksSync();
+    });
+
+    test('matches realPathOf where every link has a target', () {
+      Directory(p.join(temp.path, 'real', 'skills'))
+          .createSync(recursive: true);
+      Link(p.join(temp.path, 'alias')).createSync(p.join(temp.path, 'real'));
+      final path = p.join(temp.path, 'alias', 'skills');
+
+      expect(followedPathOf(path), realPathOf(path));
+    });
+
+    test('matches realPathOf on a missing path with no link', () {
+      final path = p.join(temp.path, 'missing', 'skills');
+
+      expect(followedPathOf(path), realPathOf(path));
+    });
+
+    test('follows a link whose target does not exist', () {
+      Link(p.join(temp.path, 'link')).createSync(p.join(temp.path, 'target'));
+
+      expect(followedPathOf(p.join(temp.path, 'link')), p.join(real, 'target'));
+    });
+
+    test('follows a relative link from the folder it lives in', () {
+      Directory(p.join(temp.path, 'a')).createSync();
+      Link(p.join(temp.path, 'a', 'link')).createSync('../target');
+
+      expect(
+        followedPathOf(p.join(temp.path, 'a', 'link')),
+        p.join(real, 'target'),
+      );
+    });
+
+    test('follows a dangling link above the path', () {
+      Link(p.join(temp.path, 'home')).createSync(p.join(temp.path, 'target'));
+
+      expect(
+        followedPathOf(p.join(temp.path, 'home', 'skills')),
+        p.join(real, 'target', 'skills'),
+      );
+    });
+
+    test('follows a chain of links to a missing target', () {
+      Link(p.join(temp.path, 'one')).createSync(p.join(temp.path, 'two'));
+      Link(p.join(temp.path, 'two')).createSync(p.join(temp.path, 'target'));
+
+      expect(followedPathOf(p.join(temp.path, 'one')), p.join(real, 'target'));
+    });
+
+    test('takes .. in a target after the link before it', () {
+      Directory(p.join(temp.path, 'far', 'away')).createSync(recursive: true);
+      Link(p.join(temp.path, 'near')).createSync(p.join(temp.path, 'far/away'));
+      Link(p.join(temp.path, 'link')).createSync('near/../target');
+
+      expect(
+        followedPathOf(p.join(temp.path, 'link')),
+        p.join(real, 'far', 'target'),
+      );
+    });
+
+    test('gives realPathOf for a link cycle', () {
+      final one = p.join(temp.path, 'one');
+      Link(one).createSync(p.join(temp.path, 'two'));
+      Link(p.join(temp.path, 'two')).createSync(one);
+
+      expect(followedPathOf(one), realPathOf(one));
+    });
+  });
+
   group('isSafelyWithin', () {
     test('accepts a path strictly inside the root', () {
       expect(isSafelyWithin(temp.path, p.join(temp.path, 'a', 'b')), isTrue);

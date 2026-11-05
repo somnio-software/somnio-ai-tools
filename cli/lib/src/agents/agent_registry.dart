@@ -13,8 +13,9 @@ class AgentRegistry {
   /// Agents that load skills as `<name>/SKILL.md` directories use
   /// [InstallFormat.skillDir]. Those installed as flat markdown before CLI
   /// 3.2.12 (files these agents never load), as Antigravity workflows before
-  /// 3.2.15, to a folder the agent never reads before 3.2.17, or into a rules
-  /// folder the agent adds to every request before 3.3.2, record that
+  /// 3.2.15, to a folder the agent never reads (or, for OpenCode, does not
+  /// document) before 3.2.17 or 3.3.3, or into a rules folder the agent adds
+  /// to every request before 3.3.2, record that
   /// in `legacyInstallFormat` / `legacyInstallPath` /
   /// `legacyExecutionRulesPath`, so update, remove and uninstall migrate or
   /// delete the old layout.
@@ -32,6 +33,7 @@ class AgentRegistry {
     _opencode,
     _codebuddy,
     _qwen,
+    _kimi,
     // ── IDE-only agents (canExecute: false) ────────────────────────
     _copilot,
     _windsurf,
@@ -86,6 +88,7 @@ class AgentRegistry {
     configHomeVariable: 'CLAUDE_CONFIG_DIR',
     // `~/.claude` may be another account's live config directory.
     cleansDefaultConfigHome: false,
+    hasPreManifestSkillDirs: true,
     ruleExtension: '.md',
     tokenUsageParser: parseClaudeUsage,
     filePrefix: 'somnio-',
@@ -337,8 +340,16 @@ class AgentRegistry {
     promptFlag: '-p',
     outputFlags: ['-f', 'json'],
     installFormat: InstallFormat.skillDir,
-    installPath: '{home}/.opencode/skills',
+    // OpenCode's documented global skills folder, under its config folder
+    // `$XDG_CONFIG_HOME/opencode`. Releases before 3.3.3 wrote to
+    // `~/.opencode/skills`, which OpenCode only reads through undocumented
+    // config-folder discovery. The project folder stays `.opencode/skills`.
+    installPath: '{home}/.config/opencode/skills',
+    projectInstallPath: '{home}/.opencode/skills',
+    configHome: '{home}/.config',
+    configHomeVariable: 'XDG_CONFIG_HOME',
     legacyInstallFormat: InstallFormat.markdown,
+    legacyInstallPath: '{home}/.opencode/skills',
     legacyExecutionRulesPath: '{home}/.opencode/somnio_rules',
     filePrefix: 'somnio',
     installUrl: 'https://opencode.ai',
@@ -393,6 +404,36 @@ class AgentRegistry {
     filePrefix: 'somnio',
     npmPackage: 'qwen-code',
     installUrl: 'https://qwen.ai',
+  );
+
+  static const _kimi = AgentConfig(
+    id: 'kimi',
+    displayName: 'Kimi Code',
+    binary: 'kimi',
+    canExecute: true,
+    promptStyle: PromptStyle.flag,
+    // `kimi -p` runs under the `auto` permission policy and rejects `--yolo`
+    // and `--auto`, so it takes no approve flags.
+    promptFlag: '-p',
+    installFormat: InstallFormat.skillDir,
+    // Kimi Code's own user skills folder. It also reads `~/.agents/skills`,
+    // which skills.sh and other agents share.
+    installPath: '{home}/.kimi-code/skills',
+    configHome: '{home}/.kimi-code',
+    configHomeVariable: 'KIMI_CODE_HOME',
+    // `KIMI_CODE_HOME` isolates profiles, and no earlier release installed
+    // into `~/.kimi-code`, so its skills are left alone while it is relocated.
+    cleansDefaultConfigHome: false,
+    // Kimi Code loads flat `<name>.md` skills as well as directories, and no
+    // release wrote here without a manifest.
+    installsOnlyWithManifest: true,
+    yieldsSharedFolder: true,
+    filePrefix: 'somnio',
+    npmPackage: '@moonshot-ai/kimi-code',
+    installUrl: 'https://github.com/MoonshotAI/kimi-code',
+    installInstructions:
+        '  curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash\n'
+        '  Or: npm install -g @moonshot-ai/kimi-code',
   );
 
   // ── IDE-only agent definitions ──────────────────────────────────
