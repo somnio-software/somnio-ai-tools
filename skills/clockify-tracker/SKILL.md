@@ -121,7 +121,7 @@ An `export CLOCKIFY_API_KEY=...` line in a shell profile still works when the ag
 | `CLOCKIFY_API_KEY` | API key value directly in the live environment. |
 | `CLOCKIFY_API_KEY_FILE` | Path to a file whose contents are the API key (e.g. `/run/secrets/clockify`). Useful with secrets managers or vault-mounted files. |
 | `CLOCKIFY_PREFS_PATH` | Custom path for the prefs JSON file. Defaults to `~/.clockify-prefs.json` when unset. Resolve it with `${CLOCKIFY_PREFS_PATH:-$HOME/.clockify-prefs.json}` (a `~` inside `${…:-…}` is not expanded by the shell). |
-| `CLOCKIFY_TZ_OFFSET` | Local offset from UTC in **whole hours** (e.g. `-3` for Argentina). Fallback when the prefs file has no timezone. |
+| `CLOCKIFY_TZ_OFFSET` | **Legacy, read-only.** Whole-hour offset from UTC (e.g. `-3`). Used only when neither the request nor the prefs file gives an IANA zone, and it ignores DST. Prefer `timezone.zone` in the prefs file. |
 
 ## Authentication
 
@@ -179,21 +179,88 @@ rm -f "$DESC_FILE"
 clockify_api POST "https://api.clockify.me/api/v1/workspaces/$WID/time-entries" "$body"
 ```
 
-
 ### Converting user-local `HH:mm` to UTC `start` / `end`
 
-When the user gives **local** time as `HH:mm` (and optional `YYYY-MM-DD`, default **today** in their locale intent):
+A fixed number of hours is not enough: zones with DST change their offset during the year, and some zones are not on the hour (India UTC+5:30, Newfoundland UTC-3:30). Convert with the IANA zone and the date of the entry, never with `hour - offset`.
 
-1. Parse date `D` (year, month, day) and time parts `hour`, `minute`.
-2. Let `tzOffset` be the offset **in hours from UTC** for that local zone: `+5` for UTC+5, `-3` for UTC-3. Use `CLOCKIFY_TZ_OFFSET` if set (integer hours); otherwise infer from the user (e.g. Argentina → `-3`) or from context.
-3. Build UTC instant:
-   `utc_hour = hour - tzOffset`
-   then normalize into a proper UTC `DateTime` on calendar day `D` (carry overflow across day boundaries as needed), and serialize with `Z` (ISO 8601 UTC).
+**1. Resolve the IANA zone** (e.g. `America/Argentina/Buenos_Aires`, `Europe/Madrid`, `Asia/Kolkata`), first match wins:
 
-**Examples:**
+1. A zone, city or offset the user names in this request wins over everything saved. Map a city to its IANA zone and confirm it ("Madrid → `Europe/Madrid`, correct?"). For a bare offset ("I'm in UTC+2 today"), ask for the zone before converting, since an offset cannot tell whether DST applies.
+2. `timezone.zone` in the prefs file.
+3. Legacy fixed offset, only when neither of the above exists: `timezone.offset` in prefs, then `CLOCKIFY_TZ_OFFSET`. Both are read-only (never written). Map offset `N` hours to the fixed zone `Etc/GMT` with the **sign flipped**: `-3` → `Etc/GMT+3`, `+5` → `Etc/GMT-5`. Warn the user that a fixed offset ignores DST and offer to pick a real zone and save it.
+4. Otherwise ask for a city or IANA zone name.
 
-- Local `09:00` on `2025-03-10`, `tzOffset = -3` → UTC hour `9 - (-3) = 12` → `2025-03-10T12:00:00.000Z`.
-- If the user already provides full ISO strings with `T` and timezone/`Z`, pass them through without this conversion.
+**Relative dates.** Resolve "today", "this week" and a missing year in the chosen zone, never the host's clock, which can be a day or a year off near midnight or New Year for a user in another zone (`clockify_py -c 'import sys; from datetime import datetime; from zoneinfo import ZoneInfo; print(datetime.now(ZoneInfo(sys.argv[1])).strftime("%Y-%m-%d"))' "$ZONE"`). A range that crosses New Year ("Dec 30 – Jan 2") rolls the year forward.
+
+**2. Convert** with this helper (needs the `clockify_py` helper; Python 3.9+ standard `zoneinfo`, and `pip install tzdata` on Windows). Each argument is `"YYYY-MM-DD HH:MM-HH:MM"` (start–end) or `"YYYY-MM-DD HH:MM"` (open-ended); the output is one line per argument: `start-UTC end-UTC minutes`. If the end is not after the start it falls on the next day. A bad zone name exits with an error.
+
+```bash
+clockify_utc() {
+  clockify_py - "$@" <<'PY'
+import sys
+from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+try:
+    zone = ZoneInfo(sys.argv[1])
+except ZoneInfoNotFoundError:
+    sys.exit(f"Unknown time zone {sys.argv[1]!r} (Windows: run pip install tzdata)")
+fmt = "%Y-%m-%dT%H:%M:%S.000Z"
+
+def to_utc(day, hm):
+    naive = datetime.strptime(f"{day} {hm}", "%Y-%m-%d %H:%M")
+    first, second = naive.replace(tzinfo=zone), naive.replace(tzinfo=zone, fold=1)
+    if first.utcoffset() != second.utcoffset():
+        sys.exit(f"{day} {hm} is skipped or repeated by a DST change in {sys.argv[1]}; ask the user which instant they mean")
+    return first.astimezone(timezone.utc)
+
+for arg in sys.argv[2:]:
+    day, span = arg.split()
+    start_hm, _, end_hm = span.partition("-")
+    start = to_utc(day, start_hm)
+    if not end_hm:
+        print(start.strftime(fmt), "-", "-")
+        continue
+    end = to_utc(day, end_hm)
+    if end <= start:
+        next_day = (datetime.strptime(day, "%Y-%m-%d") + timedelta(days=1)).strftime("%Y-%m-%d")
+        end = to_utc(next_day, end_hm)
+    print(start.strftime(fmt), end.strftime(fmt), int((end - start).total_seconds() // 60))
+PY
+}
+
+clockify_utc Europe/Madrid "2025-03-28 09:00-17:00" "2025-03-31 09:00-17:00"
+# 2025-03-28T08:00:00.000Z 2025-03-28T16:00:00.000Z 480
+# 2025-03-31T07:00:00.000Z 2025-03-31T15:00:00.000Z 480
+```
+
+Use the `minutes` column for the duration in the preview; on a DST-change day it can differ from end minus start on the clock. A local time that does not exist or occurs twice (Madrid `02:30` on 2025-03-30 and 2025-10-26) makes the helper exit with an error: ask the user for a different time.
+
+Only if no Python 3.9+ is available, `date` can convert one instant at a time. Both variants convert back and compare, which catches a skipped local time (the BSD one normalizes it, the GNU one rejects it). Neither can detect a time that occurs twice, and BSD and GNU pick different occurrences, so on the day a zone falls back (Madrid `2025-10-26`) install Python instead. Compute the duration from the two epoch values.
+
+```bash
+Z=Europe/Madrid T='2025-03-31 09:00'
+
+# macOS / BSD
+e=$(TZ=$Z date -j -f '%Y-%m-%d %H:%M:%S' "$T:00" +%s) && [ "$(TZ=$Z date -r "$e" '+%Y-%m-%d %H:%M')" = "$T" ] \
+  && date -u -r "$e" +%Y-%m-%dT%H:%M:00.000Z || echo "skipped or invalid local time: $T"
+
+# Linux / GNU
+e=$(date -d "TZ=\"$Z\" $T" +%s) && [ "$(TZ=$Z date -d @"$e" '+%Y-%m-%d %H:%M')" = "$T" ] \
+  && date -u -d @"$e" +%Y-%m-%dT%H:%M:00.000Z || echo "skipped or invalid local time: $T"
+```
+
+**Examples** (all verified with the helper above):
+
+| Zone | Local | UTC `start` |
+|------|-------|-------------|
+| `America/Argentina/Buenos_Aires` (UTC-3, no DST) | `2025-03-10 09:00` | `2025-03-10T12:00:00.000Z` |
+| `Europe/Madrid` (UTC+1 winter) | `2025-03-28 09:00` | `2025-03-28T08:00:00.000Z` |
+| `Europe/Madrid` (UTC+2 after the 2025-03-30 change) | `2025-03-31 09:00` | `2025-03-31T07:00:00.000Z` |
+| `Asia/Kolkata` (UTC+5:30) | `2025-03-10 09:00` | `2025-03-10T03:30:00.000Z` |
+| `America/St_Johns` (UTC-2:30 in July) | `2025-07-10 09:00` | `2025-07-10T11:30:00.000Z` |
+
+If the user already provides full ISO strings with `T` and a timezone/`Z`, pass them through without this conversion.
 
 ### Multiple calendar days
 
@@ -239,15 +306,15 @@ Post these entries? (yes / edit / cancel)
 1. Check that a key exists with `[ -n "$(clockify_key)" ]`. Never run `clockify_key` on its own (it prints the key), and never run `env` or `printenv`. If none is found, follow "No key found" and stop. Then read the prefs file with the reader (see Preferences file) for the saved time zone and the legacy `api_key` warning.
 2. If workspace is unknown: `GET /workspaces`; resolve `workspaceId`.
 3. If project is needed: `GET /workspaces/{workspaceId}/projects?page-size=5000`; resolve `projectId`.
-4. Collect description, start (and optional end), date if needed, and timezone offset if not obvious.
-5. Build the entries (one per day, one per project), converting local times to UTC.
+4. Collect description, start (and optional end), date if needed, and the IANA time zone if not obvious.
+5. Build the entries (one per day, one per project), converting local times to UTC with `clockify_utc`.
 6. Show the preview and wait for an explicit yes (see "Preview before every POST"). No POST before it.
 7. After the yes, `POST /workspaces/{workspaceId}/time-entries` once per previewed entry.
 8. Show the API JSON response or a clear error (status code + body).
 
 ## Errors
 
-On non-success status (`clockify_api` prints `HTTP <code>` and returns non-zero), read the response body and adjust (invalid id, permissions, malformed body). Never resend an entry that already posted, and never resend a corrected entry without showing it in a new preview first. Official reference: [Clockify API documentation](https://docs.clockify.me/).
+On non-success status (`clockify_api` prints `HTTP <code>` and returns non-zero), read the response body and adjust (invalid id, permissions, malformed body). Never resend an entry that already posted, and never resend a corrected entry without showing it in a new preview first.
 
 A POST whose outcome is unknown (a transport failure with no `HTTP <code>` line, or any 502/503/504) may still have created the entry. Never retry it automatically. List that day with `GET /workspaces/{workspaceId}/user/{userId}/time-entries?start=<ISO UTC>&end=<ISO UTC>&page-size=200&page=<n>` (the user id is `id` from `GET /user`; fetch pages until one comes back with fewer than 200 entries), show the user the entries it returns (Clockify returns instants like `...:00Z`, so compare them as instants, not strings, and look at `end`, project and description too), and resend only if the user confirms the entry is missing.
 
@@ -300,7 +367,7 @@ PY
 
 ```json
 {
-  "timezone": { "name": "Buenos Aires, Argentina", "offset": -3 },
+  "timezone": { "name": "Buenos Aires, Argentina", "zone": "America/Argentina/Buenos_Aires" },
   "default_start": "09:00",
   "default_end": "17:00",
   "workspace_id": "<wid>",
@@ -311,7 +378,7 @@ PY
 }
 ```
 
-Always **merge** new keys into existing prefs — never replace the whole file.
+Always **merge** new keys into existing prefs — never replace the whole file. `timezone.zone` is an IANA zone name. Prefs written by older versions have `"timezone": { "name": ..., "offset": -3 }` instead; that is still read (see the legacy fallback in the conversion section) but never written. When the user confirms a zone, replace that `timezone` object with the `name` + `zone` form.
 
 ### Step-by-step flow
 
@@ -334,23 +401,27 @@ Missing file → skip that day and tell the user. Parse every `## HH:MM - … (b
 
 **5. Confirm time frame** — default 09:00–17:00 (8 h). Show saved pref if one exists. Only ask to change if no prefs exist or user explicitly mentions a different block.
 
-**6. Timezone picker** — if a saved timezone exists, offer it as default:
-> "Using Buenos Aires (UTC-3) — press Enter to keep, or pick a number / type your own:"
+**6. Timezone** — the zone is an IANA name, so DST and half-hour zones are handled. If a saved `timezone.zone` exists, offer it as default:
+> "Using Buenos Aires (America/Argentina/Buenos_Aires) — press Enter to keep, or pick a number / type your own:"
+
+If the prefs only have a legacy `offset`, say it is a fixed offset that ignores DST and ask for the real zone (the picker below) before converting.
 
 If no saved pref, print and wait for a number, a name, or a free-text entry:
 ```
-1. Buenos Aires, Argentina  (UTC-3)
-2. Montevideo, Uruguay      (UTC-3)
-3. São Paulo, Brazil        (UTC-3)
-4. Quito, Ecuador           (UTC-5)
-5. Lima, Peru               (UTC-5)
-6. Colombia                 (UTC-5)
-7. Nicaragua                (UTC-6)
-8. Other — type your city or UTC offset (e.g. "Madrid" or "UTC+1")
+1. America/Argentina/Buenos_Aires  (Buenos Aires, Argentina)
+2. America/Montevideo              (Montevideo, Uruguay)
+3. America/Sao_Paulo               (São Paulo, Brazil)
+4. America/Guayaquil               (Quito, Ecuador)
+5. America/Lima                    (Lima, Peru)
+6. America/Bogota                  (Colombia)
+7. America/Managua                 (Nicaragua)
+8. Other — type your city or an IANA zone (e.g. "Madrid", "Europe/Madrid", "Asia/Kolkata")
 ```
 
-If the user types a city or region not on the list, infer the standard UTC offset from your knowledge (e.g. "Madrid" → UTC+1 in winter / UTC+2 in summer — use the current standard offset for today's date). Confirm with the user before saving:
-> "Madrid is UTC+1 (standard time) — is that correct?"
+If the user types a city or region not on the list, map it to its IANA zone from your knowledge and confirm before saving, including the offsets so they can catch a wrong guess:
+> "Madrid → Europe/Madrid (UTC+1 in winter, UTC+2 in summer) — is that correct?"
+
+Check that the zone exists before saving: `clockify_py -c 'from zoneinfo import ZoneInfo; ZoneInfo("Europe/Madrid")'` (non-zero exit and `ZoneInfoNotFoundError` for a bad name). Then save `"timezone": { "name": "<label>", "zone": "<IANA zone>" }` with the merge helper (the complete object, so a legacy `offset` is dropped).
 
 **7. Parse and resolve repo names** — log headers use two formats:
 - Worktree: `## HH:MM - mini-meta-repo/refactor-flutter_http (branch)` — root repo is the part **before** `/`

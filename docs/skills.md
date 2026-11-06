@@ -481,10 +481,10 @@ Before anything is sent, the skill shows a numbered preview (date, local start�
 
 **Example prompts:**
 ```
-Log 8 hours today on project "Backend API" in Clockify, starting at 09:00. I'm in UTC-3.
+Log 8 hours today on project "Backend API" in Clockify, starting at 09:00. My time zone is America/Argentina/Buenos_Aires.
 ```
 ```
-Track 6 hours on "Mobile App" from March 23 to 27, 10:00–16:00, timezone UTC-3.
+Track 6 hours on "Mobile App" from March 23 to 27, 10:00–16:00, timezone Europe/Madrid.
 ```
 ```
 carga 8 horas en el proyecto Somnio con la descripción "Technology" empezando a las 09:00
@@ -551,7 +551,7 @@ Created and managed by this skill — the hook does not touch it. Created automa
 
 ```json
 {
-  "timezone": { "name": "Buenos Aires, Argentina", "offset": -3 },
+  "timezone": { "name": "Buenos Aires, Argentina", "zone": "America/Argentina/Buenos_Aires" },
   "default_start": "09:00",
   "default_end": "17:00",
   "workspace_id": "<workspace id>",
@@ -567,7 +567,7 @@ Keys explained:
 
 | Key | Description |
 |-----|-------------|
-| `timezone` | Your local timezone — asked once, applied to every entry. |
+| `timezone` | Your local timezone as an IANA zone (`zone`, e.g. `Europe/Madrid`, `Asia/Kolkata`) plus a display `name` — asked once, applied to every entry. DST changes and half-hour zones are converted correctly. Older prefs with a whole-hour `offset` are still read as a fixed-offset fallback (no DST) but never written; the skill offers to replace it with a zone. |
 | `default_start` / `default_end` | Default time block for each day (e.g. 09:00–17:00). |
 | `workspace_id` | Resolved automatically from the API on first run. |
 | `auto_cleanup` | If `true`, deletes processed `~/.work-log/` files after posting without asking. Set by answering "always" to the cleanup prompt. |
