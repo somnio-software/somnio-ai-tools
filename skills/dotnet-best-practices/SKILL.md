@@ -2,8 +2,8 @@
 name: dotnet-best-practices
 description: >-
   .NET / ASP.NET Core code quality audit. Triggers: 'dotnet best practices',
-  '.net code quality', 'aspnet code review', 'csharp standards', 'dto
-  validation review'.
+  '.net code quality', 'aspnet code review', 'csharp standards', 'solid
+  principles review', 'dto validation review'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

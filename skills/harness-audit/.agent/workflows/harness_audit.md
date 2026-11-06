@@ -1,7 +1,8 @@
 ---
 description: >-
   Read-only AI harness audit: scores CLAUDE.md, rules, hooks and agents out of
-  100. Triggers: 'harness audit', 'ai harness', 'claude harness score'.
+  100. Triggers: 'harness audit', 'ai harness', 'claude harness score', 'ai
+  adoption audit'.
 ---
 
 # AI Harness Audit

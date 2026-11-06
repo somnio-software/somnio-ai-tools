@@ -3,7 +3,7 @@ name: dora-metrics
 description: >-
   DORA metrics (deployment frequency, lead time) from GitHub, GitLab,
   Bitbucket or Azure DevOps APIs. Triggers: 'run the DORA metrics', 'lead time
-  for [project]'.
+  for [project]', 'biweekly metrics report'.
 allowed-tools: Read, Write, Edit, Bash, Agent
 ---
 

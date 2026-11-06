@@ -2,7 +2,7 @@
 description: >-
   React project health audit, scored report; hands off to nextjs-health-audit
   on Next.js. Triggers: 'react audit', 'react health', 'health audit',
-  'frontend audit'.
+  'frontend audit', 'vite audit'.
 ---
 
 # React Project Health Audit

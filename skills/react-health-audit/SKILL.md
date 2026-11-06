@@ -3,7 +3,7 @@ name: react-health-audit
 description: >-
   React project health audit, scored report; hands off to nextjs-health-audit
   on Next.js. Triggers: 'react audit', 'react health', 'health audit',
-  'frontend audit'.
+  'frontend audit', 'vite audit'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent, Task
 ---
 

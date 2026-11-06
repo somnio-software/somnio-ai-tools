@@ -1,8 +1,8 @@
 ---
 description: >-
-  Next.js security audit: live advisory checks of installed versions, secrets,
-  Server Actions. Triggers: 'nextjs security audit', 'nextjs cve', 'is my next
-  version vulnerable'.
+  Next.js security audit: live advisory checks of installed next/react
+  versions, secrets, Server Actions. Triggers: 'nextjs security audit',
+  'nextjs cve', 'is my next version vulnerable'.
 ---
 
 # Next.js Security Audit

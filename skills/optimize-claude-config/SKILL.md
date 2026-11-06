@@ -1,9 +1,9 @@
 ---
 name: optimize-claude-config
 description: |
-  Audits Claude Code config: lazy-load `paths:` rules checked against the
-  tree, slim CLAUDE.md index, PreToolUse(Write) hook. --audit-only skips
-  applying.
+  Audits and optimizes Claude Code config: lazy-load `paths:` rules checked
+  against the tree, slim CLAUDE.md index, PreToolUse(Write) hook. --audit-only
+  skips applying.
 argument-hint: "[--audit-only] [path]"
 allowed-tools: Bash, Read, Edit, Write
 ---

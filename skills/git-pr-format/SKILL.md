@@ -1,8 +1,8 @@
 ---
 name: git-pr-format
 description: >-
-  Generates PR titles and descriptions with no AI attribution. Use before `gh
-  pr create` or `gh pr edit --body`, or for "open a PR for this".
+  Generates PR/MR titles and descriptions with no AI attribution. Use before
+  `gh pr create` or `gh pr edit --body`, or for "open a PR for this".
 ---
 
 # Git PR Format Skill

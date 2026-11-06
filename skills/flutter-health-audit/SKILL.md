@@ -2,8 +2,7 @@
 name: flutter-health-audit
 description: >-
   Flutter project health audit, scored report. Triggers: 'flutter audit',
-  'health audit', 'flutter health', 'tech debt assessment', 'project quality
-  check'.
+  'health audit', 'flutter health'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

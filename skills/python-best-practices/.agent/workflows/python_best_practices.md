@@ -2,7 +2,7 @@
 description: >-
   Python code quality audit. Triggers: 'python best practices', 'python code
   quality', 'python standards', 'code review', 'type hints review', 'pytest
-  review'.
+  review', 'pydantic validation'.
 ---
 
 # Python Best Practices Check

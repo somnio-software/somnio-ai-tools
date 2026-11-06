@@ -1,8 +1,7 @@
 ---
 description: >-
   Flutter project health audit, scored report. Triggers: 'flutter audit',
-  'health audit', 'flutter health', 'tech debt assessment', 'project quality
-  check'.
+  'health audit', 'flutter health'.
 ---
 
 # Flutter Project Health Audit

@@ -107,7 +107,7 @@ If `skills/react-*` already exists, it runs in **auto-detect mode** — scans ex
    2. Step two — `references/step-two.md`
    ```
 
-   Keep the `description` to about 150 characters and under 200: what the skill does plus its main trigger words, within the first 80 characters. Claude Code and Codex list every installed skill's description in a shared budget, and long ones push other skills out of the listing or get trimmed. Use the same text in the skill's `.agent/workflows/*.md` frontmatter (if it has one) and in its `skill_registry.dart` entry.
+   Keep the `description` to about 150 characters and under 200: what the skill does plus its main trigger words, within the first 80 characters. Claude Code and Codex list every installed skill's description in a shared budget, and long ones crowd other skills' descriptions out of the listing or get trimmed. Use the same text in the skill's `.agent/workflows/*.md` frontmatter (if it has one) and in its `skill_registry.dart` entry.
 
 3. Create reference files in `references/`:
 

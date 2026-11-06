@@ -15,10 +15,8 @@ class SkillRegistry {
       name: 'flutter-health-audit',
       aliases: ['somnio-fh', 'fh'],
       displayName: 'Flutter Project Health Audit',
-      description:
-          'Flutter project health audit, scored report. Triggers: '
-          "'flutter audit', 'health audit', 'flutter health', 'tech "
-          "debt assessment', 'project quality check'.",
+      description: 'Flutter project health audit, scored report. Triggers: '
+          "'flutter audit', 'health audit', 'flutter health'.",
       planRelativePath: 'skills/flutter-health-audit/SKILL.md',
       rulesDirectory: 'skills/flutter-health-audit/references',
       workflowPath:
@@ -31,8 +29,7 @@ class SkillRegistry {
       name: 'angular-health-audit',
       aliases: ['somnio-ah', 'ah'],
       displayName: 'Angular Project Health Audit',
-      description:
-          'Modern Angular 2+ (not AngularJS) project health audit, '
+      description: 'Modern Angular 2+ (not AngularJS) project health audit, '
           "scored report. Triggers: 'angular audit', 'angular "
           "health', 'angular cli audit', 'ngx audit'.",
       planRelativePath: 'skills/angular-health-audit/SKILL.md',
@@ -47,8 +44,7 @@ class SkillRegistry {
       name: 'flutter-best-practices',
       aliases: ['somnio-fp', 'fp'],
       displayName: 'Flutter Best Practices Check',
-      description:
-          "Flutter code quality audit. Triggers: 'flutter best "
+      description: "Flutter code quality audit. Triggers: 'flutter best "
           "practices', 'flutter standards', 'code quality', 'code "
           "review', 'architecture compliance'.",
       planRelativePath: 'skills/flutter-best-practices/SKILL.md',
@@ -63,8 +59,7 @@ class SkillRegistry {
       name: 'soc2-audit',
       aliases: ['somnio-s2', 's2'],
       displayName: 'SOC 2 Readiness Audit',
-      description:
-          'Read-only SOC 2 readiness audit against the Trust Services '
+      description: 'Read-only SOC 2 readiness audit against the Trust Services '
           "Criteria, /100 score. Triggers: 'soc 2 audit', 'soc2 "
           "readiness', 'soc2 gap analysis', 'compliance audit'.",
       planRelativePath: 'skills/soc2-audit/SKILL.md',
@@ -78,8 +73,7 @@ class SkillRegistry {
       name: 'nestjs-health-audit',
       aliases: ['somnio-nh', 'nh'],
       displayName: 'NestJS Project Health Audit',
-      description:
-          'NestJS project health audit, scored report. Triggers: '
+      description: 'NestJS project health audit, scored report. Triggers: '
           "'nestjs audit', 'nestjs health', 'health audit', 'backend "
           "audit', 'node audit', 'api audit'.",
       planRelativePath: 'skills/nestjs-health-audit/SKILL.md',
@@ -94,8 +88,7 @@ class SkillRegistry {
       name: 'angularjs-best-practices',
       aliases: ['somnio-ajp', 'ajp'],
       displayName: 'AngularJS Best Practices Check',
-      description:
-          'AngularJS (Angular 1.x) code quality audit. Triggers: '
+      description: 'AngularJS (Angular 1.x) code quality audit. Triggers: '
           "'angularjs best practices', 'angular 1 code quality', "
           "'minification-safe DI review'.",
       planRelativePath: 'skills/angularjs-best-practices/SKILL.md',
@@ -110,8 +103,7 @@ class SkillRegistry {
       name: 'nestjs-best-practices',
       aliases: ['somnio-np', 'np'],
       displayName: 'NestJS Best Practices Check',
-      description:
-          "NestJS code quality audit. Triggers: 'nestjs best "
+      description: "NestJS code quality audit. Triggers: 'nestjs best "
           "practices', 'nestjs standards', 'backend code quality', "
           "'code review', 'dto validation'.",
       planRelativePath: 'skills/nestjs-best-practices/SKILL.md',
@@ -126,8 +118,7 @@ class SkillRegistry {
       name: 'angular-best-practices',
       aliases: ['somnio-ap', 'ap'],
       displayName: 'Angular Best Practices Check',
-      description:
-          'Modern Angular 2+ (not AngularJS) code quality audit. '
+      description: 'Modern Angular 2+ (not AngularJS) code quality audit. '
           "Triggers: 'angular best practices', 'angular code "
           "quality', 'rxjs review', 'ngx best practices'.",
       planRelativePath: 'skills/angular-best-practices/SKILL.md',
@@ -142,10 +133,10 @@ class SkillRegistry {
       name: 'react-health-audit',
       aliases: ['somnio-rh', 'rh'],
       displayName: 'React Project Health Audit',
-      description:
-          'React project health audit, scored report; hands off to '
+      description: 'React project health audit, scored report; hands off to '
           "nextjs-health-audit on Next.js. Triggers: 'react audit', "
-          "'react health', 'health audit', 'frontend audit'.",
+          "'react health', 'health audit', 'frontend audit', 'vite "
+          "audit'.",
       planRelativePath: 'skills/react-health-audit/SKILL.md',
       rulesDirectory: 'skills/react-health-audit/references',
       workflowPath:
@@ -158,8 +149,7 @@ class SkillRegistry {
       name: 'angularjs-health-audit',
       aliases: ['somnio-ajh', 'ajh'],
       displayName: 'AngularJS Project Health Audit',
-      description:
-          'AngularJS (Angular 1.x) project health audit, scored '
+      description: 'AngularJS (Angular 1.x) project health audit, scored '
           "report. Triggers: 'angularjs audit', 'angular 1 audit', "
           "'legacy frontend audit', 'bower audit'.",
       planRelativePath: 'skills/angularjs-health-audit/SKILL.md',
@@ -174,8 +164,7 @@ class SkillRegistry {
       name: 'react-best-practices',
       aliases: ['somnio-rp', 'rp'],
       displayName: 'React Best Practices Check',
-      description:
-          "React code quality audit. Triggers: 'react best "
+      description: "React code quality audit. Triggers: 'react best "
           "practices', 'react code quality', 'react standards', "
           "'component review', 'hooks review'.",
       planRelativePath: 'skills/react-best-practices/SKILL.md',
@@ -190,8 +179,7 @@ class SkillRegistry {
       name: 'python-health-audit',
       aliases: ['somnio-ph', 'ph'],
       displayName: 'Python Project Health Audit',
-      description:
-          'Python project health audit (FastAPI, Django, Flask), '
+      description: 'Python project health audit (FastAPI, Django, Flask), '
           "scored report. Triggers: 'python audit', 'python health', "
           "'fastapi audit', 'django audit', 'flask audit'.",
       planRelativePath: 'skills/python-health-audit/SKILL.md',
@@ -206,8 +194,7 @@ class SkillRegistry {
       name: 'iso27001-audit',
       aliases: ['somnio-iso', 'iso'],
       displayName: 'ISO 27001 Readiness Audit',
-      description:
-          'Read-only ISO/IEC 27001:2022 readiness audit (ISMS, Annex '
+      description: 'Read-only ISO/IEC 27001:2022 readiness audit (ISMS, Annex '
           "A), /100 score. Triggers: 'iso 27001 audit', 'isms audit', "
           "'annex a gap analysis', 'iso compliance audit'.",
       planRelativePath: 'skills/iso27001-audit/SKILL.md',
@@ -221,10 +208,10 @@ class SkillRegistry {
       name: 'python-best-practices',
       aliases: ['somnio-pp', 'pp'],
       displayName: 'Python Best Practices Check',
-      description:
-          "Python code quality audit. Triggers: 'python best "
+      description: "Python code quality audit. Triggers: 'python best "
           "practices', 'python code quality', 'python standards', "
-          "'code review', 'type hints review', 'pytest review'.",
+          "'code review', 'type hints review', 'pytest review', "
+          "'pydantic validation'.",
       planRelativePath: 'skills/python-best-practices/SKILL.md',
       rulesDirectory: 'skills/python-best-practices/references',
       workflowPath:
@@ -237,8 +224,7 @@ class SkillRegistry {
       name: 'dotnet-health-audit',
       aliases: ['somnio-dh', 'dh'],
       displayName: '.NET Project Health Audit',
-      description:
-          '.NET / ASP.NET Core Web API project health audit, scored '
+      description: '.NET / ASP.NET Core Web API project health audit, scored '
           "report. Triggers: 'dotnet audit', 'health audit', '.net "
           "audit', 'aspnet audit', 'csharp audit'.",
       planRelativePath: 'skills/dotnet-health-audit/SKILL.md',
@@ -253,10 +239,10 @@ class SkillRegistry {
       name: 'dotnet-best-practices',
       aliases: ['somnio-dp', 'dp'],
       displayName: '.NET Best Practices Check',
-      description:
-          ".NET / ASP.NET Core code quality audit. Triggers: 'dotnet "
+      description: ".NET / ASP.NET Core code quality audit. Triggers: 'dotnet "
           "best practices', '.net code quality', 'aspnet code "
-          "review', 'csharp standards', 'dto validation review'.",
+          "review', 'csharp standards', 'solid principles review', "
+          "'dto validation review'.",
       planRelativePath: 'skills/dotnet-best-practices/SKILL.md',
       rulesDirectory: 'skills/dotnet-best-practices/references',
       workflowPath:
@@ -269,8 +255,7 @@ class SkillRegistry {
       name: 'nextjs-health-audit',
       aliases: ['somnio-nxh', 'nxh'],
       displayName: 'Next.js Project Health Audit',
-      description:
-          'Next.js project health audit (versions, App Router, '
+      description: 'Next.js project health audit (versions, App Router, '
           "caching, CI/CD), scored report. Triggers: 'nextjs audit', "
           "'nextjs health', 'app router audit'.",
       planRelativePath: 'skills/nextjs-health-audit/SKILL.md',
@@ -285,8 +270,7 @@ class SkillRegistry {
       name: 'nextjs-best-practices',
       aliases: ['somnio-nxp', 'nxp'],
       displayName: 'Next.js Best Practices Check',
-      description:
-          'Version-aware Next.js code quality audit (App Router, '
+      description: 'Version-aware Next.js code quality audit (App Router, '
           "Server Components). Triggers: 'nextjs best practices', "
           "'nextjs code review', 'app router best practices'.",
       planRelativePath: 'skills/nextjs-best-practices/SKILL.md',
@@ -301,10 +285,9 @@ class SkillRegistry {
       name: 'nextjs-security-audit',
       aliases: ['somnio-nxs', 'nxs'],
       displayName: 'Next.js Security Audit',
-      description:
-          'Next.js security audit: live advisory checks of installed '
-          "versions, secrets, Server Actions. Triggers: 'nextjs "
-          "security audit', 'nextjs cve', 'is my next version "
+      description: 'Next.js security audit: live advisory checks of installed '
+          'next/react versions, secrets, Server Actions. Triggers: '
+          "'nextjs security audit', 'nextjs cve', 'is my next version "
           "vulnerable'.",
       planRelativePath: 'skills/nextjs-security-audit/SKILL.md',
       rulesDirectory: 'skills/nextjs-security-audit/references',
@@ -318,8 +301,7 @@ class SkillRegistry {
       name: 'security-audit',
       aliases: ['somnio-sa', 'sa'],
       displayName: 'Security Audit',
-      description:
-          'Framework-agnostic security audit: secrets, sensitive '
+      description: 'Framework-agnostic security audit: secrets, sensitive '
           "files, dependency vulnerabilities. Triggers: 'security "
           "audit', 'vulnerability scan', 'secret scan', 'owasp'.",
       planRelativePath: 'skills/security-audit/SKILL.md',
@@ -333,10 +315,9 @@ class SkillRegistry {
       name: 'harness-audit',
       aliases: ['somnio-ha', 'ha'],
       displayName: 'Harness Audit',
-      description:
-          'Read-only AI harness audit: scores CLAUDE.md, rules, hooks '
+      description: 'Read-only AI harness audit: scores CLAUDE.md, rules, hooks '
           "and agents out of 100. Triggers: 'harness audit', 'ai "
-          "harness', 'claude harness score'.",
+          "harness', 'claude harness score', 'ai adoption audit'.",
       planRelativePath: 'skills/harness-audit/SKILL.md',
       rulesDirectory: 'skills/harness-audit/references',
       workflowPath: 'skills/harness-audit/.agent/workflows/harness_audit.md',
@@ -373,8 +354,7 @@ class SkillRegistry {
       id: 'clockify_tracker',
       name: 'clockify-tracker',
       displayName: 'Clockify Tracker',
-      description:
-          'Clockify time tracking via the REST API: list projects, '
+      description: 'Clockify time tracking via the REST API: list projects, '
           'create time entries (UTC). Use to log time, track hours, '
           'or when Clockify is mentioned.',
       planRelativePath: 'skills/clockify-tracker/SKILL.md',
@@ -383,8 +363,7 @@ class SkillRegistry {
       id: 'git_commit_format',
       name: 'git-commit-format',
       displayName: 'Git Commit Format',
-      description:
-          'Generates Conventional Commits messages (title + '
+      description: 'Generates Conventional Commits messages (title + '
           'description). Use for "write a commit for these changes", '
           '"how should I commit this?".',
       planRelativePath: 'skills/git-commit-format/SKILL.md',
@@ -393,8 +372,7 @@ class SkillRegistry {
       id: 'git_branch_format',
       name: 'git-branch-format',
       displayName: 'Git Branch Format',
-      description:
-          'Generates Git branch names following project conventions. '
+      description: 'Generates Git branch names following project conventions. '
           'Use when naming or creating a branch: "what should I call '
           'this branch?".',
       planRelativePath: 'skills/git-branch-format/SKILL.md',
@@ -403,8 +381,7 @@ class SkillRegistry {
       id: 'git_pr_format',
       name: 'git-pr-format',
       displayName: 'Git PR Format',
-      description:
-          'Generates PR titles and descriptions with no AI '
+      description: 'Generates PR/MR titles and descriptions with no AI '
           'attribution. Use before `gh pr create` or `gh pr edit '
           '--body`, or for "open a PR for this".',
       planRelativePath: 'skills/git-pr-format/SKILL.md',
@@ -413,8 +390,7 @@ class SkillRegistry {
       id: 'workflow_builder',
       name: 'workflow-builder',
       displayName: 'Workflow Builder',
-      description:
-          'Creates and runs multi-step workflows with per-step AI '
+      description: 'Creates and runs multi-step workflows with per-step AI '
           "models and parallel waves. Triggers: 'create workflow', "
           "'run workflow', 'resume workflow', 'task pipeline'.",
       planRelativePath: 'skills/workflow-builder/SKILL.md',
@@ -424,30 +400,30 @@ class SkillRegistry {
       id: 'dart_model_from_json',
       name: 'dart-model-from-json',
       displayName: 'Dart Model from JSON',
-      description:
-          'Generates Dart models from JSON with json_annotation and '
+      description: 'Generates Dart models from JSON with json_annotation and '
           "equatable. Triggers: 'dart model from json', 'generate a "
-          "Dart model for this JSON'.",
+          "Dart model for this JSON', 'create a model from this "
+          "response'.",
       planRelativePath: 'skills/dart-model-from-json/SKILL.md',
     ),
     WorkflowSkill(
       id: 'optimize_claude_config',
       name: 'optimize-claude-config',
       displayName: 'Optimize Claude Config',
-      description:
-          'Audits Claude Code config: lazy-load `paths:` rules '
-          'checked against the tree, slim CLAUDE.md index, '
-          'PreToolUse(Write) hook. --audit-only skips applying.',
+      description: 'Audits and optimizes Claude Code config: lazy-load '
+          '`paths:` rules checked against the tree, slim CLAUDE.md '
+          'index, PreToolUse(Write) hook. --audit-only skips '
+          'applying.',
       planRelativePath: 'skills/optimize-claude-config/SKILL.md',
     ),
     WorkflowSkill(
       id: 'dora_metrics',
       name: 'dora-metrics',
       displayName: 'DORA Metrics',
-      description:
-          'DORA metrics (deployment frequency, lead time) from '
+      description: 'DORA metrics (deployment frequency, lead time) from '
           'GitHub, GitLab, Bitbucket or Azure DevOps APIs. Triggers: '
-          "'run the DORA metrics', 'lead time for [project]'.",
+          "'run the DORA metrics', 'lead time for [project]', "
+          "'biweekly metrics report'.",
       planRelativePath: 'skills/dora-metrics/SKILL.md',
       assetDirectories: [
         'skills/dora-metrics/scripts',

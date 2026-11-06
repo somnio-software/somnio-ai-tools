@@ -3,7 +3,7 @@ name: python-best-practices
 description: >-
   Python code quality audit. Triggers: 'python best practices', 'python code
   quality', 'python standards', 'code review', 'type hints review', 'pytest
-  review'.
+  review', 'pydantic validation'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

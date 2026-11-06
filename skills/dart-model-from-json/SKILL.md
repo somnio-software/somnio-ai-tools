@@ -2,7 +2,8 @@
 name: dart-model-from-json
 description: >-
   Generates Dart models from JSON with json_annotation and equatable.
-  Triggers: 'dart model from json', 'generate a Dart model for this JSON'.
+  Triggers: 'dart model from json', 'generate a Dart model for this JSON',
+  'create a model from this response'.
 ---
 
 # Dart Model from JSON
