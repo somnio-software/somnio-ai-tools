@@ -199,18 +199,57 @@ When the user gives **local** time as `HH:mm` (and optional `YYYY-MM-DD`, defaul
 
 For ranges ("March 2–6") or discrete lists ("March 23, 24, 25, 26 and 27"), create **one POST per day** with the same local times and the appropriate date for each `start` (and `end` if any). When no year is provided, assume the current calendar year.
 
+## Preview before every POST
+
+Every `POST` to `/time-entries` is preceded by one preview, in every path: a single manual entry, a multi-day range, and log-based mode. Show every entry that will be created, then wait for the user's answer. Nothing is sent before an explicit **yes**.
+
+Format: a numbered list (not a table, so the description is never truncated), one item per POST, each with the date, local start–end, project, description and duration, then a total and the question:
+
+```
+Here's what I'll post to Clockify (time zone: America/Argentina/Buenos_Aires):
+
+1. 2025-05-22 — Nubank — 09:00–17:00 (8h)
+   refactor-flutter_http: Completed Flutter HTTP migration by updating LogoutInterceptor
+   to use IRouter and fixing the redirect_interceptor_test setup. Key finding: the
+   interceptor correctly dispatches the logout deeplink on 403 responses.
+
+2. 2025-05-26 — Nubank — 09:00–16:00 (7h)
+   refactor-flutter_http: Diagnosed the native catalyst HTTP bypass on both iOS and
+   Android — authenticated calls go through URLSession/OkHttp, not Dart/Dio, making
+   LogoutInterceptor.onError structurally unreachable. Proposed and planned Option A
+   (synthetic DioException) as the only viable path to trigger the interceptor.
+
+3. 2025-05-26 — Internal Tools — 16:00–17:00 (1h)
+   somnio-ai-tools: Planned and implemented the clockify-tracker log-based mode,
+   including hook fix for root-repo logging and the repo-to-project mapping system.
+
+Total: 3 entries, 16h
+
+Post these entries? (yes / edit / cancel)
+```
+
+- Show the full date with the year and name the time zone the times are in, so a wrong zone or year is visible before anything is sent.
+- Write the project by name, or "no project" when `projectId` is omitted. Show the full description.
+- Open-ended entry (no `end`): show `09:00– (running)` and leave it out of the total.
+- Only a clear yes posts. "edit": ask which entry number to change and what the new value is, then show the full preview again. "cancel", silence or anything ambiguous: do not post.
+- The yes covers exactly the entries shown. If anything changes before sending (a time, a project, a description, a different set of days), show the preview again.
+
 ## Operational flow
 
 1. Check that a key exists with `[ -n "$(clockify_key)" ]`. Never run `clockify_key` on its own (it prints the key), and never run `env` or `printenv`. If none is found, follow "No key found" and stop. Then read the prefs file with the reader (see Preferences file) for the saved time zone and the legacy `api_key` warning.
 2. If workspace is unknown: `GET /workspaces`; resolve `workspaceId`.
 3. If project is needed: `GET /workspaces/{workspaceId}/projects?page-size=5000`; resolve `projectId`.
 4. Collect description, start (and optional end), date if needed, and timezone offset if not obvious.
-5. Build JSON and `POST /workspaces/{workspaceId}/time-entries`.
-6. Show the API JSON response or a clear error (status code + body).
+5. Build the entries (one per day, one per project), converting local times to UTC.
+6. Show the preview and wait for an explicit yes (see "Preview before every POST"). No POST before it.
+7. After the yes, `POST /workspaces/{workspaceId}/time-entries` once per previewed entry.
+8. Show the API JSON response or a clear error (status code + body).
 
 ## Errors
 
-On non-success status, read the response body and adjust (invalid id, permissions, malformed body). Official reference: [Clockify API documentation](https://docs.clockify.me/).
+On non-success status (`clockify_api` prints `HTTP <code>` and returns non-zero), read the response body and adjust (invalid id, permissions, malformed body). Never resend an entry that already posted, and never resend a corrected entry without showing it in a new preview first. Official reference: [Clockify API documentation](https://docs.clockify.me/).
+
+A POST whose outcome is unknown (a transport failure with no `HTTP <code>` line, or any 502/503/504) may still have created the entry. Never retry it automatically. List that day with `GET /workspaces/{workspaceId}/user/{userId}/time-entries?start=<ISO UTC>&end=<ISO UTC>&page-size=200&page=<n>` (the user id is `id` from `GET /user`; fetch pages until one comes back with fewer than 200 entries), show the user the entries it returns (Clockify returns instants like `...:00Z`, so compare them as instants, not strings, and look at `end`, project and description too), and resend only if the user confirms the entry is missing.
 
 ---
 
@@ -339,32 +378,9 @@ Batch all unknown-repo questions before creating any entries.
 
 The goal is enough context for a Finance reader to understand 8 h of work, without being a wall of text.
 
-**11. Preview and confirm** — before posting anything, show each entry in full so the user can validate the description. Format as a numbered list, one entry per item:
+**11. Preview and confirm** — show the preview exactly as described in "Preview before every POST", with the 2-sentence summaries as descriptions, so the user can validate each one. Do not post until they answer yes.
 
-```
-Here's what I'll post to Clockify:
-
-1. May 22 — Nubank — 09:00–17:00
-   refactor-flutter_http: Completed Flutter HTTP migration by updating LogoutInterceptor
-   to use IRouter and fixing the redirect_interceptor_test setup. Key finding: the
-   interceptor correctly dispatches the logout deeplink on 403 responses.
-
-2. May 26 — Nubank — 09:00–16:00
-   refactor-flutter_http: Diagnosed the native catalyst HTTP bypass on both iOS and
-   Android — authenticated calls go through URLSession/OkHttp, not Dart/Dio, making
-   LogoutInterceptor.onError structurally unreachable. Proposed and planned Option A
-   (synthetic DioException) as the only viable path to trigger the interceptor.
-
-3. May 26 — Internal Tools — 16:00–17:00
-   somnio-ai-tools: Planned and implemented the clockify-tracker log-based mode,
-   including hook fix for root-repo logging and the repo-to-project mapping system.
-
-Post these entries? (yes / edit / cancel)
-```
-
-Use a numbered list (not a table) so the full description is readable without truncation. If the user says "edit", ask which entry number they want to change and what the new description should be, then re-show the full preview before posting.
-
-**12. Create entries** — one `POST /workspaces/{workspaceId}/time-entries` per row using the existing UTC conversion logic. Show each API response.
+**12. Create entries** — one `POST /workspaces/{workspaceId}/time-entries` per previewed row, with the `start` / `end` that `clockify_utc` produced and `clockify_api POST`. Show each API response.
 
 **13. Clean up log files** — after all entries are successfully posted, offer to delete the processed files.
 

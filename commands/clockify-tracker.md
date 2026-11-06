@@ -9,4 +9,6 @@ Follow the **clockify-tracker** Agent Skill (`skills/clockify-tracker/SKILL.md`)
 
 **Log-based mode** — triggered when the user says "use logs", "from work logs", "usa los logs", "auto-fill from logs", or similar. Read daily work logs from `~/.work-log/`, resolve repo-to-project mappings (persisted in `~/.clockify-prefs.json`), generate executive summaries, and create Clockify entries after user confirmation. Full flow is in the skill file under `## Log-based mode`.
 
+In both modes, show the skill's numbered preview (date, local start–end, project, description, duration, total) and wait for an explicit yes before any POST.
+
 If they say "8 hours starting at 09:00", use end time 17:00 local unless they specify otherwise.

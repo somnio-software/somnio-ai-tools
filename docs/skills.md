@@ -477,6 +477,8 @@ Log time and manage time entries in Clockify directly from your AI assistant usi
 
 Provide description, project, dates, and times explicitly.
 
+Before anything is sent, the skill shows a numbered preview (date, local start–end, project, description, duration, total) and waits for an explicit yes. Log-based mode uses the same preview.
+
 **Example prompts:**
 ```
 Log 8 hours today on project "Backend API" in Clockify, starting at 09:00. I'm in UTC-3.
