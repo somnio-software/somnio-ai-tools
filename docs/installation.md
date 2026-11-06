@@ -85,7 +85,7 @@ Some skills require environment variables to be configured before use:
 
 | Skill | Variable | Required | Purpose |
 |-------|----------|----------|---------|
-| Clockify Tracker | `CLOCKIFY_API_KEY` | Yes | API key from Clockify (Profile → API) |
+| Clockify Tracker | `CLOCKIFY_API_KEY` | One of the key sources | API key from Clockify (Profile → API). Alternatives: `CLOCKIFY_API_KEY_FILE` (path to a file with only the key) or your OS secret store, service `clockify` — see [Clockify Tracker](skills.md#clockify-tracker) |
 | Clockify Tracker | `CLOCKIFY_TZ_OFFSET` | No | Local UTC offset in whole hours (e.g. `-3` for Argentina) |
 | DORA Metrics | `GITHUB_TOKEN` | No — falls back to `gh auth token` | GitHub token with read access to the project's repos/orgs. Skip this if you already have `gh auth login` done locally. |
 

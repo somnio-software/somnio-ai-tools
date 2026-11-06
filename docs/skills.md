@@ -549,7 +549,6 @@ Created and managed by this skill — the hook does not touch it. Created automa
 
 ```json
 {
-  "api_key": "<your Clockify API key>",
   "timezone": { "name": "Buenos Aires, Argentina", "offset": -3 },
   "default_start": "09:00",
   "default_end": "17:00",
@@ -566,7 +565,6 @@ Keys explained:
 
 | Key | Description |
 |-----|-------------|
-| `api_key` | Clockify API key (Profile → API). Alternative sources: `CLOCKIFY_API_KEY` env var, `CLOCKIFY_API_KEY_FILE` env var (path to a file containing the key), or shell config files (`~/.zshrc` etc.). See resolution order below. |
 | `timezone` | Your local timezone — asked once, applied to every entry. |
 | `default_start` / `default_end` | Default time block for each day (e.g. 09:00–17:00). |
 | `workspace_id` | Resolved automatically from the API on first run. |
@@ -575,7 +573,26 @@ Keys explained:
 
 > **Note on repo mappings:** the hook logs entries using the **root git repo name** (e.g. `mini-meta-repo`), not the worktree or branch name. Any worktree from the same repo (e.g. `mini-meta-repo/fix-NU-334`) maps to the same project automatically. If you have stale per-worktree entries in `repo_mappings` from before this behaviour was introduced, you can safely remove them and keep only the root repo key.
 
-**API key resolution order:** `CLOCKIFY_API_KEY` env var → `CLOCKIFY_API_KEY_FILE` env var → shell config files (`~/.zshrc`, `~/.bashrc`, etc.) → `api_key` in prefs file → prompted once and optionally saved. The prefs file path itself defaults to `~/.clockify-prefs.json` but can be overridden with `CLOCKIFY_PREFS_PATH`.
+**API key:** the prefs file never holds the key. The skill looks it up in this order: `CLOCKIFY_API_KEY` env var → `CLOCKIFY_API_KEY_FILE` env var (path to a file containing only the key, for vault-mounted files or hosts with no secret store) → your OS secret store (service `clockify`: macOS Keychain, Linux Secret Service via `secret-tool`, Windows Credential Manager via the `CredentialManager` PowerShell module). If none has it, the skill gives you the save command for your OS to run in your own terminal. It never asks you to paste the key into the chat. Save it once:
+
+```bash
+# macOS
+security add-generic-password -U -s clockify -a "$USER" -w
+# Linux
+secret-tool store --label='Clockify API key' service clockify account "$USER"
+```
+
+```powershell
+# Windows PowerShell
+Install-Module CredentialManager -Scope CurrentUser
+New-StoredCredential -Target clockify -Credentials (Get-Credential -UserName clockify -Message 'Clockify API key') -Persist LocalMachine
+```
+
+**Requirements per platform:** macOS, Linux and WSL need bash, `curl` and Python 3.9+. On Windows use Git Bash (included with Git for Windows) with the built-in `curl`, Python 3.9+ plus `pip install tzdata`, and run the `Install-Module` / `New-StoredCredential` commands above in **Windows PowerShell 5.1** (`powershell.exe`), because that is the shell the skill uses to read the key. Linux needs `libsecret-tools` and a running Secret Service (GNOME Keyring or KWallet); on a headless host or container use `CLOCKIFY_API_KEY_FILE`.
+
+**Upgrading from an older version:** earlier versions read an `api_key` field from the prefs file and grepped `~/.zshrc` and similar files. Both are gone. If your prefs file still has `api_key`, save the key with the command above, then delete the field (the skill offers to remove it once the new lookup works). An `export CLOCKIFY_API_KEY=...` in your shell profile still works when the agent's shell inherits it; the skill just no longer greps rc files itself.
+
+The prefs file path itself defaults to `~/.clockify-prefs.json` but can be overridden with `CLOCKIFY_PREFS_PATH`.
 
 **Output:** Confirmed time entry (or entries) created via Clockify API, with a full preview shown before posting.
 

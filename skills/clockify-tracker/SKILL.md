@@ -10,41 +10,122 @@ Integrate with Clockify using **HTTPS requests** to `https://api.clockify.me/api
 
 ## API key
 
-Resolve the key using this priority order:
+The key lives in the user's environment or OS secret store, never in the chat and never in a file the skill writes.
 
-1. `CLOCKIFY_API_KEY` environment variable — check with `echo $CLOCKIFY_API_KEY`
-2. `CLOCKIFY_API_KEY_FILE` environment variable — path to a file containing just the key; read with `cat "$CLOCKIFY_API_KEY_FILE" 2>/dev/null | tr -d '[:space:]'`
-3. Shell config files — grep common rc files for an export/assignment of `CLOCKIFY_API_KEY`:
-   ```bash
-   grep -h "CLOCKIFY_API_KEY" ~/.zshrc ~/.zprofile ~/.bashrc ~/.bash_profile ~/.profile 2>/dev/null \
-     | grep -v '^\s*#' | head -1
-   ```
-   Extract the value from a line like `export CLOCKIFY_API_KEY=abc123` or `CLOCKIFY_API_KEY="abc123"` using:
-   ```bash
-   sed 's/.*CLOCKIFY_API_KEY[[:space:]]*=[[:space:]]*//' | tr -d '"'"'"' '
-   ```
-   If a non-empty value is found, use it silently (same as if it were in the live environment).
-4. `api_key` field in the prefs file (see `CLOCKIFY_PREFS_PATH` below) — read with `cat <prefs-path> 2>/dev/null`
-5. None found → ask the user to paste their key (Clockify → Profile → API), then offer to save it:
-   > "Save this key to <prefs-path> so you don't have to enter it again? (yes/no)"
-   If yes, merge `"api_key": "<key>"` into the prefs file.
+**Rules for the agent**
 
-**Never echo or log the key value**. Use it only inside `curl -H "X-Api-Key: $KEY"` commands.
+- Never ask the user to paste the key into the chat, and never save a key typed or pasted into the chat. If the user pastes one anyway, do not use or store it; tell them to regenerate it (Clockify → Profile → API) and save the new one from their own terminal.
+- Never print the key: no `echo`, no `curl -v`, no `set -x`, no `cat` of a file that may hold it. Check for a key only with `[ -n "$(clockify_key)" ]`.
+- The user saves the key from their own terminal, in a window outside the chat (not through the `!` prefix, which logs output to the transcript).
+
+### Lookup order
+
+Use the first source that returns a non-empty value:
+
+1. `CLOCKIFY_API_KEY` environment variable.
+2. `CLOCKIFY_API_KEY_FILE` — path to a file containing just the key. Meant for vault-mounted or secrets-manager files, and for hosts with no secret store (headless Linux, containers). The skill reads it and never writes it; keep it `chmod 600`.
+3. The OS secret store, service `clockify`, account = the login user (`$USER`):
+   - **macOS** — `security find-generic-password -s clockify -a "$USER" -w`
+   - **Linux** — `secret-tool lookup service clockify account "$USER"` (package `libsecret-tools`; needs a running Secret Service such as GNOME Keyring or KWallet)
+   - **Windows** — Credential Manager, read through PowerShell. `cmdkey` can list entries but cannot print a secret, so use the `CredentialManager` module (`Install-Module CredentialManager`, Windows PowerShell 5.1), entry `clockify`: `(Get-StoredCredential -Target clockify).GetNetworkCredential().Password`
+
+**Requirements.** A bash-compatible shell (macOS, Linux, WSL, or Git Bash on Windows, which Git for Windows provides), `curl` (built into Windows 10+ and Git for Windows), and Python 3.9+ for JSON and time zones (Windows: also `pip install tzdata`, which `zoneinfo` needs there). On Windows the key is read through `powershell.exe` (Windows PowerShell 5.1), so run the `Install-Module` / `New-StoredCredential` commands below in **Windows PowerShell**, not PowerShell 7, or the 5.1 reader will not see the module.
+
+Define these helpers once per shell command (each Bash call starts fresh); every snippet in this file that calls `clockify_py`, `clockify_key`, `clockify_api` or `clockify_utc` needs them in the same command. They keep the key in a variable and out of the process list. `clockify_api` sends the key on curl's stdin, so the JSON body is passed as an argument (never `@-` or a heredoc), and `-q` stops a user's `~/.curlrc` (`verbose`, `trace`) from echoing the key header. Do not add `-v`/`--trace` or call `clockify_key` on its own:
+
+```bash
+# Runs Python 3.9+ with the given args (python3, python, or the Windows py launcher).
+clockify_py() {
+  if python3 -c 'import zoneinfo' 2>/dev/null; then python3 "$@"
+  elif python -c 'import zoneinfo' 2>/dev/null; then python "$@"
+  elif py -3 -c 'import zoneinfo' 2>/dev/null; then py -3 "$@"
+  else echo "Python 3.9+ not found (Windows: install Python, then run: pip install tzdata)" >&2; return 1
+  fi
+}
+
+clockify_key() {
+  local k=${CLOCKIFY_API_KEY:-}
+  [ -z "$k" ] && [ -n "${CLOCKIFY_API_KEY_FILE:-}" ] && k=$(tr -d '[:space:]' < "$CLOCKIFY_API_KEY_FILE" 2>/dev/null)
+  if [ -z "$k" ]; then
+    case "$(uname -s)" in
+      Darwin) k=$(security find-generic-password -s clockify -a "${USER:-$(id -un)}" -w 2>/dev/null) ;;
+      Linux) k=$(secret-tool lookup service clockify account "${USER:-$(id -un)}" 2>/dev/null) ;;
+      MINGW*|MSYS*|CYGWIN*) k=$(powershell.exe -NoProfile -Command '(Get-StoredCredential -Target clockify).GetNetworkCredential().Password' 2>/dev/null | tr -d '\r') ;;
+    esac
+  fi
+  printf '%s' "$k"
+}
+
+# Usage: clockify_api GET|POST <url> [json-body]
+# Prints the response body, prints "HTTP <code>" on stderr, returns non-zero outside 2xx.
+clockify_api() {
+  local k resp code args=()
+  k=$(clockify_key)
+  [ -n "$k" ] || { echo "No Clockify API key found" >&2; return 1; }
+  [ -n "$3" ] && args=(--data-binary "$3")
+  resp=$(printf 'header = "X-Api-Key: %s"\n' "$k" | curl -q -sS --max-time 30 -K - -X "$1" -H 'Content-Type: application/json' "${args[@]}" -w '\n%{http_code}' "$2") || return 1
+  code=${resp##*$'\n'}
+  printf '%s\n' "${resp%$'\n'*}"
+  echo "HTTP $code" >&2
+  case $code in 2??) ;; *) return 1 ;; esac
+}
+```
+
+### No key found
+
+Stop and give the user the command for their OS to run **in their own terminal**; each one prompts for the key without echoing it. Then wait for them to say it is saved and look the key up again. On a host with no reachable secret store (WSL, headless Linux, containers, a sandboxed agent shell), point them to `CLOCKIFY_API_KEY_FILE` instead.
+
+```bash
+# macOS (-w with no value makes security prompt for the key; -U updates an existing item)
+security add-generic-password -U -s clockify -a "$USER" -w
+
+# Linux (secret-tool reads the key from the terminal)
+secret-tool store --label='Clockify API key' service clockify account "$USER"
+```
+
+```powershell
+# Windows PowerShell: type the key as the password in the prompt (the user name is ignored)
+Install-Module CredentialManager -Scope CurrentUser   # once
+New-StoredCredential -Target clockify -Credentials (Get-Credential -UserName clockify -Message 'Clockify API key') -Persist LocalMachine
+```
+
+### Migrating a plaintext key
+
+Older versions of this skill kept the key as `api_key` in the prefs file and read it from shell rc files. The skill no longer reads either. If the prefs file still has an `api_key` field, the prefs reader (see Preferences file) reports it with the value hidden. Tell the user to:
+
+1. Save the key with the command for their OS above (they can copy it from the prefs file in their own editor).
+2. Say when it is saved. Verify with `clockify_api GET https://api.clockify.me/api/v1/user` (expect a user object, not an error).
+3. Delete the `api_key` field. Offer to do it, and do it only on a yes:
+
+```bash
+clockify_py - "${CLOCKIFY_PREFS_PATH:-$HOME/.clockify-prefs.json}" <<'PY'
+import json, sys
+path = sys.argv[1]
+with open(path, encoding="utf-8") as f:
+    prefs = json.load(f)
+prefs.pop("api_key", None)
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(prefs, f, indent=2, ensure_ascii=False)
+    f.write("\n")
+PY
+```
+
+If the prefs file was ever committed, synced or shared (dotfiles repo, cloud drive), tell the user to regenerate the key in Clockify as well.
+
+An `export CLOCKIFY_API_KEY=...` line in a shell profile still works when the agent's shell inherits it (source 1); the skill just no longer greps rc files itself.
 
 ## Environment
 
 | Variable | Purpose |
 |----------|---------|
 | `CLOCKIFY_API_KEY` | API key value directly in the live environment. |
-| `CLOCKIFY_API_KEY_FILE` | Path to a file whose contents are the API key (e.g. `~/.secrets/clockify`). Useful with secrets managers or symlinked vault files. |
-| `CLOCKIFY_PREFS_PATH` | Custom path for the prefs JSON file. Defaults to `~/.clockify-prefs.json` when unset. Resolving prefs path: `${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}`. |
+| `CLOCKIFY_API_KEY_FILE` | Path to a file whose contents are the API key (e.g. `/run/secrets/clockify`). Useful with secrets managers or vault-mounted files. |
+| `CLOCKIFY_PREFS_PATH` | Custom path for the prefs JSON file. Defaults to `~/.clockify-prefs.json` when unset. Resolve it with `${CLOCKIFY_PREFS_PATH:-$HOME/.clockify-prefs.json}` (a `~` inside `${…:-…}` is not expanded by the shell). |
 | `CLOCKIFY_TZ_OFFSET` | Local offset from UTC in **whole hours** (e.g. `-3` for Argentina). Fallback when the prefs file has no timezone. |
-
-Shell config files checked (step 3 above): `~/.zshrc`, `~/.zprofile`, `~/.bashrc`, `~/.bash_profile`, `~/.profile`.
 
 ## Authentication
 
-Every request:
+Every request goes through `clockify_api` (see API key), which sends:
 
 - Header: `X-Api-Key: <resolved key>`
 - Header: `Content-Type: application/json` (for POST bodies)
@@ -79,6 +160,26 @@ Returns a JSON array of projects; each item includes `id` and `name`.
 | `end` | No | ISO 8601 UTC; omit for open-ended entry |
 | `projectId` | No | Clockify project id |
 
+Build the body with `json.dumps`, so quotes, apostrophes and backslashes in a description cannot break it, and pass it to `clockify_api`:
+
+```bash
+START=2025-03-31T07:00:00.000Z END=2025-03-31T15:00:00.000Z PID=<projectId> WID=<workspaceId>
+DESC_FILE=$(mktemp)
+cat > "$DESC_FILE" <<'TXT'
+Fixed the user's login redirect and removed the "legacy" auth path.
+TXT
+body=$(clockify_py -c '
+import json, sys
+start, end, desc_file, pid = sys.argv[1:5]
+entry = {"start": start, "description": open(desc_file, encoding="utf-8").read().strip()}
+if end: entry["end"] = end
+if pid: entry["projectId"] = pid
+print(json.dumps(entry))' "$START" "$END" "$DESC_FILE" "$PID")
+rm -f "$DESC_FILE"
+clockify_api POST "https://api.clockify.me/api/v1/workspaces/$WID/time-entries" "$body"
+```
+
+
 ### Converting user-local `HH:mm` to UTC `start` / `end`
 
 When the user gives **local** time as `HH:mm` (and optional `YYYY-MM-DD`, default **today** in their locale intent):
@@ -100,7 +201,7 @@ For ranges ("March 2–6") or discrete lists ("March 23, 24, 25, 26 and 27"), cr
 
 ## Operational flow
 
-1. Confirm `CLOCKIFY_API_KEY` is available to the execution environment.
+1. Check that a key exists with `[ -n "$(clockify_key)" ]`. Never run `clockify_key` on its own (it prints the key), and never run `env` or `printenv`. If none is found, follow "No key found" and stop. Then read the prefs file with the reader (see Preferences file) for the saved time zone and the legacy `api_key` warning.
 2. If workspace is unknown: `GET /workspaces`; resolve `workspaceId`.
 3. If project is needed: `GET /workspaces/{workspaceId}/projects?page-size=5000`; resolve `projectId`.
 4. Collect description, start (and optional end), date if needed, and timezone offset if not obvious.
@@ -119,11 +220,47 @@ Triggered when the user says **"use logs"**, **"from work logs"**, **"usa los lo
 
 ### Preferences file
 
-Path: `${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}`. Always resolve this at runtime — check the env var first, then fall back to `~/.clockify-prefs.json`. Read with `cat "${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}" 2>/dev/null`; write by overwriting the file with merged JSON.
+Path: `${CLOCKIFY_PREFS_PATH:-$HOME/.clockify-prefs.json}`. Always resolve this at runtime — check the env var first, then fall back to `~/.clockify-prefs.json` — and use that one path for every read, write and `auto_cleanup` check. The file holds no secrets. Never `cat` it (an old file may still contain a plaintext `api_key`); read it with this, which hides that field and warns:
+
+```bash
+clockify_py - "${CLOCKIFY_PREFS_PATH:-$HOME/.clockify-prefs.json}" <<'PY'
+import json, sys
+try:
+    with open(sys.argv[1], encoding="utf-8") as f:
+        prefs = json.load(f)
+except FileNotFoundError:
+    sys.exit(0)  # no file means first run
+if "api_key" in prefs:
+    del prefs["api_key"]
+    print("legacy api_key found in prefs (value hidden): see Migrating a plaintext key", file=sys.stderr)
+print(json.dumps(prefs, indent=2))
+PY
+```
+
+Write with this merge helper, passing only the keys to set (single-quoted JSON; write an apostrophe inside a value as `'\''`). It reloads the whole file, so a legacy `api_key` the reader hid is kept until the user's migration step removes it, never dropped by an ordinary save. Top-level keys are replaced (pass the complete `timezone` object); `repo_mappings` is merged one level deep, so passing one new repo keeps the others. It builds the whole text before opening the file for writing, so an encoding error cannot leave a truncated prefs file:
+
+```bash
+clockify_py - "${CLOCKIFY_PREFS_PATH:-$HOME/.clockify-prefs.json}" '{"default_start": "09:00"}' <<'PY'
+import json, sys
+path, update = sys.argv[1], json.loads(sys.argv[2])
+try:
+    with open(path, encoding="utf-8") as f:
+        prefs = json.load(f)
+except FileNotFoundError:
+    prefs = {}
+for key, value in update.items():
+    if key == "repo_mappings" and isinstance(prefs.get(key), dict):
+        prefs[key].update(value)
+    else:
+        prefs[key] = value
+text = json.dumps(prefs, indent=2, ensure_ascii=False) + "\n"
+with open(path, "w", encoding="utf-8") as f:
+    f.write(text)
+PY
+```
 
 ```json
 {
-  "api_key": "<clockify-api-key>",
   "timezone": { "name": "Buenos Aires, Argentina", "offset": -3 },
   "default_start": "09:00",
   "default_end": "17:00",
@@ -139,13 +276,13 @@ Always **merge** new keys into existing prefs — never replace the whole file.
 
 ### Step-by-step flow
 
-**1. Load prefs** — read `~/.clockify-prefs.json`. Missing file means no saved state; proceed through first-run setup.
+**1. Load prefs** — read the prefs file with the reader above. Missing file means no saved state; proceed through first-run setup.
 
 **2. First-run setup (no prefs file)** — before asking anything else, ask:
 > "Let's set up your preferences. What repos/projects are you actively working on, and what's the Clockify project name for each?
 > Example: mini-meta-repo → Nubank, somnio-ai-tools → Internal Tools"
 
-Resolve named Clockify projects to IDs via `GET /workspaces/{wid}/projects` and save to prefs. This is the only time the full project landscape is declared — new repos encountered later get a single one-time question.
+Resolve named Clockify projects to IDs via `GET /workspaces/{wid}/projects` and save them to prefs with the merge helper. This is the only time the full project landscape is declared — new repos encountered later get a single one-time question.
 
 **3. Ask for timespan** — if not in the user's message:
 > "Which days should I look at? (e.g. today, this week, May 22–26)"
@@ -187,7 +324,7 @@ Split on `/` to extract the root repo name (for Clockify mapping) and the worktr
 
 Batch all unknown-repo questions before creating any entries.
 
-**8. Save prefs** — after all questions are answered, merge answers into `~/.clockify-prefs.json`.
+**8. Save prefs** — after all questions are answered, merge answers into the prefs file with the merge helper.
 
 **9. Handle multi-project days** — for each day, count distinct Clockify projects the day's repos map to:
 - **Single project** → one entry for the full time block.
@@ -231,7 +368,7 @@ Use a numbered list (not a table) so the full description is readable without tr
 
 **13. Clean up log files** — after all entries are successfully posted, offer to delete the processed files.
 
-Check `~/.clockify-prefs.json` for `"auto_cleanup": true`. If set, delete without asking and tell the user which files were removed. Otherwise ask:
+Check the prefs loaded in step 1 for `"auto_cleanup": true`. If set, delete without asking and tell the user which files were removed. Otherwise ask:
 
 > "Entries posted. Delete the processed log files?
 > - ~/.work-log/2026-05-26.md
@@ -240,6 +377,6 @@ Check `~/.clockify-prefs.json` for `"auto_cleanup": true`. If set, delete withou
 
 - **yes** — delete those files with `rm`, confirm each one removed
 - **no** — leave files as-is
-- **always** — delete files, then merge `"auto_cleanup": true` into the resolved prefs file (`${CLOCKIFY_PREFS_PATH:-~/.clockify-prefs.json}`)
+- **always** — delete files, then merge `"auto_cleanup": true` into the prefs file with the merge helper
 
-Only delete files whose entries **all** posted successfully. If posting was partial, skip deletion for any day with a failed entry and tell the user which files were kept.
+Only delete files whose entries **all** posted successfully (`clockify_api` returned 2xx for each). If posting was partial, skip deletion for any day with a failed entry and tell the user which files were kept.
