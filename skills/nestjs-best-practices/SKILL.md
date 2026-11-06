@@ -1,13 +1,8 @@
 ---
 name: nestjs-best-practices
 description: >-
-  Execute a micro-level NestJS code quality audit. Validates code against live
-  GitHub standards for testing, architecture, DTO validation, error handling,
-  and code implementation. Produces a detailed violations report with
-  prioritized action plan. Use when the user asks to check NestJS code quality,
-  validate best practices, or review backend code standards.
-  Triggers on: 'nestjs best practices', 'backend code quality', 'code review',
-  'nestjs standards', 'dto validation', 'error handling review'.
+  NestJS code quality audit. Triggers: 'nestjs best practices', 'nestjs
+  standards', 'backend code quality', 'code review', 'dto validation'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

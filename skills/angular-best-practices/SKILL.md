@@ -1,16 +1,9 @@
 ---
 name: angular-best-practices
 description: >-
-  Execute a micro-level modern Angular (2+/Angular CLI, TypeScript) code quality
-  audit. Validates code against live GitHub standards for testing, component &
-  module architecture, lifecycle & dependency-injection patterns, services &
-  RxJS/signals state, change detection & performance, and TypeScript strictness.
-  Produces a detailed violations report with prioritized action plan. This is
-  modern Angular 2+ (components, NgModules/standalone, DI, RxJS, Angular CLI) —
-  NOT AngularJS 1.x. Use when the user asks to check Angular code quality,
-  validate best practices, or review frontend code standards.
-  Triggers on: 'angular best practices', 'angular code quality', 'angular
-  standards', 'rxjs review', 'ngx best practices'.
+  Modern Angular 2+ (not AngularJS) code quality audit. Triggers: 'angular
+  best practices', 'angular code quality', 'rxjs review', 'ngx best
+  practices'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

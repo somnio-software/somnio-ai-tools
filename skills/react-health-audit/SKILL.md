@@ -1,14 +1,9 @@
 ---
 name: react-health-audit
 description: >-
-  Execute a comprehensive React Project Health Audit. Analyzes tech stack,
-  architecture, state management, testing, code quality, performance, CI/CD,
-  and documentation. Produces a shareable Markdown report with section scores
-  and weighted overall score. Use when the user asks to audit a React project,
-  run a health check, evaluate frontend quality, or assess technical debt.
-  On a Next.js project it hands off to nextjs-health-audit.
-  Triggers on: 'react audit', 'health audit', 'react health', 'frontend audit',
-  'next.js audit', 'vite audit', 'project quality check'.
+  React project health audit, scored report; hands off to nextjs-health-audit
+  on Next.js. Triggers: 'react audit', 'react health', 'health audit',
+  'frontend audit'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent, Task
 ---
 

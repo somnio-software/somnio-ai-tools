@@ -1,9 +1,7 @@
 ---
 description: >-
-  Execute a micro-level NestJS code quality audit. Validates code against live
-  GitHub standards for testing, architecture, DTO validation, error handling,
-  and code implementation. Produces a detailed violations report with
-  prioritized action plan.
+  NestJS code quality audit. Triggers: 'nestjs best practices', 'nestjs
+  standards', 'backend code quality', 'code review', 'dto validation'.
 ---
 
 # NestJS Best Practices Check

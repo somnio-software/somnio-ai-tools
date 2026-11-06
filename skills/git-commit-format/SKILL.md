@@ -1,11 +1,8 @@
 ---
 name: git-commit-format
 description: >-
-  Generates properly formatted Git commit messages (title + description) following Conventional Commits.
-  Use this skill whenever the user wants to write a commit message, document code changes in git format,
-  or asks things like "how should I commit this?", "write a commit for these changes", "help me with my
-  commit message", or describes what they changed and needs a git-ready output. Always use this skill
-  when the user describes code changes and needs a commit, even if they don't explicitly say "commit".
+  Generates Conventional Commits messages (title + description). Use for
+  "write a commit for these changes", "how should I commit this?".
 ---
 
 # Git Commit Format Skill

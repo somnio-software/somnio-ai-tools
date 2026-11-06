@@ -1,15 +1,8 @@
 ---
 name: harness-audit
 description: >-
-  Execute a comprehensive, framework-agnostic AI Harness Audit. Scores how
-  complete a project's AI coding harness is — CLAUDE.md, .claude/rules,
-  settings.json permissions and hooks, commands/skills, custom agents, and the
-  autotest-to-green-PR lifecycle — then returns a /100 score, a maturity band,
-  and a prioritized action plan. Read-only: never modifies the audited repo.
-  Use when the user asks to audit the AI harness, score their Claude setup,
-  assess AI adoption maturity, or check how paved the quality path is.
-  Triggers on: 'harness audit', 'ai harness', 'claude harness score',
-  'ai adoption audit', 'harness health'.
+  Read-only AI harness audit: scores CLAUDE.md, rules, hooks and agents out of
+  100. Triggers: 'harness audit', 'ai harness', 'claude harness score'.
 allowed-tools: Read, Grep, Glob, Bash, Agent
 ---
 

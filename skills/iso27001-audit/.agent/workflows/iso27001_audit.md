@@ -1,13 +1,8 @@
 ---
 description: >-
-  Execute a comprehensive, framework-agnostic ISO/IEC 27001:2022 readiness
-  audit. Detects the project type at runtime and adapts control-evidence
-  gathering accordingly. Inspects the whole repository/application for evidence
-  of an ISMS (clauses 4-10) and Annex A controls organized into 11 auditable
-  categories, records a Status + Owner/lane per control, scores readiness per
-  category, and produces a gap register, remediation plan, Statement of
-  Applicability starter, and ISMS clause coverage with an overall readiness
-  score /100 and band. Read-only and evidence-based.
+  Read-only ISO/IEC 27001:2022 readiness audit (ISMS, Annex A), /100 score.
+  Triggers: 'iso 27001 audit', 'isms audit', 'annex a gap analysis', 'iso
+  compliance audit'.
 ---
 
 # ISO/IEC 27001:2022 Readiness Audit

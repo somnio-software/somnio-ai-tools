@@ -1,10 +1,8 @@
 ---
 description: >-
-  Execute a micro-level Next.js code quality audit aware of the installed
-  Next.js version. Checks App Router architecture, Server and Client
-  Components, data fetching and caching, Server Actions and Route Handlers,
-  rendering performance, testing and TypeScript against version-matched docs.
-  Produces a detailed violations report with prioritized action plan.
+  Version-aware Next.js code quality audit (App Router, Server Components).
+  Triggers: 'nextjs best practices', 'nextjs code review', 'app router best
+  practices'.
 ---
 
 # Next.js Best Practices Check

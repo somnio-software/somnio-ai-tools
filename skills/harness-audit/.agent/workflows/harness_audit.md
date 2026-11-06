@@ -1,11 +1,7 @@
 ---
 description: >-
-  Execute a comprehensive, framework-agnostic AI Harness Audit. Locates every
-  harness piece at runtime (CLAUDE.md, rules, settings.json permissions and
-  hooks, commands/skills, agents, and the autotest-to-PR lifecycle), scores them
-  against a fixed 7-piece / 100-point rubric, and produces a scored report with a
-  maturity band and a top-3 action plan. Read-only: never modifies the audited
-  repository.
+  Read-only AI harness audit: scores CLAUDE.md, rules, hooks and agents out of
+  100. Triggers: 'harness audit', 'ai harness', 'claude harness score'.
 ---
 
 # AI Harness Audit

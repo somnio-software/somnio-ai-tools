@@ -1,19 +1,9 @@
 ---
 name: nextjs-security-audit
 description: >-
-  Execute a Next.js-specific Security Audit. Resolves the exact installed
-  versions of next, react and related packages from the lockfile and checks
-  them live against OSV, the GitHub Advisory Database and the Next.js
-  security advisories, plus end-of-life status. Audits the full dependency
-  tree, package manager supply-chain hardening (pnpm recommended), secrets
-  and NEXT_PUBLIC_ exposure, Server Actions, Route Handlers, middleware/proxy
-  authorization, security headers and next.config. Produces a scored,
-  severity-classified report.
-  Use when the user asks to audit the security of a Next.js app, check a
-  Next.js or React version for vulnerabilities, or harden a Next.js project.
-  Triggers on: 'nextjs security audit', 'next.js security audit',
-  'next security audit', 'audit my next app security', 'is my next version
-  vulnerable', 'react server components vulnerability', 'nextjs cve'.
+  Next.js security audit: live advisory checks of installed versions, secrets,
+  Server Actions. Triggers: 'nextjs security audit', 'nextjs cve', 'is my next
+  version vulnerable'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

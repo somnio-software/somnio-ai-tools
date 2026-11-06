@@ -1,11 +1,8 @@
 ---
 name: dart-model-from-json
 description: >-
-  Generates Dart models from a JSON structure using json_annotation and equatable.
-  Use this skill when the user provides a JSON object and wants the corresponding
-  Dart model classes generated, or asks things like "generate a Dart model for
-  this JSON", "create a model from this response", "dart model from json".
-  Always use this skill when the user provides JSON and needs Dart model output.
+  Generates Dart models from JSON with json_annotation and equatable.
+  Triggers: 'dart model from json', 'generate a Dart model for this JSON'.
 ---
 
 # Dart Model from JSON
