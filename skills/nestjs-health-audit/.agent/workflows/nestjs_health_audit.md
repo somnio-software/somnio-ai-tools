@@ -1,12 +1,7 @@
 ---
 description: >-
-  Execute a comprehensive NestJS Project Health Audit. Analyzes tech stack,
-  architecture, API design, data layer, testing, code quality, CI/CD, and
-  documentation. Produces a shareable Markdown report with section scores and
-  weighted overall score. Use when the user asks to audit a NestJS project,
-  run a health check, evaluate backend quality, or assess technical debt.
-  Triggers on: 'nestjs audit', 'health audit', 'backend audit', 'nestjs
-  health', 'node audit', 'api audit', 'project quality check'.
+  NestJS project health audit, scored report. Triggers: 'nestjs audit',
+  'nestjs health', 'health audit', 'backend audit', 'node audit', 'api audit'.
 ---
 
 # NestJS Project Health Audit

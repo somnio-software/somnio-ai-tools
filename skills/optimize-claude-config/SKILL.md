@@ -1,17 +1,9 @@
 ---
 name: optimize-claude-config
 description: |
-  Audits and optimizes a repository's Claude Code configuration so path-scoped
-  rules load lazily and CLAUDE.md stays a lightweight always-loaded index.
-  First maps the real project tree (domains, monorepo package roots, extensions,
-  generated/frozen areas) so every path glob is derived from and validated
-  against actual files — stale globs that match zero files and over-broad ones
-  are caught. Three areas: (1) migrate .claude/rules/**/*.md frontmatter to the
-  native lazy-load `paths:` YAML-array form (away from eager `globs:` or
-  red-flagged CSV `paths:`) with accurate, tree-validated patterns; (2) slim CLAUDE.md files to an index + rule map and delete
-  redundant @import-only shells; (3) audit/install the PreToolUse(Write) hook
-  that works around the read-not-create caveat. Audits first, shows a report,
-  asks for confirmation, then applies. Pass --audit-only to skip applying.
+  Audits and optimizes Claude Code config: lazy-load `paths:` rules checked
+  against the tree, slim CLAUDE.md index, PreToolUse(Write) hook. --audit-only
+  skips applying.
 argument-hint: "[--audit-only] [path]"
 allowed-tools: Bash, Read, Edit, Write
 ---

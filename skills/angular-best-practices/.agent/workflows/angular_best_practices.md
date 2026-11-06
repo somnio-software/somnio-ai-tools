@@ -1,10 +1,8 @@
 ---
 description: >-
-  Execute a micro-level modern Angular (2+/Angular CLI, TypeScript) code quality
-  audit. Validates code against live GitHub standards for testing, component &
-  module architecture, lifecycle & DI patterns, services & RxJS/signals state,
-  change detection & performance, and TypeScript. Produces a detailed violations
-  report with prioritized action plan. NOT for AngularJS 1.x.
+  Modern Angular 2+ (not AngularJS) code quality audit. Triggers: 'angular
+  best practices', 'angular code quality', 'rxjs review', 'ngx best
+  practices'.
 ---
 
 # Angular Best Practices Check

@@ -1,12 +1,8 @@
 ---
 description: >-
-  Execute a Next.js-specific Security Audit. Resolves the installed next and
-  react versions from the lockfile and checks them against live advisory
-  sources and end-of-life status, audits the dependency tree, package manager
-  supply-chain hardening (pnpm recommended), secrets and NEXT_PUBLIC_
-  exposure, Server Actions, Route Handlers, middleware/proxy authorization and
-  security headers. Produces a severity-classified report with quantitative
-  scoring.
+  Next.js security audit: live advisory checks of installed next/react
+  versions, secrets, Server Actions. Triggers: 'nextjs security audit',
+  'nextjs cve', 'is my next version vulnerable'.
 ---
 
 # Next.js Security Audit

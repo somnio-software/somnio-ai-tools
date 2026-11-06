@@ -1,14 +1,9 @@
 ---
 name: security-audit
 description: >-
-  Execute a comprehensive, framework-agnostic Security Audit. Detects project
-  type at runtime and adapts security checks accordingly. Analyzes sensitive
-  files, source code secrets, and dependency vulnerabilities. Produces a
-  severity-classified report.
-  Use when the user asks to audit security, scan for vulnerabilities, check
-  for secrets, or assess dependency risks.
-  Triggers on: 'security audit', 'vulnerability scan', 'secret scan',
-  'dependency audit', 'security check', 'pentest', 'owasp'.
+  Framework-agnostic security audit: secrets, sensitive files, dependency
+  vulnerabilities. Triggers: 'security audit', 'vulnerability scan', 'secret
+  scan', 'owasp'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

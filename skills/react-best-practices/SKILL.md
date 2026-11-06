@@ -1,13 +1,8 @@
 ---
 name: react-best-practices
 description: >-
-  Execute a micro-level React code quality audit. Validates code against live
-  GitHub standards for testing, component architecture, hooks patterns, state
-  management, performance, and TypeScript. Produces a detailed violations report
-  with prioritized action plan. Use when the user asks to check React code
-  quality, validate best practices, or review frontend code standards.
-  Triggers on: 'react best practices', 'react code quality', 'component review',
-  'hooks review', 'react standards', 'frontend code quality'.
+  React code quality audit. Triggers: 'react best practices', 'react code
+  quality', 'react standards', 'component review', 'hooks review'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

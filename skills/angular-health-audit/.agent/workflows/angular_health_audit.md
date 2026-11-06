@@ -1,16 +1,8 @@
 ---
 description: >-
-  Execute a comprehensive modern Angular (2+/Angular CLI, TypeScript) frontend
-  Project Health Audit. Analyzes tech stack & runtime, module/component
-  architecture, state & data flow (services/RxJS/signals), templating & change
-  detection, build & bundle pipeline (Angular CLI), testing (Karma/Jasmine or
-  Jest), code quality & tooling (TS strictness, Angular ESLint), dependency
-  hygiene, and documentation. NOT for AngularJS 1.x (use angularjs-health-audit
-  for that). Produces a Markdown report with per-section scores and a weighted
-  overall score. Use when the user asks to audit an Angular project, run a
-  health check, evaluate frontend quality, or assess technical debt.
-  Triggers on: 'angular audit', 'angular health', 'angular cli audit',
-  'typescript frontend audit', 'ngx audit', 'project quality check'.
+  Modern Angular 2+ (not AngularJS) project health audit, scored report.
+  Triggers: 'angular audit', 'angular health', 'angular cli audit', 'ngx
+  audit'.
 ---
 
 # Angular Project Health Audit
