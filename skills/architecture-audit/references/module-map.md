@@ -167,18 +167,40 @@ Rules for the map:
 - Longest path wins: a file belongs to the row with the longest path that
   contains it, so a `root` row for `lib/app/router` and a `shared-domain`
   row for `lib/app` can coexist. A catch-all row (`.`) matches last.
+  Where a row's directory sits never makes its code the root's: a row
+  beside the root's rows under the same parent directory, around them, or
+  in a subdirectory of theirs is a module of its own. Only a directory
+  that directly holds files of the root and of other modules mixes them;
+  step 2 measures those directories (`rootMixedDirectories`) and C2
+  counts their smaller side.
 - Every file in `files.tsv` must fall in some module. If a file fits no
   role, create a module for its directory and classify it; do not leave it
   unmapped.
 - A directory that holds code of two roles is split into rows by
   subdirectory or file. Where it cannot be split, give it its
   most-depended-upon role and record it as **mixed** with the roles it
-  holds. Shared code that you split out of the root's directories is
-  recorded the same way: it is a C2 site (R5), counted once there, not a
-  neutral relabelling.
+  holds, except a unit that holds composition: map it to the root, and
+  step 3 counts its other code as non-composition (R5). Splitting by file
+  does not take code out of the root's directory: when a directory
+  directly holds files of the root and of other modules, C2 counts the
+  smaller side (step 2 lists them), so record such a split with its
+  reason, never to change a count.
+- Framework-placed files: when the framework fixes where files sit
+  (file-system routing such as Next.js `pages/` and `app/`, Expo Router
+  `app/`, SvelteKit `src/routes/`, Nuxt `pages/`), record globs for its
+  convention files only, not helpers beside them, with the reason. The
+  globs are `fnmatch` patterns on the repo-relative path, where `*` also
+  matches `/` and part of a name, so name each file exactly per depth:
+  `app/page.tsx`, `app/*/page.tsx`, `app/layout.tsx`,
+  `app/*/layout.tsx`, not `app/*page.tsx`, which also matches
+  `app/ui/homepage.tsx`. Step 2 passes them as `--fixed-location`, so they
+  do not count toward a mixed directory; the script warns about a glob
+  that matches no file.
 - A barrel (a file that only re-exports) belongs to the module of the
-  directory it indexes, whatever it re-exports. A module importing it
-  depends on that module: a feature that imports the root's barrel to
+  directory it indexes, whatever it re-exports, and so does a package
+  marker (`__init__.py`) or index file there. A module importing it
+  depends on that module, and reaches whatever package it re-exports (R8,
+  step 3 follows re-exports): a feature that imports the root's barrel to
   reach shared code is an R5 site, and the remedy is importing the shared
   module directly.
 - Assign each file by what it holds before you look at the edges, and
@@ -245,8 +267,10 @@ Write, under `reports/.artifacts/architecture-audit/`:
     history facts and the bots excluded;
   - **Module table**: name, role, physical, path(s), public surface, files,
     lines, and a one-line justification for each non-obvious role;
-  - **Mixed modules** and the roles each holds, including code split out of
-    the root;
+  - **Mixed modules** and the roles each holds, and the units holding
+    composition that were mapped to the root because they cannot be split;
+  - **Framework-placed files**: each `--fixed-location` glob with its
+    reason, or "none";
   - **Drivers** (D1–D4) with the code each concerns and the evidence;
   - **Ownership** coverage, or "no ownership file";
   - **Profile override**: "none", or the profile and the reason;

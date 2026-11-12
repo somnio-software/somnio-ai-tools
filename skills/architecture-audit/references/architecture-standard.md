@@ -153,10 +153,12 @@ that feature's data code kept apart: it stays its own shared-domain module,
 with the feature it serves recorded, and it does not make the feature
 physical.
 
-A module that holds code of two roles (for example a directory that is both
-the composition root and a home for widgets the features import) is
-classified by its most-depended-upon role and reported as mixed: under R5
-when one of its roles is the composition root, otherwise under AP1.
+A module that holds code of two roles is classified by its
+most-depended-upon role and reported as mixed, except a unit that holds
+composition and cannot be split (for example a file that is both the
+composition root and a home for widgets the features import): it belongs
+to the root. A mixed unit is reported under R5 when it belongs to the
+root, otherwise under AP1, wherever its directory sits.
 
 ## 4. Allowed dependencies
 
@@ -227,7 +229,15 @@ for other modules, and no module outside the root may depend on it. What
 features need from the root moves to a contract, shared or foundation
 module. App-wide configuration that only the root uses to start the
 application (the theme or shell it hands the framework, environment and
-startup setup) is composition.
+startup setup) is composition. The root's handwritten files and other
+modules' handwritten files MUST NOT share a directory: in a directory that
+directly holds both, the files on its smaller side (the other modules'
+files on a tie) are violations, and a shared module only the root imports
+holds no product logic. Where a module's own directory sits (beside the
+root's under one parent, around them, or inside one of them) is no
+violation by itself. Generated files, package markers and index files
+that only mark or re-export, and files whose place the framework fixes
+(file-system routes) are exempt.
 
 **R6. Modules are used through their public surface.** An edge into a module
 MUST target its public surface. A deep edge into another module's internals
@@ -244,7 +254,8 @@ mix roles (UI kit, platform services and domain logic in one place).
 presentation depends on state, state on domain or repositories,
 repositories on data sources and clients, never the reverse, and
 presentation does not reach data sources or clients directly. Vendor SDKs,
-HTTP clients and platform APIs are imported only by the composition root
+HTTP clients and platform APIs (reached directly or through a barrel or
+file that re-exports them) are imported only by the composition root
 (to initialise and bind them), foundation modules, global-service
 implementations, or a data layer (a feature's own, or a shared-domain
 module of repositories). A **vendor
@@ -296,18 +307,25 @@ Signals: one shared, global-service or foundation module holds more than
 has the highest fan-in of any module while its name states no purpose
 (`common`, `core`, `utils`, `app`, `shared` alone); it depends on a
 feature; a contract module holds screens, state or implementations.
-Shared code found inside the root's directories is counted once, under R5,
-not here: its modules give no AP1 signal, though their R7 sites still
-count.
+These signals apply to every such module wherever its directory sits,
+also when R5 counts some of its files because they share a directory with
+the root's or only the root imports them: R5 counts where code sits and
+who imports it, AP1 what a module holds, so moving a module changes R5
+alone. Code that belongs to the root is judged under R5, not here.
 
 **AP2. Composition monolith.** The composition root grows into the place
 where the application actually lives.
 Signals: the root's share of handwritten code is in Risk (M9); a single
 handwritten wiring file exceeds 500 lines; one handwritten wiring file
 registers the bindings of more than five features instead of including
-per-feature registration modules. Generated wiring (for example
-injectable's output) is left out: its registrations are declared next to
-the code they bind.
+per-feature registration modules. A **wiring file** creates or obtains
+instances and passes them to application code, registers bindings, or
+provides instances through a scope; start-up configuration (initialising
+SDKs, framework hooks and observers, logging, environment) is not wiring,
+whatever the file is called, and route definitions alone are not either.
+A file that does any wiring is a wiring file. Generated wiring (for
+example injectable's output) is left out: its registrations are declared
+next to the code they bind.
 
 **AP3. Hidden navigation coupling.** Features look independent in the
 dependency rules but are tied together through navigation.
@@ -440,7 +458,7 @@ enforced.
   manifests encode: R5 and R6 for every package (a package cannot declare
   the app, and `implementation_imports` guards `src/`); R1 for feature
   packages; and R7, and R8 containment of a vendor SDK only a data package
-  declares, for lower-role packages whose manifests list only what the
+  declares and no package re-exports, for lower-role packages whose manifests list only what the
   matrix allows. They do so only when both lints are enabled, not
   suppressed, and fail CI: raised to `error`, or run by `flutter analyze`
   (which fails on infos and warnings unless told otherwise with

@@ -75,10 +75,24 @@ collaborators, say so: C1 scores that as 0.
 ## 2. Composition root contents (R5, AP2)
 
 For every `root` row in `data/module_map.tsv`:
-- List its files with line counts. A **wiring file** is a handwritten file
-  whose main content is constructing or registering dependencies (the
-  entry point, bootstrap, a DI module, the widget that provides the
-  scopes). Name the largest wiring file and its line count.
+- List its files with line counts. A **wiring file** is a handwritten
+  root file that does at least one of these, whatever it is called:
+  creates or obtains an instance (a constructor call, `X.instance`,
+  `getInstance()`, `await X.create()`) and passes it to code that is not
+  the framework's (a provider, a locator registration, a registration
+  module, another app object's constructor, the app builder); registers
+  bindings; or is a scope widget that provides or overrides at least one
+  instance (an empty `ProviderScope` does not). **Start-up
+  configuration** is not wiring: initialising a vendor SDK with its
+  options (crash reporting, monitoring, analytics), framework setters,
+  observers and hooks (`Bloc.observer = ...`, error and zone handlers),
+  logging, platform and system-UI set-up, reading the environment or
+  flavour, and `runApp(App())` itself. Route definitions alone do not
+  make a file a wiring file (C3 scores route assembly), but any other
+  wiring act in it does. A file holding one wiring act is a wiring file:
+  cite the `file:line` of one act for each wiring file, and for each
+  handwritten root file over 500 lines that is not one, say that none
+  exists. Name the largest wiring file and its line count.
 - A **binding** is an instance made available to other code: a provider,
   a locator registration, a module binding. Constructing an object is not
   registering it. Find the handwritten wiring file that registers the most bindings, and
@@ -91,21 +105,47 @@ For every `root` row in `data/module_map.tsv`:
   shared widgets, localisation, assets or services meant for other
   modules. Configuration only the root uses to start the application (the
   theme or shell it hands the framework, environment and startup setup) is
-  composition, not a site. Add the files of every row step 1 split out of
-  the root's directories, whatever its role: they are counted here, once,
-  and not again under AP1.
-- Count the **imports of the root from outside it**: the sites of the
-  `*->root` violation kinds in `metrics.json`, one per importing file and
-  imported root file, as `metrics.json` lists them. A file already counted
-  as split out is not counted again.
+  composition, not a site. A unit holding composition and other code that
+  step 1 mapped to the root is a site.
+- **Mixed directories**: take `rootMixedDirectories` from `metrics.json`.
+  Each directory that directly holds handwritten files of the root and of
+  other modules mixes them, and its smaller side (`siteFiles`) is the site
+  set: the files that must move to separate the roles. A module in a
+  directory of its own is not a site, wherever that directory sits.
+  The script sets aside package markers and index files by name
+  (`indexFiles`): put back each one that holds more than re-exports or
+  package marking (an entry point, an app factory such as Flask's
+  `create_app` in `__init__.py`). Remove any other file on either side
+  that only re-exports (a Dart barrel). Recount the smaller side after
+  either change (the other modules' side on a tie), say so, and use the
+  recount from here on.
+- **Imported only by the root**: for each module in `rootOnlyImported`,
+  judge each file as a root file is judged. A file holding product logic
+  is a site: it is the root's product logic under another label. Not
+  sites: composition content (a theme or shell only the root uses), an
+  implementation of an interface declared in another module that the root
+  binds, and every file of a module a root file re-exports to other
+  modules (its importers are imports of the root already).
+- Count the **imports of the root from outside it**: one per importing
+  file and imported root file. `rootImports.sitesOutsideMixedDirectories`
+  already leaves out importing files in `siteFiles`; also leave out those
+  whose importing file you counted as imported only by the root (take
+  them from `data/module_edges.tsv`). When your recount changed the site
+  files, count the imports of the root from `data/module_edges.tsv`
+  against the recounted site files instead.
 
-**C2 sites** = non-composition files in the root + split-out files +
-imports of the root from outside it.
+**C2 sites** = non-composition files in the root + mixed-directory sites +
+files counted as imported only by the root, each file once + imports of
+the root from outside it. Where the code sits counts here; what a shared,
+global-service, foundation or contract module holds is judged under AP1,
+wherever it sits.
 
 AP2 signals (standard section 6), each present or absent with evidence:
-`rootShare` in Risk (over 25 %); a handwritten wiring file over 500
-lines; one handwritten wiring file registering the bindings of more than
-five features.
+`rootShare` in Risk (over 25 %); a handwritten wiring file, as defined
+above, over 500 lines; one handwritten wiring file registering the
+bindings of more than five features. A file with no wiring act
+(start-up configuration only, or a shell that provides no instance) is
+never a size signal, however long.
 
 ## 3. Route assembly (R4)
 
@@ -198,6 +238,30 @@ repository module); open the
 importing files (`grep` for the package within the module) to decide
 which layer they sit in.
 
+Those two maps record the direct imports of each file and do not follow
+exports. A module that imports a barrel or another file re-exporting a
+kept package reaches the package as if it imported it, so list the
+re-exports too. `grep` every module's files for a statement that
+republishes a kept package (an export directive naming it, `export ...
+from`, or the stack's equivalent: in Python, a package `__init__.py`
+importing names from the package, or a module listing them in
+`__all__`; in TypeScript or JavaScript also an import followed by a
+separate `export { name }`, `export default` or `module.exports =` of the
+imported name), and keep the files found. A plain `import` that the file
+only uses is not a re-export. Take each
+one's importers from `data/module_edges.tsv` (rows whose target file it
+is, with their modules). When an importer itself re-exports the kept file
+(an export directive, `export ... from`, or the Python form above, naming
+it), keep that importer
+too and take its importers in turn, until no new file is kept: an exempt
+barrel passes the package on, it does not end the chain. An importer in
+code the exemptions above do not cover is a containment site for that
+package, counted once per (module, package) pair, also when the module
+imports the package directly or through several files, and not for an
+edge already counted as a layering site, or one whose `module_edges.tsv`
+status is a violated rule (R1, R3, R5, R7), which I1, S4 and C2 score. Record the re-exporting file,
+the package and one importing `file:line`.
+
 For the layer direction, use `data/module_edges.tsv`: every row already
 carries its source and target modules and roles, and same-module edges
 have status `internal`. The file carries no layers: classify each file of
@@ -214,9 +278,13 @@ count I5 scores.
 Write `reports/.artifacts/architecture-audit/step_03_composition-analysis.md`:
 - **Implementation selection**: mechanism, R4 violation sites by kind
   (count and examples), or "no injection mechanism".
-- **Composition root**: files and sizes, largest wiring file, the most
-  features one wiring file registers, non-composition files, files
-  importing the root, C2 site total, AP2 signals present/absent.
+- **Composition root**: files and sizes, each wiring file with the
+  `file:line` of one wiring act, each root file over 500 lines that is not
+  a wiring file, largest wiring file, the most features one wiring file
+  registers, non-composition files, mixed directories (each with both
+  counts and the site files), the modules imported only by the root and
+  the files counted from them, files importing the root, C2 site total,
+  AP2 signals present/absent.
 - **Route assembly**: where, by whom, cross-feature assembly cases, or
   "Not applicable" with the reason.
 - **Navigation**: contract modules (paths or "none"), screen imports
@@ -224,7 +292,8 @@ Write `reports/.artifacts/architecture-audit/step_03_composition-analysis.md`:
   route sites (count, examples), AP3 signals present/absent, or "Not
   applicable" with the reason.
 - **Layering and containment**: R8 violations by kind with sites, and the
-  total.
+  total; the containment sites reached through a re-export, each with the
+  re-exporting file, the package and the importing `file:line`.
 
 If the runner gave you a different artifact path for this step, write the
 artifact there instead.

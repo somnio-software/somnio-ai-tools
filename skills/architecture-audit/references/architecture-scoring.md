@@ -62,16 +62,16 @@ drivers from the step 1 artifact before awarding anything.
 | **I2. Acyclic graph** (R2, M2) | 6 | `largestCycle` 0 → 6; 2–3 → 3; ≥ 4 → 0. Cycles are counted over allowed edges only (`cycles`, not `cyclesAllEdges`). | fewer than three modules |
 | **I3. Public surfaces** (R6, M3) | 4 | M3 = 0 % → 4; ≤ 5 % → 2; > 5 % → 0. When `uncheckedEdgeShare` is above 50 %, or `deepEdgeShare` is `null` while allowed cross-module edges exist → Not measured (0). | Compact profile; no allowed cross-module edges |
 | **I4. Navigation contracts** (R3, AP3) | 4 | Sites = route string literals passed to navigation calls outside contract modules. **Compact**: route names or paths are declared in one contract file and there are 0 sites → 4; 1–5 sites → 2; no such file, or more sites → 0. **Standard and Large**: cross-feature navigation goes through contract identifiers and there are 0 sites → 4; contracts exist and 1–5 sites remain → 2; no contracts, or more sites → 0. A feature importing another feature's screen is already counted by I1; do not count it here. | no navigation between features (a backend, a single-flow app); fewer than two features |
-| **I5. Layering and containment** (R8) | 4 | R8 sites from step 3: each file-level edge against the layer direction, plus each (module, package) pair in which the module imports a vendor SDK (as R8 defines it), an HTTP client or a platform API (as R8 defines them) from code other than the composition root, a foundation module, a global-service implementation or a data layer (a feature's own, or a shared-domain repository module). 0 → 4; 1–5 → 2; more → 0. | never |
+| **I5. Layering and containment** (R8) | 4 | R8 sites from step 3: each file-level edge against the layer direction, plus each (module, package) pair in which the module imports a vendor SDK (as R8 defines it), an HTTP client or a platform API (as R8 defines them), directly or through a file that re-exports it, from code other than the composition root, a foundation module, a global-service implementation or a data layer (a feature's own, or a shared-domain repository module). 0 → 4; 1–5 → 2; more → 0. | never |
 
 ### Composition contour — 25
 
 | Check | Points | Award | N/A when |
 |---|---|---|---|
 | **C1. Substitutable wiring** (R4) | 8 | Count the R4 violation sites from step 3, in any module other than the composition root: constructing another module's implementation (not a default the root or a test can replace), reaching another module's static singleton, looking up another module's implementation type where the root binds an interface for it, registering another module's bindings. Framework-native injection that the root and tests can override is not a violation, and neither is a lookup of what the root binds through a locator or scope it configures (get_it, `provider` or `flutter_bloc`'s `context.read`, Riverpod's `ref`). 0 sites → 8; 1–5 → 4; more, or no injection mechanism at all with features constructing their own collaborators → 0. | never |
-| **C2. Root holds composition only** (R5) | 7 | Sites = non-composition files inside the root (product logic, or shared widgets, localisation, assets or services meant for other modules, including code step 1 split out of the root's directories, counted here once and not again under AP1; configuration only the root uses to start the application is composition) + imports of the root from outside it, one per importing file and imported root file (the `*->root` sites in `metrics.json`), leaving out files already counted as split out. 0 → 7; 1–5 → 3; more → 0. | never |
+| **C2. Root holds composition only** (R5) | 7 | Sites from step 3 = non-composition files inside the root (product logic, or shared widgets, localisation, assets or services meant for other modules; configuration only the root uses to start the application is composition) + the smaller side of each directory that directly holds handwritten files of the root and of other modules (`rootMixedDirectories` in `metrics.json`, as step 3 recounted it; the other modules' side on a tie) + the files with product logic in a shared module only the root imports (`rootOnlyImported`), each file once + imports of the root from outside it, one per importing file and imported root file, leaving out importing files already counted (against the recounted site files). A module in a directory of its own is never a site because of where that directory sits, and AP1 still judges what it holds. 0 → 7; 1–5 → 3; more → 0. | never |
 | **C3. Route assembly** (R4) | 5 | The route tree (or HTTP route registration) is assembled in the root, from per-feature groups or directly, and no feature assembles another's routes → 5; central assembly, but 1–2 features assemble another's routes → 2; no central assembly, or more → 0. | the framework derives routes from the file system; the product has a single route |
-| **C4. Proportionate root** (AP2) | 5 | Count the AP2 signals from step 3: M9 in Risk; a handwritten wiring file over 500 lines; one handwritten wiring file registering the bindings of more than five features. Generated wiring is left out. None → 5; one → 2; two or three → 0. | never |
+| **C4. Proportionate root** (AP2) | 5 | Count the AP2 signals from step 3: M9 in Risk; a handwritten wiring file over 500 lines; one handwritten wiring file registering the bindings of more than five features. A wiring file passes instances it creates or obtains to application code, registers bindings, or provides instances through a scope (step 3 cites the line); start-up configuration and route definitions alone are not wiring, whatever the file is called. Generated wiring is left out. None → 5; one → 2; two or three → 0. | never |
 
 ### Control contour — 25
 
@@ -79,7 +79,7 @@ drivers from the step 1 artifact before awarding anything.
 |---|---|---|---|
 | **K1. Written standard** | 5 | A module map and dependency rules are written and match the code → 5; only one, or stale → 2; neither → 0. **Large** profile: if an owner is not declared for every module (M11 below 100 %), cap at 2. | never |
 | **K2. Mechanical enforcement** (R9, M6) | 10 | Required classes are the profile's classes (standard section 2) that the module graph can break: R1 with at least two features, R2 with at least three modules, R6 when a module declares a public surface, R7 when a contract, shared, global-service or foundation module exists, R5 and R8 whenever the profile lists them. Enforced = 1 per class, 0.5 per class with partial coverage (step 4). Ratio = enforced ÷ required: 1 → 10; ≥ 0.5 → 6; > 0 → 3; 0 → 0. | no class is required (Compact profile with fewer than two features and fewer than three modules) |
-| **K3. Debt ratchet** (R9) | 5 | For each class rated enforced or partial that has existing violations inside the modules its check covers (step 4): all of them are held in a baseline that fails on growth and fails on or prunes stale entries → 5; a baseline exists but misses growth or staleness → 2; violations are silenced ad hoc (ignore comments, a disabled rule, an allowlist nothing shrinks), or neither held nor silenced → 0. | no class rated enforced or partial, required or not, has existing violations inside the modules its check covers, including when nothing is enforced |
+| **K3. Debt ratchet** (R9) | 5 | For each class rated enforced or partial that has existing violations inside the modules its check covers (step 4): all of them are held in a baseline that fails on growth and fails on or prunes stale entries → 5; a baseline exists but misses growth or staleness → 2; violations are silenced ad hoc (ignore comments, a disabled rule, an allowlist nothing shrinks), or neither held nor silenced → 0. A baseline misses growth when the number of violations can rise without failing the check (a swap at the same count is not growth): one keyed by module pair or by file with no count, where a new import inside a listed key passes, is such a baseline and earns 2, not 5. | no class rated enforced or partial, required or not, has existing violations inside the modules its check covers, including when nothing is enforced |
 | **K4. Local feedback** | 5 | At least one enforcing check also runs before code leaves the machine (a Git hook) or shows as an error in the editor (an analyzer or lint rule at error severity) → 5; otherwise → 0. | Compact profile |
 
 ## COMPUTATION (execute before writing anything)
@@ -98,17 +98,27 @@ Step C. **Total** = round(100 × Σ earned ÷ Σ possible), over all four
 contours, rounding halves up (62.5 → 63). With no N/A check, possible is
 100 and the Total is the plain sum.
 
-**Enforcement caps.** The Total is capped by K2:
+**Caps.** The Total is capped by K2 and by S1:
 - K2 earns 0 (scored 0 or not measured): at most 64. A codebase that
   enforces none of its required rule classes is at most Partially
   modular, however few checks apply to it.
 - K2 earns 3 or 6, or is N/A because no class is required yet: at most 84.
   Governed modular means tools hold every required class, which takes
   K2 = 10.
-- K2 earns 10: no cap.
+- K2 earns 10: no K2 cap.
+- S1 earns 0 (scored 0 or not measured): at most 84. A codebase whose
+  boundary form does not fit its profile is at most Modular, because the
+  Governed band says the standard holds for the profile. S1 is never N/A.
+  A Compact codebase starts at 8 and reaches 0 only through both
+  deductions; a Standard or Large one can reach 0 on its base.
+- S1 earns any points: no S1 cap.
 
-A cap applies when it lowers the Total; then state the uncapped value and
-the cap's reason next to the capped one.
+A cap applies when the uncapped Total is above it. When several apply the
+lowest sets the Total (K2 6 with S1 0 at an uncapped 88 gives 84, with
+both reasons; with K2 0 and S1 0 the uncapped Total cannot pass 82, so
+only the 64 cap applies). State the
+uncapped value and the reason of every cap that applies next to the capped
+one.
 
 Step D. Map the Total to a maturity band. The band describes fitness for
 the effective profile:
@@ -118,8 +128,9 @@ the effective profile:
   coupled or the rules are not enforced.
 - **65–84 — Modular**: modules, roles and dependencies mostly follow the
   standard for this profile; gaps remain in enforcement or in a contour.
-- **85–100 — Governed modular**: the standard holds for this profile and
-  tools enforce every rule class it requires (K2 = 10).
+- **85–100 — Governed modular**: the standard holds for this profile, the
+  boundary form fits it (S1 earns points) and tools enforce every rule
+  class it requires (K2 = 10).
 
 Step E. **Quality criteria reading**: for every metric M1–M11 in standard
 section 7, state the value and Healthy, Watch, Risk, N/A or Not measured.
@@ -163,8 +174,8 @@ Write `reports/.artifacts/architecture-audit/step_05_architecture-scoring.md`:
 - **Per-check table**: contour · check · outcome · points awarded / max ·
   justification with the evidence.
 - **Contour scores** as `earned / possible`, and the **Total**:
-  `[total]/100`, with the uncapped value and the reason when an
-  enforcement cap lowers it.
+  `[total]/100`, with the uncapped value and the reason when a
+  cap lowers it.
 - **Maturity band** with a one-sentence reading that names the profile.
 - **Quality criteria reading** (Step E).
 - **Rule compliance** (Step F).
