@@ -75,10 +75,24 @@ collaborators, say so: C1 scores that as 0.
 ## 2. Composition root contents (R5, AP2)
 
 For every `root` row in `data/module_map.tsv`:
-- List its files with line counts. A **wiring file** is a handwritten file
-  whose main content is constructing or registering dependencies (the
-  entry point, bootstrap, a DI module, the widget that provides the
-  scopes). Name the largest wiring file and its line count.
+- List its files with line counts. A **wiring file** is a handwritten
+  root file that does at least one of these, whatever it is called:
+  creates or obtains an instance (a constructor call, `X.instance`,
+  `getInstance()`, `await X.create()`) and passes it to code that is not
+  the framework's (a provider, a locator registration, a registration
+  module, another app object's constructor, the app builder); registers
+  bindings; or is a scope widget that provides or overrides at least one
+  instance (an empty `ProviderScope` does not). **Start-up
+  configuration** is not wiring: initialising a vendor SDK with its
+  options (crash reporting, monitoring, analytics), framework setters,
+  observers and hooks (`Bloc.observer = ...`, error and zone handlers),
+  logging, platform and system-UI set-up, reading the environment or
+  flavour, and `runApp(App())` itself. Route definitions alone do not
+  make a file a wiring file (C3 scores route assembly), but any other
+  wiring act in it does. A file holding one wiring act is a wiring file:
+  cite the `file:line` of one act for each wiring file, and for each
+  handwritten root file over 500 lines that is not one, say that none
+  exists. Name the largest wiring file and its line count.
 - A **binding** is an instance made available to other code: a provider,
   a locator registration, a module binding. Constructing an object is not
   registering it. Find the handwritten wiring file that registers the most bindings, and
@@ -91,21 +105,40 @@ For every `root` row in `data/module_map.tsv`:
   shared widgets, localisation, assets or services meant for other
   modules. Configuration only the root uses to start the application (the
   theme or shell it hands the framework, environment and startup setup) is
-  composition, not a site. Add the files of every row step 1 split out of
-  the root's directories, whatever its role: they are counted here, once,
-  and not again under AP1.
-- Count the **imports of the root from outside it**: the sites of the
-  `*->root` violation kinds in `metrics.json`, one per importing file and
-  imported root file, as `metrics.json` lists them. A file already counted
-  as split out is not counted again.
+  composition, not a site. A unit holding composition and other code that
+  step 1 mapped to the root is a site.
+- **Mixed directories**: take `rootMixedDirectories` from `metrics.json`.
+  Each directory that directly holds handwritten files of the root and of
+  other modules mixes them, and its smaller side (`siteFiles`) is the site
+  set: the files that must move to separate the roles. A module in a
+  directory of its own is not a site, wherever that directory sits.
+  Remove any file on either side that only re-exports (a Dart barrel; the
+  script already leaves out `__init__.py` and `index.*`), recount the
+  smaller side, and say so.
+- **Imported only by the root**: for each module in `rootOnlyImported`,
+  judge each file as a root file is judged. A file holding product logic
+  is a site: it is the root's product logic under another label. Not
+  sites: composition content (a theme or shell only the root uses), an
+  implementation of an interface declared in another module that the root
+  binds, and every file of a module a root file re-exports to other
+  modules (its importers are imports of the root already).
+- Count the **imports of the root from outside it**: one per importing
+  file and imported root file. `rootImports.sitesOutsideMixedDirectories`
+  already leaves out importing files in `siteFiles`; also leave out those
+  whose importing file you counted as imported only by the root (take
+  them from `data/module_edges.tsv`).
 
-**C2 sites** = non-composition files in the root + split-out files +
-imports of the root from outside it.
+**C2 sites** = non-composition files in the root + mixed-directory sites +
+files counted as imported only by the root, each file once + imports of
+the root from outside it. Where the code sits counts here; what a shared,
+global-service, foundation or contract module holds is judged under AP1,
+wherever it sits.
 
 AP2 signals (standard section 6), each present or absent with evidence:
-`rootShare` in Risk (over 25 %); a handwritten wiring file over 500
-lines; one handwritten wiring file registering the bindings of more than
-five features.
+`rootShare` in Risk (over 25 %); a handwritten wiring file, as defined
+above, over 500 lines; one handwritten wiring file registering the
+bindings of more than five features. A start-up configuration file or a
+shell is never a size signal, however long.
 
 ## 3. Route assembly (R4)
 
@@ -238,9 +271,13 @@ count I5 scores.
 Write `reports/.artifacts/architecture-audit/step_03_composition-analysis.md`:
 - **Implementation selection**: mechanism, R4 violation sites by kind
   (count and examples), or "no injection mechanism".
-- **Composition root**: files and sizes, largest wiring file, the most
-  features one wiring file registers, non-composition files, files
-  importing the root, C2 site total, AP2 signals present/absent.
+- **Composition root**: files and sizes, each wiring file with the
+  `file:line` of one wiring act, each root file over 500 lines that is not
+  a wiring file, largest wiring file, the most features one wiring file
+  registers, non-composition files, mixed directories (each with both
+  counts and the site files), the modules imported only by the root and
+  the files counted from them, files importing the root, C2 site total,
+  AP2 signals present/absent.
 - **Route assembly**: where, by whom, cross-feature assembly cases, or
   "Not applicable" with the reason.
 - **Navigation**: contract modules (paths or "none"), screen imports

@@ -30,12 +30,16 @@ READ-ONLY DISCIPLINE:
 ```bash
 python3 reports/.artifacts/architecture-audit/data/graph_metrics.py metrics \
   --root . --dir reports/.artifacts/architecture-audit/data --lang <lang> \
-  [--driver D1 ...] [--profile compact|standard|large]
+  [--driver D1 ...] [--profile compact|standard|large] \
+  [--fixed-location '<glob>' ...]
 ```
 
 - Pass one `--driver` per driver step 1 found to apply (the script
   records them under `profile.drivers`; they change no number), and
   `--profile` only when step 1 recorded an operator override.
+- Pass one `--fixed-location` per glob step 1 recorded for files whose
+  place the framework fixes (file-system routes). They only leave the
+  mixed-directory count of the composition root; their edges stay.
 - Do not edit the script: the thresholds assume exactly its definitions.
 - For `--lang none` (any other stack), first write `data/edges.in.tsv`
   yourself, one edge per line: `<source file>\t<target file>\t<line>`,
@@ -118,6 +122,19 @@ them (one decimal).
   `largestSharedModule` (shared, global-service and foundation modules
   only), `physicalFeatureShare`, `filesOver1000` (count and the five
   largest), `filesOver2000`, and `filesOver1000Share`.
+- **Root placement** (step 3 counts C2 from these):
+  `rootMixedDirectories` lists each directory that directly holds
+  handwritten files of the root and of other modules, with both counts,
+  the side counted (the smaller one, the other modules' files on a tie)
+  and the other modules there; `sites` and `siteFiles` are that smaller
+  side over all such directories. Generated files, package markers and
+  index files (`__init__.py`, `index.*`) and the `--fixed-location` files
+  sit on neither side. `rootOnlyImported` lists the shared-common and
+  shared-domain modules that the root imports and no other module does,
+  with their handwritten and generated file counts: candidates step 3
+  judges. `rootImports` counts the imports of the root from outside it
+  (`sites`, one per importing file and imported root file) and those whose
+  importing file is not in `siteFiles` (`sitesOutsideMixedDirectories`).
 - **External and platform imports**: `externalImportsByModule` maps each
   module to the packages it imports, with a file count and an example
   site; `platformImportsByModule` maps it to the platform libraries it
@@ -139,7 +156,9 @@ Then evaluate, with the evidence that decides each:
   it so) or not measured.
 - **AP1 signals** (shared module as a warehouse): `largestSharedModule`
   over 50 %; mixed shared, global-service or foundation modules from step
-  1 (root relocations are counted under C2, not here); contract modules
+  1, wherever their directories sit, including those with files in
+  `rootMixedDirectories` or in `rootOnlyImported` (C2 counts where code
+  sits and who imports it, AP1 what a module holds); contract modules
   holding implementations; a shared module with the highest fan-in whose
   name states no purpose; shared modules with an edge into a feature.
   Features, including a Compact codebase mapped as one `app` feature, are
@@ -165,8 +184,9 @@ Keep `edges.tsv`, `module_edges.tsv` and `metrics.json` in
 `reports/.artifacts/architecture-audit/data/`, and write
 `reports/.artifacts/architecture-audit/step_02_dependency-graph.md` with
 the sections of part 3: profile, metrics with their values and status,
-violations with example sites, cycles, fan-in and fan-out, sizes, external
-and platform imports, change locality, the AP1, AP4 and AP5 signals, and
+violations with example sites, cycles, fan-in and fan-out, sizes, root
+placement, external and platform imports, change locality, the AP1, AP4
+and AP5 signals, and
 any extraction limitation you observed.
 
 If the runner gave you a different artifact path for this step, write the

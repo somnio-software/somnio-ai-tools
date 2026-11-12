@@ -891,6 +891,121 @@ class GraphMetrics(Case):
             self.assertEqual([len(c) for c in got], sorted((len(c) for c in got), reverse=True))
 
 
+class RootPlacement(Case):
+    """C2's mechanical inputs: directories shared by root and other files, root-only shared modules, root imports."""
+
+    def placement(self, files, rows, edges=(), gen=(), extra=()):
+        (self.art / 'files.tsv').write_text(''.join(f'{path}\t10\t{"gen" if path in gen else "src"}\n'
+                                                    for path in files), encoding='utf-8')
+        (self.art / 'edges.in.tsv').write_text('# from\tto\tline\n' + ''.join(f'{a}\t{b}\t1\n' for a, b in edges),
+                                               encoding='utf-8')
+        self.module_map(rows)
+        m = self.metrics('none', *extra)
+        return m['rootMixedDirectories'], m['rootOnlyImported'], m['rootImports']
+
+    def test_the_smaller_non_root_side_is_the_site_set_and_own_directories_are_not(self):
+        files = ['lib/app/router/router.dart', 'lib/app/router/observer.dart', 'lib/app/router/links.dart',
+                 'lib/app/router/paths.dart', 'lib/app/router/keys/keys.dart', 'lib/app/services/share.dart']
+        mixed, _, imports = self.placement(
+            files, [('root', 'root', 'no', 'lib/app/router', '-'),
+                    ('paths', 'contract', 'no', 'lib/app/router/paths.dart', '-'),
+                    ('keys', 'contract', 'no', 'lib/app/router/keys', '-'),
+                    ('services', 'global', 'no', 'lib/app/services', '-')],
+            edges=[('lib/app/router/paths.dart', 'lib/app/router/router.dart'),
+                   ('lib/app/services/share.dart', 'lib/app/router/links.dart')])
+        self.assertEqual(mixed['siteFiles'], ['lib/app/router/paths.dart'])
+        self.assertEqual(mixed['directories'], [{'directory': 'lib/app/router', 'rootFiles': 3, 'otherFiles': 1,
+                                                 'counted': 'other', 'modules': {'paths': 1}}])
+        self.assertEqual(imports, {'sites': 2, 'sitesOutsideMixedDirectories': 1})
+
+    def test_root_files_are_the_site_set_when_they_are_the_smaller_side(self):
+        files = ['lib/core/di.dart'] + [f'lib/core/{name}.dart' for name in 'abcd']
+        mixed, _, _ = self.placement(files, [('root', 'root', 'no', 'lib/core/di.dart', '-'),
+                                             ('core', 'shared-common', 'no', 'lib/core', '-')])
+        self.assertEqual((mixed['sites'], mixed['siteFiles']), (1, ['lib/core/di.dart']))
+        self.assertEqual(mixed['directories'][0]['counted'], 'root')
+
+    def test_a_tie_counts_the_non_root_side(self):
+        mixed, _, _ = self.placement(['lib/x/root.dart', 'lib/x/shared.dart'],
+                                     [('root', 'root', 'no', 'lib/x/root.dart', '-'),
+                                      ('shared', 'shared-common', 'no', 'lib/x', '-')])
+        self.assertEqual(mixed['siteFiles'], ['lib/x/shared.dart'])
+
+    def test_the_result_does_not_depend_on_how_the_root_rows_are_spelled(self):
+        files = ['lib/app/app.dart', 'lib/app/other.dart', 'lib/app/session.dart',
+                 'lib/app/view/app.dart', 'lib/app/view/shell.dart', 'lib/app/view/toast.dart']
+        rest = [('common', 'shared-common', 'no', 'lib/app', '-'),
+                ('toast', 'shared-common', 'no', 'lib/app/view/toast.dart', '-')]
+        by_directory = self.placement(files, [('root', 'root', 'no', 'lib/app/app.dart', '-'),
+                                              ('root', 'root', 'no', 'lib/app/view', '-')] + rest)[0]
+        by_file = self.placement(files, [('root', 'root', 'no', p, '-')
+                                         for p in ('lib/app/app.dart', 'lib/app/view/app.dart',
+                                                   'lib/app/view/shell.dart')] + rest)[0]
+        self.assertEqual(by_directory, by_file)
+        self.assertEqual(by_file['siteFiles'], ['lib/app/app.dart', 'lib/app/view/toast.dart'])
+
+    def test_a_catch_all_root_row_does_not_make_its_subdirectories_mixed(self):
+        mixed, _, _ = self.placement(['lib/main.dart', 'lib/features/a/a.dart'],
+                                     [('root', 'root', 'no', 'lib', '-'), ('a', 'feature', 'no', 'lib/features/a', '-')])
+        self.assertEqual((mixed['sites'], mixed['directories']), (0, []))
+
+    def test_generated_files_neither_count_nor_make_a_directory_mixed(self):
+        files = ['lib/router/router.dart', 'lib/router/paths.g.dart', 'lib/options.dart', 'lib/shared.dart']
+        mixed, _, _ = self.placement(files, [('root', 'root', 'no', 'lib/router', '-'),
+                                             ('root', 'root', 'no', 'lib/options.dart', '-'),
+                                             ('paths', 'contract', 'no', 'lib/router/paths.g.dart', '-'),
+                                             ('shared', 'shared-common', 'no', 'lib', '-')],
+                                     gen=('lib/router/paths.g.dart', 'lib/options.dart'))
+        self.assertEqual((mixed['sites'], mixed['directories']), (0, []))
+
+    def test_package_markers_and_index_files_sit_on_neither_side(self):
+        files = ['pkg/a.py', 'pkg/b.py', 'pkg/__init__.py', 'web/main.ts', 'web/app.ts', 'web/index.ts']
+        mixed, _, _ = self.placement(files, [('root', 'root', 'no', 'pkg', '-'), ('root', 'root', 'no', 'web', '-'),
+                                             ('marker', 'shared-common', 'no', 'pkg/__init__.py', '-'),
+                                             ('barrel', 'shared-common', 'no', 'web/index.ts', '-')])
+        self.assertEqual((mixed['sites'], mixed['directories']), (0, []))
+
+    def test_framework_placed_files_leave_the_count_but_keep_their_imports_of_the_root(self):
+        files = ['app/layout.tsx', 'app/providers.tsx', 'app/page.tsx', 'app/utils.ts']
+        rows = [('root', 'root', 'no', 'app/layout.tsx', '-'), ('root', 'root', 'no', 'app/providers.tsx', '-'),
+                ('home', 'feature', 'no', 'app/page.tsx', '-'), ('utils', 'shared-common', 'no', 'app/utils.ts', '-')]
+        edges = [('app/page.tsx', 'app/providers.tsx')]
+        mixed, _, imports = self.placement(files, rows, edges)
+        self.assertEqual(mixed['siteFiles'], ['app/page.tsx', 'app/utils.ts'])
+        self.assertEqual(imports, {'sites': 1, 'sitesOutsideMixedDirectories': 0})
+        mixed, _, imports = self.placement(files, rows, edges, extra=('--fixed-location', 'app/*page.tsx'))
+        self.assertEqual(mixed['siteFiles'], ['app/utils.ts'])
+        self.assertEqual(mixed['fixedLocation'], ['app/*page.tsx'])
+        self.assertEqual(imports, {'sites': 1, 'sitesOutsideMixedDirectories': 1})
+
+    def test_only_shared_modules_that_the_root_alone_imports_are_candidates(self):
+        names = ('theme', 'data', 'widgets', 'keys', 'contract', 'found', 'glob', 'orphan', 'a')
+        roles = ('shared-common', 'shared-domain', 'shared-common', 'shared-common', 'contract', 'foundation',
+                 'global', 'shared-common', 'feature')
+        files = ['main.dart', 'theme/theme.g.dart'] + [f'{name}/{name}.dart' for name in names]
+        rows = [('root', 'root', 'no', 'main.dart', '-')] + [(n, r, 'no', n, '-') for n, r in zip(names, roles)]
+        edges = [('main.dart', f'{name}/{name}.dart') for name in names if name != 'orphan']
+        edges += [('a/a.dart', 'widgets/widgets.dart'), ('contract/contract.dart', 'keys/keys.dart')]
+        _, only_root, _ = self.placement(files, rows, edges, gen=('theme/theme.g.dart',))
+        self.assertEqual(only_root, {'data': {'role': 'shared-domain', 'files': 1, 'genFiles': 0},
+                                     'theme': {'role': 'shared-common', 'files': 1, 'genFiles': 1}})
+
+    def test_a_module_spanning_rows_is_counted_once_per_directory(self):
+        files = ['lib/app/a.dart', 'lib/app/b.dart', 'lib/app/c.dart', 'lib/app/x.dart', 'lib/app/y.dart']
+        mixed, _, _ = self.placement(files, [('root', 'root', 'no', 'lib/app', '-'),
+                                             ('kit', 'shared-common', 'no', 'lib/app/x.dart', '-'),
+                                             ('kit', 'shared-common', 'no', 'lib/app/y.dart', '-')])
+        self.assertEqual(mixed['directories'], [{'directory': 'lib/app', 'rootFiles': 3, 'otherFiles': 2,
+                                                 'counted': 'other', 'modules': {'kit': 2}}])
+
+    def test_a_map_without_a_root_gives_empty_values(self):
+        self.assertEqual(self.placement(['lib/a/a.dart', 'lib/b/b.dart'],
+                                        [('a', 'feature', 'no', 'lib/a', '-'), ('b', 'feature', 'no', 'lib/b', '-')],
+                                        edges=[('lib/a/a.dart', 'lib/b/b.dart')]),
+                         ({'sites': 0, 'siteFiles': [], 'directories': [], 'fixedLocation': []}, {},
+                          {'sites': 0, 'sitesOutsideMixedDirectories': 0}))
+
+
 class Integrity(Case):
     def run_copy(self, text, crlf=False):
         copy = self.root / 'graph_metrics.py'

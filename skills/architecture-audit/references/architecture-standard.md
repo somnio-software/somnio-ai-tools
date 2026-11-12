@@ -153,10 +153,12 @@ that feature's data code kept apart: it stays its own shared-domain module,
 with the feature it serves recorded, and it does not make the feature
 physical.
 
-A module that holds code of two roles (for example a directory that is both
-the composition root and a home for widgets the features import) is
-classified by its most-depended-upon role and reported as mixed: under R5
-when one of its roles is the composition root, otherwise under AP1.
+A module that holds code of two roles is classified by its
+most-depended-upon role and reported as mixed, except a unit that holds
+composition and cannot be split (for example a file that is both the
+composition root and a home for widgets the features import): it belongs
+to the root. A mixed unit is reported under R5 when it belongs to the
+root, otherwise under AP1, wherever its directory sits.
 
 ## 4. Allowed dependencies
 
@@ -227,7 +229,13 @@ for other modules, and no module outside the root may depend on it. What
 features need from the root moves to a contract, shared or foundation
 module. App-wide configuration that only the root uses to start the
 application (the theme or shell it hands the framework, environment and
-startup setup) is composition.
+startup setup) is composition. The root's files and other modules' files
+MUST NOT share a directory: in a directory that directly holds both, the
+files on its smaller side are violations, and a shared module only the
+root imports holds no product logic. Where a module's own directory sits
+(beside the root's under one parent, or inside one of them) is no
+violation by itself. Files whose place the framework fixes (file-system
+routes) are exempt.
 
 **R6. Modules are used through their public surface.** An edge into a module
 MUST target its public surface. A deep edge into another module's internals
@@ -297,18 +305,25 @@ Signals: one shared, global-service or foundation module holds more than
 has the highest fan-in of any module while its name states no purpose
 (`common`, `core`, `utils`, `app`, `shared` alone); it depends on a
 feature; a contract module holds screens, state or implementations.
-Shared code found inside the root's directories is counted once, under R5,
-not here: its modules give no AP1 signal, though their R7 sites still
-count.
+These signals apply to every such module wherever its directory sits,
+also when R5 counts some of its files because they share a directory with
+the root's or only the root imports them: R5 counts where code sits and
+who imports it, AP1 what a module holds, so moving a module changes R5
+alone. Code that belongs to the root is judged under R5, not here.
 
 **AP2. Composition monolith.** The composition root grows into the place
 where the application actually lives.
 Signals: the root's share of handwritten code is in Risk (M9); a single
 handwritten wiring file exceeds 500 lines; one handwritten wiring file
 registers the bindings of more than five features instead of including
-per-feature registration modules. Generated wiring (for example
-injectable's output) is left out: its registrations are declared next to
-the code they bind.
+per-feature registration modules. A **wiring file** creates or obtains
+instances and passes them to application code, registers bindings, or
+provides instances through a scope; start-up configuration (initialising
+SDKs, framework hooks and observers, logging, environment) is not wiring,
+whatever the file is called, and route definitions alone are not either.
+A file that does any wiring is a wiring file. Generated wiring (for
+example injectable's output) is left out: its registrations are declared
+next to the code they bind.
 
 **AP3. Hidden navigation coupling.** Features look independent in the
 dependency rules but are tied together through navigation.
