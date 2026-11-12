@@ -90,7 +90,7 @@ from dataclasses import dataclass, field
 
 # sha256 of this file, with line endings normalised to \n and the hex below
 # replaced by 64 zeros; main() refuses to run an edited copy.
-SELF_DIGEST = 'ef76ef55bda6d7dc8aa064c8295d0a6c9285154ebfb95c51d60ebe1f05cf6119'
+SELF_DIGEST = '760e6fe9a09ec87c2c0842c35fd1599ea4f635d69f4c35dfb06fa9cbd1f64313'
 SELF_DIGEST_LINE = re.compile(r"^SELF_DIGEST = '[0-9a-f]{64}'$", re.MULTILINE)
 
 # --- The standard ------------------------------------------------------------
@@ -1863,7 +1863,8 @@ def main(argv=None):
     metrics.add_argument('--branch', default='HEAD')
     metrics.add_argument('--changes-file', help='read `git log --name-only --format=@@%%H` output instead')
     metrics.add_argument('--profile', choices=('compact', 'standard', 'large'), help='override the measured profile')
-    metrics.add_argument('--driver', action='append', help='a reason for the profile, repeatable')
+    metrics.add_argument('--driver', action='append', choices=('D1', 'D3', 'D4'),
+                         help='a driver that applies (standard section 2), repeatable')
     metrics.add_argument('--fixed-location', action='append',
                          help='fnmatch glob on the repo-relative path (* also matches /): a file whose place the '
                               'framework fixes (file-system routes); it sits on neither side of a directory shared '

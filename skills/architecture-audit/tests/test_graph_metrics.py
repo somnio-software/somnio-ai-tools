@@ -1112,10 +1112,17 @@ class Profile(Case):
         self.assertEqual(self.profile(100, 2)['measured'], 'compact')
 
     def test_override_and_drivers(self):
-        p = self.profile(100, 2, extra=('--profile', 'large', '--driver', 'regulated', '--driver', 'growth',
-                                        '--driver', 'regulated'))
+        p = self.profile(100, 2, extra=('--profile', 'large', '--driver', 'D4', '--driver', 'D1',
+                                        '--driver', 'D4'))
         self.assertEqual((p['measured'], p['override'], p['effective'], p['drivers']),
-                         ('compact', 'large', 'large', ['growth', 'regulated']))
+                         ('compact', 'large', 'large', ['D1', 'D4']))
+
+    def test_the_retired_driver_is_rejected(self):
+        self.write({'f0/x.sql': ''})
+        result = self.cli('metrics', '--root', str(self.root), '--dir', str(self.art), '--lang', 'none',
+                          '--driver', 'D2', ok=False)
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('D2', result.stderr)
 
 
 class ChangeLocality(Case):
