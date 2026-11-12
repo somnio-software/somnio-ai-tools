@@ -958,12 +958,28 @@ class RootPlacement(Case):
                                      gen=('lib/router/paths.g.dart', 'lib/options.dart'))
         self.assertEqual((mixed['sites'], mixed['directories']), (0, []))
 
-    def test_package_markers_and_index_files_sit_on_neither_side(self):
-        files = ['pkg/a.py', 'pkg/b.py', 'pkg/__init__.py', 'web/main.ts', 'web/app.ts', 'web/index.ts']
+    def test_package_markers_and_index_files_sit_on_neither_side_and_are_listed_for_step_3(self):
+        files = ['pkg/a.py', 'pkg/b.py', 'pkg/__init__.py', 'web/main.ts', 'web/app.ts', 'web/index.ts',
+                 'lib/index.dart', 'lib/x.dart', 'app/__init__.py']
         mixed, _, _ = self.placement(files, [('root', 'root', 'no', 'pkg', '-'), ('root', 'root', 'no', 'web', '-'),
                                              ('marker', 'shared-common', 'no', 'pkg/__init__.py', '-'),
-                                             ('barrel', 'shared-common', 'no', 'web/index.ts', '-')])
+                                             ('barrel', 'shared-common', 'no', 'web/index.ts', '-'),
+                                             ('lib', 'shared-common', 'no', 'lib', '-'),
+                                             ('root', 'root', 'no', 'app/__init__.py', '-')])
         self.assertEqual((mixed['sites'], mixed['directories']), (0, []))
+        self.assertEqual(mixed['indexFiles'], [{'file': 'app/__init__.py', 'module': 'root'},
+                                               {'file': 'pkg/__init__.py', 'module': 'marker'},
+                                               {'file': 'web/index.ts', 'module': 'barrel'}])
+
+    def test_names_that_only_start_with_index_still_count(self):
+        files = ['web/main.ts', 'web/app.ts', 'web/index_page.ts', 'lib/a.dart', 'lib/b.dart', 'lib/indexer.dart']
+        mixed, _, _ = self.placement(files, [('root', 'root', 'no', 'web/main.ts', '-'),
+                                             ('root', 'root', 'no', 'web/app.ts', '-'),
+                                             ('page', 'feature', 'no', 'web', '-'),
+                                             ('root', 'root', 'no', 'lib/a.dart', '-'),
+                                             ('root', 'root', 'no', 'lib/b.dart', '-'),
+                                             ('search', 'shared-common', 'no', 'lib', '-')])
+        self.assertEqual((mixed['siteFiles'], mixed['indexFiles']), (['lib/indexer.dart', 'web/index_page.ts'], []))
 
     def test_framework_placed_files_leave_the_count_but_keep_their_imports_of_the_root(self):
         files = ['app/layout.tsx', 'app/providers.tsx', 'app/page.tsx', 'app/utils.ts']
@@ -973,10 +989,13 @@ class RootPlacement(Case):
         mixed, _, imports = self.placement(files, rows, edges)
         self.assertEqual(mixed['siteFiles'], ['app/page.tsx', 'app/utils.ts'])
         self.assertEqual(imports, {'sites': 1, 'sitesOutsideMixedDirectories': 0})
-        mixed, _, imports = self.placement(files, rows, edges, extra=('--fixed-location', 'app/*page.tsx'))
+        mixed, _, imports = self.placement(files, rows, edges, extra=('--fixed-location', 'app/page.tsx',
+                                                                      '--fixed-location', 'app/*/page.tsx'))
         self.assertEqual(mixed['siteFiles'], ['app/utils.ts'])
-        self.assertEqual(mixed['fixedLocation'], ['app/*page.tsx'])
+        self.assertEqual(mixed['fixedLocation'], ['app/*/page.tsx', 'app/page.tsx'])
         self.assertEqual(imports, {'sites': 1, 'sitesOutsideMixedDirectories': 1})
+        self.assertIn("--fixed-location 'app/*/page.tsx' matches no handwritten mapped file", self.last.stderr)
+        self.assertNotIn("'app/page.tsx' matches no", self.last.stderr)
 
     def test_only_shared_modules_that_the_root_alone_imports_are_candidates(self):
         names = ('theme', 'data', 'widgets', 'keys', 'contract', 'found', 'glob', 'orphan', 'a')
@@ -1002,7 +1021,8 @@ class RootPlacement(Case):
         self.assertEqual(self.placement(['lib/a/a.dart', 'lib/b/b.dart'],
                                         [('a', 'feature', 'no', 'lib/a', '-'), ('b', 'feature', 'no', 'lib/b', '-')],
                                         edges=[('lib/a/a.dart', 'lib/b/b.dart')]),
-                         ({'sites': 0, 'siteFiles': [], 'directories': [], 'fixedLocation': []}, {},
+                         ({'sites': 0, 'siteFiles': [], 'directories': [], 'indexFiles': [], 'fixedLocation': []},
+                          {},
                           {'sites': 0, 'sitesOutsideMixedDirectories': 0}))
 
 

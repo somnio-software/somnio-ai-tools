@@ -229,13 +229,15 @@ for other modules, and no module outside the root may depend on it. What
 features need from the root moves to a contract, shared or foundation
 module. App-wide configuration that only the root uses to start the
 application (the theme or shell it hands the framework, environment and
-startup setup) is composition. The root's files and other modules' files
-MUST NOT share a directory: in a directory that directly holds both, the
-files on its smaller side are violations, and a shared module only the
-root imports holds no product logic. Where a module's own directory sits
-(beside the root's under one parent, or inside one of them) is no
-violation by itself. Files whose place the framework fixes (file-system
-routes) are exempt.
+startup setup) is composition. The root's handwritten files and other
+modules' handwritten files MUST NOT share a directory: in a directory that
+directly holds both, the files on its smaller side (the other modules'
+files on a tie) are violations, and a shared module only the root imports
+holds no product logic. Where a module's own directory sits (beside the
+root's under one parent, around them, or inside one of them) is no
+violation by itself. Generated files, package markers and index files
+that only mark or re-export, and files whose place the framework fixes
+(file-system routes) are exempt.
 
 **R6. Modules are used through their public surface.** An edge into a module
 MUST target its public surface. A deep edge into another module's internals

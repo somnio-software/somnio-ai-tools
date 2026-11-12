@@ -89,7 +89,7 @@ from dataclasses import dataclass, field
 
 # sha256 of this file, with line endings normalised to \n and the hex below
 # replaced by 64 zeros; main() refuses to run an edited copy.
-SELF_DIGEST = '64c71fcfca6bd56d8c7c1667f7becc53bad3f7225a8d60aabacb8a8fffa061ec'
+SELF_DIGEST = 'fff2ccfbd49a327d0b6b57f20ca8d1cd77e337943dbe9fe1412ef618f4d82c25'
 SELF_DIGEST_LINE = re.compile(r"^SELF_DIGEST = '[0-9a-f]{64}'$", re.MULTILINE)
 
 # --- The standard ------------------------------------------------------------
@@ -1640,14 +1640,24 @@ def root_placement(files, modmap, edges, fixed_location):
     """C2's mechanical inputs: directories that hold handwritten files of the root and of other modules (their
     smaller side is the site set), the shared modules only the root imports, and the imports of the root."""
     sides = defaultdict(lambda: ([], []))  # directory -> (root files, other files)
+    set_aside, matched = [], set()
     for path, (_, kind) in sorted(files.items()):
         owner = modmap.owner(path)
-        if owner is None or kind != 'src' or is_index_file(path):
+        if owner is None or kind != 'src':
             continue
-        if any(fnmatch.fnmatchcase(path, pattern) for pattern in fixed_location):
+        fixed = [pattern for pattern in fixed_location if fnmatch.fnmatchcase(path, pattern)]
+        matched.update(fixed)
+        if fixed:
+            continue
+        if is_index_file(path):
+            set_aside.append((path, owner[0]))
             continue
         root_files, other_files = sides[posixpath.dirname(path)]
         (root_files if owner[0].role == 'root' else other_files).append(path)
+    for pattern in sorted(set(fixed_location) - matched):
+        warn(f'--fixed-location {pattern!r} matches no handwritten mapped file in files.tsv')
+    index_files = [{'file': path, 'module': module.name} for path, module in set_aside
+                   if module.role == 'root' or sides.get(posixpath.dirname(path), ((), ()))[0]]
     directories, site_files = [], []
     for directory, (root_files, other_files) in sorted(sides.items()):
         if not root_files or not other_files:
@@ -1675,7 +1685,8 @@ def root_placement(files, modmap, edges, fixed_location):
     into_root = [edge for edge in edges if edge.destination.role == 'root']
     return {
         'rootMixedDirectories': {'sites': len(site_files), 'siteFiles': sorted(site_files),
-                                 'directories': directories, 'fixedLocation': sorted(set(fixed_location))},
+                                 'directories': directories, 'indexFiles': index_files,
+                                 'fixedLocation': sorted(set(fixed_location))},
         'rootOnlyImported': only_root,
         'rootImports': {'sites': len(into_root),
                         'sitesOutsideMixedDirectories': sum(edge.source not in sites for edge in into_root)},
@@ -1920,8 +1931,9 @@ def main(argv=None):
     metrics.add_argument('--profile', choices=('compact', 'standard', 'large'), help='override the measured profile')
     metrics.add_argument('--driver', action='append', help='a reason for the profile, repeatable')
     metrics.add_argument('--fixed-location', action='append',
-                         help='glob on the repo-relative path: a file whose place the framework fixes (file-system '
-                              'routes); it sits on neither side of a directory shared by root and other files')
+                         help='fnmatch glob on the repo-relative path (* also matches /): a file whose place the '
+                              'framework fixes (file-system routes); it sits on neither side of a directory shared '
+                              'by root and other files')
     args = parser.parse_args(argv)
     (run_inventory if args.command == 'inventory' else run_metrics)(args)
 

@@ -38,8 +38,11 @@ python3 reports/.artifacts/architecture-audit/data/graph_metrics.py metrics \
   records them under `profile.drivers`; they change no number), and
   `--profile` only when step 1 recorded an operator override.
 - Pass one `--fixed-location` per glob step 1 recorded for files whose
-  place the framework fixes (file-system routes). They only leave the
-  mixed-directory count of the composition root; their edges stay.
+  place the framework fixes (file-system routes). Each is an `fnmatch`
+  pattern on the repo-relative path (`*` also matches `/`), so quote it.
+  They only leave the mixed-directory count of the composition root; their
+  edges stay. The script warns about a glob that matches no file: fix the
+  glob in the module map and rerun.
 - Do not edit the script: the thresholds assume exactly its definitions.
 - For `--lang none` (any other stack), first write `data/edges.in.tsv`
   yourself, one edge per line: `<source file>\t<target file>\t<line>`,
@@ -129,7 +132,10 @@ them (one decimal).
   and the other modules there; `sites` and `siteFiles` are that smaller
   side over all such directories. Generated files, package markers and
   index files (`__init__.py`, `index.*`) and the `--fixed-location` files
-  sit on neither side. `rootOnlyImported` lists the shared-common and
+  sit on neither side; `indexFiles` lists the markers and index files set
+  aside where they could matter (root files, or in a directory holding
+  one), for step 3 to check, and `fixedLocation` the globs passed.
+  `rootOnlyImported` lists the shared-common and
   shared-domain modules that the root imports and no other module does,
   with their handwritten and generated file counts: candidates step 3
   judges. `rootImports` counts the imports of the root from outside it

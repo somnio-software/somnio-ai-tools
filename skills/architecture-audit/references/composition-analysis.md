@@ -112,9 +112,12 @@ For every `root` row in `data/module_map.tsv`:
   other modules mixes them, and its smaller side (`siteFiles`) is the site
   set: the files that must move to separate the roles. A module in a
   directory of its own is not a site, wherever that directory sits.
-  Remove any file on either side that only re-exports (a Dart barrel; the
-  script already leaves out `__init__.py` and `index.*`), recount the
-  smaller side, and say so.
+  The script sets aside package markers and index files by name
+  (`indexFiles`): put back each one that holds more than re-exports or
+  package marking (an entry point, an app factory such as Flask's
+  `create_app` in `__init__.py`). Remove any other file on either side
+  that only re-exports (a Dart barrel). Recount the smaller side after
+  either change, and say so.
 - **Imported only by the root**: for each module in `rootOnlyImported`,
   judge each file as a root file is judged. A file holding product logic
   is a site: it is the root's product logic under another label. Not
@@ -126,7 +129,9 @@ For every `root` row in `data/module_map.tsv`:
   file and imported root file. `rootImports.sitesOutsideMixedDirectories`
   already leaves out importing files in `siteFiles`; also leave out those
   whose importing file you counted as imported only by the root (take
-  them from `data/module_edges.tsv`).
+  them from `data/module_edges.tsv`). When your recount changed the site
+  files, count the imports of the root from `data/module_edges.tsv`
+  against the recounted site files instead.
 
 **C2 sites** = non-composition files in the root + mixed-directory sites +
 files counted as imported only by the root, each file once + imports of
@@ -137,8 +142,9 @@ wherever it sits.
 AP2 signals (standard section 6), each present or absent with evidence:
 `rootShare` in Risk (over 25 %); a handwritten wiring file, as defined
 above, over 500 lines; one handwritten wiring file registering the
-bindings of more than five features. A start-up configuration file or a
-shell is never a size signal, however long.
+bindings of more than five features. A file with no wiring act
+(start-up configuration only, or a shell that provides no instance) is
+never a size signal, however long.
 
 ## 3. Route assembly (R4)
 

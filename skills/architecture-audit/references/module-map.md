@@ -187,10 +187,15 @@ Rules for the map:
   reason, never to change a count.
 - Framework-placed files: when the framework fixes where files sit
   (file-system routing such as Next.js `pages/` and `app/`, Expo Router
-  `app/`, SvelteKit `src/routes/`, Nuxt `pages/`), record a glob for its
-  convention files only (`app/*page.tsx`, `app/*layout.tsx` and the like,
-  not helpers beside them) with the reason. Step 2 passes them as
-  `--fixed-location`, so they do not count toward a mixed directory.
+  `app/`, SvelteKit `src/routes/`, Nuxt `pages/`), record globs for its
+  convention files only, not helpers beside them, with the reason. The
+  globs are `fnmatch` patterns on the repo-relative path, where `*` also
+  matches `/` and part of a name, so name each file exactly per depth:
+  `app/page.tsx`, `app/*/page.tsx`, `app/layout.tsx`,
+  `app/*/layout.tsx`, not `app/*page.tsx`, which also matches
+  `app/ui/homepage.tsx`. Step 2 passes them as `--fixed-location`, so they
+  do not count toward a mixed directory; the script warns about a glob
+  that matches no file.
 - A barrel (a file that only re-exports) belongs to the module of the
   directory it indexes, whatever it re-exports, and so does a package
   marker (`__init__.py`) or index file there. A module importing it
