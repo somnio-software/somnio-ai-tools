@@ -389,7 +389,7 @@ class SkillRegistry {
       description: 'Audit a codebase against a written modular architecture '
           'standard — module roles, allowed dependencies, feature '
           'isolation, composition and navigation, and which rules tools '
-          'enforce — in proportion to its size and team (Compact, '
+          'enforce — in proportion to its size (Compact, '
           'Standard or Large profile), and return a score out of 100 '
           'with a maturity band and a staged remediation plan. Measures '
           'Dart/Flutter, TypeScript/JavaScript and Python import graphs '

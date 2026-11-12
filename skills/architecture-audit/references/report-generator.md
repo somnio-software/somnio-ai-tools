@@ -25,7 +25,7 @@ Read these artifacts for this run under `reports/.artifacts/architecture-audit/`
 Of the `data/` directory read only `data/metrics.json`: the TSV files and
 the script there are raw inputs of the earlier steps, and can be large.
 - `step_*_module-map.md` - stack, documentation found, module table, mixed
-  modules, drivers, ownership, profile override; drives Section 7.
+  modules, drivers, profile override; drives Section 7.
 - `step_*_dependency-graph.md` and `data/metrics.json` - profile,
   coupling, violations, cycles, sizes, change locality, AP1, AP4 and AP5
   signals; drive Sections 1, 2, 3 and 4.
@@ -71,9 +71,11 @@ A check is scored, N/A (it leaves both earned and possible points), or not
 measured (0 points, still possible). Each contour shows
 `earned / possible`. Total = round(100 × Σ earned ÷ Σ possible), rounding
 halves up. When K2 earns 0, the Total is capped at 64; when K2 earns 3
-or 6, or is N/A because no rule class is required yet, at 84. When a cap
-lowers the Total, the uncapped value and the cap's reason are shown
-beside it.
+or 6, or is N/A because no rule class is required yet, at 84; when S1
+earns 0 (scored 0 or not measured), at 84. The lowest cap that applies
+sets the Total, and a cap applies only when the uncapped Total is above
+it. When a cap lowers the Total, the uncapped value and the reason of
+every cap that applies are shown beside it.
 
 Maturity Band mapping:
 - 0-39 = Monolithic
@@ -90,10 +92,13 @@ Maturity Band mapping:
   `**Drivers:**` and the drivers that apply, or "none".
 - Table with exactly four contour rows (Structural, Integration,
   Composition, Control), each `[earned]/[possible]`, then a **Total Score**
-  row `[total]/100`, followed by `(capped from [N]: [reason])` when an
-  enforcement cap lowers the Total. The reason is "no required rule class
-  is enforced" for the 64 cap, and "not every required rule class is
-  enforced" or "no rule class is required yet" for the 84 cap.
+  row `[total]/100`, followed by `(capped from [N]: [reason])` when a
+  cap lowers the Total. The reason is "no required rule class is
+  enforced" for the 64 cap, "not every required rule class is enforced" or
+  "no rule class is required yet" for the K2 84 cap, and "the boundary
+  form does not fit the profile (S1 earns 0)" for the S1 84 cap, or "the
+  boundary form was not measured (S1 Not measured)" when S1 is Not
+  measured; give each reason of the caps that apply.
 - Followed by a **Maturity Band: [band]** line, the band legend, and the
   sentence "Scores are relative to the profile; scores of different
   profiles are not comparable."
@@ -126,7 +131,7 @@ Composition, Control. Each block has:
 
 ### Section 4 - Quality Criteria Reading
 
-One row per metric M1-M11 of standard section 7: criterion, metric, value,
+One row per metric M1-M10 of standard section 7: criterion, metric, value,
 and Healthy / Watch / Risk / N/A / Not measured; then each criterion's
 status. Change locality carries its trend when a previous audit exists.
 
@@ -194,7 +199,7 @@ Before finalizing, verify:
 - No check exceeds its maximum; each contour's earned and possible points
   equal the sums of its checks; the Total equals
   round(100 × Σ earned ÷ Σ possible) with halves rounded up, capped at 64
-  when K2 earns 0 and at 84 when K2 earns 3 or 6 or is N/A.
+  when K2 earns 0 and at 84 when K2 earns 3 or 6 or is N/A, or S1 earns 0.
 - Every N/A is one the scoring reference allows for the effective profile.
 - The Total in Section 1 matches Section 2 and the JSON export.
 - The band matches the Total's range.
@@ -210,13 +215,13 @@ Before finalizing, verify:
 After writing the report, write `reports/<YYYY-MM-DD>-<project>-architecture-audit.json`:
 
     {
-      "totalScore": [integer 0-100, after the enforcement cap],
+      "totalScore": [integer 0-100, after the caps],
       "uncappedScore": [integer 0-100, or null when no cap lowers the Total],
       "band": "[Monolithic|Partially modular|Modular|Governed modular]",
       "profile": {
         "measured": "[compact|standard|large]",
         "effective": "[compact|standard|large]",
-        "drivers": ["[D1-D4 that apply, as step 5 decided]", "..."]
+        "drivers": ["[D1, D3, D4 that apply, as step 5 decided]", "..."]
       },
       "contours": {
         "structural": { "earned": [number], "possible": [number] },

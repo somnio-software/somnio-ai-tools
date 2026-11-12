@@ -99,17 +99,9 @@ only for project-specific output that is not source at all, since it drops
 the file and its edges. Record every override and exclusion with its
 reason.
 
-`inventory.json` also records the history facts the profile needs: whether
-the clone is shallow, the repository's age, and the peak monthly
-contributors over the last twelve months, counted over commits that touch
-the source roots (`contributorPaths`), so other apps in a monorepo do not
-count. Bot accounts are left out; `botsExcluded` lists them. Check that
-list and the contributor count, and exclude a service account the rules
-miss (a CI user without "bot" in its name) with `--bot '<glob>'`, matched
-case-insensitively on the author name and email. Authors are counted by
-name after `.mailmap`; when one person appears under several names and
-the repository has no `.mailmap`, say so, and if merging them would change
-the profile, record a profile override with that reason. A shallow clone
+`inventory.json` also records the repository's history facts: whether the
+clone is shallow, and the date and age of its first commit. They do not
+enter the profile, which is measured on lines and features alone. A shallow clone
 leaves the facts `null`; say so. Re-running the inventory with other
 options rewrites `files.tsv` and `inventory.json`; check the module map
 against the new `files.tsv` again.
@@ -167,18 +159,40 @@ Rules for the map:
 - Longest path wins: a file belongs to the row with the longest path that
   contains it, so a `root` row for `lib/app/router` and a `shared-domain`
   row for `lib/app` can coexist. A catch-all row (`.`) matches last.
+  Where a row's directory sits never makes its code the root's: a row
+  beside the root's rows under the same parent directory, around them, or
+  in a subdirectory of theirs is a module of its own. Only a directory
+  that directly holds files of the root and of other modules mixes them;
+  step 2 measures those directories (`rootMixedDirectories`) and C2
+  counts their smaller side.
 - Every file in `files.tsv` must fall in some module. If a file fits no
   role, create a module for its directory and classify it; do not leave it
   unmapped.
 - A directory that holds code of two roles is split into rows by
   subdirectory or file. Where it cannot be split, give it its
   most-depended-upon role and record it as **mixed** with the roles it
-  holds. Shared code that you split out of the root's directories is
-  recorded the same way: it is a C2 site (R5), counted once there, not a
-  neutral relabelling.
+  holds, except a unit that holds composition: map it to the root, and
+  step 3 counts its other code as non-composition (R5). Splitting by file
+  does not take code out of the root's directory: when a directory
+  directly holds files of the root and of other modules, C2 counts the
+  smaller side (step 2 lists them), so record such a split with its
+  reason, never to change a count.
+- Framework-placed files: when the framework fixes where files sit
+  (file-system routing such as Next.js `pages/` and `app/`, Expo Router
+  `app/`, SvelteKit `src/routes/`, Nuxt `pages/`), record globs for its
+  convention files only, not helpers beside them, with the reason. The
+  globs are `fnmatch` patterns on the repo-relative path, where `*` also
+  matches `/` and part of a name, so name each file exactly per depth:
+  `app/page.tsx`, `app/*/page.tsx`, `app/layout.tsx`,
+  `app/*/layout.tsx`, not `app/*page.tsx`, which also matches
+  `app/ui/homepage.tsx`. Step 2 passes them as `--fixed-location`, so they
+  do not count toward a mixed directory; the script warns about a glob
+  that matches no file.
 - A barrel (a file that only re-exports) belongs to the module of the
-  directory it indexes, whatever it re-exports. A module importing it
-  depends on that module: a feature that imports the root's barrel to
+  directory it indexes, whatever it re-exports, and so does a package
+  marker (`__init__.py`) or index file there. A module importing it
+  depends on that module, and reaches whatever package it re-exports (R8,
+  step 3 follows re-exports): a feature that imports the root's barrel to
   reach shared code is an R5 site, and the remedy is importing the shared
   module directly.
 - Assign each file by what it holds before you look at the edges, and
@@ -187,8 +201,7 @@ Rules for the map:
   with the reason, so audits stay comparable.
 - **Compact, layer-first codebases**: the profile is computed in step 2,
   so judge it here from `inventory.json` and the feature count: under
-  20,000 handwritten lines, at most 8 features and at most 3 peak monthly
-  contributors (or history unavailable). When
+  20,000 handwritten lines and at most 8 features. When
   such a codebase is organised by layer and capabilities cannot be told
   apart, map its product code as one feature module named `app` (one row
   per layer directory) and say so. Feature metrics are
@@ -197,7 +210,7 @@ Rules for the map:
 - Classify from contents and dependents, not from the directory name
   alone. Cite one or two files per non-obvious classification.
 
-## 5. Drivers and ownership (standard section 2)
+## 5. Drivers (standard section 2)
 
 For each driver, record whether it applies, the code it concerns, and the
 evidence:
@@ -208,8 +221,6 @@ evidence:
   (`main_development`, `main_staging`, `main_production`) and white-label
   builds that each ship the whole app do not count, and neither do
   showcase, example or gallery apps that no user receives.
-- **D2. Several owning teams**: `CODEOWNERS` (or the equivalent) naming two
-  or more teams, or documentation that says so.
 - **D3. Deferred delivery**: Android dynamic-feature modules (the code
   must be a physical module), or Dart `deferred as` imports, Flutter
   `deferred-components` in `pubspec.yaml`, or JavaScript dynamic
@@ -219,10 +230,6 @@ evidence:
 - **D4. Published package**: a package meant for publication (a Dart
   package without `publish_to: none`, a `package.json` without
   `"private": true` and with a publish configuration).
-
-Ownership: when `CODEOWNERS` or an equivalent exists, record which modules
-have a declared owner (metric M11, scored only in the Large profile). With
-no such file, M11 is 0 %, not unmeasured.
 
 Profile override: if the operator stated a profile for this audit, record
 it with the stated reason; otherwise record "none". Step 2 passes it to the
@@ -241,14 +248,15 @@ Write, under `reports/.artifacts/architecture-audit/`:
     it covers (module map, allowed dependencies, layering, navigation);
   - **Inventory**: file and line totals from `inventory.json`, the
     number of files `generatedByHeader` lists, every exclusion and
-    `--generated` / `--handwritten` / `--bot` override with its reason, the
-    history facts and the bots excluded;
+    `--generated` / `--handwritten` override with its reason, and the
+    history facts;
   - **Module table**: name, role, physical, path(s), public surface, files,
     lines, and a one-line justification for each non-obvious role;
-  - **Mixed modules** and the roles each holds, including code split out of
-    the root;
-  - **Drivers** (D1–D4) with the code each concerns and the evidence;
-  - **Ownership** coverage, or "no ownership file";
+  - **Mixed modules** and the roles each holds, and the units holding
+    composition that were mapped to the root because they cannot be split;
+  - **Framework-placed files**: each `--fixed-location` glob with its
+    reason, or "none";
+  - **Drivers** (D1, D3, D4) with the code each concerns and the evidence;
   - **Profile override**: "none", or the profile and the reason;
   - **Assumptions** you had to make, each stated plainly.
 
