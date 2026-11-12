@@ -1066,7 +1066,7 @@ class Integrity(Case):
 
 
 class Profile(Case):
-    def profile(self, lines, features, peak=None, extra=()):
+    def profile(self, lines, features, stale_peak=None, extra=()):
         tree = {f'f{i}/x.sql': '' for i in range(features)}
         tree['shared/s.sql'] = ''
         self.write(tree)
@@ -1074,20 +1074,17 @@ class Profile(Case):
         (self.art / 'edges.in.tsv').write_text('f0/x.sql\tshared/s.sql\t1\n' if features else '')
         self.module_map([(f'f{i}', 'feature', 'no', f'f{i}', '-') for i in range(features)]
                         + [('shared', 'shared-common', 'no', 'shared', '-')])
-        if peak is not None:
-            (self.art / 'inventory.json').write_text(json.dumps({'git': {'peakMonthlyContributors': peak}}))
+        if stale_peak is not None:  # an inventory.json written by an older script
+            (self.art / 'inventory.json').write_text(json.dumps({'git': {'peakMonthlyContributors': stale_peak}}))
         return self.metrics('none', *extra)['profile']
 
     def test_compact(self):
         p = self.profile(19_999, 8)
         self.assertEqual((p['measured'], p['effective'], p['override']), ('compact', 'compact', None))
-        self.assertEqual(p['inputs'], {'srcLines': 19_999, 'features': 8, 'peakMonthlyContributors': None})
+        self.assertEqual(p['inputs'], {'srcLines': 19_999, 'features': 8})
 
-    def test_standard_by_lines_or_contributors(self):
+    def test_standard_by_lines(self):
         self.assertEqual(self.profile(20_000, 2)['measured'], 'standard')
-
-    def test_standard_by_contributors(self):
-        self.assertEqual(self.profile(1000, 2, peak=4)['measured'], 'standard')
 
     def test_large_by_lines(self):
         self.assertEqual(self.profile(80_000, 2)['measured'], 'large')
@@ -1095,8 +1092,24 @@ class Profile(Case):
     def test_large_by_features(self):
         self.assertEqual(self.profile(100, 20)['measured'], 'large')
 
-    def test_large_by_contributors(self):
-        self.assertEqual(self.profile(100, 2, peak=8)['measured'], 'large')
+    def test_contributors_do_not_pick_the_profile(self):
+        for peak in (4, 50):
+            with self.subTest(peak=peak):
+                p = self.profile(100, 2, stale_peak=peak)
+                self.assertEqual((p['measured'], p['inputs']), ('compact', {'srcLines': 100, 'features': 2}))
+        p = self.profile(1000, 12, stale_peak=50)
+        self.assertEqual(p['measured'], 'standard')
+
+    def test_many_authors_in_the_history_keep_a_small_codebase_compact(self):
+        now = dt.datetime.now(dt.timezone.utc).strftime('%Y-%m-%dT%H:%M:%S+00:00')
+        self.git('init', '-q', '-b', 'main')
+        for number in range(12):
+            env = dict(GIT_ENV, GIT_AUTHOR_NAME=f'Dev {number}', GIT_AUTHOR_EMAIL=f'dev{number}@example.com',
+                       GIT_AUTHOR_DATE=now, GIT_COMMITTER_DATE=now)
+            self.commit(f'change {number}', {f'f0/{number}.sql': f'-- {number}\n'}, env=env)
+        self.cli('inventory', '--root', str(self.root), '--dir', str(self.art), '--lang', 'none', '--ext', 'sql',
+                 '--source', '.')
+        self.assertEqual(self.profile(100, 2)['measured'], 'compact')
 
     def test_override_and_drivers(self):
         p = self.profile(100, 2, extra=('--profile', 'large', '--driver', 'regulated', '--driver', 'growth',
@@ -1248,8 +1261,7 @@ class ChangeLocality(Case):
         art.mkdir()
         self.cli('inventory', '--root', str(clone), '--dir', str(art), '--lang', 'dart', '--source', 'lib')
         self.assertEqual(json.loads((art / 'inventory.json').read_text())['git'], {
-            'isShallow': True, 'firstCommitDate': None, 'ageDays': None, 'peakMonthlyContributors': None,
-            'contributors90d': None, 'botsExcluded': None, 'botPatterns': [], 'contributorPaths': ['lib'], 'reason': 'shallow clone'})
+            'isShallow': True, 'firstCommitDate': None, 'ageDays': None, 'reason': 'shallow clone'})
         (art / 'module_map.tsv').write_text(''.join('\t'.join(row) + '\n' for row in self.MAP))
         self.cli('metrics', '--root', str(clone), '--dir', str(art), '--lang', 'dart')
         self.assertEqual(json.loads((art / 'metrics.json').read_text())['changeLocality']['reason'], 'shallow clone')
@@ -1447,66 +1459,6 @@ class Inventory(Case):
         files, _ = self.inventory('py', '--no-git', sources=('.github',))  # a source named explicitly is walked
         self.assertEqual(set(files), {'.github/scripts/ci.py'})
 
-    def test_bot_authors(self):
-        is_bot = load_script(self).is_bot
-        for name, email, bot in (('Tal', 'talbot@example.com', False), ('Abbot Lee', 'abbot@example.com', False),
-                                 ('dependabot[bot]', '49699333+dependabot[bot]@users.noreply.github.com', True),
-                                 ('CI', 'ci-bot@example.com', True), ('Builder', 'bot@example.com', True),
-                                 ('Deploy', 'deploy.bot@example.com', True), ('Release', 'release_bot@x.io', True),
-                                 ('Tagger', 'me+bot@x.io', True), ('Renovate', 'renovate@whitesourcesoftware.com', True),
-                                 ('github-actions', 'actions@github.com', True), ('Renovator', 'renovator@x.io', False),
-                                 ('Sam', 'sam@renovatesolutions.com', False), ('Ann', 'ann.botha@example.com', False),
-                                 ('Project bot', 'project_123_bot_0a1b2c3d4e5f@noreply.gitlab.example.com', True),
-                                 ('x', 'group_45_bot_9f8e7d6c@noreply.gitlab.example.com', True),
-                                 ('x', 'project_123_bot@noreply.gitlab.example.com', True),
-                                 ('x', 'project123_bot4@noreply.gitlab.example.com', True),
-                                 ('x', 'group7_bot@gitlab.example.com', True),
-                                 ('Pat', 'project_manager@example.com', False), ('Pat', 'group_leader@example.com', False),
-                                 ('Release Bot', 'release@example.com', True), ('Deploy (bot)', 'deploy@example.com', True),
-                                 ('BOT', 'x@example.com', True), ('Talbot', 'tal@example.com', False),
-                                 ('Bot Hunter', 'hunter@example.com', False),
-                                 ('Jane', 'jane@renovate-corp.com', False), ('Jane', 'jane@dependabot.example.com', False),
-                                 ('renovate[bot]', '29139614+renovate[bot]@users.noreply.github.com', True),
-                                 ('Jane', 'renovate@example.com', True), ('Jane', '29139614+renovate[bot]@users.noreply.github.com', True)):
-            with self.subTest(email=email):
-                self.assertEqual(is_bot(name, email), bot)
-
-    def test_bot_patterns_exclude_authors_and_are_recorded(self):
-        now = dt.datetime.now(dt.timezone.utc)
-        self.git('init', '-q', '-b', 'main')
-
-        def commit_as(name, email, message):
-            stamp = (now - dt.timedelta(minutes=1)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
-            env = dict(GIT_ENV, GIT_AUTHOR_NAME=name, GIT_AUTHOR_EMAIL=email, GIT_AUTHOR_DATE=stamp, GIT_COMMITTER_DATE=stamp)
-            self.commit(message, {'lib/a.dart': f'// {message}\n'}, env=env)
-
-        commit_as('Ann', 'ann@example.com', 'ann')
-        commit_as('Jenkins CI', 'builds@example.com', 'jenkins')
-        commit_as('Pipeline', 'pipeline@ci.example.com', 'pipeline')
-        commit_as('Jane', 'jane@renovate-corp.com', 'jane')
-        args = ('--root', str(self.root), '--dir', str(self.art), '--lang', 'dart', '--source', 'lib')
-        result = self.cli('inventory', *args)
-        facts = json.loads((self.art / 'inventory.json').read_text(encoding='utf-8'))['git']
-        self.assertEqual(facts['peakMonthlyContributors'], 4)
-        self.assertEqual((facts['botsExcluded'], facts['botPatterns']), ([], []))
-        self.assertNotIn('--bot', result.stderr)
-        result = self.cli('inventory', *args, '--bot', 'JENKINS*', '--bot', '*@ci.example.com', '--bot', 'ghost*',
-                          '--bot', 'JENKINS*')
-        facts = json.loads((self.art / 'inventory.json').read_text(encoding='utf-8'))['git']
-        self.assertEqual(facts['peakMonthlyContributors'], 2)  # Ann and Jane: the renovate-corp domain is no bot
-        self.assertEqual(facts['botsExcluded'], ['Jenkins CI <builds@example.com>', 'Pipeline <pipeline@ci.example.com>'])
-        self.assertEqual(facts['botPatterns'], ['*@ci.example.com', 'JENKINS*', 'ghost*'])
-        self.assertIn('--bot ghost* matched no author', result.stderr)
-        self.assertNotIn('--bot JENKINS*', result.stderr)
-        self.assertNotIn('--bot *@ci.example.com', result.stderr)
-
-    def test_bot_patterns_without_history_are_still_recorded(self):
-        self.write({'lib/a.dart': 'class A {}\n'})
-        self.cli('inventory', '--root', str(self.root), '--dir', str(self.art), '--lang', 'dart', '--source', 'lib',
-                 '--no-git', '--bot', 'ci*')
-        facts = json.loads((self.art / 'inventory.json').read_text(encoding='utf-8'))['git']
-        self.assertEqual((facts['botsExcluded'], facts['botPatterns'], facts['reason']), (None, ['ci*'], '--no-git'))
-
     def test_inventory_never_writes_through_a_symlink(self):
         self.write({'lib/a.dart': 'class A {}\n', 'keep.txt': 'precious\n'})
         (self.art / 'files.tsv').symlink_to(self.root / 'keep.txt')
@@ -1516,40 +1468,6 @@ class Inventory(Case):
         self.assertIn(f'{self.art / "files.tsv"} is a symlink', result.stderr)
         self.assertEqual((self.root / 'keep.txt').read_text(), 'precious\n')
         self.assertFalse((self.art / 'inventory.json').exists())
-
-    def test_contributors_count_only_commits_touching_the_sources(self):
-        now = dt.datetime.now(dt.timezone.utc)
-        self.git('init', '-q', '-b', 'main')
-
-        def commit_as(name, path):
-            stamp = now.strftime('%Y-%m-%dT%H:%M:%S+00:00')
-            env = dict(GIT_ENV, GIT_AUTHOR_NAME=name, GIT_AUTHOR_EMAIL=f'{name.lower()}@example.com',
-                       GIT_AUTHOR_DATE=stamp, GIT_COMMITTER_DATE=stamp)
-            self.commit(f'{name} {path}', {path: f'// {name}\n'}, env=env)
-
-        commit_as('Ann', 'apps/a/lib/a.dart')
-        commit_as('Bob', 'apps/a/lib/b.dart')
-        commit_as('Cy', 'apps/b/lib/c.dart')
-        commit_as('Dee', 'apps/b/lib/d.dart')
-        commit_as('Eve', 'README.md')
-
-        def facts(*sources, root=None):
-            root = root or self.root
-            self.cli('inventory', '--root', str(root), '--dir', str(self.art), '--lang', 'dart',
-                     *(arg for source in sources for arg in ('--source', source)))
-            return json.loads((self.art / 'inventory.json').read_text(encoding='utf-8'))['git']
-
-        one = facts('apps/a/lib')
-        self.assertEqual((one['peakMonthlyContributors'], one['contributors90d']), (2, 2))  # Ann, Bob
-        self.assertEqual(one['contributorPaths'], ['apps/a/lib'])
-        both = facts('apps/b/lib', 'apps/a/lib')
-        self.assertEqual((both['peakMonthlyContributors'], both['contributors90d']), (4, 4))
-        self.assertEqual(both['contributorPaths'], ['apps/a/lib', 'apps/b/lib'])
-        whole = facts('.')
-        self.assertEqual((whole['peakMonthlyContributors'], whole['contributorPaths']), (5, ['.']))
-        below = facts('lib', root=self.root / 'apps' / 'b')  # --root below the repository top
-        self.assertEqual(below['peakMonthlyContributors'], 2)  # Cy, Dee
-        self.assertEqual(one['firstCommitDate'], whole['firstCommitDate'])  # the age stays repo-wide
 
     def test_lang_none_needs_extensions(self):
         self.write({'db/a.sql': 'select 1;\n'})
@@ -1562,37 +1480,14 @@ class Inventory(Case):
     def test_git_facts(self):
         now = dt.datetime.now(dt.timezone.utc)
         self.git('init', '-q', '-b', 'main')
-
-        def commit_as(name, email, when, message):
-            stamp = when.strftime('%Y-%m-%dT%H:%M:%S+00:00')
-            env = dict(GIT_ENV, GIT_AUTHOR_NAME=name, GIT_AUTHOR_EMAIL=email, GIT_AUTHOR_DATE=stamp,
-                       GIT_COMMITTER_DATE=stamp)
-            self.commit(message, {'lib/a.dart': f'// {message}\n'}, env=env)
-
-        commit_as('Old Timer', 'old@example.com', now - dt.timedelta(days=730), 'first')
-        recent = [now - dt.timedelta(minutes=minutes) for minutes in range(9, 0, -1)]
-        if recent[0].month != now.month:  # keep every recent commit in the current month
-            recent = [now] * len(recent)
-        commit_as('Ann', 'ann@example.com', recent[0], 'ann')
-        commit_as('Ann Work', 'ann@work.example', recent[1], 'ann work')
-        commit_as('Bob', 'bob@example.com', recent[2], 'bob')
-        commit_as('Tal', 'talbot@example.com', recent[3], 'tal')
-        commit_as('dependabot[bot]', '49699333+dependabot[bot]@users.noreply.github.com', recent[4], 'bot')
-        commit_as('Renovate Bot', 'bot@renovateapp.com', recent[5], 'renovate')
-        commit_as('CI', 'ci-bot@example.com', recent[6], 'ci')
-        commit_as('Release Bot', 'release@example.com', recent[7], 'release')
-        commit_as('Pipeline', 'project_9_bot_ab12cd34@noreply.gitlab.example.com', recent[8], 'pipeline')
-        self.write({'.mailmap': 'Ann <ann@example.com> Ann Work <ann@work.example>\n'})
-        self.commit('mailmap')  # authored by Ann through GIT_ENV
+        stamp = (now - dt.timedelta(days=730)).strftime('%Y-%m-%dT%H:%M:%S+00:00')
+        env = dict(GIT_ENV, GIT_AUTHOR_DATE=stamp, GIT_COMMITTER_DATE=stamp)
+        self.commit('first', {'lib/a.dart': '// first\n'}, env=env)
+        self.commit('second', {'lib/a.dart': '// second\n'})
         _, summary = self.inventory('dart', sources=('lib',))
         facts = summary['git']
+        self.assertEqual(set(facts), {'isShallow', 'firstCommitDate', 'ageDays', 'reason'})
         self.assertEqual((facts['isShallow'], facts['reason']), (False, None))
-        self.assertEqual((facts['peakMonthlyContributors'], facts['contributors90d']), (3, 3))  # Ann, Bob, Tal
-        self.assertEqual(facts['botsExcluded'], [
-            'CI <ci-bot@example.com>', 'Pipeline <project_9_bot_ab12cd34@noreply.gitlab.example.com>',
-            'Release Bot <release@example.com>', 'Renovate Bot <bot@renovateapp.com>',
-            'dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>'])
-        self.assertEqual(facts['botPatterns'], [])
         self.assertIn(facts['ageDays'], (729, 730))
         self.assertEqual(facts['firstCommitDate'][:10], (now - dt.timedelta(days=730)).strftime('%Y-%m-%d'))
 

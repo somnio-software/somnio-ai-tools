@@ -25,7 +25,7 @@ Read these artifacts for this run under `reports/.artifacts/architecture-audit/`
 Of the `data/` directory read only `data/metrics.json`: the TSV files and
 the script there are raw inputs of the earlier steps, and can be large.
 - `step_*_module-map.md` - stack, documentation found, module table, mixed
-  modules, drivers, ownership, profile override; drives Section 7.
+  modules, drivers, profile override; drives Section 7.
 - `step_*_dependency-graph.md` and `data/metrics.json` - profile,
   coupling, violations, cycles, sizes, change locality, AP1, AP4 and AP5
   signals; drive Sections 1, 2, 3 and 4.
@@ -131,7 +131,7 @@ Composition, Control. Each block has:
 
 ### Section 4 - Quality Criteria Reading
 
-One row per metric M1-M11 of standard section 7: criterion, metric, value,
+One row per metric M1-M10 of standard section 7: criterion, metric, value,
 and Healthy / Watch / Risk / N/A / Not measured; then each criterion's
 status. Change locality carries its trend when a previous audit exists.
 
@@ -221,7 +221,7 @@ After writing the report, write `reports/<YYYY-MM-DD>-<project>-architecture-aud
       "profile": {
         "measured": "[compact|standard|large]",
         "effective": "[compact|standard|large]",
-        "drivers": ["[D1-D4 that apply, as step 5 decided]", "..."]
+        "drivers": ["[D1, D3, D4 that apply, as step 5 decided]", "..."]
       },
       "contours": {
         "structural": { "earned": [number], "possible": [number] },

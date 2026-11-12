@@ -50,7 +50,7 @@ These references are the single source of truth for the rubric, the section stru
 
 Read each artifact that exists under `reports/.artifacts/architecture-audit/`:
 
-- `step_01_module-map.md` - stack, modules, roles, drivers, ownership, profile override; drives Section 7 and S1, S4.
+- `step_01_module-map.md` - stack, modules, roles, drivers, profile override; drives Section 7 and S1, S4.
 - `step_02_dependency-graph.md`, `data/metrics.json` - profile, coupling, violations, cycles, sizes, locality; drive S1-S4, I1-I3, C2, C4 and Section 4. Read no other file under `data/`.
 - `step_03_composition-analysis.md` - implementation selection, root, routes, navigation, layering; drives I4, I5, C1-C4.
 - `step_04_control-analysis.md` - written rules, enforcement, baselines, hooks; drives K1-K4.

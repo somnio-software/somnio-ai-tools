@@ -4,7 +4,7 @@
 
 ## 1. Architecture Scoring Breakdown
 
-**Profile:** [Compact/Standard/Large] (measured: [Compact/Standard/Large]) - [override reason, or omit] - **Drivers:** [D1-D4 with the code each concerns, or "none"]
+**Profile:** [Compact/Standard/Large] (measured: [Compact/Standard/Large]) - [override reason, or omit] - **Drivers:** [D1, D3, D4 with the code each concerns, or "none"]
 
 | Contour | Score |
 |---------|-------|
@@ -28,7 +28,7 @@
 
 **Total Score:** [Score]/100 ([Band])
 
-[One paragraph: what the score means for this codebase at its profile - where its boundaries hold, where they are conventions only, and what that costs the team.]
+[One paragraph: what the score means for this codebase at its profile - where its boundaries hold, where they are conventions only, and what that costs.]
 
 **Previous:** [N]/100, **Change:** [+/-M] ([improving/declining/unchanged])
 _(omit this line if no history exists; note a profile change since the previous audit)_
@@ -71,9 +71,9 @@ _(Repeat this block for all four contours.)_
 | Change locality | [M4-M5] | [value, trend; note a rebase-merge history] | [Status] |
 | Manageability | [M6] | [value] | [Status] |
 | Maintainability | [M7-M8] | [value] | [Status] |
-| Development scalability | [M9-M11] | [value] | [Status] |
+| Development scalability | [M9-M10] | [value] | [Status] |
 
-_(One row per metric M1-M11 of the standard's section 7; a criterion spans several rows. Then each criterion's status, the worst among its applicable metrics.)_
+_(One row per metric M1-M10 of the standard's section 7; a criterion spans several rows. Then each criterion's status, the worst among its applicable metrics.)_
 
 ---
 
@@ -110,7 +110,7 @@ _(One row per metric M1-M11 of the standard's section 7; a criterion spans sever
 
 **Stack:** [languages, workspace tooling] - **Application:** `[path]`
 
-**Profile inputs:** [N] handwritten lines, [N] features, [N] peak monthly contributors ([or "history unavailable"]) - **Drivers:** [each driver and the code it concerns, or "none"]
+**Profile inputs:** [N] handwritten lines, [N] features - **Drivers:** [each driver and the code it concerns, or "none"]
 
 | Module | Role | Physical | Lines | Notes |
 |--------|------|----------|-------|-------|

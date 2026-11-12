@@ -51,24 +51,21 @@ The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 ## 2. Project profile
 
 Modularity has a cost: manifests, wiring, ceremony and build configuration.
-The standard asks each codebase for the structure its size and team
-justify, no more. Every audit first measures the codebase's **profile**, and
+The standard asks each codebase for the structure its size justifies, no
+more. Every audit first measures the codebase's **profile**, and
 the profile decides which expectations apply (table below) and which checks
 are scored.
 
 | Profile | Measured when |
 |---|---|
-| **Compact** | under 20,000 handwritten lines **and** at most 8 features **and** at most 3 peak monthly contributors |
-| **Large** | at least 80,000 handwritten lines **or** at least 20 features **or** at least 8 peak monthly contributors |
+| **Compact** | under 20,000 handwritten lines **and** at most 8 features |
+| **Large** | at least 80,000 handwritten lines **or** at least 20 features |
 | **Standard** | every other codebase |
 
-- *Peak monthly contributors* is the largest number of distinct people,
-  bots excluded, who changed the codebase in any calendar month of the last
-  twelve. When the history is unavailable (shallow clone, no repository),
-  the profile is measured on lines and features alone and the report says
-  so.
+- The profile is measured on the code alone: handwritten lines and features.
+  The number of people who work on it plays no part.
 - The operator MAY override the measured profile with a stated reason, for
-  example a team about to triple or a prototype to be discarded. The report
+  example a planned split into packages or a prototype to be discarded. The report
   shows both the measured and the effective profile.
 - Scores are relative to the effective profile. A score says how well a
   codebase fits what its profile calls for; scores of different profiles
@@ -83,8 +80,8 @@ whole codebase:
   entry points of one app (flavours such as development, staging and
   production) are one deliverable, and so are white-label builds that each
   ship the whole app.
-- **D2. Several owning teams.** Two or more teams own parts of the
-  codebase.
+- **D2. Retired.** It counted owning teams, an organisational fact the
+  code cannot show. The ID is not reused and D3 and D4 keep theirs.
 - **D3. Deferred delivery.** Parts of the app load on demand. Where the
   platform delivers them as build modules (Android dynamic feature
   modules), the deferred code MUST be a physical module. Where it defers by
@@ -94,7 +91,7 @@ whole codebase:
 - **D4. Published package.** The repository publishes part of its code as a
   package for others.
 
-D1, D2 and D4, and D3 where the platform delivers build modules, are
+D1 and D4, and D3 where the platform delivers build modules, are
 **module drivers**: they call for physical modules. D3 code deferred by
 library or chunk calls only for the absence of eager imports.
 
@@ -109,7 +106,6 @@ What each profile expects:
 | Rule classes enforced by tools (R9) | R1, R2 | R1, R2, R5, R7 | R1, R2, R5, R6, R7, R8 |
 | Public surfaces respected (R6) | not assessed | MUST | MUST |
 | Checks runnable before push | not expected | SHOULD | SHOULD |
-| An owner declared for every module | not expected | not expected | MUST |
 
 A rule class the R9 row lists for the profile is required only when the
 codebase's module graph can break it: R1 with at least two features, R2
@@ -289,7 +285,7 @@ violation.
 
 **R10. Boundaries become physical when the profile or a driver calls for
 it.** In the Large profile, at least 90 % of features MUST be physical
-modules. Code that D1, D2 or D4 concerns MUST be a physical module in any
+modules. Code that D1 or D4 concerns MUST be a physical module in any
 profile, and code that D3 concerns MUST meet D3's requirement (section 2).
 Below that, logical modules with the profile's enforced rule
 classes satisfy the standard, and splitting further is AP5.
@@ -369,7 +365,11 @@ is missing is **not measured**, which is never read as Healthy.
 | M8 | Handwritten files over 1,000 lines, as a share of files | 0 | ≤ 1 % | > 1 % | always |
 | M9 | Composition root's share of handwritten code | ≤ 10 % | ≤ 25 % | > 25 % | always |
 | M10 | Features that are physical modules | ≥ 90 % | ≥ 50 % | < 50 % | Large profile |
-| M11 | Modules with a declared owner | 100 % | ≥ 50 % | < 50 % | Large profile |
+
+**M11 is retired.** It counted modules with a declared owner, an
+organisational fact that the code cannot show. The ID is not reused
+and the others are not renumbered, so "M1–M10" keeps its meaning in
+reports written earlier.
 
 How the change metrics are counted (M4, M5): the last 300 changes on the
 audited branch's first-parent line, so a merged pull request counts once
@@ -396,7 +396,7 @@ status is the worst status among its applicable metrics.
 | Change locality | M4, M5 |
 | Manageability | M6 |
 | Maintainability | M7, M8 |
-| Development scalability | M9, M10, M11 |
+| Development scalability | M9, M10 |
 
 ## 8. The four contours
 

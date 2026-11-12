@@ -79,7 +79,7 @@ FORMATTING RULES TO ENFORCE:
 - ORDERING: Section 3 contours in fixed order; Section 8 actions in stage
   order.
 - PROFILE FIT: Section 8 recommends physical feature modules only in the
-  Large profile or for code a named module driver (D1, D2, D4, or D3
+  Large profile or for code a named module driver (D1, D4, or D3
   delivered as build modules) concerns.
 - EVIDENCE DISCIPLINE: every check cites a metric value or a file; no score
   without evidence.

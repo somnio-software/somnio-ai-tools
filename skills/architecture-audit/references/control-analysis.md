@@ -36,9 +36,6 @@ Using the documentation step 1 found, record for each document:
   tree and the graph. When documents contradict each other and none is
   marked as superseded, say so: K1 reads them as stale.
 
-In the Large profile, also record the ownership coverage step 1 found
-(M11).
-
 ## 2. Enforcement per rule class
 
 The checkable rule classes are **R1** (feature isolation), **R2**
@@ -157,8 +154,7 @@ cannot be seen; record that it is opt-in. Record the hook or rule and the comman
 
 Write `reports/.artifacts/architecture-audit/step_04_control-analysis.md`:
 - **Written rules**: each document with module map yes/no, dependency rules
-  yes/no, current yes/partly/no, and the evidence; ownership coverage in the Large
-  profile.
+  yes/no, current yes/partly/no, and the evidence.
 - **Enforcement table**: one row per rule class R1, R2, R5, R6, R7, R8 with
   required (yes/no, and the condition when the profile lists the class but
   the module graph cannot break it), rating (enforced / partial / warn-only /

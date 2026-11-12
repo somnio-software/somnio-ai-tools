@@ -3,7 +3,7 @@ name: architecture-audit
 description: >-
   Execute a Modular Architecture Audit against a written standard: module
   roles, an allowed-dependency matrix, ten rules and five anti-patterns,
-  applied in proportion to the codebase's size and team (Compact, Standard
+  applied in proportion to the codebase's size (Compact, Standard
   or Large profile). Maps every module, extracts the import graph with a
   fixed script (Dart/Flutter, TypeScript/JavaScript and Python; other
   stacks by hand), inspects composition and navigation, checks which rules
@@ -25,7 +25,7 @@ artifact that feeds the final report.
 The audit answers one question: **do the codebase's module boundaries hold
 by construction, or only by convention — to the degree its size calls
 for?** It first measures the codebase's profile (Compact, Standard or
-Large) from its size, feature count and team, then measures the structure,
+Large) from its size and feature count, then measures the structure,
 the dependencies between modules, how the application is assembled, and
 which rules tools enforce, and says in what order to fix what it finds. It
 never asks a small codebase for the structure of a large one, and flags
@@ -86,11 +86,11 @@ You are a master at:
 `references/architecture-standard.md` is the normative document every step
 measures against: terms, project profiles and drivers, module roles, the
 allowed-dependency matrix, rules R1-R10, anti-patterns AP1-AP5, metrics
-M1-M11 with their thresholds, the four contours, the order of remediation,
+M1-M10 with their thresholds, the four contours, the order of remediation,
 and stack notes. Each step reference points to the sections it applies.
 
 If the operator states a profile for this audit (for example "audit as
-Large: two more teams join next quarter"), step 1 records it with the
+Large: the app is about to be split into packages"), step 1 records it with the
 reason and step 2 passes it to the script; the report shows both the
 measured and the effective profile.
 
