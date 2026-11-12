@@ -1066,7 +1066,7 @@ class Integrity(Case):
 
 
 class Profile(Case):
-    def profile(self, lines, features, stale_peak=None, extra=()):
+    def profile(self, lines, features, stale_peak=None, extra=(), git=False):
         tree = {f'f{i}/x.sql': '' for i in range(features)}
         tree['shared/s.sql'] = ''
         self.write(tree)
@@ -1076,7 +1076,7 @@ class Profile(Case):
                         + [('shared', 'shared-common', 'no', 'shared', '-')])
         if stale_peak is not None:  # an inventory.json written by an older script
             (self.art / 'inventory.json').write_text(json.dumps({'git': {'peakMonthlyContributors': stale_peak}}))
-        return self.metrics('none', *extra)['profile']
+        return self.metrics('none', *extra, git=git)['profile']
 
     def test_compact(self):
         p = self.profile(19_999, 8)
@@ -1109,7 +1109,7 @@ class Profile(Case):
             self.commit(f'change {number}', {f'f0/{number}.sql': f'-- {number}\n'}, env=env)
         self.cli('inventory', '--root', str(self.root), '--dir', str(self.art), '--lang', 'none', '--ext', 'sql',
                  '--source', '.')
-        self.assertEqual(self.profile(100, 2)['measured'], 'compact')
+        self.assertEqual(self.profile(100, 2, git=True)['measured'], 'compact')
 
     def test_override_and_drivers(self):
         p = self.profile(100, 2, extra=('--profile', 'large', '--driver', 'D4', '--driver', 'D1',
@@ -1121,8 +1121,8 @@ class Profile(Case):
         self.write({'f0/x.sql': ''})
         result = self.cli('metrics', '--root', str(self.root), '--dir', str(self.art), '--lang', 'none',
                           '--driver', 'D2', ok=False)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('D2', result.stderr)
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("invalid choice: 'D2'", result.stderr)
 
 
 class ChangeLocality(Case):

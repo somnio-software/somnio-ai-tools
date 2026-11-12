@@ -90,7 +90,7 @@ from dataclasses import dataclass, field
 
 # sha256 of this file, with line endings normalised to \n and the hex below
 # replaced by 64 zeros; main() refuses to run an edited copy.
-SELF_DIGEST = '760e6fe9a09ec87c2c0842c35fd1599ea4f635d69f4c35dfb06fa9cbd1f64313'
+SELF_DIGEST = '6b621aacb56a313ea858a2cae5f1e6c49f9f6c51d15a5494c2923a71bf4b2661'
 SELF_DIGEST_LINE = re.compile(r"^SELF_DIGEST = '[0-9a-f]{64}'$", re.MULTILINE)
 
 # --- The standard ------------------------------------------------------------
@@ -429,7 +429,7 @@ def generated_by_path(path, outputs):
 
 
 def git_facts(root, no_git):
-    """History facts of the repository; without readable history only isShallow and reason are set."""
+    """History facts of the repository; without readable history the first-commit date and age stay null."""
     facts = dict.fromkeys(('isShallow', 'firstCommitDate', 'ageDays', 'reason'))
     reason = git_unavailable(root, no_git)
     facts['isShallow'] = {'shallow clone': True, None: False}.get(reason)
