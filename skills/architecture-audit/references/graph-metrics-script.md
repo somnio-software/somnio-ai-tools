@@ -89,7 +89,7 @@ from dataclasses import dataclass, field
 
 # sha256 of this file, with line endings normalised to \n and the hex below
 # replaced by 64 zeros; main() refuses to run an edited copy.
-SELF_DIGEST = 'fff2ccfbd49a327d0b6b57f20ca8d1cd77e337943dbe9fe1412ef618f4d82c25'
+SELF_DIGEST = '7710a7a396b938a4edfeac03dd6625e2ee936df8c998299c0a701ef868e1b4d0'
 SELF_DIGEST_LINE = re.compile(r"^SELF_DIGEST = '[0-9a-f]{64}'$", re.MULTILINE)
 
 # --- The standard ------------------------------------------------------------
@@ -1656,8 +1656,10 @@ def root_placement(files, modmap, edges, fixed_location):
         (root_files if owner[0].role == 'root' else other_files).append(path)
     for pattern in sorted(set(fixed_location) - matched):
         warn(f'--fixed-location {pattern!r} matches no handwritten mapped file in files.tsv')
+    root_index_directories = {posixpath.dirname(path) for path, module in set_aside if module.role == 'root'}
     index_files = [{'file': path, 'module': module.name} for path, module in set_aside
-                   if module.role == 'root' or sides.get(posixpath.dirname(path), ((), ()))[0]]
+                   if module.role == 'root' or posixpath.dirname(path) in root_index_directories
+                   or sides.get(posixpath.dirname(path), ((), ()))[0]]
     directories, site_files = [], []
     for directory, (root_files, other_files) in sorted(sides.items()):
         if not root_files or not other_files:

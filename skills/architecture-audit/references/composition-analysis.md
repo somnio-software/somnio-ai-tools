@@ -117,7 +117,8 @@ For every `root` row in `data/module_map.tsv`:
   package marking (an entry point, an app factory such as Flask's
   `create_app` in `__init__.py`). Remove any other file on either side
   that only re-exports (a Dart barrel). Recount the smaller side after
-  either change, and say so.
+  either change (the other modules' side on a tie), say so, and use the
+  recount from here on.
 - **Imported only by the root**: for each module in `rootOnlyImported`,
   judge each file as a root file is judged. A file holding product logic
   is a site: it is the root's product logic under another label. Not

@@ -971,6 +971,15 @@ class RootPlacement(Case):
                                                {'file': 'pkg/__init__.py', 'module': 'marker'},
                                                {'file': 'web/index.ts', 'module': 'barrel'}])
 
+    def test_an_index_beside_a_root_index_is_listed_even_with_no_other_root_file(self):
+        mixed, _, _ = self.placement(['web/index.ts', 'web/index.tsx', 'lib/index.ts'],
+                                     [('root', 'root', 'no', 'web/index.ts', '-'),
+                                      ('shell', 'shared-common', 'no', 'web/index.tsx', '-'),
+                                      ('lib', 'shared-common', 'no', 'lib', '-')])
+        self.assertEqual((mixed['sites'], mixed['indexFiles']),
+                         (0, [{'file': 'web/index.ts', 'module': 'root'},
+                              {'file': 'web/index.tsx', 'module': 'shell'}]))
+
     def test_names_that_only_start_with_index_still_count(self):
         files = ['web/main.ts', 'web/app.ts', 'web/index_page.ts', 'lib/a.dart', 'lib/b.dart', 'lib/indexer.dart']
         mixed, _, _ = self.placement(files, [('root', 'root', 'no', 'web/main.ts', '-'),
