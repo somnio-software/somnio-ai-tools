@@ -66,7 +66,7 @@ import statistics
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
-from urllib.parse import quote
+from urllib.parse import parse_qsl, quote, urlsplit
 
 import requests
 
@@ -298,7 +298,14 @@ def azure_session(credential: dict) -> requests.Session:
 
 
 def gh_paginate(session: requests.Session, url: str, params: dict = None):
-    """GET with pagination via the Link header. Yields items from each page."""
+    """GET with pagination via the Link header. Yields items from each page.
+
+    Only the query string of the rel="next" link is followed; every page is
+    requested on the original `repos/{owner}/{repo}/...` URL. GitHub writes
+    that link with the numeric-ID form (`/repositories/{id}/...`), which the
+    Claude Code cloud environments' GitHub proxy rejects with a 403 — so a
+    repo with any paginated listing (e.g. a PR with more than 100 commits)
+    could not be measured from a scheduled routine."""
     params = dict(params or {})
     params.setdefault("per_page", 100)
     next_url = url
@@ -323,7 +330,8 @@ def gh_paginate(session: requests.Session, url: str, params: dict = None):
         next_url = None
         next_params = None
         if "next" in resp.links:
-            next_url = resp.links["next"]["url"]
+            next_url = url
+            next_params = dict(parse_qsl(urlsplit(resp.links["next"]["url"]).query))
 
 
 def parse_ts(s: str) -> datetime:
