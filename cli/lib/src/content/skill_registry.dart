@@ -497,6 +497,32 @@ class SkillRegistry {
       ],
       referencesRelativePath: 'skills/dora-metrics/references',
     ),
+    WorkflowSkill(
+      id: 'weekly_audit_triage',
+      name: 'weekly-audit-triage',
+      displayName: 'Weekly Audit Triage',
+      description:
+          'Turns the Monday audit reports of each repository into Jira '
+          'tasks without duplicating earlier runs (fingerprint labels), one '
+          'task per project per run with children for the small fixes. Each '
+          'repository declares its Jira project, Drive folder and apps in '
+          'its own .claude/weekly-audit.json.',
+      planRelativePath: 'skills/weekly-audit-triage/SKILL.md',
+      assetDirectories: ['skills/weekly-audit-triage/scripts'],
+      referencesRelativePath: 'skills/weekly-audit-triage/references',
+    ),
+    WorkflowSkill(
+      id: 'weekly_audit_fixer',
+      name: 'weekly-audit-fixer',
+      displayName: 'Weekly Audit Fixer',
+      description:
+          'Opens one ready-for-review pull request per Jira ticket labelled '
+          'audit-auto-fixable and audit-approved, using the base branch and '
+          "verification commands of the repository's "
+          '.claude/weekly-audit.json. Never merges or changes a ticket '
+          'status.',
+      planRelativePath: 'skills/weekly-audit-fixer/SKILL.md',
+    ),
   ];
 
   /// Find a skill bundle by its ID.
