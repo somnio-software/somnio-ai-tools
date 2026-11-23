@@ -1047,7 +1047,7 @@ class TestGhPaginate(unittest.TestCase):
         s = Session()
         items = list(dora_metrics.gh_paginate(s, url))
         self.assertEqual([i["sha"] for i in items], ["a", "b"])
-        self.assertEqual(s.calls[1], (url, {"per_page": "100", "page": "2"}))
+        self.assertEqual(s.calls[1], (url, [("per_page", "100"), ("page", "2")]))
         for called_url, _ in s.calls:
             self.assertNotIn("/repositories/", called_url)
 
@@ -1065,8 +1065,23 @@ class TestGhPaginate(unittest.TestCase):
 
         items = list(dora_metrics.gh_paginate(Session(), url, params={"q": "repo:org/repo is:merged"}))
         self.assertEqual([i["n"] for i in items], [1, 2])
-        self.assertEqual(calls[1][1]["q"], "repo:org/repo is:merged")
-        self.assertEqual(calls[1][1]["page"], "2")
+        self.assertEqual(dict(calls[1][1])["q"], "repo:org/repo is:merged")
+        self.assertEqual(dict(calls[1][1])["page"], "2")
+
+    def test_keeps_repeated_and_blank_params_of_the_next_link(self):
+        url = "https://api.github.com/repos/org/repo/tags"
+        page1 = FakeHttpResponse(200, [{"name": "a"}], links={"next": {
+            "url": "https://api.github.com/repositories/1/tags?state=open&state=closed&after=&page=2"}})
+        page2 = FakeHttpResponse(200, [{"name": "b"}])
+        calls = []
+
+        class Session:
+            def get(self, u, params=None):
+                calls.append((u, params))
+                return page1 if len(calls) == 1 else page2
+
+        list(dora_metrics.gh_paginate(Session(), url))
+        self.assertEqual(calls[1][1], [("state", "open"), ("state", "closed"), ("after", ""), ("page", "2")])
 
 
 class TestParseIsoTs(unittest.TestCase):

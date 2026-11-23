@@ -305,7 +305,10 @@ def gh_paginate(session: requests.Session, url: str, params: dict = None):
     that link with the numeric-ID form (`/repositories/{id}/...`), which the
     Claude Code cloud environments' GitHub proxy rejects with a 403 — so a
     repo with any paginated listing (e.g. a PR with more than 100 commits)
-    could not be measured from a scheduled routine."""
+    could not be measured from a scheduled routine.
+
+    `url` must not carry a query string: pass filters in `params`, or pages
+    2+ would send them twice."""
     params = dict(params or {})
     params.setdefault("per_page", 100)
     next_url = url
@@ -331,7 +334,8 @@ def gh_paginate(session: requests.Session, url: str, params: dict = None):
         next_params = None
         if "next" in resp.links:
             next_url = url
-            next_params = dict(parse_qsl(urlsplit(resp.links["next"]["url"]).query))
+            # A list of tuples keeps repeated keys; keep_blank_values keeps empty ones.
+            next_params = parse_qsl(urlsplit(resp.links["next"]["url"]).query, keep_blank_values=True)
 
 
 def parse_ts(s: str) -> datetime:
