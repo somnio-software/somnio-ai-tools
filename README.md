@@ -95,6 +95,8 @@ somnio status          # check the CLI version against each installed skill's st
 | [Dart Model from JSON](docs/skills.md#dart-model-from-json) | Generate Dart model classes from a JSON structure with json_annotation + equatable |
 | [Optimize Claude Config](docs/skills.md#optimize-claude-config) | Audit & optimize a repo's Claude Code config for lazy-loading rules and a lean CLAUDE.md |
 | [DORA Metrics](docs/skills.md#dora-metrics) | Deployment Frequency and Lead Time for Changes, per project and per repo, from GitHub, GitLab, or Bitbucket |
+| [Weekly Audit Triage](docs/skills.md#weekly-audit-triage) | Turns the Monday audit reports into Jira tasks, without duplicating earlier runs |
+| [Weekly Audit Fixer](docs/skills.md#weekly-audit-fixer) | One pull request per approved audit ticket, verified with the repository's own commands |
 
 > [Full skills catalog with examples →](docs/skills.md)
 

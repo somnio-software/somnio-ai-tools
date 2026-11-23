@@ -754,4 +754,39 @@ Each credential needs read access to all orgs/groups/workspaces of that provider
 
 ---
 
+## Weekly Audit Triage
+
+Turns the Monday audit reports (security, health and DORA, one `.md` per repository and type in the repository's Drive folder) into Jira tasks: one task per project per run, with a child ticket for each finding small enough to fix automatically. It never creates a duplicate: each finding carries a fingerprint label (`audit-fp-<fp>`, from `scripts/fingerprint.py`), and the skill also searches by meaning and once more just before each create. It never adds `audit-approved`; a person decides which tickets an agent may implement.
+
+Each repository declares itself in its own `.claude/weekly-audit.json` (Jira project, base branch, Drive folder, apps, extra excluded paths, verification commands). The file is read from the repository's default branch and checked with `scripts/repo_config.py`; the schema is [`references/repo-config.md`](../skills/weekly-audit-triage/references/repo-config.md). Adding a repository is adding that file to it: the skill does not change.
+
+**Example prompts:**
+```
+Triage this week's audit reports for closebook-finance-platform.
+```
+```
+Which findings in Monday's reports are new?
+```
+
+**Requires:** the Atlassian (Jira) and Google Drive connectors, and `gh` to read another repository's config.
+
+**Output:** Jira tasks and child tickets, and a summary comment on each run task. Nothing is written to Drive.
+
+---
+
+## Weekly Audit Fixer
+
+Runs after the triage. For each Jira ticket labelled `audit-auto-fixable` and `audit-approved` it opens one branch and one pull request, ready for review, then comments the pull request on the ticket. It re-checks the size and exclusion gate on the real code, runs every `verify` command of the repository's `.claude/weekly-audit.json`, and stops with `audit-needs-human` instead of working around a failing check. It never merges, deploys or changes a ticket's status, and a repository without a valid config gets no pull request.
+
+**Example prompts:**
+```
+Run the weekly fixer on closebook-finance-platform.
+```
+
+**Requires:** the Atlassian (Jira) connector, `gh`, and the `weekly-audit-triage` skill installed (its validator reads the config).
+
+**Output:** one pull request per approved ticket, or the reason it was left for a person.
+
+---
+
 **See also:** [Installation](installation.md) | [CLI Reference](cli.md) | [Workflow Guide](workflows.md)
