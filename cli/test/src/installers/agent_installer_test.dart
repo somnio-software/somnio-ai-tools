@@ -1959,7 +1959,7 @@ void main() {
       installDir = p.join(tmp.path, 'config', 'opencode', 'skills');
     });
 
-    /// The skill-directory layout releases 3.2.12 to 3.3.2 wrote to the
+    /// The skill-directory layout releases 3.2.12 to 3.3.3 wrote to the
     /// old folder.
     AgentConfig oldFolderAgent() => AgentConfig(
           id: 'test-agent',
