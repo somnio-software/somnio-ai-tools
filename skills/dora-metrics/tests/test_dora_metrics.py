@@ -1026,6 +1026,64 @@ class FakeHttpSession:
         return self.default
 
 
+class TestGhPaginate(unittest.TestCase):
+    """GitHub's rel="next" link uses /repositories/{id}/..., which the cloud
+    GitHub proxy rejects; pages must stay on the repos/{owner}/{repo} URL."""
+
+    def test_follows_next_page_on_the_original_url(self):
+        url = "https://api.github.com/repos/org/repo/pulls/269/commits"
+        page1 = FakeHttpResponse(200, [{"sha": "a"}], links={"next": {
+            "url": "https://api.github.com/repositories/1286516780/pulls/269/commits?per_page=100&page=2"}})
+        page2 = FakeHttpResponse(200, [{"sha": "b"}])
+
+        class Session:
+            def __init__(self):
+                self.calls = []
+
+            def get(self, u, params=None):
+                self.calls.append((u, params))
+                return page1 if len(self.calls) == 1 else page2
+
+        s = Session()
+        items = list(dora_metrics.gh_paginate(s, url))
+        self.assertEqual([i["sha"] for i in items], ["a", "b"])
+        self.assertEqual(s.calls[1], (url, [("per_page", "100"), ("page", "2")]))
+        for called_url, _ in s.calls:
+            self.assertNotIn("/repositories/", called_url)
+
+    def test_keeps_search_query_on_later_pages(self):
+        url = "https://api.github.com/search/issues"
+        page1 = FakeHttpResponse(200, {"items": [{"n": 1}]}, links={"next": {
+            "url": "https://api.github.com/search/issues?q=repo%3Aorg%2Frepo+is%3Amerged&per_page=100&page=2"}})
+        page2 = FakeHttpResponse(200, {"items": [{"n": 2}]})
+        calls = []
+
+        class Session:
+            def get(self, u, params=None):
+                calls.append((u, params))
+                return page1 if len(calls) == 1 else page2
+
+        items = list(dora_metrics.gh_paginate(Session(), url, params={"q": "repo:org/repo is:merged"}))
+        self.assertEqual([i["n"] for i in items], [1, 2])
+        self.assertEqual(dict(calls[1][1])["q"], "repo:org/repo is:merged")
+        self.assertEqual(dict(calls[1][1])["page"], "2")
+
+    def test_keeps_repeated_and_blank_params_of_the_next_link(self):
+        url = "https://api.github.com/repos/org/repo/tags"
+        page1 = FakeHttpResponse(200, [{"name": "a"}], links={"next": {
+            "url": "https://api.github.com/repositories/1/tags?state=open&state=closed&after=&page=2"}})
+        page2 = FakeHttpResponse(200, [{"name": "b"}])
+        calls = []
+
+        class Session:
+            def get(self, u, params=None):
+                calls.append((u, params))
+                return page1 if len(calls) == 1 else page2
+
+        list(dora_metrics.gh_paginate(Session(), url))
+        self.assertEqual(calls[1][1], [("state", "open"), ("state", "closed"), ("after", ""), ("page", "2")])
+
+
 class TestParseIsoTs(unittest.TestCase):
     def test_handles_z_suffix(self):
         self.assertEqual(dora_metrics.parse_iso_ts("2026-07-01T12:00:00Z"), dt("2026-07-01T12:00:00Z"))

@@ -66,7 +66,7 @@ import statistics
 import subprocess
 import sys
 from datetime import datetime, timedelta, timezone
-from urllib.parse import quote
+from urllib.parse import parse_qsl, quote, urlsplit
 
 import requests
 
@@ -77,7 +77,7 @@ import practice_guidance  # noqa: E402  (sibling module, same reason)
 # Version of the Somnio CLI this script ships with. Kept in sync with
 # `packageVersion` in cli/lib/src/version.dart by `dart run tool/stamp_version.dart`
 # (run from cli/) and checked by cli/test/src/content/version_stamp_test.dart.
-SOMNIO_VERSION = "3.3.5"
+SOMNIO_VERSION = "3.3.6"
 REPORT_TYPE = "dora-metrics"
 
 API_ROOT = "https://api.github.com"
@@ -298,7 +298,17 @@ def azure_session(credential: dict) -> requests.Session:
 
 
 def gh_paginate(session: requests.Session, url: str, params: dict = None):
-    """GET with pagination via the Link header. Yields items from each page."""
+    """GET with pagination via the Link header. Yields items from each page.
+
+    Only the query string of the rel="next" link is followed; every page is
+    requested on the original `repos/{owner}/{repo}/...` URL. GitHub writes
+    that link with the numeric-ID form (`/repositories/{id}/...`), which the
+    Claude Code cloud environments' GitHub proxy rejects with a 403 — so a
+    repo with any paginated listing (e.g. a PR with more than 100 commits)
+    could not be measured from a scheduled routine.
+
+    `url` must not carry a query string: pass filters in `params`, or pages
+    2+ would send them twice."""
     params = dict(params or {})
     params.setdefault("per_page", 100)
     next_url = url
@@ -323,7 +333,9 @@ def gh_paginate(session: requests.Session, url: str, params: dict = None):
         next_url = None
         next_params = None
         if "next" in resp.links:
-            next_url = resp.links["next"]["url"]
+            next_url = url
+            # A list of tuples keeps repeated keys; keep_blank_values keeps empty ones.
+            next_params = parse_qsl(urlsplit(resp.links["next"]["url"]).query, keep_blank_values=True)
 
 
 def parse_ts(s: str) -> datetime:
