@@ -1133,7 +1133,7 @@ void main() {
       );
     });
 
-    group('an OpenCode manifest written before 3.3.4', () {
+    group('an OpenCode manifest written before 3.4.1', () {
       /// Records a somnio skill directory in the manifest of [skillsDir].
       void seedSkill(String skillsDir, String skill) {
         _writeSkill(skillsDir, skill);
