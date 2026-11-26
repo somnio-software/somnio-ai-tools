@@ -24,7 +24,7 @@ description: |
   <example>
   Context: Ordering the remediation plan.
   user: "Why does the plan start with CI checks rather than splitting the big feature?"
-  assistant: "The standard fixes the order: rules and control first, then navigation contracts, emptying the root, breaking cycles, physical features, and splitting monoliths last. A split made before the cycle is broken only moves the cycle, and boundaries made before they are enforced erode again."
+  assistant: "The standard fixes the order: minimal control first, then breaking cycles, fixing direction, the remaining contracts and rules, emptying the root, physical features, and splitting monoliths last. A split made before the cycle is broken only moves the cycle, and a cycle broken before a check guards it can return."
   <commentary>
   The plan follows the standard's stage order, then points recovered within a stage.
   </commentary>

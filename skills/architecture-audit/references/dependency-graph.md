@@ -56,9 +56,9 @@ JavaScript and Python; it resolves `package:` URIs, tsconfig path aliases
 (nearest config, following `extends`), `#` subpath imports from the
 nearest `package.json` (after the tsconfig aliases), workspace package
 names and relative paths; it maps every edge to modules by the longest module path;
-and it flags edges the matrix forbids. It also finds cycles over the
-allowed edges, sums handwritten lines per unique module, and measures change
-locality from `git log` on the first-parent line. Besides `edges.tsv` it
+and it flags edges the matrix forbids. It also finds cycles over every
+edge, forbidden ones included, sums handwritten lines per unique module, and
+measures change locality from `git log` on the first-parent line. Besides `edges.tsv` it
 writes `module_edges.tsv`: every resolved internal edge with its source
 and target modules and roles and a status (`internal`, `allowed`, `deep`,
 `unchecked`, the rule it violates, or `unmapped` when a file matches no
@@ -109,10 +109,10 @@ them (one decimal).
 - **Profile**: `profile.measured`, `profile.effective`, the inputs and the
   drivers.
 - **Structural coupling**: `featureEdges`, `featureEdgesPerFeature`,
-  `featureCycles` (the largest in full), `cycles` and `largestCycle`
-  (cycles over allowed edges; say whether one runs through the root;
-  `cyclesAllEdges`, over every edge, is context only, because forbidden
-  edges are already counted as violations),
+  `featureCycles` (the largest in full), `cyclesAllEdges` and
+  `largestCycleAllEdges` (cycles over every edge, forbidden ones included;
+  say whether one runs through the root; they feed M2 and I2), `cycles` and
+  `largestCycle` (over allowed edges only; context),
   `mutualFeaturePairs`, `deepEdges`, `deepEdgeShare` and
   `uncheckedEdgeShare`.
 - **Violations by kind** (`violations`): the rule, the count, the module

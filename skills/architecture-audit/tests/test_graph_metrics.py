@@ -573,6 +573,7 @@ class Mapping(Case):
         self.assertEqual(m['sizes']['linesByModule'], {'a': 70, 'root': 30, 'widgets': 10})
         self.assertAlmostEqual(m['sizes']['rootShare'], 300 / 11)  # 27.27...: not rounded
         self.assertEqual(m['structuralCoupling']['cyclesAllEdges'], [])
+        self.assertEqual(m['structuralCoupling']['largestCycleAllEdges'], 0)
         self.assertEqual(m['totals']['crossModuleEdges'], 2)  # root->a, a->widgets; root files share one module
 
     def test_catch_all_matches_last_and_prefixes_respect_segments(self):
@@ -742,6 +743,7 @@ class GraphMetrics(Case):
         self.assertEqual(m['structuralCoupling']['cycles'], [])
         self.assertEqual(m['structuralCoupling']['largestCycle'], 0)
         self.assertEqual(m['structuralCoupling']['cyclesAllEdges'], [['f', 'r']])
+        self.assertEqual(m['structuralCoupling']['largestCycleAllEdges'], 2)
         self.assertEqual(m['violations']['feature->root']['rule'], 'R5')
 
     def test_deep_and_unchecked_count_allowed_edges_only(self):
@@ -776,6 +778,7 @@ class GraphMetrics(Case):
         self.assertEqual(m['structuralCoupling']['featureEdges'], 1)
         self.assertEqual(m['structuralCoupling']['cycles'], [])
         self.assertEqual(m['structuralCoupling']['cyclesAllEdges'], [['c', 'fa']])
+        self.assertEqual(m['structuralCoupling']['largestCycleAllEdges'], 2)
 
     def test_sizes_skip_generated_files(self):
         self.write({'pubspec.yaml': 'name: app\n', 'lib/main.dart': "import 'a/a.dart';\n",

@@ -59,7 +59,7 @@ drivers from the step 1 artifact before awarding anything.
 | Check | Points | Award | N/A when |
 |---|---|---|---|
 | **I1. Feature isolation** (R1, M1) | 7 | M1 = 0 → 7; ≤ 1 → 4; > 1 → 0. In the Standard and Large profiles, fewer than two features → 0, because isolation cannot be shown. | Compact profile with fewer than two features |
-| **I2. Acyclic graph** (R2, M2) | 6 | `largestCycle` 0 → 6; 2–3 → 3; ≥ 4 → 0. Cycles are counted over allowed edges only (`cycles`, not `cyclesAllEdges`). | fewer than three modules |
+| **I2. Acyclic graph** (R2, M2) | 6 | `largestCycleAllEdges` 0 → 6; 2–3 → 3; ≥ 4 → 0. Cycles are counted over every edge, forbidden ones included; a forbidden edge keeps its R1, R3, R5 or R7 penalty, and a cycle through it also costs I2. | fewer than three modules |
 | **I3. Public surfaces** (R6, M3) | 4 | M3 = 0 % → 4; ≤ 5 % → 2; > 5 % → 0. When `uncheckedEdgeShare` is above 50 %, or `deepEdgeShare` is `null` while allowed cross-module edges exist → Not measured (0). | Compact profile; no allowed cross-module edges |
 | **I4. Navigation contracts** (R3, AP3) | 4 | Sites = route string literals passed to navigation calls outside contract modules. **Compact**: route names or paths are declared in one contract file and there are 0 sites → 4; 1–5 sites → 2; no such file, or more sites → 0. **Standard and Large**: cross-feature navigation goes through contract identifiers and there are 0 sites → 4; contracts exist and 1–5 sites remain → 2; no contracts, or more sites → 0. A feature importing another feature's screen is already counted by I1; do not count it here. | no navigation between features (a backend, a single-flow app); fewer than two features |
 | **I5. Layering and containment** (R8) | 4 | R8 sites from step 3: each file-level edge against the layer direction, plus each (module, package) pair in which the module imports a vendor SDK (as R8 defines it), an HTTP client or a platform API (as R8 defines them), directly or through a file that re-exports it, from code other than the composition root, a foundation module, a global-service implementation or a data layer (a feature's own, or a shared-domain repository module). 0 → 4; 1–5 → 2; more → 0. | never |
@@ -144,7 +144,9 @@ MUST clause is broken at any site) or **Not applicable** (the standard
 says when), with the evidence, and whether it is enforced (from step 4:
 Yes, Partial or No for the rule classes R1, R2 and R5–R8, and "—" for R3,
 R4, R9 and R10, which step 4 does not rate). Map violation kinds to rules by the `rule` field in
-`metrics.json`. When no rule class is required, R9 is Not applicable; say
+`metrics.json`. A cycle over every edge (`largestCycleAllEdges` above 0)
+violates R2, one through a forbidden edge included. When no rule class
+is required, R9 is Not applicable; say
 which class becomes required first (R1 with a second feature, R2 with a
 third module).
 
@@ -162,7 +164,7 @@ of standard section 9. Skip a stage the profile does not call for: never
 recommend physical feature modules for a Compact or Standard codebase
 unless a module driver applies (standard section 2), and recommend
 merging modules when AP5 is Confirmed. For D3 code deferred by library or
-chunk, the action is removing its eager imports, in stage 5. Within a stage, order by points recovered. Each action names
+chunk, the action is removing its eager imports, in stage 6. Within a stage, order by points recovered. Each action names
 the modules or files involved, the rule it restores, the checks and points
 it recovers, and the stage.
 

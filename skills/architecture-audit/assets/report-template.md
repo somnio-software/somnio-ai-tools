@@ -35,7 +35,7 @@ _(omit this line if no history exists; note a profile change since the previous 
 
 **Key Figures:**
 - Handwritten code: [N] files, [N] lines; [N] modules, [N] features ([N] % physical)
-- Feature-to-feature edges: [N] ([N] per feature); largest cycle over allowed edges: [N] modules
+- Feature-to-feature edges: [N] ([N] per feature); largest cycle over all edges: [N] modules
 - Composition root share: [N] %; largest feature: [feature], [N]x the mean feature size (or "not applicable" with one feature)
 
 **First Steps (detail in Section 8):**
@@ -120,7 +120,7 @@ _(One row per metric M1-M10 of the standard's section 7; a criterion spans sever
 
 ## 8. Remediation Plan
 
-> _Ordered by the standard's remediation stages: rules and control, navigation contracts, empty the root, break cycles, physical boundaries where the profile or a driver calls for them, split monoliths._
+> _Ordered by the standard's remediation stages: minimal control, break cycles, fix direction, remaining contracts and rules, empty the root, physical boundaries where the profile or a driver calls for them, split monoliths._
 
 1. **[Action - modules or files involved]**
    - Stage: [stage]

@@ -232,8 +232,8 @@ profile; the lowest cap that applies sets the Total. Scores are relative to the 
 - Graph metrics are computed by a fixed script, so audits are comparable
   across runs and across projects.
 - Strictly read-only - safe to run against any repository.
-- The remediation plan follows a fixed order, so each step makes the next
-  one cheaper.
+- The remediation plan follows a fixed order: control first, so a broken
+  cycle cannot return, and each later step is cheaper.
 
 ## Subagent Dispatch (in-session)
 

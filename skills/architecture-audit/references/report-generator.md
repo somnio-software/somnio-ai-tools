@@ -111,7 +111,7 @@ Maturity Band mapping:
 - One paragraph on what the score means for this codebase at its profile.
 - **Key Figures** from `data/metrics.json`: files, handwritten lines,
   modules, features and their physical share; feature-to-feature edges and
-  per feature; largest cycle over allowed edges; root share; largest
+  per feature; largest cycle over all edges; root share; largest
   feature against the mean.
 - Up to the first three actions of the remediation plan, one line each,
   or the plan's one line when it has no action.
@@ -239,7 +239,7 @@ After writing the report, write `reports/<YYYY-MM-DD>-<project>-architecture-aud
         "srcLines": [integer],
         "features": [integer],
         "featureEdges": [integer],
-        "largestCycle": [integer],
+        "largestCycleAllEdges": [integer],
         "deepEdgeShare": [number or null],
         "rootShare": [number or null],
         "largestFeatureRatioToMean": [number or null],
@@ -269,7 +269,7 @@ Write `reports/.history/last_architecture_scores.json`:
       "profile": "[effective profile]",
       "contours": { "structural": { "earned": N, "possible": N },
         "integration": {...}, "composition": {...}, "control": {...} },
-      "metrics": { "featureEdges": N, "largestCycle": N,
+      "metrics": { "featureEdges": N, "largestCycleAllEdges": N,
         "rootShare": N, "physicalFeatureShare": N,
         "meanFeaturesPerChange": N },
       "band": "[band]" }

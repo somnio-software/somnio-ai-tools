@@ -90,7 +90,7 @@ from dataclasses import dataclass, field
 
 # sha256 of this file, with line endings normalised to \n and the hex below
 # replaced by 64 zeros; main() refuses to run an edited copy.
-SELF_DIGEST = '6b621aacb56a313ea858a2cae5f1e6c49f9f6c51d15a5494c2923a71bf4b2661'
+SELF_DIGEST = '9fb0c8a39d1a04a9dc9809435400c533847aee9cce0cde1da1c5baccab2c22e3'
 SELF_DIGEST_LINE = re.compile(r"^SELF_DIGEST = '[0-9a-f]{64}'$", re.MULTILINE)
 
 # --- The standard ------------------------------------------------------------
@@ -1462,6 +1462,7 @@ def coupling_metrics(edges, modmap):
         feature_graph[a].add(b)
     names = set(modmap.modules)
     cycles = strongly_connected(names, allowed)
+    cycles_all = strongly_connected(names, graph)
     permitted = [e for e in edges if e.kind is None]
     checked = [e for e in permitted if e.surface != 'unchecked']
     deep = [e for e in checked if e.surface == 'deep']
@@ -1473,7 +1474,8 @@ def coupling_metrics(edges, modmap):
         'featureCycles': strongly_connected(set(features), feature_graph),
         'cycles': cycles,
         'largestCycle': len(cycles[0]) if cycles else 0,
-        'cyclesAllEdges': strongly_connected(names, graph),
+        'cyclesAllEdges': cycles_all,
+        'largestCycleAllEdges': len(cycles_all[0]) if cycles_all else 0,
         'checkedEdges': len(checked),
         'deepEdges': len(deep),
         'deepEdgeShare': pct(len(deep), len(checked)),

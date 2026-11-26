@@ -184,10 +184,10 @@ a shared module; how one feature reaches another goes through a contract
 (R3). Edges into contract modules, including another feature's API module,
 are not feature edges.
 
-**R2. The module graph is acyclic.** No cycle may exist among the edges the
-matrix allows. Edges the matrix forbids are violations of R1, R3, R5 or R7
-and are counted there, not again as cycles. Within a module, cycles between
-files are the module's own business.
+**R2. The module graph is acyclic.** No cycle may exist among the modules,
+counting every edge, the forbidden ones included. A forbidden edge is a
+violation of R1, R3, R5 or R7; a cycle through it is also a violation of
+R2. Within a module, cycles between files are the module's own business.
 
 **R3. Navigation goes through contracts.** A feature that opens another
 feature's screen MUST address it through a contract: a route key, typed
@@ -356,7 +356,7 @@ is missing is **not measured**, which is never read as Healthy.
 | ID | Metric | Healthy | Watch | Risk | Applies when |
 |---|---|---|---|---|---|
 | M1 | Feature-to-feature module edges per feature | 0 | ≤ 1 | > 1 | ≥ 2 features |
-| M2 | Modules in the largest cycle over allowed edges | 0 | 2–3 | ≥ 4 | ≥ 3 modules |
+| M2 | Modules in the largest cycle over all edges | 0 | 2–3 | ≥ 4 | ≥ 3 modules |
 | M3 | Deep edges as a share of checked allowed cross-module edges | 0 % | ≤ 5 % | > 5 % | not Compact; not measured when more than half of allowed cross-module edges go into modules without a declared surface |
 | M4 | Mean features touched per change | ≤ 1.2 | ≤ 1.5 | > 1.5 | ≥ 4 features, ≥ 50 qualifying changes, full history |
 | M5 | Changes touching three or more features | ≤ 5 % | ≤ 10 % | > 10 % | as M4 |
@@ -412,33 +412,38 @@ and the audit scores each.
 
 ## 9. Order of remediation
 
-Bring a codebase into line in this order. Each stage makes the next one
-cheaper and keeps the previous one from eroding. A stage the profile does
-not call for is skipped.
+Bring a codebase into line in this order. Control comes first and locks in
+each gain, so a broken cycle cannot return; contracts are spent where they
+break cycles. A stage the profile does not call for is skipped.
 
-1. **Rules and control first.** Write the module map and the dependency
-   matrix down; add mechanical checks for the profile's rule classes with a
-   baseline of current violations that may only shrink (R9).
-2. **Navigation contracts.** Replace screen imports with contracts and move
-   route assembly into the root (R3, R4). This usually removes a large
-   share of feature-to-feature edges mechanically.
-3. **Empty the root.** Move shared widgets and localisation to
+1. **Minimal control.** Write the module map and the dependency matrix
+   down; add cycle and direction checks for the profile's rule classes
+   with a baseline of current violations that may only shrink (R9). This
+   locks in every cycle broken after it.
+2. **Break cycles** (R1, R2), including cycles through forbidden edges.
+   Where the edge that closes a cycle is navigation, cut it with a
+   navigation contract (R3) instead of a separate stage. Extract what the
+   modules in a cycle share, starting with the most depended-upon pieces.
+3. **Fix direction.** Remove dependencies on the root (R5) and lower roles
+   that point up (R7).
+4. **Remaining contracts and rules.** Replace the screen imports and move
+   the route assembly that stage 2 did not cut (R3, R4), move the wiring
+   (singletons, cross-module construction) to the root (R4), and add the
+   rest of the R9 checks for the profile's rule classes.
+5. **Empty the root.** Move shared widgets and localisation to
    shared-common, platform services to foundation, domain logic to its
    owning module (R5, AP1).
-4. **Break cycles through shared modules.** Extract what the modules in a
-   cycle share, starting with the most depended-upon pieces (R1, R2).
-5. **Make boundaries physical where the profile or a driver calls for it.**
+6. **Make boundaries physical where the profile or a driver calls for it.**
    Start with code a module driver concerns, then features with no edges
    to other features, then pure providers (fan-out 0), then the rest
    (R10). In the Compact profile, the matching action is to merge modules
    that AP5 flags. For D3 code deferred by library or chunk, the action is
    to remove its eager imports and add a check that keeps them out.
-6. **Split monoliths last.** Decompose a feature monolith (AP4) once it no
+7. **Split monoliths last.** Decompose a feature monolith (AP4) once it no
    longer sits in a cycle; earlier, the split only moves the cycle.
 
-Work no stage names goes with the nearest one: R4 wiring (singletons,
-cross-module construction) and AP2 with stage 3, R6, R7 and R8 with stage
-4, and oversized files (M8) with stage 6.
+Work no stage names goes with the nearest one: AP2, R6 and R8 with stage
+4, and oversized files (M8) with stage 7.
 
 ## 10. Stack notes
 
