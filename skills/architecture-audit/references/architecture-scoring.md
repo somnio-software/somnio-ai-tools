@@ -144,8 +144,9 @@ MUST clause is broken at any site) or **Not applicable** (the standard
 says when), with the evidence, and whether it is enforced (from step 4:
 Yes, Partial or No for the rule classes R1, R2 and R5–R8, and "—" for R3,
 R4, R9 and R10, which step 4 does not rate). Map violation kinds to rules by the `rule` field in
-`metrics.json`. A cycle over every edge (`largestCycleAllEdges` above 0)
-violates R2, one through a forbidden edge included. When no rule class
+`metrics.json`. With three or more modules, a cycle over every edge
+(`largestCycleAllEdges` above 0) violates R2, one through a forbidden edge
+included; with fewer, R2 is Not applicable. When no rule class
 is required, R9 is Not applicable; say
 which class becomes required first (R1 with a second feature, R2 with a
 third module).

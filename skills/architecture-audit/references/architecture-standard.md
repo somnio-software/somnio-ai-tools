@@ -187,7 +187,9 @@ are not feature edges.
 **R2. The module graph is acyclic.** No cycle may exist among the modules,
 counting every edge, the forbidden ones included. A forbidden edge is a
 violation of R1, R3, R5 or R7; a cycle through it is also a violation of
-R2. Within a module, cycles between files are the module's own business.
+R2. R2 applies once there are three modules: below that, a cycle between
+the root and a feature is R5's alone. Within a module, cycles between files
+are the module's own business.
 
 **R3. Navigation goes through contracts.** A feature that opens another
 feature's screen MUST address it through a contract: a route key, typed
@@ -417,8 +419,8 @@ each gain, so a broken cycle cannot return; contracts are spent where they
 break cycles. A stage the profile does not call for is skipped.
 
 1. **Minimal control.** Write the module map and the dependency matrix
-   down; add cycle and direction checks for the profile's rule classes
-   with a baseline of current violations that may only shrink (R9). This
+   down; add the cycle and direction checks (those of R1, R2, R5 and R7 the
+   profile's rule classes list) with a baseline of current violations that may only shrink (R9). This
    locks in every cycle broken after it.
 2. **Break cycles** (R1, R2), including cycles through forbidden edges.
    Where the edge that closes a cycle is navigation, cut it with a
@@ -429,7 +431,7 @@ break cycles. A stage the profile does not call for is skipped.
 4. **Remaining contracts and rules.** Replace the screen imports and move
    the route assembly that stage 2 did not cut (R3, R4), move the wiring
    (singletons, cross-module construction) to the root (R4), and add the
-   rest of the R9 checks for the profile's rule classes.
+   rest of the R9 checks for the profile's rule classes (R6, R8).
 5. **Empty the root.** Move shared widgets and localisation to
    shared-common, platform services to foundation, domain logic to its
    owning module (R5, AP1).
@@ -442,7 +444,9 @@ break cycles. A stage the profile does not call for is skipped.
 7. **Split monoliths last.** Decompose a feature monolith (AP4) once it no
    longer sits in a cycle; earlier, the split only moves the cycle.
 
-Work no stage names goes with the nearest one: AP2, R6 and R8 with stage
+An action that fits several stages belongs to the earliest of them: a
+dependency on the root that closes a cycle is stage 2 work, not stage 3 or
+5. Work no stage names goes with the nearest one: AP2, R6 and R8 with stage
 4, and oversized files (M8) with stage 7.
 
 ## 10. Stack notes

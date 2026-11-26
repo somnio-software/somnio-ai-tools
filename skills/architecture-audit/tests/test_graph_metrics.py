@@ -734,7 +734,7 @@ class GraphMetrics(Case):
         self.assertIn('warning: no import edges', self.last.stderr)
         self.assertEqual(m['totals']['unresolvedInternal'], 0)
 
-    def test_allowed_cycles_exclude_violation_edges(self):
+    def test_cycles_over_allowed_and_all_edges(self):
         self.write({'pubspec.yaml': 'name: app\n', 'lib/main.dart': "import 'f/f.dart';\n",
                     'lib/f/f.dart': "import '../main.dart';\n"})
         self.files_tsv(('.dart',))
