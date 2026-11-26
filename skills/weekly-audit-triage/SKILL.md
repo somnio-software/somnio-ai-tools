@@ -51,6 +51,16 @@ Per finding keep: `source` (security|nestjs|react|dora|…), `rule`, `file`, `se
 (local only) and run `scripts/fingerprint.py <scratch>` to get each `fingerprint`: the script is the
 contract, and its values must not change between versions (tickets carry them as labels).
 
+The fingerprint must come out the same every Monday, so fill its inputs the same way every time:
+
+- **A dependency advisory** also gets `package`: the package name as the registry spells it (`next`,
+  `@hono/node-server`). One finding per package, even when the report lists several in one row. With
+  `package`, the fingerprint ignores `rule`, `file` and `title`, so versions, advisory counts and
+  whether you read it from a `package.json` or the lockfile do not change it.
+- **Any other finding:** copy `rule` and `title` as the report prints them. Never paraphrase them or
+  add counts, versions or dates to them: another wording is another fingerprint, and another
+  fingerprint is a duplicate ticket.
+
 Each task records the repository, the SHA and date from the report header, and the Drive link of the
 report it came from, so the ticket stands on its own.
 
