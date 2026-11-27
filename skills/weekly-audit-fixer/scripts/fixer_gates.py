@@ -221,7 +221,7 @@ def run_gates(config, repo):
         size_failure = f"{total} changed lines, limit {MAX_LINES}"
     else:
         size_failure = None
-    gate("size", size_failure, f"{total} lines")
+    gate("size", size_failure, f"{total} line" + ("" if total == 1 else "s"))
 
     touched = [app for app in config["apps"] if any(under(path, app) for path, _ in files)]
     gate(
