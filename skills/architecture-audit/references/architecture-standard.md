@@ -244,7 +244,8 @@ mix roles (UI kit, platform services and domain logic in one place).
 presentation depends on state, state on domain or repositories,
 repositories on data sources and clients, never the reverse, and
 presentation does not reach data sources or clients directly. Vendor SDKs,
-HTTP clients and platform APIs are imported only by the composition root
+HTTP clients and platform APIs (reached directly or through a barrel or
+file that re-exports them) are imported only by the composition root
 (to initialise and bind them), foundation modules, global-service
 implementations, or a data layer (a feature's own, or a shared-domain
 module of repositories). A **vendor
@@ -440,7 +441,7 @@ enforced.
   manifests encode: R5 and R6 for every package (a package cannot declare
   the app, and `implementation_imports` guards `src/`); R1 for feature
   packages; and R7, and R8 containment of a vendor SDK only a data package
-  declares, for lower-role packages whose manifests list only what the
+  declares and no package re-exports, for lower-role packages whose manifests list only what the
   matrix allows. They do so only when both lints are enabled, not
   suppressed, and fail CI: raised to `error`, or run by `flutter analyze`
   (which fails on infos and warnings unless told otherwise with

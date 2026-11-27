@@ -126,7 +126,9 @@ them (one decimal).
   processes or the host, as `node:<name>`; Python standard-library modules
   for files, storage, sockets, HTTP, processes and native code). List the feature
   and shared modules that import packages likely to be vendor SDKs, HTTP
-  clients or platform APIs; step 3 judges them against R8.
+  clients or platform APIs; step 3 judges them against R8. Both maps count
+  each file's direct imports and do not follow exports; step 3 lists the
+  re-exports.
 - **Change locality**: `meanFeaturesPerChange`,
   `changesTouching3PlusFeatures` (a share), the qualifying `changes`,
   `droppedOversized`, `changesWithoutFeatures` and `topCoChangedPairs`.
