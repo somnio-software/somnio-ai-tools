@@ -97,6 +97,7 @@ somnio status          # check the CLI version against each installed skill's st
 | [DORA Metrics](docs/skills.md#dora-metrics) | Deployment Frequency and Lead Time for Changes, per project and per repo, from GitHub, GitLab, or Bitbucket |
 | [Weekly Audit Triage](docs/skills.md#weekly-audit-triage) | Turns the Monday audit reports into Jira tasks, without duplicating earlier runs |
 | [Weekly Audit Fixer](docs/skills.md#weekly-audit-fixer) | One pull request per approved audit ticket, verified with the repository's own commands |
+| [Weekly Audit Ledger](docs/skills.md#weekly-audit-ledger) | A daily, read-only list of the audit tickets and fixer pull requests that wait on a person |
 
 > [Full skills catalog with examples →](docs/skills.md)
 
