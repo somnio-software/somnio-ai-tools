@@ -9,6 +9,7 @@ sha256 before extracting anything, and writes the binary to `<bin dir>/<tool>`. 
 <version>` or `FAIL <tool>: <reason>` for every tool, and exits 0 when all are OK, 2 otherwise.
 """
 import hashlib
+import http.client
 import io
 import json
 import os
@@ -63,7 +64,7 @@ def install(tool: str, path: str, repo_root: str, bin_dir: str, opener=urllib.re
     except urllib.error.HTTPError as exc:
         exc.close()
         raise Failure(f"{url} returned HTTP {exc.code}") from None
-    except OSError as exc:  # URLError and timeouts included
+    except (OSError, http.client.HTTPException) as exc:  # URLError, timeouts and a cut-off body included
         raise Failure(f"cannot download {url}: {exc}") from None
     digest = hashlib.sha256(data).hexdigest()
     if digest != pin["SHA256"]:

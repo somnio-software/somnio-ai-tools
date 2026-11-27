@@ -1,6 +1,7 @@
 """Tests for scripts/install_tools.py, which installs the scan tools at the version the repository's CI pins."""
 import contextlib
 import hashlib
+import http.client
 import importlib.util
 import io
 import json
@@ -166,6 +167,18 @@ class TestInstall(InstallTest):
                                  f"FAIL trivy: cannot download {TRIVY_URL}: <urlopen error timed out>"])
         self.assertEqual(len(opener.requested), 2)
         self.assertFalse(os.path.exists(self.bin))
+
+    def test_a_body_cut_off_mid_download_fails_and_the_other_tool_still_installs(self):
+        class CutOff(io.BytesIO):
+            def read(self, *args):
+                raise http.client.IncompleteRead(b"partial", 15490)
+
+        opener = Opener({TRIVY_URL: self.trivy})
+        code, lines = self.run_main(lambda url, timeout=None: CutOff() if url == GITLEAKS_URL else opener(url, timeout))
+        self.assertEqual(code, 2)
+        self.assertTrue(lines[0].startswith(f"FAIL gitleaks: cannot download {GITLEAKS_URL}: IncompleteRead"), lines)
+        self.assertEqual(lines[1], "OK trivy 0.76.0")
+        self.assertEqual(os.listdir(self.bin), ["trivy"])
 
     def test_an_archive_without_the_binary(self):
         other = tarball("gitleaks-darwin")
