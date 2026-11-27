@@ -523,6 +523,19 @@ class SkillRegistry {
           'status.',
       planRelativePath: 'skills/weekly-audit-fixer/SKILL.md',
     ),
+    WorkflowSkill(
+      id: 'dependabot_review',
+      name: 'dependabot-review',
+      displayName: 'Dependabot Review',
+      description:
+          'Leaves one comment per open Dependabot pull request with a '
+          'verdict (ready to merge, needs work or block) and its reason: CI '
+          'on the head SHA and, for a major, its breaking changes against '
+          "the repository's usages, peers and module format. Never merges, "
+          'approves or closes, and never sends a Dependabot command.',
+      planRelativePath: 'skills/dependabot-review/SKILL.md',
+      assetDirectories: ['skills/dependabot-review/scripts'],
+    ),
   ];
 
   /// Find a skill bundle by its ID.

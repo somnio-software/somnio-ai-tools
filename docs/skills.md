@@ -789,4 +789,25 @@ Run the weekly fixer on closebook-finance-platform.
 
 ---
 
+## Dependabot Review
+
+Reviews the open Dependabot pull requests of a repository and leaves **one comment** on each with a verdict: **ready to merge** (CI green on the head SHA, and no major, or a major whose breaking changes touch none of the repository's usages), **needs work** (a failed or running check, a major that touches usages, listed `file:line`, or release notes it could not read) or **block** (a major that cannot land alone: a peer kept on another major, or an ESM-only package the repository loads with CommonJS). `scripts/dependabot_review.py` lists the pull requests that need a verdict from the running account (none yet, one for an older head, or one not final) with the updates parsed from their bodies, and renders and checks each comment; the comment is edited, not duplicated, when Dependabot rebases.
+
+It never merges, approves, requests changes, closes, labels or pushes, and refuses a comment that would ping someone or carry an `@dependabot` command. It needs no config: any repository with Dependabot works. A `DRY RUN` first line posts nothing and prints each comment it would post.
+
+**Example prompts:**
+```
+Review the open Dependabot PRs of this repository.
+```
+```
+DRY RUN
+Review the Dependabot PRs of somnio-products/closebook-finance-platform.
+```
+
+**Requires:** `gh` authenticated as an account that can comment on the repository's pull requests, and `npm` for the peer and module-format checks of an npm major.
+
+**Output:** one comment per pull request, and one line per pull request (verdict, link) at the end of the run.
+
+---
+
 **See also:** [Installation](installation.md) | [CLI Reference](cli.md) | [Workflow Guide](workflows.md)
