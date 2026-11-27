@@ -3,6 +3,8 @@
 The expected values were produced by the script as it lived in closebook-finance-platform before it
 moved here (CLOS-412). Tickets carry `audit-fp-<fingerprint>` labels, so a different value for the
 same finding would re-open every open finding as a new ticket: these values must never change.
+A dependency advisory with `package` is keyed by its package instead (CLOS-414): its pinned value
+below must never change either.
 """
 import importlib.util
 import os
@@ -39,6 +41,25 @@ class TestFingerprint(unittest.TestCase):
         a = {"source": "react", "rule": "r", "file": "f", "title": "Remove  Console.log"}
         b = dict(a, title="remove console.log ")
         self.assertEqual(fingerprint.fingerprint(a), fingerprint.fingerprint(b))
+
+    def test_a_dependency_is_keyed_by_its_package(self):
+        # The same advisory as two dry runs of closebook's routine wrote it on 2026-11-25 (CLOS-414).
+        run2 = {"source": "security", "rule": "dep-next-advisories", "file": "apps/web/package.json",
+                "title": "Bump next 16.4.3 to >=16.4.5 in apps/web (7 moderate advisories)",
+                "package": "next"}
+        run3 = {"source": "security", "rule": "dependency", "file": "pnpm-lock.yaml",
+                "title": "next 16.4.3 has 8 moderate advisories, fixed in 16.4.6", "package": " Next "}
+        self.assertEqual(fingerprint.fingerprint(run2), "38dcf68e85")
+        self.assertEqual(fingerprint.fingerprint(run3), "38dcf68e85")
+
+    def test_different_packages_or_sources_differ(self):
+        a = {"source": "security", "package": "glob"}
+        self.assertNotEqual(fingerprint.fingerprint(a), fingerprint.fingerprint(dict(a, package="minimatch")))
+        self.assertNotEqual(fingerprint.fingerprint(a), fingerprint.fingerprint(dict(a, source="nestjs")))
+
+    def test_an_empty_package_keeps_the_original_key(self):
+        finding, expected = KNOWN[0]
+        self.assertEqual(fingerprint.fingerprint(dict(finding, package="")), expected)
 
     def test_a_different_rule_changes_the_fingerprint(self):
         a = {"source": "react", "rule": "r1", "file": "f", "title": "t"}
