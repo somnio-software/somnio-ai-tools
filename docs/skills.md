@@ -789,4 +789,19 @@ Run the weekly fixer on closebook-finance-platform.
 
 ---
 
+## Weekly Audit Ledger
+
+Lists what the audit cycle waits on people for, per Jira project and repository: tickets labelled `audit-auto-fixable` that wait for `audit-approved`, fixer pull requests nobody has reviewed for more than 3 days, and audit tickets whose finding the last 2 runs did not see. It runs as a block of the TL watch routine, which adds the section to its daily message. It only reads (Jira searches, `gh api`, `gh pr list`); `scripts/audit_ledger.py` builds the section from the saved files, with no network, and lists what it could not see instead of guessing.
+
+**Example prompts:**
+```
+What is pending in the weekly audits for closebook-finance-platform?
+```
+
+**Requires:** the Atlassian (Jira) connector, `gh`, and the `weekly-audit-triage` skill (its validator reads each repository's `.claude/weekly-audit.json`).
+
+**Output:** the "Audit pending" section, one block per Jira project. Nothing is written anywhere.
+
+---
+
 **See also:** [Installation](installation.md) | [CLI Reference](cli.md) | [Workflow Guide](workflows.md)

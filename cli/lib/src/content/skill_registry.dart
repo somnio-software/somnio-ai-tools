@@ -523,6 +523,17 @@ class SkillRegistry {
           'status.',
       planRelativePath: 'skills/weekly-audit-fixer/SKILL.md',
     ),
+    WorkflowSkill(
+      id: 'weekly_audit_ledger',
+      name: 'weekly-audit-ledger',
+      displayName: 'Weekly Audit Ledger',
+      description:
+          'Lists what the weekly audits wait on people for: tickets without '
+          'audit-approved, fixer PRs without review, and tickets whose '
+          'finding is gone. Read-only.',
+      planRelativePath: 'skills/weekly-audit-ledger/SKILL.md',
+      assetDirectories: ['skills/weekly-audit-ledger/scripts'],
+    ),
   ];
 
   /// Find a skill bundle by its ID.
