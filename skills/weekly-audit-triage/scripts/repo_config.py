@@ -28,6 +28,9 @@ OPTIONAL = {
     "slack_channel": str,
     "audits": list,
     "dora": dict,
+    "ai_tools_ref": str,
+    "tools": dict,
+    "services": list,
 }
 IGNORED = {"_comment"}
 VERIFY_KEYS = {"name", "run", "when"}
@@ -39,6 +42,9 @@ AUDIT_KEYS = {"skill", "path", "report_name"}
 DORA_KEYS = {"window_days": int, "prod_branch": str, "type": list, "deploy_source": str,
              "tag_pattern": str, "provider": str}
 DORA_REQUIRED = {"window_days", "prod_branch"}
+# The tools weekly-audit-checks' install_tools.py installs from the CI file that pins them (CLOS-419).
+TOOLS = ("gitleaks", "trivy")
+SERVICE_KEYS = {"name", "run", "env"}
 
 
 def _is(value, typ) -> bool:
@@ -96,6 +102,42 @@ def _dora(dora: dict, errors: list) -> None:
         errors.append(f"unknown field 'dora.{key}'")
 
 
+def _pins(data: dict, errors: list) -> None:
+    """The somnio-ai-tools pin, the CI files that pin each tool and the test services (CLOS-419)."""
+    if _is(data.get("ai_tools_ref"), str) and not re.fullmatch(r"[0-9a-f]{40}", data["ai_tools_ref"]):
+        errors.append("'ai_tools_ref' must be the 40-character lowercase hex SHA of a somnio-ai-tools commit")
+    if _is(data.get("tools"), dict):
+        if not data["tools"]:
+            errors.append("'tools' must list at least one tool, or be left out")
+        for tool, path in data["tools"].items():
+            if tool not in TOOLS:
+                errors.append(f"'tools.{tool}' is not a tool the routine installs ({', '.join(TOOLS)})")
+            elif not isinstance(path, str) or not path.strip():
+                errors.append(f"'tools.{tool}' must be a non-empty string")
+            elif path.startswith("/") or ".." in path.split("/"):
+                errors.append(f"'tools.{tool}' must be a path relative to the repository root, without '..'")
+    if _is(data.get("services"), list):
+        if not data["services"]:
+            errors.append("'services' must list at least one service, or be left out")
+        names = set()
+        for i, service in enumerate(data["services"]):
+            if not isinstance(service, dict):
+                errors.append(f"'services[{i}]' must be an object with 'name' and 'run'")
+                continue
+            for key in ("name", "run"):
+                if not isinstance(service.get(key), str) or not service[key].strip():
+                    errors.append(f"'services[{i}].{key}' must be a non-empty string")
+            if isinstance(service.get("name"), str):
+                if service["name"] in names:
+                    errors.append(f"'services[{i}].name' repeats '{service['name']}'")
+                names.add(service["name"])
+            env = service.get("env", {})
+            if not isinstance(env, dict) or not all(isinstance(value, str) for value in env.values()):
+                errors.append(f"'services[{i}].env' must be an object of strings")
+            for key in sorted(set(service) - SERVICE_KEYS):
+                errors.append(f"unknown field 'services[{i}].{key}'")
+
+
 def validate(data) -> tuple[dict, list]:
     """-> (config with defaults applied, errors). The config is meaningful only without errors."""
     if not isinstance(data, dict):
@@ -149,6 +191,7 @@ def validate(data) -> tuple[dict, list]:
         errors.append(f"'dora' is required when '{DORA}' is an audit")
     if "dora" in data and not dora_audit:
         errors.append(f"'dora' is given but '{DORA}' is not an audit")
+    _pins(data, errors)
 
     config = {k: v for k, v in data.items() if k not in IGNORED}
     if _is(data.get("repo"), str):
