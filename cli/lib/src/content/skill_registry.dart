@@ -519,9 +519,11 @@ class SkillRegistry {
           'Opens one ready-for-review pull request per Jira ticket labelled '
           'audit-auto-fixable and audit-approved, using the base branch and '
           "verification commands of the repository's "
-          '.claude/weekly-audit.json. Never merges or changes a ticket '
-          'status.',
+          '.claude/weekly-audit.json. A gate script and the '
+          "repository's code-reviewer agent pass the exact commit before it "
+          'is pushed. Never merges or changes a ticket status.',
       planRelativePath: 'skills/weekly-audit-fixer/SKILL.md',
+      assetDirectories: ['skills/weekly-audit-fixer/scripts'],
     ),
   ];
 

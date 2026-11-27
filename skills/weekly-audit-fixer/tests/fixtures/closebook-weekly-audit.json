@@ -1,0 +1,32 @@
+{
+  "_comment": "Read by the weekly-audit-triage and weekly-audit-fixer skills of somnio-software/somnio-ai-tools (skills/weekly-audit-*), from the default branch only. Schema: skills/weekly-audit-triage/references/repo-config.md there. CLOS-412.",
+  "version": 1,
+  "repo": "somnio-products/closebook-finance-platform",
+  "jira_project": "CLOS",
+  "base_branch": "develop",
+  "drive_folder": "12JvOdKLeA4QAXO9fjjuWRdfGcq9RvMYV",
+  "report_name": "closebook-finance-platform",
+  "apps": ["apps/api", "apps/web", "apps/mcp"],
+  "excluded_paths": [
+    "infra/",
+    "deploy/",
+    ".github/workflows/",
+    "apps/api/prisma/",
+    "apps/api/src/oauth/",
+    "apps/api/src/route-access/",
+    "apps/api/src/governance/",
+    "apps/web/src/lib/auth/",
+    "apps/mcp/src/auth.ts",
+    "apps/mcp/src/tools/",
+    ".claude/RULES.md"
+  ],
+  "verify": [
+    {"name": "build", "run": "pnpm build"},
+    {"name": "web-lint", "run": "pnpm --filter @closebook/web lint"},
+    {"name": "mcp-typecheck", "run": "pnpm --filter @closebook/mcp typecheck"},
+    {"name": "unit-tests", "run": "pnpm test"},
+    {"name": "integration", "run": "pnpm test:int:changed --subset-only"},
+    {"name": "dependency-audit", "run": "pnpm check:audit", "when": "dependencies"}
+  ],
+  "ship_skill": "ship-flow"
+}

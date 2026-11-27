@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "required": [
+    {
+      "name": "spec",
+      "kind": "spec"
+    },
+    {
+      "name": "build",
+      "receipt": true,
+      "expect_cmd": "pnpm build"
+    },
+    {
+      "name": "web-lint",
+      "receipt": true,
+      "expect_cmd": "pnpm --filter @closebook/web lint"
+    },
+    {
+      "name": "mcp-typecheck",
+      "receipt": true,
+      "expect_cmd": "pnpm --filter @closebook/mcp typecheck"
+    },
+    {
+      "name": "unit-tests",
+      "receipt": true,
+      "expect_cmd": "pnpm test"
+    },
+    {
+      "name": "integration",
+      "receipt": true,
+      "expect_cmd": "pnpm test:int:changed --subset-only"
+    }
+  ],
+  "_candidates": [
+    "self-qa (a marker requirement has no advisory mode: requiring it blocks every push without a fresh /self-qa run; dev-execution already runs it before the PR)"
+  ],
+  "_note": "CLOS-265: a push needs a fresh receipt of build, web lint, mcp typecheck and the unit tests (ship-marker.sh run --label <name> -- <command>). The unit tests were added so a push reaches CI already green: a red CI run is paid in Actions minutes. The integration receipt runs the suites of the modules the change touches (it needs Docker; nothing else runs them before a release candidate). The spec requirement is enforced since its enforce_after date (2026-10-27) passed. See docs/runbooks/ship-flow.md"
+}
