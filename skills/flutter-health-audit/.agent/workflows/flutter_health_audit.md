@@ -1,12 +1,7 @@
 ---
 description: >-
-  Execute a comprehensive Flutter Project Health Audit. Analyzes tech stack,
-  architecture, state management, testing, code quality, CI/CD, and
-  documentation. Produces a shareable Markdown report with section scores and
-  weighted overall score. Use when the user asks to audit a Flutter project,
-  run a health check, evaluate project quality, or assess technical debt.
-  Triggers on: 'flutter audit', 'health audit', 'project audit', 'flutter
-  health', 'tech debt assessment', 'project quality check'.
+  Flutter project health audit, scored report. Triggers: 'flutter audit',
+  'health audit', 'flutter health'.
 ---
 
 # Flutter Project Health Audit

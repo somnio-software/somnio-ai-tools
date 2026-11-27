@@ -1,21 +1,9 @@
 ---
 name: soc2-audit
 description: >-
-  Execute a comprehensive, framework-agnostic SOC 2 readiness audit of a
-  repository or application. Detects the stack at runtime and inspects the
-  project for observable evidence of AICPA Trust Services Criteria controls
-  (Common Criteria CC1-CC9 plus optional Availability, Confidentiality,
-  Processing Integrity, and Privacy), organized into eleven control families
-  (A-K). Records a Status (met / partial / gap / organizational) and an
-  ownership lane (platform-auditable / organizational / client-CUEC) per
-  control, scores each family, maps gaps to criteria, and produces a
-  prioritized remediation plan with a readiness score /100 and band.
-  Read-only and evidence-based: never invents controls; absent evidence is a
-  Gap; secrets are redacted.
-  Use when the user asks for a SOC 2 audit, SOC 2 readiness assessment, Trust
-  Services Criteria review, compliance gap analysis, or audit-readiness check.
-  Triggers on: 'soc 2 audit', 'soc2 readiness', 'trust services criteria audit',
-  'soc2 gap analysis', 'compliance audit'.
+  Read-only SOC 2 readiness audit against the Trust Services Criteria, /100
+  score. Triggers: 'soc 2 audit', 'soc2 readiness', 'soc2 gap analysis',
+  'compliance audit'.
 allowed-tools: Read, Grep, Glob, Bash, WebFetch, Agent
 ---
 

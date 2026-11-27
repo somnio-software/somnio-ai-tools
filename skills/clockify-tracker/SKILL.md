@@ -1,7 +1,8 @@
 ---
 name: clockify-tracker
 description: >-
-  Manages Clockify time tracking via the official Clockify REST API (v1): list workspaces and projects, create time entries with correct UTC timestamps. Use when the user wants to log time, track hours, record work in Clockify, or mentions Clockify or time entries.
+  Clockify time tracking via the REST API: list projects, create time entries
+  (UTC). Use to log time, track hours, or when Clockify is mentioned.
 ---
 
 # Clockify time tracking (REST API)

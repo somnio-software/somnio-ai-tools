@@ -1,14 +1,9 @@
 ---
 name: workflow-builder
 description: >-
-  This skill should be used when the user asks to "create a workflow",
-  "run a workflow", "design a task pipeline", "execute a workflow",
-  "resume a workflow", or "plan a multi-step automation". Creates and
-  executes custom, repeatable workflows with multiple steps that can
-  each use different AI models and run in parallel waves.
-  Triggers on: 'create workflow', 'run workflow', 'execute workflow',
-  'workflow plan', 'workflow run', 'resume workflow', 'multi-step
-  workflow', 'task pipeline', 'automation'.
+  Creates and runs multi-step workflows with per-step AI models and parallel
+  waves. Triggers: 'create workflow', 'run workflow', 'resume workflow', 'task
+  pipeline'.
 argument-hint: <plan|run> <workflow-name>
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---

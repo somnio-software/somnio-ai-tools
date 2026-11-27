@@ -1,12 +1,8 @@
 ---
 description: >-
-  Execute a comprehensive, framework-agnostic SOC 2 readiness audit of an entire
-  repository or application. Detects project type and stack at runtime and
-  adapts evidence gathering. Assesses AICPA Trust Services Criteria controls
-  across eleven control families (A-K), records each control's Status and
-  ownership lane (platform-auditable / organizational / client-CUEC), scores
-  readiness per family, and produces a prioritized remediation plan with an
-  overall readiness score and band. Read-only; secret values redacted.
+  Read-only SOC 2 readiness audit against the Trust Services Criteria, /100
+  score. Triggers: 'soc 2 audit', 'soc2 readiness', 'soc2 gap analysis',
+  'compliance audit'.
 ---
 
 # SOC 2 Readiness Audit

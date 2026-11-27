@@ -1,13 +1,8 @@
 ---
 name: flutter-best-practices
 description: >-
-  Execute a micro-level Flutter code quality audit. Validates code against live
-  GitHub standards for testing, architecture, and code implementation. Produces
-  a detailed violations report with prioritized action plan. Use when the user
-  asks to check Flutter code quality, validate best practices, or review code
-  standards compliance.
-  Triggers on: 'flutter best practices', 'code quality', 'code review',
-  'flutter standards', 'architecture compliance', 'testing quality'.
+  Flutter code quality audit. Triggers: 'flutter best practices', 'flutter
+  standards', 'code quality', 'code review', 'architecture compliance'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

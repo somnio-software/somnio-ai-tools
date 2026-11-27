@@ -1,13 +1,7 @@
 ---
 description: >-
-  Execute a comprehensive Next.js Project Health Audit. Analyzes tech stack
-  (installed next/react versions, live advisory and end-of-life checks,
-  package manager), App Router / Pages Router architecture, data and state
-  (Server Components, Server Actions, caching), testing, code quality,
-  performance, CI/CD, documentation and AI harness. Produces a shareable
-  Markdown report with section scores and a weighted overall score.
-  Triggers on: 'next.js audit', 'nextjs audit', 'nextjs health',
-  'next.js health', 'next audit', 'app router audit', 'next.js health check'.
+  Next.js project health audit (versions, App Router, caching, CI/CD), scored
+  report. Triggers: 'nextjs audit', 'nextjs health', 'app router audit'.
 ---
 
 # Next.js Project Health Audit

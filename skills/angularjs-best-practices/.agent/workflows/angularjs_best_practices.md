@@ -1,10 +1,7 @@
 ---
 description: >-
-  Execute a micro-level AngularJS (Angular 1.x) code quality audit. Validates
-  code against live GitHub standards for testing, module/component
-  architecture, scope & binding patterns, services & data flow, digest
-  performance, and minification-safe JavaScript standards. Produces a detailed
-  violations report with prioritized action plan.
+  AngularJS (Angular 1.x) code quality audit. Triggers: 'angularjs best
+  practices', 'angular 1 code quality', 'minification-safe DI review'.
 ---
 
 # AngularJS Best Practices Check

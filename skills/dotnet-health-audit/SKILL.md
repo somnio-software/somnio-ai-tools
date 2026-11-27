@@ -1,16 +1,9 @@
 ---
 name: dotnet-health-audit
 description: >-
-  Execute a comprehensive .NET / ASP.NET Core Web API Project Health Audit.
-  Analyzes tech stack (including .NET support lifecycle and dependency
-  vulnerabilities), architecture (including SOLID compliance and cyclomatic
-  complexity), API design, data layer, testing, code quality, CI/CD,
-  documentation, and AI harness & adoption. Produces a shareable Markdown
-  report with section scores and weighted overall score. Use when the user
-  asks to audit a .NET project, run a health check, evaluate ASP.NET Core
-  quality, or assess technical debt. Triggers on: 'dotnet audit', 'health audit',
-  '.net audit', 'aspnet audit', 'backend audit', 'csharp audit',
-  'webapi audit', 'project quality check'.
+  .NET / ASP.NET Core Web API project health audit, scored report. Triggers:
+  'dotnet audit', 'health audit', '.net audit', 'aspnet audit', 'csharp
+  audit'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent, Task
 ---
 

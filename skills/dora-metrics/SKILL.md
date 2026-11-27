@@ -1,17 +1,9 @@
 ---
 name: dora-metrics
-description: >
-  Fetches the DORA metrics Deployment Frequency and Lead Time for Changes, per
-  project and per repo, from the provider's API (GitHub, GitLab, Bitbucket, or
-  Azure DevOps — not local git). Use this skill whenever the user asks to run or update the
-  DORA metrics, measure the deployment frequency or lead time of a project
-  (e.g. "Example Project"), generate the biweekly metrics report, or asks how
-  many deploys a project made or how long a change takes to reach production —
-  regardless of which of the four providers the project's repos live on.
-  Also trigger on phrases like: "run the DORA metrics", "metrics for
-  Example Project", "deployment frequency for [project]", "lead time for
-  [project]", "biweekly metrics report", "how many deploys did we do this
-  sprint", "add a GitLab/Bitbucket/Azure DevOps project to the DORA metrics".
+description: >-
+  DORA metrics (deployment frequency, lead time) from GitHub, GitLab,
+  Bitbucket or Azure DevOps APIs. Triggers: 'run the DORA metrics', 'lead time
+  for [project]', 'biweekly metrics report'.
 allowed-tools: Read, Write, Edit, Bash, Agent
 ---
 

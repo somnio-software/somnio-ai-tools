@@ -1,16 +1,9 @@
 ---
 name: nextjs-best-practices
 description: >-
-  Execute a micro-level Next.js code quality audit that is aware of the
-  installed Next.js version. Checks App Router architecture, Server and Client
-  Components, data fetching and caching, Server Actions and Route Handlers,
-  rendering performance, testing and TypeScript against the docs that match the
-  installed version. Produces a scored violations report with a prioritized
-  action plan. Use when the user asks to review Next.js code quality, App Router
-  usage or Server Components.
-  Triggers on: 'next.js best practices', 'nextjs best practices', 'nextjs code
-  review', 'next.js code review', 'app router best practices', 'server
-  components review'.
+  Version-aware Next.js code quality audit (App Router, Server Components).
+  Triggers: 'nextjs best practices', 'nextjs code review', 'app router best
+  practices'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

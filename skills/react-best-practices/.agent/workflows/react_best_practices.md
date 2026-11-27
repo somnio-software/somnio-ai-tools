@@ -1,9 +1,7 @@
 ---
 description: >-
-  Execute a micro-level React code quality audit. Validates code against live
-  GitHub standards for testing, component architecture, hooks patterns, state
-  management, performance, and TypeScript. Produces a detailed violations
-  report with prioritized action plan.
+  React code quality audit. Triggers: 'react best practices', 'react code
+  quality', 'react standards', 'component review', 'hooks review'.
 ---
 
 # React Best Practices Check

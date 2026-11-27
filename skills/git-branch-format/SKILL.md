@@ -1,11 +1,8 @@
 ---
 name: git-branch-format
 description: >-
-  Generates properly formatted Git branch names following project conventions.
-  Use this skill whenever the user wants to name a branch, create a branch, or asks things like
-  "what should I call this branch?", "what branch name should I use?", "help me with the branch name",
-  or describes a feature/fix and needs a branch name. Always use this skill when the user needs a
-  git branch name, even if they don't explicitly say "branch".
+  Generates Git branch names following project conventions. Use when naming or
+  creating a branch: "what should I call this branch?".
 ---
 
 # Git Branch Format Skill

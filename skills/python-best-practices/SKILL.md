@@ -1,13 +1,9 @@
 ---
 name: python-best-practices
 description: >-
-  Execute a micro-level Python code quality audit. Validates code against live
-  GitHub standards for typing, code style, function design, data validation,
-  error handling, module structure, and testing. Produces a detailed violations
-  report with prioritized action plan. Use when the user asks to check Python
-  code quality, validate best practices, or review Python code standards.
-  Triggers on: 'python best practices', 'python code quality', 'code review',
-  'python standards', 'type hints review', 'pytest review', 'pydantic validation'.
+  Python code quality audit. Triggers: 'python best practices', 'python code
+  quality', 'python standards', 'code review', 'type hints review', 'pytest
+  review', 'pydantic validation'.
 allowed-tools: Read, Edit, Write, Grep, Glob, Bash, WebFetch, Agent
 ---
 

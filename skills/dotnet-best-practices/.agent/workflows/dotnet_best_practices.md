@@ -1,10 +1,8 @@
 ---
 description: >-
-  Execute a micro-level .NET / ASP.NET Core code quality audit. Validates
-  code against live GitHub standards for testing, architecture compliance,
-  SOLID principles, cyclomatic complexity, code standards, DTO validation,
-  and error handling. Produces a detailed violations report with
-  prioritized action plan.
+  .NET / ASP.NET Core code quality audit. Triggers: 'dotnet best practices',
+  '.net code quality', 'aspnet code review', 'csharp standards', 'solid
+  principles review', 'dto validation review'.
 ---
 
 # .NET Micro-Code Audit

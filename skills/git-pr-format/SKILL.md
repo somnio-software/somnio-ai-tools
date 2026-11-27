@@ -1,11 +1,8 @@
 ---
 name: git-pr-format
 description: >-
-  Generates properly formatted pull request titles and descriptions, with no AI attribution.
-  Use this skill whenever the user wants to open, create, write, or update a pull request (or merge
-  request), or asks things like "open a PR for this", "write the PR description", "create the pull
-  request", "update the PR body", or "help me with my PR". Always use this skill before running
-  `gh pr create` or `gh pr edit --body`, even if the user doesn't explicitly ask for a format.
+  Generates PR/MR titles and descriptions with no AI attribution. Use before
+  `gh pr create` or `gh pr edit --body`, or for "open a PR for this".
 ---
 
 # Git PR Format Skill

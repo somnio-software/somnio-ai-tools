@@ -1,8 +1,7 @@
 ---
 description: >-
-  Execute a micro-level Flutter code quality audit. Validates code against
-  live GitHub standards for testing, architecture, and code implementation.
-  Produces a detailed violations report with prioritized action plan.
+  Flutter code quality audit. Triggers: 'flutter best practices', 'flutter
+  standards', 'code quality', 'code review', 'architecture compliance'.
 ---
 
 # Flutter Best Practices Check

@@ -1,9 +1,8 @@
 ---
 description: >-
-  Execute a comprehensive, framework-agnostic Security Audit. Detects project
-  type at runtime and adapts security checks accordingly. Analyzes sensitive
-  files, source code secrets, and dependency vulnerabilities. Produces a
-  severity-classified report with quantitative scoring.
+  Framework-agnostic security audit: secrets, sensitive files, dependency
+  vulnerabilities. Triggers: 'security audit', 'vulnerability scan', 'secret
+  scan', 'owasp'.
 ---
 
 # Security Audit
