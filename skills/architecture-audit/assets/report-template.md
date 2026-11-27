@@ -12,7 +12,7 @@
 | Integration (dependencies between modules) | [earned]/[possible] |
 | Composition (assembly in the root) | [earned]/[possible] |
 | Control (rules written and enforced) | [earned]/[possible] |
-| **Total Score** | **[Score]/100** [(capped from [N]: [cap reason]) - omit when no cap lowers the Total] |
+| **Total Score** | **[Score]/100** [(capped from [N]: [reason of each cap that applies]) - omit when no cap lowers the Total] |
 
 **Maturity Band:** [Monolithic / Partially modular / Modular / Governed modular]
 
