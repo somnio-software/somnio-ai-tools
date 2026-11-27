@@ -5,8 +5,12 @@ Prints the config with its defaults applied and exits 0, or prints every error, 
 exits 2. The schema is references/repo-config.md. Usage: repo_config.py <path to weekly-audit.json>
 """
 import json
+import os
 import re
 import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from report_check import ACCEPTED_TYPES, DORA  # noqa: E402  (sibling module, loaded by path so the script runs from anywhere)
 
 REQUIRED = {
     "version": int,
@@ -21,11 +25,20 @@ OPTIONAL = {
     "apps": list,
     "excluded_paths": list,
     "ship_skill": str,
+    "slack_channel": str,
+    "audits": list,
+    "dora": dict,
 }
 IGNORED = {"_comment"}
 VERIFY_KEYS = {"name", "run", "when"}
 VERIFY_WHEN = {"dependencies"}
 SUPPORTED_VERSIONS = {1}
+AUDIT_KEYS = {"skill", "path", "report_name"}
+# The per-repo keys of dora-metrics' projects.json, plus the run's window. dora_metrics.py checks the
+# values of `deploy_source` and `provider` itself.
+DORA_KEYS = {"window_days": int, "prod_branch": str, "type": list, "deploy_source": str,
+             "tag_pattern": str, "provider": str}
+DORA_REQUIRED = {"window_days", "prod_branch"}
 
 
 def _is(value, typ) -> bool:
@@ -37,6 +50,50 @@ def _strings(key: str, value: list, errors: list) -> None:
     for i, item in enumerate(value):
         if not isinstance(item, str) or not item.strip():
             errors.append(f"'{key}[{i}]' must be a non-empty string")
+
+
+def _audits(data: dict, errors: list) -> None:
+    if not data["audits"]:
+        errors.append("'audits' must list at least one audit, or be left out")
+    for key in ("report_name", "slack_channel"):
+        if key not in data:
+            errors.append(f"'{key}' is required when 'audits' is given")
+    seen = {}
+    for i, audit in enumerate(data["audits"]):
+        if not isinstance(audit, dict):
+            errors.append(f"'audits[{i}]' must be an object with 'skill'")
+            continue
+        if audit.get("skill") not in ACCEPTED_TYPES:
+            errors.append(f"'audits[{i}].skill' must be one of: {', '.join(ACCEPTED_TYPES)}")
+        for key in ("path", "report_name"):
+            if key in audit and (not isinstance(audit[key], str) or not audit[key].strip()):
+                errors.append(f"'audits[{i}].{key}' must be a non-empty string")
+        for key in sorted(set(audit) - AUDIT_KEYS):
+            errors.append(f"unknown field 'audits[{i}].{key}'")
+        # Two audits with the same key and skill write the same file: the second would overwrite the first.
+        name = audit.get("report_name", data.get("report_name"))
+        if audit.get("skill") in ACCEPTED_TYPES and isinstance(name, str):
+            first = seen.setdefault((name, audit["skill"]), i)
+            if first != i:
+                errors.append(f"'audits[{i}]' writes the same report as 'audits[{first}]'")
+
+
+def _dora(dora: dict, errors: list) -> None:
+    for key, typ in DORA_KEYS.items():
+        if key not in dora:
+            if key in DORA_REQUIRED:
+                errors.append(f"missing required field 'dora.{key}'")
+        elif key == "window_days":
+            if not _is(dora[key], int) or dora[key] < 1:
+                errors.append("'dora.window_days' must be a positive integer")
+        elif not _is(dora[key], typ):
+            errors.append(f"'dora.{key}' must be a {typ.__name__}")
+        elif typ is str and not dora[key].strip():
+            errors.append(f"'dora.{key}' must not be empty")
+    if _is(dora.get("type"), list):
+        _strings("dora.type", dora["type"], errors)
+    for key in sorted(set(dora) - set(DORA_KEYS)):
+        errors.append(f"unknown field 'dora.{key}'")
 
 
 def validate(data) -> tuple[dict, list]:
@@ -82,12 +139,28 @@ def validate(data) -> tuple[dict, list]:
     if _is(data.get("apps"), list) and not data["apps"]:
         errors.append("'apps' must list at least one app, or be left out")
 
+    audits = data["audits"] if _is(data.get("audits"), list) else None
+    if audits is not None:
+        _audits(data, errors)
+    if _is(data.get("dora"), dict):
+        _dora(data["dora"], errors)
+    dora_audit = any(isinstance(audit, dict) and audit.get("skill") == DORA for audit in audits or [])
+    if dora_audit and "dora" not in data:
+        errors.append(f"'dora' is required when '{DORA}' is an audit")
+    if "dora" in data and not dora_audit:
+        errors.append(f"'dora' is given but '{DORA}' is not an audit")
+
     config = {k: v for k, v in data.items() if k not in IGNORED}
     if _is(data.get("repo"), str):
         config.setdefault("report_name", data["repo"].split("/")[-1])
     config.setdefault("apps", ["."])
     config.setdefault("excluded_paths", [])
     config.setdefault("ship_skill", None)
+    if audits:
+        config["audits"] = [
+            {"path": ".", "report_name": config.get("report_name"), **audit} if isinstance(audit, dict) else audit
+            for audit in audits
+        ]
     return config, errors
 
 

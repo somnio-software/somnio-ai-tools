@@ -66,9 +66,15 @@ class TestValidate(unittest.TestCase):
         self.assertIn("'version' must be a int", errors)
 
     def test_unknown_fields_are_rejected(self):
-        _, errors = repo_config.validate(valid(verfy=[], slack_channel="#x"))
-        self.assertIn("unknown field 'slack_channel'", errors)
+        _, errors = repo_config.validate(valid(verfy=[], slack="#x"))
+        self.assertIn("unknown field 'slack'", errors)
         self.assertIn("unknown field 'verfy'", errors)
+
+    def test_a_config_without_audits_validates_as_before(self):
+        config, errors = repo_config.validate(valid())
+        self.assertEqual(errors, [])
+        self.assertEqual(set(config), {"version", "repo", "jira_project", "base_branch", "drive_folder",
+                                       "verify", "report_name", "apps", "excluded_paths", "ship_skill"})
 
     def test_values_are_checked(self):
         _, errors = repo_config.validate(valid(
@@ -101,6 +107,106 @@ class TestValidate(unittest.TestCase):
         self.assertEqual(errors, ["the config must be a JSON object"])
 
 
+def routine(**overrides):
+    """A config with the fields the weekly-audit-checks routine reads (CLOS-413)."""
+    config = valid(
+        report_name="widgets-platform",
+        slack_channel="C0123456789",
+        audits=[
+            {"skill": "security-audit"},
+            {"skill": "nestjs-health-audit", "path": "apps/api"},
+            {"skill": "react-health-audit", "path": "apps/web", "report_name": "widgets-web"},
+            {"skill": "dora-metrics"},
+        ],
+        dora={"window_days": 14, "prod_branch": "main", "type": ["web", "backend"],
+              "deploy_source": "release", "tag_pattern": r"^prod-v\d+$", "provider": "github"},
+    )
+    config.update(overrides)
+    return {k: v for k, v in config.items() if v is not None}  # an override of None drops the field
+
+
+class TestRoutineFields(unittest.TestCase):
+    def test_audits_get_their_defaults(self):
+        config, errors = repo_config.validate(routine())
+        self.assertEqual(errors, [])
+        self.assertEqual(config["audits"], [
+            {"skill": "security-audit", "path": ".", "report_name": "widgets-platform"},
+            {"skill": "nestjs-health-audit", "path": "apps/api", "report_name": "widgets-platform"},
+            {"skill": "react-health-audit", "path": "apps/web", "report_name": "widgets-web"},
+            {"skill": "dora-metrics", "path": ".", "report_name": "widgets-platform"},
+        ])
+        self.assertEqual(config["slack_channel"], "C0123456789")
+        self.assertEqual(config["dora"], routine()["dora"])
+
+    def test_audits_need_report_name_and_slack_channel(self):
+        _, errors = repo_config.validate(routine(report_name=None, slack_channel=None))
+        self.assertIn("'report_name' is required when 'audits' is given", errors)
+        self.assertIn("'slack_channel' is required when 'audits' is given", errors)
+
+    def test_slack_channel_alone_needs_no_audits(self):
+        _, errors = repo_config.validate(valid(slack_channel="C0123456789"))
+        self.assertEqual(errors, [])
+
+    def test_an_audit_skill_must_be_an_accepted_type(self):
+        _, errors = repo_config.validate(routine(audits=[{"skill": "nextjs-health-audit"}], dora=None))
+        self.assertIn("'audits[0].skill' must be one of: security-audit, dora-metrics, nestjs-health-audit, "
+                      "react-health-audit, python-health-audit", errors)
+
+    def test_audit_entries_are_checked(self):
+        _, errors = repo_config.validate(routine(audits=[
+            "security-audit",
+            {"skill": "nestjs-health-audit", "path": "", "report_name": 7, "stack": "nestjs"},
+            {"skill": "dora-metrics"},
+            {"skill": "dora-metrics", "report_name": "widgets-platform"},
+        ]))
+        self.assertIn("'audits[0]' must be an object with 'skill'", errors)
+        self.assertIn("'audits[1].path' must be a non-empty string", errors)
+        self.assertIn("'audits[1].report_name' must be a non-empty string", errors)
+        self.assertIn("unknown field 'audits[1].stack'", errors)
+        self.assertIn("'audits[3]' writes the same report as 'audits[2]'", errors)
+
+    def test_an_empty_audits_list_is_an_error(self):
+        _, errors = repo_config.validate(routine(audits=[]))
+        self.assertIn("'audits' must list at least one audit, or be left out", errors)
+
+    def test_dora_metrics_needs_dora(self):
+        _, errors = repo_config.validate(routine(dora=None))
+        self.assertEqual(errors, ["'dora' is required when 'dora-metrics' is an audit"])
+
+    def test_dora_needs_dora_metrics(self):
+        _, errors = repo_config.validate(routine(audits=[{"skill": "security-audit"}]))
+        self.assertEqual(errors, ["'dora' is given but 'dora-metrics' is not an audit"])
+        _, errors = repo_config.validate(valid(dora=routine()["dora"]))
+        self.assertEqual(errors, ["'dora' is given but 'dora-metrics' is not an audit"])
+
+    def test_window_days_must_be_a_positive_integer(self):
+        for window in (0, -7, "14", True, 1.5):
+            with self.subTest(window=window):
+                _, errors = repo_config.validate(routine(dora={"window_days": window, "prod_branch": "main"}))
+                self.assertEqual(errors, ["'dora.window_days' must be a positive integer"])
+        _, errors = repo_config.validate(routine(dora={"window_days": 1, "prod_branch": "main"}))
+        self.assertEqual(errors, [])
+
+    def test_dora_fields_are_checked(self):
+        _, errors = repo_config.validate(routine(dora={
+            "window": 14, "type": "web", "deploy_source": " ", "tag_pattern": 3,
+        }))
+        self.assertIn("missing required field 'dora.window_days'", errors)
+        self.assertIn("missing required field 'dora.prod_branch'", errors)
+        self.assertIn("unknown field 'dora.window'", errors)
+        self.assertIn("'dora.type' must be a list", errors)
+        self.assertIn("'dora.deploy_source' must not be empty", errors)
+        self.assertIn("'dora.tag_pattern' must be a str", errors)
+        _, errors = repo_config.validate(routine(dora={"window_days": 7, "prod_branch": "main", "type": [""]}))
+        self.assertEqual(errors, ["'dora.type[0]' must be a non-empty string"])
+
+    def test_wrong_types_of_the_routine_fields(self):
+        _, errors = repo_config.validate(routine(slack_channel="", audits={}, dora=[]))
+        self.assertIn("'slack_channel' must not be empty", errors)
+        self.assertIn("'audits' must be a list", errors)
+        self.assertIn("'dora' must be a dict", errors)
+
+
 class TestCommandLine(unittest.TestCase):
     def run_script(self, *args):
         return subprocess.run([sys.executable, SCRIPT_PATH, *args], capture_output=True, text=True)
@@ -116,6 +222,12 @@ class TestCommandLine(unittest.TestCase):
         result = self.run_script(self.write(json.dumps(valid())))
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(json.loads(result.stdout)["report_name"], "widgets")
+
+    def test_a_routine_config_prints_its_audits_with_defaults(self):
+        result = self.run_script(self.write(json.dumps(routine())))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        audits = json.loads(result.stdout)["audits"]
+        self.assertEqual(audits[0], {"skill": "security-audit", "path": ".", "report_name": "widgets-platform"})
 
     def test_invalid_file_lists_errors_and_exits_2(self):
         result = self.run_script(self.write(json.dumps({"version": 1})))
