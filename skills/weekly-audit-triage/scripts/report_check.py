@@ -34,9 +34,8 @@ DATED = re.compile(r"(\d{4}-\d{2}-\d{2})-(.+)")
 WINDOW_ROW = re.compile(r"^\|\s*Measurement window\s*\|\s*(\d+) days\s*\|\s*$", re.MULTILINE)
 # The run notes the Weekly checks routine writes under a report's title (CLOS-419 D6).
 RUN_LINE = re.compile(r"^> Run: \S+ @ ([0-9a-f]{40}) · somnio-ai-tools @ ([0-9a-f]{40})[ \t]*$", re.MULTILINE)
-WARNING_LINE = re.compile(r"^> ⚠️", re.MULTILINE)
+WARNING_LINE = re.compile(r"^> ⚠", re.MULTILINE)  # with or without the emoji variation selector
 SHA = re.compile(r"[0-9a-f]{40}")
-HEALTH = "-health-audit"
 
 
 def expected_reports(config: dict) -> set:
@@ -183,10 +182,9 @@ def unchanged_lines(config: dict, date: str, directory: str, repo_sha: str, ref:
     """-> `SKIP <key>-<type>: …` or `RUN <key>-<type>: <reason>` for each health audit of the config.
     A health audit is skipped only when its previous report was made from both SHAs and has no warning."""
     lines = []
-    for key, typ in dict.fromkeys(
-        (audit.get("report_name", config["report_name"]), audit["skill"]) for audit in config.get("audits") or []
-    ):
-        if not typ.endswith(HEALTH):
+    for audit in config.get("audits") or []:
+        key, typ = audit.get("report_name", config["report_name"]), audit["skill"]
+        if not typ.endswith("-health-audit"):
             continue
         name = f"{key}-{typ}"
         found, text = previous_report(directory, config, date, key, typ)

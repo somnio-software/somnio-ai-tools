@@ -1,4 +1,5 @@
 """Tests for scripts/install_tools.py, which installs the scan tools at the version the repository's CI pins."""
+import contextlib
 import hashlib
 import importlib.util
 import io
@@ -98,11 +99,8 @@ class InstallTest(unittest.TestCase):
 
     def run_main(self, opener):
         out = io.StringIO()
-        stdout, sys.stdout = sys.stdout, out
-        try:
+        with contextlib.redirect_stdout(out):
             code = install_tools.main([self.config, self.root, self.bin], opener)
-        finally:
-            sys.stdout = stdout
         return code, out.getvalue().splitlines()
 
 

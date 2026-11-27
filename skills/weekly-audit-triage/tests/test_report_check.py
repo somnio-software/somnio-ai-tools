@@ -387,6 +387,8 @@ class TestUnchanged(PreviousTest):
             "no run line": ([], {}, f"the report of {PREVIOUS_DATE} has no '> Run:' line"),
             "a warning": ([run_line(), "> ⚠️ Service not started: postgres (exit 1)."], {},
                           f"the report of {PREVIOUS_DATE} has a '> ⚠️' line"),
+            "a warning without the variation selector": ([run_line(), "> ⚠ Gitleaks not run: FAIL."], {},
+                                                         f"the report of {PREVIOUS_DATE} has a '> ⚠️' line"),
         }
         for case, (notes, args, reason) in cases.items():
             with self.subTest(case=case):
