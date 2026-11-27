@@ -776,16 +776,16 @@ Which findings in Monday's reports are new?
 
 ## Weekly Audit Fixer
 
-Runs after the triage. For each Jira ticket labelled `audit-auto-fixable` and `audit-approved` it opens one branch and one pull request, ready for review, then comments the pull request on the ticket. It re-checks the size and exclusion gate on the real code, runs every `verify` command of the repository's `.claude/weekly-audit.json`, and stops with `audit-needs-human` instead of working around a failing check. It never merges, deploys or changes a ticket's status, and a repository without a valid config gets no pull request.
+Runs after the triage. For each Jira ticket labelled `audit-auto-fixable` and `audit-approved` it opens one branch and one pull request, ready for review, then comments the pull request on the ticket. Its limits are a script, not prose: `scripts/fixer_gates.py` runs on the committed ticket branch and fails a dirty tree, an empty diff, more than 400 changed lines or 2 of the config's `apps`, an excluded path (the config's `excluded_paths` plus built-ins such as `infra/`, `.github/workflows/`, `.env*` and the gate's own config files), or a receipt of the base branch's `.claude/ship-gate.json` with no `verify` command; then it runs every `verify` command of the repository's `.claude/weekly-audit.json`. Exit 0 sends the exact commit to the repository's own `code-reviewer` agent, at most two reviews; only that commit, passed by both, is pushed. A failed gate or a second failed review labels the ticket `audit-needs-human` with the script's output or the findings. It never merges, deploys or changes a ticket's status, and a repository without a valid config or a `code-reviewer` agent on its base branch gets no pull request.
 
 **Example prompts:**
 ```
 Run the weekly fixer on closebook-finance-platform.
 ```
 
-**Requires:** the Atlassian (Jira) connector, `gh`, and the `weekly-audit-triage` skill installed (its validator reads the config).
+**Requires:** the Atlassian (Jira) connector, `gh`, `git`, `python3`, the `weekly-audit-triage` skill installed (its validator reads the config), and a `.claude/agents/code-reviewer.md` on the repository's base branch.
 
-**Output:** one pull request per approved ticket, or the reason it was left for a person.
+**Output:** one pull request per approved ticket, carrying the gate script's output and the review verdicts, or the gate or review round that left it for a person.
 
 ---
 

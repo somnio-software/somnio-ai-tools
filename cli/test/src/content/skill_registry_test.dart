@@ -75,6 +75,13 @@ void main() {
       }
     });
 
+    test('weekly-audit-fixer ships its gate script', () {
+      final fixer = SkillRegistry.findWorkflowById('weekly-audit-fixer')!;
+      expect(fixer.assetDirectories, ['skills/weekly-audit-fixer/scripts']);
+      final script = p.join(root, fixer.assetDirectories.single, 'fixer_gates.py');
+      expect(File(script).existsSync(), isTrue, reason: 'missing $script');
+    });
+
     test('every audit bundle has its SKILL.md present', () {
       for (final bundle in SkillRegistry.skills) {
         final file = File(p.join(root, bundle.planRelativePath));
