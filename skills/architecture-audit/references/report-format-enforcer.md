@@ -65,10 +65,11 @@ FORMATTING RULES TO ENFORCE:
   partial has existing violations inside the modules its check covers); K4 (Compact profile). S1, S3, S4, I5, C1, C2, C4
   and K1 are never N/A. Reject an N/A whose condition is not on this list
   or names a profile other than the effective one.
-- ENFORCEMENT CAPS: when K2 is 0 or Not measured, the Total is at most 64;
-  when K2 is 3, 6 or N/A, at most 84, so Governed modular requires K2 =
-  10. When a cap lowers the Total, the uncapped value and the cap's reason
-  are shown beside it.
+- CAPS: when K2 is 0 or Not measured, the Total is at most 64; when K2 is
+  3, 6 or N/A, or S1 is 0 or Not measured, at most 84, so Governed
+  modular requires K2 = 10 and an S1 above 0. A cap applies only when the
+  uncapped Total is above it, and the lowest that applies sets the Total. When a cap lowers the Total, the uncapped value and the
+  reason of every cap that applies are shown beside it.
 - BAND-RANGE CHECK: Monolithic (0-39), Partially modular (40-64), Modular
   (65-84), Governed modular (85-100). The band label matches the Total.
 - STATUS VOCABULARY: metrics and criteria Healthy / Watch / Risk / N/A /
@@ -78,7 +79,7 @@ FORMATTING RULES TO ENFORCE:
 - ORDERING: Section 3 contours in fixed order; Section 8 actions in stage
   order.
 - PROFILE FIT: Section 8 recommends physical feature modules only in the
-  Large profile or for code a named module driver (D1, D2, D4, or D3
+  Large profile or for code a named module driver (D1, D4, or D3
   delivered as build modules) concerns.
 - EVIDENCE DISCIPLINE: every check cites a metric value or a file; no score
   without evidence.
@@ -109,8 +110,8 @@ VALIDATION CHECKLIST:
 - Point arithmetic holds at check, contour and total level, N/A checks
   excluded from possible points, halves rounded up
 - Every N/A is on the whitelist for the effective profile
-- The enforcement caps are applied: 64 when K2 earns 0, 84 when K2 is
-  3, 6 or N/A
+- The caps are applied: 64 when K2 earns 0, 84 when K2 is
+  3, 6 or N/A or S1 earns 0
 - Band label matches the Total's range
 - Sections 5 and 6 complete; Section 8 has at most eight staged actions, none padded
 - Section 9 immediately before Section 10, all five groups filled

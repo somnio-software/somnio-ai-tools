@@ -36,9 +36,6 @@ Using the documentation step 1 found, record for each document:
   tree and the graph. When documents contradict each other and none is
   marked as superseded, say so: K1 reads them as stale.
 
-In the Large profile, also record the ownership coverage step 1 found
-(M11).
-
 ## 2. Enforcement per rule class
 
 The checkable rule classes are **R1** (feature isolation), **R2**
@@ -105,7 +102,12 @@ Rate each class:
   hold. Judge a check by what escapes it in the modules it scans: when a
   violation of another form passes (it catches one import pattern, or a
   test checks some directory pairs but not others), it rates **no** for
-  the class; record it anyway;
+  the class; record it anyway. A baseline or allowlist of existing
+  violations is not a gap in coverage: rate the class by its check, and
+  judge the baseline in section 3. A containment check that
+  does not follow re-exports rates **no** for R8 when step 3 records a
+  containment site reached through a re-export in a module the check
+  covers (the site's importing module, not the re-exporting one);
 - **warn-only**: it reports at a severity CI does not fail on (info or
   warning, unless the CI command is fatal on them, as `flutter analyze` is
   by default), or runs where it cannot block a merge. When CI calls a
@@ -125,10 +127,17 @@ the check:
 - a **baseline or allowlist** file the check reads (path, entry count);
 - whether the check fails on growth, and whether it fails on, or
   automatically prunes, entries that no longer occur (a ratchet that can
-  only shrink);
+  only shrink). Judge growth from what an entry keys on: when the number
+  of violations can rise without failing the check, the baseline misses
+  growth (a swap of one violation for another at the same count is not
+  growth). An entry per module pair, or per file, with no count lets a new
+  import inside a listed key pass; an entry per violation site, or a key
+  with a count the check compares, does not. K3 scores a baseline that
+  misses growth 2, not 5;
 - ignore comments, disabled rules or suppressions in source (count them
   with `grep`).
 
+For this section a violation is a file-level site, whatever the class.
 When no enforced or partial class has existing violations inside its
 covered modules, write "none to hold": K3 is then not applicable.
 
@@ -145,8 +154,7 @@ cannot be seen; record that it is opt-in. Record the hook or rule and the comman
 
 Write `reports/.artifacts/architecture-audit/step_04_control-analysis.md`:
 - **Written rules**: each document with module map yes/no, dependency rules
-  yes/no, current yes/partly/no, and the evidence; ownership coverage in the Large
-  profile.
+  yes/no, current yes/partly/no, and the evidence.
 - **Enforcement table**: one row per rule class R1, R2, R5, R6, R7, R8 with
   required (yes/no, and the condition when the profile lists the class but
   the module graph cannot break it), rating (enforced / partial / warn-only /

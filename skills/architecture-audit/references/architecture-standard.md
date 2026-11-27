@@ -51,24 +51,21 @@ The key words MUST, MUST NOT, SHOULD and MAY are used as in RFC 2119.
 ## 2. Project profile
 
 Modularity has a cost: manifests, wiring, ceremony and build configuration.
-The standard asks each codebase for the structure its size and team
-justify, no more. Every audit first measures the codebase's **profile**, and
+The standard asks each codebase for the structure its size justifies, no
+more. Every audit first measures the codebase's **profile**, and
 the profile decides which expectations apply (table below) and which checks
 are scored.
 
 | Profile | Measured when |
 |---|---|
-| **Compact** | under 20,000 handwritten lines **and** at most 8 features **and** at most 3 peak monthly contributors |
-| **Large** | at least 80,000 handwritten lines **or** at least 20 features **or** at least 8 peak monthly contributors |
+| **Compact** | under 20,000 handwritten lines **and** at most 8 features |
+| **Large** | at least 80,000 handwritten lines **or** at least 20 features |
 | **Standard** | every other codebase |
 
-- *Peak monthly contributors* is the largest number of distinct people,
-  bots excluded, who changed the codebase in any calendar month of the last
-  twelve. When the history is unavailable (shallow clone, no repository),
-  the profile is measured on lines and features alone and the report says
-  so.
+- The profile is measured on the code alone: handwritten lines and features.
+  The number of people who work on it plays no part.
 - The operator MAY override the measured profile with a stated reason, for
-  example a team about to triple or a prototype to be discarded. The report
+  example a planned split into packages or a prototype to be discarded. The report
   shows both the measured and the effective profile.
 - Scores are relative to the effective profile. A score says how well a
   codebase fits what its profile calls for; scores of different profiles
@@ -83,8 +80,8 @@ whole codebase:
   entry points of one app (flavours such as development, staging and
   production) are one deliverable, and so are white-label builds that each
   ship the whole app.
-- **D2. Several owning teams.** Two or more teams own parts of the
-  codebase.
+- **D2. Retired.** It counted owning teams, an organisational fact the
+  code cannot show. The ID is not reused and D3 and D4 keep theirs.
 - **D3. Deferred delivery.** Parts of the app load on demand. Where the
   platform delivers them as build modules (Android dynamic feature
   modules), the deferred code MUST be a physical module. Where it defers by
@@ -94,7 +91,7 @@ whole codebase:
 - **D4. Published package.** The repository publishes part of its code as a
   package for others.
 
-D1, D2 and D4, and D3 where the platform delivers build modules, are
+D1 and D4, and D3 where the platform delivers build modules, are
 **module drivers**: they call for physical modules. D3 code deferred by
 library or chunk calls only for the absence of eager imports.
 
@@ -109,7 +106,6 @@ What each profile expects:
 | Rule classes enforced by tools (R9) | R1, R2 | R1, R2, R5, R7 | R1, R2, R5, R6, R7, R8 |
 | Public surfaces respected (R6) | not assessed | MUST | MUST |
 | Checks runnable before push | not expected | SHOULD | SHOULD |
-| An owner declared for every module | not expected | not expected | MUST |
 
 A rule class the R9 row lists for the profile is required only when the
 codebase's module graph can break it: R1 with at least two features, R2
@@ -153,10 +149,12 @@ that feature's data code kept apart: it stays its own shared-domain module,
 with the feature it serves recorded, and it does not make the feature
 physical.
 
-A module that holds code of two roles (for example a directory that is both
-the composition root and a home for widgets the features import) is
-classified by its most-depended-upon role and reported as mixed: under R5
-when one of its roles is the composition root, otherwise under AP1.
+A module that holds code of two roles is classified by its
+most-depended-upon role and reported as mixed, except a unit that holds
+composition and cannot be split (for example a file that is both the
+composition root and a home for widgets the features import): it belongs
+to the root. A mixed unit is reported under R5 when it belongs to the
+root, otherwise under AP1, wherever its directory sits.
 
 ## 4. Allowed dependencies
 
@@ -186,10 +184,12 @@ a shared module; how one feature reaches another goes through a contract
 (R3). Edges into contract modules, including another feature's API module,
 are not feature edges.
 
-**R2. The module graph is acyclic.** No cycle may exist among the edges the
-matrix allows. Edges the matrix forbids are violations of R1, R3, R5 or R7
-and are counted there, not again as cycles. Within a module, cycles between
-files are the module's own business.
+**R2. The module graph is acyclic.** No cycle may exist among the modules,
+counting every edge, the forbidden ones included. A forbidden edge is a
+violation of R1, R3, R5 or R7; a cycle through it is also a violation of
+R2. R2 applies once there are three modules: below that, a cycle between
+the root and a feature is R5's alone. Within a module, cycles between files
+are the module's own business.
 
 **R3. Navigation goes through contracts.** A feature that opens another
 feature's screen MUST address it through a contract: a route key, typed
@@ -227,7 +227,15 @@ for other modules, and no module outside the root may depend on it. What
 features need from the root moves to a contract, shared or foundation
 module. App-wide configuration that only the root uses to start the
 application (the theme or shell it hands the framework, environment and
-startup setup) is composition.
+startup setup) is composition. The root's handwritten files and other
+modules' handwritten files MUST NOT share a directory: in a directory that
+directly holds both, the files on its smaller side (the other modules'
+files on a tie) are violations, and a shared module only the root imports
+holds no product logic. Where a module's own directory sits (beside the
+root's under one parent, around them, or inside one of them) is no
+violation by itself. Generated files, package markers and index files
+that only mark or re-export, and files whose place the framework fixes
+(file-system routes) are exempt.
 
 **R6. Modules are used through their public surface.** An edge into a module
 MUST target its public surface. A deep edge into another module's internals
@@ -244,7 +252,8 @@ mix roles (UI kit, platform services and domain logic in one place).
 presentation depends on state, state on domain or repositories,
 repositories on data sources and clients, never the reverse, and
 presentation does not reach data sources or clients directly. Vendor SDKs,
-HTTP clients and platform APIs are imported only by the composition root
+HTTP clients and platform APIs (reached directly or through a barrel or
+file that re-exports them) are imported only by the composition root
 (to initialise and bind them), foundation modules, global-service
 implementations, or a data layer (a feature's own, or a shared-domain
 module of repositories). A **vendor
@@ -278,7 +287,7 @@ violation.
 
 **R10. Boundaries become physical when the profile or a driver calls for
 it.** In the Large profile, at least 90 % of features MUST be physical
-modules. Code that D1, D2 or D4 concerns MUST be a physical module in any
+modules. Code that D1 or D4 concerns MUST be a physical module in any
 profile, and code that D3 concerns MUST meet D3's requirement (section 2).
 Below that, logical modules with the profile's enforced rule
 classes satisfy the standard, and splitting further is AP5.
@@ -296,18 +305,25 @@ Signals: one shared, global-service or foundation module holds more than
 has the highest fan-in of any module while its name states no purpose
 (`common`, `core`, `utils`, `app`, `shared` alone); it depends on a
 feature; a contract module holds screens, state or implementations.
-Shared code found inside the root's directories is counted once, under R5,
-not here: its modules give no AP1 signal, though their R7 sites still
-count.
+These signals apply to every such module wherever its directory sits,
+also when R5 counts some of its files because they share a directory with
+the root's or only the root imports them: R5 counts where code sits and
+who imports it, AP1 what a module holds, so moving a module changes R5
+alone. Code that belongs to the root is judged under R5, not here.
 
 **AP2. Composition monolith.** The composition root grows into the place
 where the application actually lives.
 Signals: the root's share of handwritten code is in Risk (M9); a single
 handwritten wiring file exceeds 500 lines; one handwritten wiring file
 registers the bindings of more than five features instead of including
-per-feature registration modules. Generated wiring (for example
-injectable's output) is left out: its registrations are declared next to
-the code they bind.
+per-feature registration modules. A **wiring file** creates or obtains
+instances and passes them to application code, registers bindings, or
+provides instances through a scope; start-up configuration (initialising
+SDKs, framework hooks and observers, logging, environment) is not wiring,
+whatever the file is called, and route definitions alone are not either.
+A file that does any wiring is a wiring file. Generated wiring (for
+example injectable's output) is left out: its registrations are declared
+next to the code they bind.
 
 **AP3. Hidden navigation coupling.** Features look independent in the
 dependency rules but are tied together through navigation.
@@ -342,7 +358,7 @@ is missing is **not measured**, which is never read as Healthy.
 | ID | Metric | Healthy | Watch | Risk | Applies when |
 |---|---|---|---|---|---|
 | M1 | Feature-to-feature module edges per feature | 0 | ≤ 1 | > 1 | ≥ 2 features |
-| M2 | Modules in the largest cycle over allowed edges | 0 | 2–3 | ≥ 4 | ≥ 3 modules |
+| M2 | Modules in the largest cycle over all edges | 0 | 2–3 | ≥ 4 | ≥ 3 modules |
 | M3 | Deep edges as a share of checked allowed cross-module edges | 0 % | ≤ 5 % | > 5 % | not Compact; not measured when more than half of allowed cross-module edges go into modules without a declared surface |
 | M4 | Mean features touched per change | ≤ 1.2 | ≤ 1.5 | > 1.5 | ≥ 4 features, ≥ 50 qualifying changes, full history |
 | M5 | Changes touching three or more features | ≤ 5 % | ≤ 10 % | > 10 % | as M4 |
@@ -351,7 +367,11 @@ is missing is **not measured**, which is never read as Healthy.
 | M8 | Handwritten files over 1,000 lines, as a share of files | 0 | ≤ 1 % | > 1 % | always |
 | M9 | Composition root's share of handwritten code | ≤ 10 % | ≤ 25 % | > 25 % | always |
 | M10 | Features that are physical modules | ≥ 90 % | ≥ 50 % | < 50 % | Large profile |
-| M11 | Modules with a declared owner | 100 % | ≥ 50 % | < 50 % | Large profile |
+
+**M11 is retired.** It counted modules with a declared owner, an
+organisational fact that the code cannot show. The ID is not reused
+and the others are not renumbered, so "M1–M10" keeps its meaning in
+reports written earlier.
 
 How the change metrics are counted (M4, M5): the last 300 changes on the
 audited branch's first-parent line, so a merged pull request counts once
@@ -378,7 +398,7 @@ status is the worst status among its applicable metrics.
 | Change locality | M4, M5 |
 | Manageability | M6 |
 | Maintainability | M7, M8 |
-| Development scalability | M9, M10, M11 |
+| Development scalability | M9, M10 |
 
 ## 8. The four contours
 
@@ -394,33 +414,40 @@ and the audit scores each.
 
 ## 9. Order of remediation
 
-Bring a codebase into line in this order. Each stage makes the next one
-cheaper and keeps the previous one from eroding. A stage the profile does
-not call for is skipped.
+Bring a codebase into line in this order. Control comes first and locks in
+each gain, so a broken cycle cannot return; contracts are spent where they
+break cycles. A stage the profile does not call for is skipped.
 
-1. **Rules and control first.** Write the module map and the dependency
-   matrix down; add mechanical checks for the profile's rule classes with a
-   baseline of current violations that may only shrink (R9).
-2. **Navigation contracts.** Replace screen imports with contracts and move
-   route assembly into the root (R3, R4). This usually removes a large
-   share of feature-to-feature edges mechanically.
-3. **Empty the root.** Move shared widgets and localisation to
+1. **Minimal control.** Write the module map and the dependency matrix
+   down; add the cycle and direction checks (those of R1, R2, R5 and R7 the
+   profile's rule classes list) with a baseline of current violations that may only shrink (R9). This
+   locks in every cycle broken after it.
+2. **Break cycles** (R1, R2), including cycles through forbidden edges.
+   Where the edge that closes a cycle is navigation, cut it with a
+   navigation contract (R3) instead of a separate stage. Extract what the
+   modules in a cycle share, starting with the most depended-upon pieces.
+3. **Fix direction.** Remove dependencies on the root (R5) and lower roles
+   that point up (R7).
+4. **Remaining contracts and rules.** Replace the screen imports and move
+   the route assembly that stage 2 did not cut (R3, R4), move the wiring
+   (singletons, cross-module construction) to the root (R4), and add the
+   rest of the R9 checks for the profile's rule classes (R6, R8).
+5. **Empty the root.** Move shared widgets and localisation to
    shared-common, platform services to foundation, domain logic to its
    owning module (R5, AP1).
-4. **Break cycles through shared modules.** Extract what the modules in a
-   cycle share, starting with the most depended-upon pieces (R1, R2).
-5. **Make boundaries physical where the profile or a driver calls for it.**
+6. **Make boundaries physical where the profile or a driver calls for it.**
    Start with code a module driver concerns, then features with no edges
    to other features, then pure providers (fan-out 0), then the rest
    (R10). In the Compact profile, the matching action is to merge modules
    that AP5 flags. For D3 code deferred by library or chunk, the action is
    to remove its eager imports and add a check that keeps them out.
-6. **Split monoliths last.** Decompose a feature monolith (AP4) once it no
+7. **Split monoliths last.** Decompose a feature monolith (AP4) once it no
    longer sits in a cycle; earlier, the split only moves the cycle.
 
-Work no stage names goes with the nearest one: R4 wiring (singletons,
-cross-module construction) and AP2 with stage 3, R6, R7 and R8 with stage
-4, and oversized files (M8) with stage 6.
+An action that fits several stages belongs to the earliest of them: a
+dependency on the root that closes a cycle is stage 2 work, not stage 3 or
+5. Work no stage names goes with the nearest one: AP2, R6 and R8 with stage
+4, and oversized files (M8) with stage 7.
 
 ## 10. Stack notes
 
@@ -440,7 +467,7 @@ enforced.
   manifests encode: R5 and R6 for every package (a package cannot declare
   the app, and `implementation_imports` guards `src/`); R1 for feature
   packages; and R7, and R8 containment of a vendor SDK only a data package
-  declares, for lower-role packages whose manifests list only what the
+  declares and no package re-exports, for lower-role packages whose manifests list only what the
   matrix allows. They do so only when both lints are enabled, not
   suppressed, and fail CI: raised to `error`, or run by `flutter analyze`
   (which fails on infos and warnings unless told otherwise with
