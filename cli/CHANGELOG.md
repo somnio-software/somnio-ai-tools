@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [3.4.4] - 2026-11-27
 
+### Added
+
+- **`weekly-audit-checks`, one procedure for every Weekly checks routine.** Each "Weekly checks — <repo>" routine carried its own prompt of about 8,000 characters, with the Drive folder and Slack channel written in, and the prompts had diverged. A routine's prompt is now a stub that names the repository and follows `skills/weekly-audit-checks/SKILL.md` from a shallow clone of `main`: read the config, run its audits on the base branch, check every report, upload the ones that pass without overwriting, and post one Slack message. A `DRY RUN` first line uploads and posts nothing (CLOS-413). It is not an installable skill: only routines run it.
+- **`weekly-audit-triage/scripts/report_check.py` checks a report before it is uploaded.** The Tech Metrics spreadsheet rejected reports for format details nobody checked: a type it does not read (`nextjs-health-audit`), an old repository key, the backticked DORA heading, a DORA window other than the configured one. The script checks the name `<date>-<key>-<type>.md` against the run's date, the config's keys and a closed list of accepted types, and a DORA report's `## <owner>/<name>` heading and `Measurement window` row; a report that fails is not uploaded and the Slack message names it with its reasons.
+- **`.claude/weekly-audit.json` takes `slack_channel`, `audits` and `dora`.** They are optional and still `version: 1`, so the configs the triage and the fixer read validate as before. `audits` lists the audits the routine runs (`skill`, `path`, `report_name`), and `dora` is the repository's only DORA config (`window_days`, `prod_branch`, and the optional per-repo keys of `projects.json`). `repo_config.py` checks them; the schema is in `references/repo-config.md`.
+
 ### Changed
 
 - **`dora-metrics` writes each repository's heading as `## <owner>/<name>`.** The heading was `` ## `owner/name` (type) — deploy_source: … ``, and the Tech Metrics spreadsheet, which matches a report to its repository by that line, rejected it. Type, deploy source and provider (when it is not GitHub) now go on the line below, and an unmeasured repository says `Not measured.` there (CLOS-413). The JSON output is unchanged.
