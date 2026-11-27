@@ -60,12 +60,12 @@ Four agents let an environment variable relocate their config directory, and the
 |-------|----------|-------------------------------|-------|
 | Claude Code | `CLAUDE_CONFIG_DIR` | `$CLAUDE_CONFIG_DIR/skills` | 3.2.14 |
 | Codex CLI | `CODEX_HOME` | `$CODEX_HOME/skills` | 3.2.12 |
-| OpenCode | `XDG_CONFIG_HOME` | `$XDG_CONFIG_HOME/opencode/skills` | 3.4.1 |
-| Kimi Code | `KIMI_CODE_HOME` | `$KIMI_CODE_HOME/skills` | 3.4.3 |
+| OpenCode | `XDG_CONFIG_HOME` | `$XDG_CONFIG_HOME/opencode/skills` | 3.4.2 |
+| Kimi Code | `KIMI_CODE_HOME` | `$KIMI_CODE_HOME/skills` | 3.4.4 |
 
 A blank value is ignored; a relative value is used as typed, against the directory the CLI runs in, so set it to an absolute path. Project installs are anchored at the project root and ignore the variable. `update`, `remove`, `uninstall`, `status` and agent detection use the relocated folder, and so does `somnio run`; `somnio hooks` writes under `$CLAUDE_CONFIG_DIR` too.
 
-Earlier releases installed to the default folder regardless of the variable. For Codex, `skills remove` and `uninstall --skills` also clean the default `~/.codex/skills` while `CODEX_HOME` points elsewhere, and for OpenCode the default `~/.config/opencode/skills` while `XDG_CONFIG_HOME` points elsewhere (no release before 3.4.1 wrote there; this covers an install made before the variable was set). For Claude Code they leave `~/.claude` alone (`cleansDefaultConfigHome: false` in the registry), because it is often another Claude Code account's live directory. They leave `~/.kimi-code/skills` alone the same way while `KIMI_CODE_HOME` points elsewhere: the variable exists to keep profiles apart, and no release ignored it there. That folder gets the protection described for `~/.claude/skills` below, with one difference: when `~/.kimi-code/skills` is itself a link (`~/.kimi-code/skills` → `~/.claude/skills`) to another agent's current folder, and that folder is reached through no link, that agent keeps working on it, because the folder is not Kimi Code's (`yieldsSharedFolder` in the registry). Kimi Code still leaves it alone. As an install folder, a real `~/.kimi-code/skills` stays protected from every other agent, also from one whose variable points there (`CODEX_HOME=~/.kimi-code`). The check covers install folders only and resolves `..` before links: a rules folder linked to it (`~/.cursor/somnio_rules` → `~/.kimi-code/skills`) or `CODEX_HOME=~/q/lnk/../.kimi-code` still reaches it, and a rules folder linked to `~/.claude/skills` reaches that one the same way.
+Earlier releases installed to the default folder regardless of the variable. For Codex, `skills remove` and `uninstall --skills` also clean the default `~/.codex/skills` while `CODEX_HOME` points elsewhere, and for OpenCode the default `~/.config/opencode/skills` while `XDG_CONFIG_HOME` points elsewhere (no release before 3.4.2 wrote there; this covers an install made before the variable was set). For Claude Code they leave `~/.claude` alone (`cleansDefaultConfigHome: false` in the registry), because it is often another Claude Code account's live directory. They leave `~/.kimi-code/skills` alone the same way while `KIMI_CODE_HOME` points elsewhere: the variable exists to keep profiles apart, and no release ignored it there. That folder gets the protection described for `~/.claude/skills` below, with one difference: when `~/.kimi-code/skills` is itself a link (`~/.kimi-code/skills` → `~/.claude/skills`) to another agent's current folder, and that folder is reached through no link, that agent keeps working on it, because the folder is not Kimi Code's (`yieldsSharedFolder` in the registry). Kimi Code still leaves it alone. As an install folder, a real `~/.kimi-code/skills` stays protected from every other agent, also from one whose variable points there (`CODEX_HOME=~/.kimi-code`). The check covers install folders only and resolves `..` before links: a rules folder linked to it (`~/.cursor/somnio_rules` → `~/.kimi-code/skills`) or `CODEX_HOME=~/q/lnk/../.kimi-code` still reaches it, and a rules folder linked to `~/.claude/skills` reaches that one the same way.
 
 The difference does not reach an owner whose folder sits behind a link of its own, or one that has moved away from the folder:
 
@@ -95,13 +95,13 @@ Several agents were installed in a layout or folder the agent does not read as s
 | Amazon Q | `~/.amazonq/prompts` | `~/.aws/amazonq/prompts`; project prompts stay in `.amazonq/prompts` | 3.2.17 |
 | Roo Code | `~/.roo/rules` (`markdown`) | `~/.roo/skills`, project `.roo/skills` | 3.3.2 |
 | Kilo Code | `~/.kilocode/rules` (`markdown`) | `~/.kilocode/skills`, project `.kilocode/skills` | 3.3.2 |
-| OpenCode | `~/.opencode/skills` (`skillDir`; `markdown` before 3.2.12) | `$XDG_CONFIG_HOME/opencode/skills` (default `~/.config/opencode/skills`); project installs stay in `.opencode/skills` | 3.4.1 |
+| OpenCode | `~/.opencode/skills` (`skillDir`; `markdown` before 3.2.12) | `$XDG_CONFIG_HOME/opencode/skills` (default `~/.config/opencode/skills`); project installs stay in `.opencode/skills` | 3.4.2 |
 
 The old folder is also checked in the project scope, anchored at the project root. Antigravity IDE workflows stopped working on 2026-10-19; Roo Code and Kilo Code add every file in their rules folders to the instructions of every request, which is why skills moved out of them.
 
 ### Same folder, new layout
 
-Seven agents kept their skills folder in 3.2.12 (OpenCode left its in 3.4.1, see above), but releases before 3.2.12 wrote flat `<name>.md` files there, plus the references in a separate `somnio_rules/` directory. The agents load skills only as `<name>/SKILL.md` directories, so they now use `skillDir`.
+Seven agents kept their skills folder in 3.2.12 (OpenCode left its in 3.4.2, see above), but releases before 3.2.12 wrote flat `<name>.md` files there, plus the references in a separate `somnio_rules/` directory. The agents load skills only as `<name>/SKILL.md` directories, so they now use `skillDir`.
 
 | Agent | Old rules folder | Release |
 |-------|------------------|---------|
