@@ -20,6 +20,41 @@ void main() {
       );
     });
 
+    test('only Claude Code wrote skill folders before the manifest', () {
+      expect(
+        AgentRegistry.agents
+            .where((a) => a.hasPreManifestSkillDirs)
+            .map((a) => a.id),
+        ['claude'],
+        reason: 'uninstall --skills removes unrecorded folders by name for '
+            "these agents, where a user's own skill can't be told from an "
+            'install; a later agent never had an install without a manifest',
+      );
+    });
+
+    test('only Kimi Code gives its protected default up to the folder owner',
+        () {
+      expect(
+        AgentRegistry.agents
+            .where((a) => a.yieldsSharedFolder)
+            .map((a) => a.id),
+        ['kimi'],
+        reason: "Claude Code's protection also covers another agent's real "
+            'folder that ~/.claude/skills links to',
+      );
+    });
+
+    test('only Kimi Code keeps everything no manifest records', () {
+      expect(
+        AgentRegistry.agents
+            .where((a) => a.installsOnlyWithManifest)
+            .map((a) => a.id),
+        ['kimi'],
+        reason: 'the earlier agents still have flat files from releases '
+            'without a manifest for uninstall --skills to sweep',
+      );
+    });
+
     test('agents list is not empty', () {
       expect(AgentRegistry.agents, isNotEmpty);
     });
@@ -200,6 +235,95 @@ void main() {
       );
     });
 
+    group('opencode', () {
+      final opencode = AgentRegistry.findById('opencode')!;
+
+      test('installs into ~/.config/opencode/skills by default', () {
+        expect(
+          opencode.resolvedInstallPath(home: '/h', environment: const {}),
+          '/h/.config/opencode/skills',
+        );
+      });
+
+      test('follows \$XDG_CONFIG_HOME for the global scope', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/xdg/opencode/skills',
+        );
+      });
+
+      test('also cleans the default folder while the variable relocates it',
+          () {
+        expect(
+          opencode.resolvedGlobalInstallPaths(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          ['/xdg/opencode/skills', '/h/.config/opencode/skills'],
+        );
+        expect(
+          opencode.resolvedProtectedInstallPaths(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          isEmpty,
+        );
+      });
+
+      test('uses a relative \$XDG_CONFIG_HOME as typed', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': 'cfg'},
+          ),
+          'cfg/opencode/skills',
+        );
+      });
+
+      test('ignores a blank \$XDG_CONFIG_HOME', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '  '},
+          ),
+          '/h/.config/opencode/skills',
+        );
+      });
+
+      test('keeps project installs in .opencode/skills', () {
+        expect(
+          opencode.resolvedScopedInstallPath(
+            scope: InstallScope.project,
+            home: '/h',
+            projectRoot: '/repo',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/repo/.opencode/skills',
+        );
+      });
+
+      test('records ~/.opencode/skills as its legacy folder', () {
+        expect(
+          opencode.resolvedScopedLegacyInstallPath(
+            scope: InstallScope.global,
+            home: '/h',
+            projectRoot: '/repo',
+          ),
+          '/h/.opencode/skills',
+        );
+        expect(
+          opencode.resolvedExecutionRulesPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/h/.opencode/somnio_rules',
+        );
+      });
+    });
+
     test('codex has correct configuration', () {
       final codex = AgentRegistry.findById('codex')!;
       expect(codex.promptStyle, PromptStyle.subcommand);
@@ -224,6 +348,52 @@ void main() {
           environment: const {'CODEX_HOME': '/custom/codex'},
         ),
         '/custom/codex/skills',
+      );
+    });
+
+    test('kimi runs a single prompt with kimi -p', () {
+      final kimi = AgentRegistry.findById('kimi')!;
+      expect(kimi.displayName, 'Kimi Code');
+      expect(kimi.canExecute, isTrue);
+      expect(kimi.binary, 'kimi');
+      // `-p` already applies the auto permission policy and rejects `--yolo`.
+      expect(kimi.buildArgs('prompt'), ['-p', 'prompt']);
+    });
+
+    test('kimi installs skill directories under \$KIMI_CODE_HOME/skills', () {
+      final kimi = AgentRegistry.findById('kimi')!;
+      expect(kimi.installFormat, InstallFormat.skillDir);
+      expect(kimi.executionRulesPath, isNull);
+      expect(kimi.legacyInstallFormat, isNull);
+      expect(kimi.resolvedInstallPath(home: '/h'), '/h/.kimi-code/skills');
+      expect(
+        kimi.resolvedInstallPath(
+          home: '/h',
+          environment: const {'KIMI_CODE_HOME': '/h/.config/kimi-code'},
+        ),
+        '/h/.config/kimi-code/skills',
+      );
+      expect(
+        kimi.resolvedScopedInstallPath(
+          scope: InstallScope.project,
+          home: '/h',
+          projectRoot: '/repo',
+          environment: const {'KIMI_CODE_HOME': '/h/.config/kimi-code'},
+        ),
+        '/repo/.kimi-code/skills',
+      );
+    });
+
+    test('kimi leaves ~/.kimi-code alone while KIMI_CODE_HOME relocates it',
+        () {
+      // No earlier release installed there, and it may be another profile.
+      final kimi = AgentRegistry.findById('kimi')!;
+      expect(
+        kimi.resolvedGlobalInstallPaths(
+          home: '/h',
+          environment: const {'KIMI_CODE_HOME': '/h/.config/kimi-code'},
+        ),
+        ['/h/.config/kimi-code/skills'],
       );
     });
 
@@ -399,7 +569,7 @@ void main() {
     });
 
     test('agents without auto-approve have empty flags', () {
-      for (final id in ['amp', 'opencode']) {
+      for (final id in ['amp', 'opencode', 'kimi']) {
         final agent = AgentRegistry.findById(id)!;
         expect(agent.autoApproveFlags, isEmpty,
             reason: '$id should have no autoApproveFlags');
@@ -487,6 +657,7 @@ void main() {
         'cline',
         'opencode',
         'codebuddy',
+        'kimi',
         'antigravity',
         'copilot',
         'windsurf',
@@ -502,7 +673,14 @@ void main() {
     test('executable agents with no models resolve every tier to null', () {
       // No modelTiers, defaultModel, or fallbackModel to resolve against, so
       // the tier must not leak to the CLI as `--model cheap`.
-      for (final id in ['amp', 'aider', 'cline', 'opencode', 'codebuddy']) {
+      for (final id in [
+        'amp',
+        'aider',
+        'cline',
+        'opencode',
+        'codebuddy',
+        'kimi',
+      ]) {
         final agent = AgentRegistry.findById(id)!;
         for (final tier in ['cheap', 'mid', 'frontier']) {
           expect(agent.resolveTier(tier), isNull, reason: '$id $tier');

@@ -69,6 +69,9 @@ class AgentConfig {
     this.configHome,
     this.configHomeVariable,
     this.cleansDefaultConfigHome = true,
+    this.hasPreManifestSkillDirs = false,
+    this.installsOnlyWithManifest = false,
+    this.yieldsSharedFolder = false,
     this.legacyInstallFormat,
     this.legacyInstallPath,
     this.legacyExecutionRulesPath,
@@ -178,7 +181,8 @@ class AgentConfig {
 
   /// The agent's global config directory as a template prefix of
   /// [installPath] (e.g. `{home}/.codex`), relocatable through
-  /// [configHomeVariable].
+  /// [configHomeVariable]. It may be a parent shared with other programs
+  /// (OpenCode: `{home}/.config`, its own folder being `opencode/` below).
   ///
   /// Both must be set for the override to apply.
   final String? configHome;
@@ -199,6 +203,43 @@ class AgentConfig {
   /// `~/.claude` is often a second Claude Code account next to the one
   /// `CLAUDE_CONFIG_DIR` selects, so its skills are left alone.
   final bool cleansDefaultConfigHome;
+
+  /// Whether a release from before the `.somnio-skills.json` manifest (2.10.0)
+  /// wrote this agent's skills as directories in its default install folder.
+  ///
+  /// Only there does `uninstall --skills` remove by name a directory no
+  /// manifest records. Claude Code alone did: the other agents had flat files
+  /// then, or were not supported yet, and `CLAUDE_CONFIG_DIR` was honoured only
+  /// after the manifest, so a directory anywhere else is treated as the user's
+  /// even when its `SKILL.md` names a Somnio skill.
+  final bool hasPreManifestSkillDirs;
+
+  /// Whether this agent's skills were only ever installed with a manifest, so
+  /// that anything unrecorded in its folders is treated as the user's.
+  ///
+  /// A killed install or a lost manifest can leave a Somnio copy unrecorded; it
+  /// is kept too, to delete by hand. `uninstall --skills` removes nothing by
+  /// name from those folders, and an install in any scope keeps a directory of
+  /// a skill's name that no manifest records, unless it holds only the start of
+  /// what the install would write.
+  /// Only for an agent first supported with the manifest whose folder may hold
+  /// the user's own skills in any form: the earlier agents keep their sweep for
+  /// the flat files their old releases wrote.
+  final bool installsOnlyWithManifest;
+
+  /// Whether this agent gives way on a folder that is really another agent's.
+  ///
+  /// While its current folder is really another agent's current one
+  /// (`~/.kimi-code/skills -> ~/.claude/skills`, or the reverse), a run over
+  /// several agents leaves it to that agent, and an explicit `--agent` warns.
+  ///
+  /// With `~/.kimi-code/skills -> ~/.claude/skills` and `KIMI_CODE_HOME` set,
+  /// Claude Code still works on `~/.claude/skills`, as long as that folder is
+  /// no link itself. Another agent's folder linked into the protected one stays
+  /// refused, and so does one that reaches a real `~/.kimi-code/skills`. Claude
+  /// Code does not set this: its `~/.claude/skills` may be another account's
+  /// live folder wherever it really is.
+  final bool yieldsSharedFolder;
 
   /// The [InstallFormat] an earlier CLI release installed this agent's
   /// skills in, when that differs from [installFormat].

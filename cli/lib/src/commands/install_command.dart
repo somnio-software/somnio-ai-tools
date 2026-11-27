@@ -91,6 +91,13 @@ class InstallCommand extends Command<int> {
       return ExitCode.success.code;
     }
 
+    final targets = CommandHelpers.withoutSharedFolders(
+      _logger,
+      agents,
+      explicit: !(argResults!['all'] as bool) && agents.length == 1,
+    );
+    if (targets.isEmpty) return ExitCode.success.code;
+
     // 3. Now that the install can go ahead, offer to remove the Somnio
     //    skills skills.sh installed, which Somnio cannot update.
     runSkillsShCleanup(
@@ -105,7 +112,7 @@ class InstallCommand extends Command<int> {
     );
 
     // 4. Install the selected skills to each selected agent.
-    return flow.installToAgents(agents, content.loader, selection);
+    return flow.installToAgents(targets, content.loader, selection);
   }
 
   // ──────────────────────────────────────────────────────────────────
