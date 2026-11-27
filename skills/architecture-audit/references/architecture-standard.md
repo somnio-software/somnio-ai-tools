@@ -298,7 +298,8 @@ has the highest fan-in of any module while its name states no purpose
 feature; a contract module holds screens, state or implementations.
 Shared code found inside the root's directories is counted once, under R5,
 not here: its modules give no AP1 signal, though their R7 sites still
-count.
+count. Signals count by kind, as listed above: the same signal in several
+modules is one signal.
 
 **AP2. Composition monolith.** The composition root grows into the place
 where the application actually lives.

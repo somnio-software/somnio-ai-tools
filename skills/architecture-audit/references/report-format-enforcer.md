@@ -117,6 +117,8 @@ VALIDATION CHECKLIST:
 - No secret values (all redacted)
 - No leaked generator instructions or fabricated identifiers
 - Report starts with the "# Architecture Audit Report" title
+- Section 10 has a `Project` row, and the JSON export has a `project`
+  property, both equal to the `<project>` in the report file name
 - Report ends with "10. Report Metadata" followed by the metadata block
 
 If formatting issues are found, fix them in-place and note what was

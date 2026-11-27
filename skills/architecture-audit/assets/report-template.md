@@ -24,14 +24,14 @@
 
 ## 2. Executive Summary
 
-**Description:** Modular architecture analysis of [Project Name] against the Modular Application Architecture Standard, at the [profile] profile.
+**Description:** Modular architecture analysis of [the `<project>` name] against the Modular Application Architecture Standard, at the [profile] profile.
 
 **Total Score:** [Score]/100 ([Band])
 
 [One paragraph: what the score means for this codebase at its profile - where its boundaries hold, where they are conventions only, and what that costs the team.]
 
 **Previous:** [N]/100, **Change:** [+/-M] ([improving/declining/unchanged])
-_(omit this line if no history exists; note a profile change since the previous audit)_
+_(with no history file, write "**Previous:** no history file found at reports/.history/last_architecture_scores.json in the audited path" - never "no previous audit"; note a profile change since the previous audit; when step 1 recorded the temporary-directory warning, add it as a line here)_
 
 **Key Figures:**
 - Handwritten code: [N] files, [N] lines; [N] modules, [N] features ([N] % physical)
@@ -155,6 +155,7 @@ _(At most eight actions, none padded; with nothing to restore, one line saying s
 | Field | Value |
 |-------|-------|
 | Scan date | [Date] |
+| Project | [the `<project>` name used in the report file name] |
 | Project path | [absolute path of the audited repository] |
 | Profile | [effective] (measured: [measured]) |
 | Scope | Production code; tests are not audited |
