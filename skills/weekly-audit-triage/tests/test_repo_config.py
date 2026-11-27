@@ -74,7 +74,8 @@ class TestValidate(unittest.TestCase):
         config, errors = repo_config.validate(valid())
         self.assertEqual(errors, [])
         self.assertEqual(set(config), {"version", "repo", "jira_project", "base_branch", "drive_folder",
-                                       "verify", "report_name", "apps", "excluded_paths", "ship_skill"})
+                                       "verify", "report_name", "apps", "excluded_paths", "ship_skill",
+                                       "scheduled_scans"})
 
     def test_values_are_checked(self):
         _, errors = repo_config.validate(valid(
@@ -205,6 +206,33 @@ class TestRoutineFields(unittest.TestCase):
         self.assertIn("'slack_channel' must not be empty", errors)
         self.assertIn("'audits' must be a list", errors)
         self.assertIn("'dora' must be a dict", errors)
+
+
+class TestScheduledScans(unittest.TestCase):
+    """The scheduled workflows the triage reads (CLOS-417)."""
+
+    def test_a_list_of_workflow_files_passes(self):
+        config, errors = repo_config.validate(valid(scheduled_scans=["vulnerability-scan.yml", "security.yaml"]))
+        self.assertEqual(errors, [])
+        self.assertEqual(config["scheduled_scans"], ["vulnerability-scan.yml", "security.yaml"])
+
+    def test_it_defaults_to_none(self):
+        config, errors = repo_config.validate(valid())
+        self.assertEqual(errors, [])
+        self.assertEqual(config["scheduled_scans"], [])
+        config, errors = repo_config.validate(valid(scheduled_scans=[]))
+        self.assertEqual((config["scheduled_scans"], errors), ([], []))
+
+    def test_a_non_list_is_named(self):
+        _, errors = repo_config.validate(valid(scheduled_scans="vulnerability-scan.yml"))
+        self.assertEqual(errors, ["'scheduled_scans' must be a list"])
+
+    def test_a_non_string_a_path_or_another_extension_is_named(self):
+        for scan in [7, ".github/workflows/scan.yml", "../scan.yml", "scan.json", "scan", "", "scan.yml\n"]:
+            with self.subTest(scan=scan):
+                _, errors = repo_config.validate(valid(scheduled_scans=["ok.yml", scan]))
+                self.assertEqual(errors, ["'scheduled_scans[1]' must be a workflow file name in "
+                                          ".github/workflows/, such as 'vulnerability-scan.yml'"])
 
 
 class TestCommandLine(unittest.TestCase):

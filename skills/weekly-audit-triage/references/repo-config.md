@@ -47,10 +47,11 @@ one error per line: the repository is not processed, and the errors go into the 
 | `slack_channel` | with `audits` | string | Slack channel ID the Weekly checks routine posts its one message to, e.g. `C0C2GVB9RKR`. |
 | `audits` | no | list | The audits the Weekly checks routine runs on `base_branch` (`skills/weekly-audit-checks`): `{"skill", "path", "report_name"}`. `skill` is one of the types the Tech Metrics spreadsheet reads (below); `path` is where it runs, default `"."`; `report_name` is the key of its report, default the config's. With `audits`, `report_name` and `slack_channel` are required. Two audits may not write the same report. Leave it out in a repository no routine audits. |
 | `dora` | with `dora-metrics` | object | The DORA run, required exactly when `dora-metrics` is an audit: `window_days` (a positive integer, the run's window) and `prod_branch` are required; `type`, `deploy_source`, `tag_pattern` and `provider` are optional and mean what they mean in a repo entry of the `dora-metrics` skill's `config/projects.json`, which checks their values. It is the repository's only DORA config: the routine writes a `projects.json` from it. |
+| `scheduled_scans` | no | list of file names | Workflows in `.github/workflows/` whose scheduled runs on `base_branch` the triage reads as findings (`scripts/scheduled_scans.py`), e.g. `["vulnerability-scan.yml"]`. A file name only (`^[A-Za-z0-9._-]+\.ya?ml$`), never a path. Default `[]`: the triage reads no scheduled run. |
 | `_comment` | no | string | Free text for people; ignored. |
 
 Any other field is an error, so a misspelt field is caught instead of silently ignored. A config without
-`audits`, `slack_channel` and `dora` prints exactly as before they existed.
+`audits`, `slack_channel` and `dora` prints exactly as before they existed, plus `"scheduled_scans": []`.
 
 ## Report checks
 
@@ -98,6 +99,7 @@ reads is one line there.
     {"name": "dependency-audit", "run": "pnpm check:audit", "when": "dependencies"}
   ],
   "ship_skill": "ship-flow",
+  "scheduled_scans": ["vulnerability-scan.yml"],
   "slack_channel": "C0C2GVB9RKR",
   "audits": [
     {"skill": "security-audit"},
