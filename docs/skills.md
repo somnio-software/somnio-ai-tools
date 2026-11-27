@@ -768,7 +768,9 @@ Triage this week's audit reports for closebook-finance-platform.
 Which findings in Monday's reports are new?
 ```
 
-**Requires:** the Atlassian (Jira) and Google Drive connectors, and `gh` to read another repository's config.
+A repository whose config lists `scheduled_scans` also gets the failures of those scheduled workflows on its base branch as findings: `scripts/scheduled_scans.py` picks, for each step, the latest scheduled run of the last 7 days that ran it, and a failing step becomes package or misconfiguration findings from its log, with the same fingerprints and dedup as the reports.
+
+**Requires:** the Atlassian (Jira) and Google Drive connectors, and `gh` to read another repository's config and its scheduled runs.
 
 **Output:** Jira tasks and child tickets, and a summary comment on each run task. Nothing is written to Drive.
 

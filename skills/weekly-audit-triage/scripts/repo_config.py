@@ -28,6 +28,7 @@ OPTIONAL = {
     "slack_channel": str,
     "audits": list,
     "dora": dict,
+    "scheduled_scans": list,
 }
 IGNORED = {"_comment"}
 VERIFY_KEYS = {"name", "run", "when"}
@@ -39,6 +40,8 @@ AUDIT_KEYS = {"skill", "path", "report_name"}
 DORA_KEYS = {"window_days": int, "prod_branch": str, "type": list, "deploy_source": str,
              "tag_pattern": str, "provider": str}
 DORA_REQUIRED = {"window_days", "prod_branch"}
+# A file name in .github/workflows/, never a path: the triage reads its scheduled runs (CLOS-417).
+WORKFLOW_FILE = re.compile(r"[A-Za-z0-9._-]+\.ya?ml")
 
 
 def _is(value, typ) -> bool:
@@ -96,6 +99,13 @@ def _dora(dora: dict, errors: list) -> None:
         errors.append(f"unknown field 'dora.{key}'")
 
 
+def _scheduled_scans(scans: list, errors: list) -> None:
+    for i, scan in enumerate(scans):
+        if not isinstance(scan, str) or not WORKFLOW_FILE.fullmatch(scan):
+            errors.append(f"'scheduled_scans[{i}]' must be a workflow file name in .github/workflows/, "
+                          "such as 'vulnerability-scan.yml'")
+
+
 def validate(data) -> tuple[dict, list]:
     """-> (config with defaults applied, errors). The config is meaningful only without errors."""
     if not isinstance(data, dict):
@@ -149,6 +159,8 @@ def validate(data) -> tuple[dict, list]:
         errors.append(f"'dora' is required when '{DORA}' is an audit")
     if "dora" in data and not dora_audit:
         errors.append(f"'dora' is given but '{DORA}' is not an audit")
+    if _is(data.get("scheduled_scans"), list):
+        _scheduled_scans(data["scheduled_scans"], errors)
 
     config = {k: v for k, v in data.items() if k not in IGNORED}
     if _is(data.get("repo"), str):
@@ -156,6 +168,7 @@ def validate(data) -> tuple[dict, list]:
     config.setdefault("apps", ["."])
     config.setdefault("excluded_paths", [])
     config.setdefault("ship_skill", None)
+    config.setdefault("scheduled_scans", [])
     if audits:
         config["audits"] = [
             {"path": ".", "report_name": config.get("report_name"), **audit} if isinstance(audit, dict) else audit
