@@ -77,7 +77,7 @@ import practice_guidance  # noqa: E402  (sibling module, same reason)
 # Version of the Somnio CLI this script ships with. Kept in sync with
 # `packageVersion` in cli/lib/src/version.dart by `dart run tool/stamp_version.dart`
 # (run from cli/) and checked by cli/test/src/content/version_stamp_test.dart.
-SOMNIO_VERSION = "3.4.0"
+SOMNIO_VERSION = "3.4.4"
 REPORT_TYPE = "dora-metrics"
 
 API_ROOT = "https://api.github.com"
@@ -1760,18 +1760,22 @@ def format_human_summary(result: dict, window_days: int, date: str = None) -> st
         lines.append("")
         for r in p["repos"]:
             type_label = ", ".join(r.get("type", [])) or "unspecified"
+            # The heading is the bare `owner/name`: it is the key a reader of the
+            # report matches on (the Tech Metrics spreadsheet rejects anything
+            # else), so type, deploy source and provider go on the line below.
+            lines.append(f"## {r['repo']}")
+            lines.append("")
             if not r.get("measured", True):
-                lines.append(f"## `{r['repo']}` — not measured")
+                lines.append("Not measured.")
                 lines.append("")
                 _render_issue_groups(r.get("issues", []), lines)
                 continue
-            header = f"## `{r['repo']}` ({type_label}) — deploy_source: {r.get('deploy_source', 'release')}"
-            # The provider is named only when it isn't the default, so a
-            # GitHub repo's heading reads exactly as it always has.
+            subtitle = f"Type: {type_label} — deploy_source: {r.get('deploy_source', 'release')}"
+            # The provider is named only when it isn't the default.
             provider = r.get("provider", DEFAULT_PROVIDER)
             if provider != DEFAULT_PROVIDER:
-                header += f" — provider: {provider}"
-            lines.append(header)
+                subtitle += f" — provider: {provider}"
+            lines.append(subtitle)
             lines.append("")
             lines.append(f"- **Deployment Frequency** (window {window_days}d): {r['deployment_frequency']}")
             if r["lead_time_median_hours"] is not None:

@@ -267,7 +267,7 @@ class TestFormatHumanSummary(unittest.TestCase):
     def test_includes_metrics(self):
         text = dora_metrics.format_human_summary(self._result([self._repo()]), window_days=14)
         self.assertIn("# DORA Metrics — Example Project", text)
-        self.assertIn("## `example-org/example-frontend` (web, mobile) — deploy_source: release", text)
+        self.assertIn("## example-org/example-frontend\n\nType: web, mobile — deploy_source: release\n", text)
         self.assertIn("**Deployment Frequency** (window 14d): 2", text)
         self.assertIn("**Median Lead Time**: 4.3h (n=3)", text)
         self.assertNotIn("**Problems found", text)
@@ -328,7 +328,7 @@ class TestFormatHumanSummary(unittest.TestCase):
             self._result([{"repo": "a/b", "type": [], "deploy_source": "release",
                            "measured": False, "issues": [issue], "warnings": [issue["message"]]}]),
             window_days=14)
-        self.assertIn("## `a/b` — not measured", text)
+        self.assertIn("## a/b\n\nNot measured.\n", text)
         self.assertNotIn("**Deployment Frequency**", text)
         self.assertIn("a/b: the GitHub API returned 404", text)
 
@@ -1583,7 +1583,7 @@ class TestReportMetadata(unittest.TestCase):
 
     def test_metric_bullets_and_headings_are_unchanged(self):
         text = dora_metrics.format_human_summary(self._result([self._repo()]), window_days=14)
-        self.assertIn("## `example-org/example-frontend` (web) — deploy_source: release\n", text)
+        self.assertIn("## example-org/example-frontend\n\nType: web — deploy_source: release\n", text)
         self.assertIn("- **Deployment Frequency** (window 14d): 2\n", text)
         self.assertIn("- **Median Lead Time**: 4.3h (n=3)\n", text)
         no_data = dora_metrics.format_human_summary(
@@ -1592,8 +1592,8 @@ class TestReportMetadata(unittest.TestCase):
 
     def test_metadata_heading_is_not_a_repo_section(self):
         text = dora_metrics.format_human_summary(self._result([self._repo()]), window_days=14)
-        repo_sections = [l for l in text.splitlines() if l.startswith("## `")]
-        self.assertEqual(repo_sections, ["## `example-org/example-frontend` (web) — deploy_source: release"])
+        sections = [l for l in text.splitlines() if l.startswith("## ")]
+        self.assertEqual(sections, ["## example-org/example-frontend", "## Report Metadata"])
 
     def test_every_written_file_ends_with_the_metadata_block(self):
         result = self._result([self._repo(), self._repo("partner-org/example-backend")])
