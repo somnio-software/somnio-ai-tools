@@ -200,6 +200,95 @@ void main() {
       );
     });
 
+    group('opencode', () {
+      final opencode = AgentRegistry.findById('opencode')!;
+
+      test('installs into ~/.config/opencode/skills by default', () {
+        expect(
+          opencode.resolvedInstallPath(home: '/h', environment: const {}),
+          '/h/.config/opencode/skills',
+        );
+      });
+
+      test('follows \$XDG_CONFIG_HOME for the global scope', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/xdg/opencode/skills',
+        );
+      });
+
+      test('also cleans the default folder while the variable relocates it',
+          () {
+        expect(
+          opencode.resolvedGlobalInstallPaths(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          ['/xdg/opencode/skills', '/h/.config/opencode/skills'],
+        );
+        expect(
+          opencode.resolvedProtectedInstallPaths(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          isEmpty,
+        );
+      });
+
+      test('uses a relative \$XDG_CONFIG_HOME as typed', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': 'cfg'},
+          ),
+          'cfg/opencode/skills',
+        );
+      });
+
+      test('ignores a blank \$XDG_CONFIG_HOME', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '  '},
+          ),
+          '/h/.config/opencode/skills',
+        );
+      });
+
+      test('keeps project installs in .opencode/skills', () {
+        expect(
+          opencode.resolvedScopedInstallPath(
+            scope: InstallScope.project,
+            home: '/h',
+            projectRoot: '/repo',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/repo/.opencode/skills',
+        );
+      });
+
+      test('records ~/.opencode/skills as its legacy folder', () {
+        expect(
+          opencode.resolvedScopedLegacyInstallPath(
+            scope: InstallScope.global,
+            home: '/h',
+            projectRoot: '/repo',
+          ),
+          '/h/.opencode/skills',
+        );
+        expect(
+          opencode.resolvedExecutionRulesPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/h/.opencode/somnio_rules',
+        );
+      });
+    });
+
     test('codex has correct configuration', () {
       final codex = AgentRegistry.findById('codex')!;
       expect(codex.promptStyle, PromptStyle.subcommand);

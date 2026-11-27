@@ -14,7 +14,9 @@ import '../utils/platform_utils.dart';
 import '../utils/real_path.dart';
 import '../utils/yaml_frontmatter.dart';
 import 'installer.dart';
+import 'protected_paths.dart';
 import 'skill_manifest.dart';
+import 'skills_sh_cleaner.dart' show isSkillsShLink;
 
 /// Generic installer that works for any [AgentConfig].
 ///
@@ -93,12 +95,15 @@ class AgentInstaller extends Installer {
   /// The legacy folder, and the legacy rules folder its manifest's `rules`
   /// entries resolve against (Amp's `~/.amp/somnio_rules`), must not really
   /// be — equal, hold, or lie inside — a current folder: another installable
-  /// agent's install or rules folder in either scope, or [agent]'s own
-  /// global install folder (and its project one, in project scope). Through
-  /// a symlink either way (`~/.amp -> ~/.claude`, `~/.claude -> ~/.amp`),
-  /// that folder's manifest is the other install's, and migrating or
-  /// removing it as [agent]'s legacy install would delete those skills. A
-  /// symlink to anywhere else (a dotfiles folder) is still [agent]'s own.
+  /// agent's install or rules folder in either scope, or the protected
+  /// default one it leaves alone (`~/.claude` while `CLAUDE_CONFIG_DIR`
+  /// relocates it), or [agent]'s own global install folder (and its project
+  /// one, in project scope). Through a symlink either way (`~/.amp ->
+  /// ~/.claude`, `~/.claude -> ~/.amp`, `~/.opencode/skills ->
+  /// ~/.claude/skills`), that folder's manifest is the other install's, and
+  /// migrating or removing it as [agent]'s legacy install would delete those
+  /// skills. A symlink to anywhere else (a dotfiles folder) is still
+  /// [agent]'s own.
   ///
   /// Project folders are those under [projectRoot] only, and are not
   /// checked when [projectRoot] is itself inside a legacy folder, where
@@ -135,6 +140,10 @@ class AgentInstaller extends Installer {
       for (final other in AgentRegistry.installableAgents)
         if (other.id != agent.id) ...[
           ...other.resolvedGlobalInstallPaths(
+            home: home,
+            environment: environment,
+          ),
+          ...other.resolvedProtectedInstallPaths(
             home: home,
             environment: environment,
           ),
@@ -265,6 +274,116 @@ class AgentInstaller extends Installer {
         'so they cannot be moved; delete them by hand: ${found.join(', ')}.';
   }
 
+  /// Whether this install's folder is, holds or lies inside a protected
+  /// default one (`~/.claude/skills` while `CLAUDE_CONFIG_DIR` relocates
+  /// Claude Code), reached through a symlink: writing there would replace
+  /// another account's skills and manifest.
+  bool get _installDirIsProtected => overlapsProtected(
+        _installDir,
+        protectedInstallPaths(home: _home, environment: environment),
+      );
+
+  /// Whether an install must leave the directory of [skill] in
+  /// [_installDir] alone, because no manifest records it: the user's own
+  /// skill of the same name in a folder the agent documents (OpenCode's
+  /// `~/.config/opencode/skills`), which pruning would replace.
+  ///
+  /// Only for an agent that moved its global folder (it has a
+  /// `legacyInstallPath`): the folder it moved to is shared with other
+  /// tools, while one that was always Somnio's own is replaced as before.
+  ///
+  /// [written] maps each path relative to [_installDir] to the content this
+  /// run would write for the skill. A directory that holds nothing but
+  /// files whose content is, or begins like, the content in [written] is a
+  /// run killed part way through the copy, and is finished. Any other file
+  /// makes it the user's: it is kept, and so is the legacy entry [legacy]
+  /// holds for the skill, if any, so every run keeps it until it is moved
+  /// and the next one finishes the move.
+  ///
+  /// A skills.sh link is never kept: [_prune] replaces it by design.
+  bool _keepsUnrecordedCopy(
+    SkillManifest manifest,
+    SkillManifest? legacy,
+    String skill,
+    Map<String, String> written,
+  ) {
+    if (agentConfig.installFormat != InstallFormat.skillDir ||
+        !recordManifest ||
+        scope != InstallScope.global ||
+        agentConfig.legacyInstallPath == null ||
+        manifest.entryFor(skill) != null) {
+      return false;
+    }
+    final target = p.join(_installDir, skill);
+    if (FileSystemEntity.typeSync(target, followLinks: false) ==
+            FileSystemEntityType.notFound ||
+        isSkillsShLink(target, home: _home) ||
+        _holdsOnlyWritten(target, skill, written)) {
+      return false;
+    }
+    final legacyEntry = legacy?.entryFor(skill);
+    final oldCopyExists = legacy != null &&
+        legacyEntry != null &&
+        legacyEntry.paths.any(
+          (path) =>
+              path.root == ManifestRoot.install &&
+              FileSystemEntity.typeSync(
+                    p.join(legacy.directory, path.path),
+                    followLinks: false,
+                  ) !=
+                  FileSystemEntityType.notFound,
+        );
+    final then = oldCopyExists
+        ? 'move $skill from ${_legacyInstallDir ?? 'the old folder'}'
+        : 'install $skill';
+    logger.warn(
+      '  ${agentConfig.displayName}: kept $target: no manifest records it, '
+      'so it is not a Somnio install. Move or delete it, then run the '
+      'command again to $then.',
+    );
+    return true;
+  }
+
+  /// Whether [target], the directory of [skill], holds nothing but files
+  /// whose path is in [written] (keyed relative to [_installDir]) and whose
+  /// content is a start of what [written] holds for it: at most a copy
+  /// killed part way through, whose last file may be empty or truncated
+  /// (not inside a multibyte character, which reads as not text).
+  ///
+  /// A folder that cannot be listed or a file that cannot be read as text is
+  /// not something this install wrote.
+  bool _holdsOnlyWritten(
+    String target,
+    String skill,
+    Map<String, String> written,
+  ) {
+    if (FileSystemEntity.typeSync(target, followLinks: false) !=
+        FileSystemEntityType.directory) {
+      return false;
+    }
+    try {
+      for (final entity
+          in Directory(target).listSync(recursive: true, followLinks: false)) {
+        if (entity is Directory) continue;
+        if (entity is! File) return false;
+        final key = [skill, ...p.split(p.relative(entity.path, from: target))]
+            .join('/');
+        if (!(written[key]?.startsWith(entity.readAsStringSync()) ?? false)) {
+          return false;
+        }
+      }
+    } on FileSystemException {
+      return false;
+    }
+    return true;
+  }
+
+  void _logProtectedRefusal(String baseDir) => logger.err(
+        '  ${agentConfig.displayName}: $baseDir is really a protected '
+        "folder (another Claude Code account's config), so nothing was "
+        'installed.',
+      );
+
   /// The manifest an earlier release kept at [_legacyInstallDir], when there
   /// is one and this installer records manifests (so it may migrate).
   SkillManifest? _loadLegacyManifest() {
@@ -277,6 +396,17 @@ class AgentInstaller extends Installer {
   Future<InstallResult> install({required List<SkillBundle> bundles}) async {
     final baseDir = _installDir;
     final transformer = transformerFor(agentConfig.installFormat);
+
+    if (_installDirIsProtected) {
+      if (bundles.isNotEmpty) _logProtectedRefusal(baseDir);
+      return InstallResult(
+        skillCount: 0,
+        ruleCount: 0,
+        targetDirectory: baseDir,
+        failedCount: bundles.length,
+        failedSkills: [for (final bundle in bundles) bundle.name],
+      );
+    }
 
     // Loaded once up front and saved once at the end: `remove`/`update` need
     // an exact record of what somnio wrote so they can delete precisely
@@ -308,6 +438,16 @@ class AgentInstaller extends Installer {
         final output = transformer.transform(bundle, loader, agentConfig);
 
         if (output.skipped) {
+          skippedCount++;
+          continue;
+        }
+
+        if (_keepsUnrecordedCopy(
+          manifest,
+          legacyManifest,
+          bundle.name,
+          output.files,
+        )) {
           skippedCount++;
           continue;
         }
@@ -427,6 +567,16 @@ class AgentInstaller extends Installer {
     final installedNames = <String>[];
     final failedNames = <String>[];
 
+    if (_installDirIsProtected) {
+      if (skills.isNotEmpty) _logProtectedRefusal(baseDir);
+      return (
+        installed: 0,
+        failed: skills.length,
+        installedNames: installedNames,
+        failedNames: [for (final skill in skills) skill.name],
+      );
+    }
+
     // Loaded fresh from disk (not carried over from `install()`) so this
     // method also works standalone; when the two run back-to-back on the
     // same instance/baseDir, `SkillManifest.load` re-reading here picks up
@@ -499,19 +649,23 @@ class AgentInstaller extends Installer {
             // Pruning unlinks a symlinked skill dir (e.g. one skills.sh put
             // there) instead of writing through it into the shared copy, and
             // drops files a content update renamed or removed.
+            final files = {
+              '${skill.name}/SKILL.md': skillMd,
+              ..._assetFiles(skill),
+              for (final entry in refFiles.entries)
+                '${skill.name}/references/${entry.key}': entry.value,
+            };
+            if (_keepsUnrecordedCopy(
+              manifest,
+              legacyManifest,
+              skill.name,
+              files,
+            )) {
+              continue;
+            }
             _prune(p.join(baseDir, skill.name));
-            _writeFile(
-              baseDir,
-              p.join(baseDir, skill.name, 'SKILL.md'),
-              skillMd,
-            );
-            _installAssetDirectories(skill, baseDir);
-            for (final entry in refFiles.entries) {
-              _writeFile(
-                baseDir,
-                p.join(baseDir, skill.name, 'references', entry.key),
-                entry.value,
-              );
+            for (final entry in files.entries) {
+              _writeFile(baseDir, p.join(baseDir, entry.key), entry.value);
             }
             // The whole directory is somnio-owned — covers SKILL.md,
             // references/, and any asset dirs written above.
@@ -637,16 +791,17 @@ class AgentInstaller extends Installer {
     return buffer.toString();
   }
 
-  /// Copies each of [skill]'s `assetDirectories` verbatim into the installed
-  /// skill directory (e.g. `scripts/`, `config/`), preserving their relative
-  /// layout under `<baseDir>/<skill.name>/<dirBaseName>/...`.
+  /// Reads each of [skill]'s `assetDirectories` (e.g. `scripts/`, `config/`)
+  /// verbatim, keyed by the path they take relative to the install folder:
+  /// `<skill.name>/<dirBaseName>/...`, their relative layout preserved.
   ///
   /// Python bytecode caches (`__pycache__/`, `*.pyc`, `*.pyo`) are skipped.
   ///
   /// Silently skips directories that don't exist in the source repo — a
   /// skill can list a directory it hasn't populated yet without breaking
   /// install.
-  void _installAssetDirectories(WorkflowSkill skill, String baseDir) {
+  Map<String, String> _assetFiles(WorkflowSkill skill) {
+    final files = <String, String>{};
     for (final relativeDir in skill.assetDirectories) {
       final sourceDir = Directory(p.join(loader.repoRoot, relativeDir));
       if (!sourceDir.existsSync()) continue;
@@ -656,13 +811,11 @@ class AgentInstaller extends Installer {
         if (entity is! File) continue;
         final relativePath = p.relative(entity.path, from: sourceDir.path);
         if (isIgnoredBundleFile(relativePath)) continue;
-        _writeFile(
-          baseDir,
-          p.join(baseDir, skill.name, dirName, relativePath),
-          entity.readAsStringSync(),
-        );
+        files[[skill.name, dirName, ...p.split(relativePath)].join('/')] =
+            entity.readAsStringSync();
       }
     }
+    return files;
   }
 
   @override
@@ -719,13 +872,14 @@ class AgentInstaller extends Installer {
   }
 
   /// Deletes what [legacy] — the manifest at [_legacyInstallDir] — recorded
-  /// for [skill], now reinstalled at [_installDir], and drops its entry.
+  /// for [skill], now reinstalled at [_installDir], and drops its entry once
+  /// every delete has succeeded.
   ///
   /// `install` paths resolve against [_legacyInstallDir] and `rules` paths
   /// against [_rulesDir]; only those strictly inside their root are deleted,
   /// never through a symlinked directory.
   void _migrateLegacyEntry(SkillManifest? legacy, String skill) {
-    final entry = legacy?.removeEntry(skill);
+    final entry = legacy?.entryFor(skill);
     if (legacy == null || entry == null) return;
     for (final path in entry.paths) {
       final root =
@@ -733,6 +887,9 @@ class AgentInstaller extends Installer {
       final target = p.normalize(p.join(root, path.path));
       if (isSafelyWithin(root, target)) _prune(target);
     }
+    // Only now: a delete that failed leaves the entry, so the next run
+    // finishes the move instead of stranding the old copy.
+    legacy.removeEntry(skill);
   }
 
   /// The directory a manifest [path] is relative to.

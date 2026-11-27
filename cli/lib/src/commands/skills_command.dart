@@ -13,6 +13,7 @@ import '../content/skill_registry.dart';
 import '../content/workflow_skill.dart';
 import '../installers/agent_installer.dart';
 import '../installers/interactive_install.dart';
+import '../installers/protected_paths.dart';
 import '../installers/skill_manifest.dart';
 import '../installers/skills_sh_cleaner.dart';
 import '../installers/skills_sh_cleanup_flow.dart';
@@ -686,6 +687,7 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
   void Function(String message)? onWarning,
 }) {
   final units = <SkillsUpdateUnit>[];
+  final protected = protectedInstallPaths(home: home, environment: environment);
 
   void warnOrphaned(AgentConfig agent, InstallScope scope, String skill) {
     onWarning?.call(
@@ -701,13 +703,9 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
     ];
     // Run from the home directory, the project scope is the global one:
     // refresh that location once, as global. Never touch a protected
-    // default location (another Claude Code account's ~/.claude).
-    final seen = {
-      ...agent.resolvedProtectedInstallPaths(
-        home: home,
-        environment: environment,
-      ),
-    };
+    // default location (another Claude Code account's ~/.claude), nor a
+    // folder that links to, holds or lies inside it.
+    final seen = <String>{};
 
     // An agent without a project location now (Amp) cannot refresh what
     // an earlier release put in its old project folder; say so — unless
@@ -739,6 +737,7 @@ List<SkillsUpdateUnit> discoverSkillsUpdateUnits({
         projectRoot: projectRoot,
         environment: environment,
       );
+      if (overlapsProtected(dir, protected)) continue;
       if (!seen.add(realPathOf(dir))) continue;
       // Skills an earlier release installed at the agent's old location
       // (Antigravity's workflows) are refreshed into the current one; the
@@ -1129,17 +1128,14 @@ List<SkillsRemoveCandidate> discoverSkillsRemoveCandidates({
   Map<String, String> environment = const {},
 }) {
   final candidates = <SkillsRemoveCandidate>[];
+  final protected = protectedInstallPaths(home: home, environment: environment);
 
   for (final agent in agents) {
     // Global and project can be the same directory (run from home); its
     // manifest must be processed once. A protected default location
-    // (another Claude Code account's ~/.claude) is never a candidate.
-    final seen = {
-      ...agent.resolvedProtectedInstallPaths(
-        home: home,
-        environment: environment,
-      ),
-    };
+    // (another Claude Code account's ~/.claude), or a folder that links to,
+    // holds or lies inside it, is never a candidate.
+    final seen = <String>{};
     for (final scope in scopes) {
       // A relocated global install (CODEX_HOME) may still have an older
       // one at the default location, and an agent that moved (Antigravity,
@@ -1169,6 +1165,7 @@ List<SkillsRemoveCandidate> discoverSkillsRemoveCandidates({
               environment: environment,
             );
       for (final dir in dirs) {
+        if (overlapsProtected(dir, protected)) continue;
         if (!seen.add(realPathOf(dir))) continue;
         final manifest = SkillManifest.load(dir);
         for (final entry in manifest.entries) {

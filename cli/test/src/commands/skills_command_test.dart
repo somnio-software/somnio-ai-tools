@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 import 'package:somnio/src/agents/agent_config.dart';
 import 'package:somnio/src/agents/agent_registry.dart';
 import 'package:somnio/src/commands/skills_command.dart';
+import 'package:somnio/src/commands/uninstall_command.dart';
 import 'package:somnio/src/content/skill_registry.dart';
 import 'package:somnio/src/installers/agent_installer.dart';
 import 'package:somnio/src/installers/skill_manifest.dart';
@@ -18,6 +19,7 @@ final _amazonq = AgentRegistry.findById('amazonq')!;
 final _amp = AgentRegistry.findById('amp')!;
 final _copilot = AgentRegistry.findById('copilot')!;
 final _windsurf = AgentRegistry.findById('windsurf')!;
+final _opencode = AgentRegistry.findById('opencode')!;
 
 /// Registered skill names, so the manifests map back to the registry.
 final _auditA = SkillRegistry.skills[0].name;
@@ -164,6 +166,7 @@ void main() {
       List<String> args, {
       String? workingDirectory,
       String claudeConfigDir = '',
+      String xdgConfigHome = '',
     }) =>
         Process.run(
           Platform.resolvedExecutable,
@@ -175,6 +178,8 @@ void main() {
             // Blank by default, so a caller's Claude config dir never
             // relocates the install out of the fake home.
             'CLAUDE_CONFIG_DIR': claudeConfigDir,
+            // Blank by default for the same reason (OpenCode's skills).
+            'XDG_CONFIG_HOME': xdgConfigHome,
             // Keep pub reading the real cache instead of creating one under
             // the fake home.
             'PUB_CACHE': _pubCache,
@@ -248,6 +253,183 @@ void main() {
 
         expect(result.exitCode, 0, reason: '${result.stderr}');
         expectOtherAccountUntouched();
+      });
+    });
+
+    test('moves OpenCode skills out of ~/.opencode/skills', () async {
+      final oldSkills = p.join(home.path, '.opencode', 'skills');
+      Directory(p.join(oldSkills, 'git-commit-format'))
+          .createSync(recursive: true);
+      File(p.join(oldSkills, 'git-commit-format', 'SKILL.md'))
+          .writeAsStringSync('old');
+      Directory(p.join(oldSkills, 'my-skill')).createSync();
+      File(p.join(oldSkills, '.somnio-skills.json')).writeAsStringSync(
+        jsonEncode({
+          'version': 1,
+          'skills': {
+            'git-commit-format': {
+              'kind': 'workflow',
+              'paths': [
+                {'root': 'install', 'path': 'git-commit-format'},
+              ],
+            },
+          },
+        }),
+      );
+      final xdg = p.join(home.path, 'xdg');
+
+      final result = await runSkills(
+        ['update', '--agent', 'opencode'],
+        xdgConfigHome: xdg,
+      );
+
+      expect(result.exitCode, 0, reason: '${result.stderr}');
+      expect(result.stdout,
+          contains('Updated skills (1):\n  - git-commit-format'));
+      expect(
+        File(p.join(xdg, 'opencode', 'skills', 'git-commit-format', 'SKILL.md'))
+            .readAsStringSync(),
+        startsWith('---\nname: git-commit-format\n'),
+      );
+      expect(
+        Directory(oldSkills).listSync().map((e) => p.basename(e.path)),
+        ['my-skill'],
+      );
+    });
+
+    for (final relocated in [false, true]) {
+      test(
+          "leaves Claude Code's skills alone when ~/.opencode/skills links to "
+          'them${relocated ? ' with CLAUDE_CONFIG_DIR set' : ''}', () async {
+        seedManifest({'git-commit-format': 'workflow'});
+        final claudeSkills = p.join(home.path, '.claude', 'skills');
+        Directory(p.join(claudeSkills, 'git-commit-format')).createSync();
+        final manifest = File(p.join(claudeSkills, '.somnio-skills.json'))
+            .readAsStringSync();
+        Link(p.join(home.path, '.opencode', 'skills'))
+            .createSync(claudeSkills, recursive: true);
+
+        final result = await runSkills(
+          ['update', '--agent', 'opencode'],
+          claudeConfigDir: relocated ? p.join(home.path, '.claude-work') : '',
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expect(
+          Directory(p.join(claudeSkills, 'git-commit-format')).existsSync(),
+          isTrue,
+        );
+        expect(
+          File(p.join(claudeSkills, '.somnio-skills.json')).readAsStringSync(),
+          manifest,
+        );
+      });
+    }
+
+    test(
+        "keeps the user's own skills beside the ones skills update moved, "
+        'through uninstall --skills', () async {
+      final oldSkills = p.join(home.path, '.opencode', 'skills');
+      for (final mine in ['security-audit', 'somnio-team-style']) {
+        Directory(p.join(oldSkills, mine)).createSync(recursive: true);
+        File(p.join(oldSkills, mine, 'SKILL.md'))
+            .writeAsStringSync('---\nname: $mine\n---\n');
+      }
+      Directory(p.join(oldSkills, 'git-commit-format')).createSync();
+      File(p.join(oldSkills, '.somnio-skills.json')).writeAsStringSync(
+        jsonEncode({
+          'version': 1,
+          'skills': {
+            'git-commit-format': {
+              'kind': 'workflow',
+              'paths': [
+                {'root': 'install', 'path': 'git-commit-format'},
+              ],
+            },
+          },
+        }),
+      );
+
+      final result = await runSkills(['update', '--agent', 'opencode']);
+      expect(result.exitCode, 0, reason: '${result.stderr}');
+      expect(
+        File(p.join(oldSkills, '.somnio-skills.json')).existsSync(),
+        isFalse,
+        reason: 'the migration empties and deletes the legacy manifest',
+      );
+      removeAgentInstalls(home: home.path, environment: const {});
+
+      for (final mine in ['security-audit', 'somnio-team-style']) {
+        expect(Directory(p.join(oldSkills, mine)).existsSync(), isTrue);
+      }
+    });
+
+    group('~/.config/opencode/skills linked to the protected ~/.claude/skills',
+        () {
+      late String claudeSkills;
+      late String manifest;
+      late String claudeConfigDir;
+
+      setUp(() {
+        seedManifest({'git-commit-format': 'workflow'});
+        claudeSkills = p.join(home.path, '.claude', 'skills');
+        Directory(p.join(claudeSkills, 'git-commit-format')).createSync();
+        File(p.join(claudeSkills, 'git-commit-format', 'SKILL.md'))
+            .writeAsStringSync('THEIRS');
+        manifest = File(p.join(claudeSkills, '.somnio-skills.json'))
+            .readAsStringSync();
+        Link(p.join(home.path, '.config', 'opencode', 'skills'))
+            .createSync(claudeSkills, recursive: true);
+        claudeConfigDir = p.join(home.path, '.claude-work');
+      });
+
+      void expectUntouched() {
+        expect(
+          File(p.join(claudeSkills, 'git-commit-format', 'SKILL.md'))
+              .readAsStringSync(),
+          'THEIRS',
+        );
+        expect(
+          File(p.join(claudeSkills, '.somnio-skills.json')).readAsStringSync(),
+          manifest,
+        );
+      }
+
+      test('skills update leaves it alone', () async {
+        final result = await runSkills(
+          ['update', '--agent', 'opencode'],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expectUntouched();
+      });
+
+      test('skills remove leaves it alone', () async {
+        final result = await runSkills(
+          ['remove', '--global', '--agent', 'opencode', '--force'],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, 0, reason: '${result.stderr}');
+        expectUntouched();
+      });
+
+      test('skills install refuses to write there', () async {
+        final result = await runSkills(
+          [
+            'install',
+            '--agent',
+            'opencode',
+            '--global',
+            '--skills',
+            'git-commit-format',
+          ],
+          claudeConfigDir: claudeConfigDir,
+        );
+
+        expect(result.exitCode, isNot(0));
+        expectUntouched();
       });
     });
 
@@ -677,15 +859,54 @@ void main() {
           home: home.path,
           projectRoot: project.path,
         );
-        // Amazon Q's project prompts never moved: its legacy project folder
-        // is its current one, which ownProjectInstallDirs keeps anyway.
+        // Amazon Q's project prompts and OpenCode's project skills never
+        // moved: their legacy project folder is their current one, which
+        // ownProjectInstallDirs keeps anyway.
         expect(
           legacy,
-          agent == _amazonq ? isNull : isNotNull,
+          agent == _amazonq || agent.id == 'opencode' ? isNull : isNotNull,
           reason: agent.id,
         );
       }
     });
+  });
+
+  group('a current folder linked into the protected ~/.claude', () {
+    for (final target in [
+      '.claude/skills',
+      '.claude/skills/shared',
+      '.claude'
+    ]) {
+      test('is neither refreshed nor removed when it links to ~/$target', () {
+        final linked = p.join(home.path, target);
+        _seed(linked, _auditA);
+        Link(p.join(home.path, '.config', 'opencode', 'skills'))
+            .createSync(linked, recursive: true);
+        final environment = {
+          'CLAUDE_CONFIG_DIR': p.join(home.path, '.claude-work'),
+        };
+
+        expect(
+          discoverSkillsUpdateUnits(
+            agents: [_opencode],
+            home: home.path,
+            projectRoot: project.path,
+            environment: environment,
+          ),
+          isEmpty,
+        );
+        expect(
+          discoverSkillsRemoveCandidates(
+            agents: [_opencode],
+            scopes: [InstallScope.global],
+            home: home.path,
+            projectRoot: project.path,
+            environment: environment,
+          ),
+          isEmpty,
+        );
+      });
+    }
   });
 
   group('discoverSkillsRemoveCandidates', () {
