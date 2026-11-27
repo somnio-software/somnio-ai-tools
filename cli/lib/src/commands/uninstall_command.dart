@@ -721,7 +721,7 @@ bool _removeGenericInstall(
     if (!dir.existsSync() || _hasManifest(location)) continue;
     if (overlapsProtected(location, protectedPaths)) continue;
     for (final entity in dir.listSync(followLinks: false)) {
-      // Skill directories that a release 3.2.12 to 3.4.0 wrote here are
+      // Skill directories that a release 3.2.12 to 3.4.1 wrote here are
       // recorded in a manifest, which the manifest pass cleans. With none
       // left (`skills update` deletes it once empty), a directory is the
       // user's own, beside the skills that update moved; the flat-file

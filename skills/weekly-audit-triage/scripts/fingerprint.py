@@ -2,7 +2,9 @@
 """Stable fingerprint of an audit finding: sha1(source|rule|file|title)[:10].
 
 The line number is left out on purpose so the same finding keeps its fingerprint when the code
-above it moves. Reads findings.json (a list, or {"findings": [...]}) and prints it with the
+above it moves. A dependency advisory carries `package` and is keyed by sha1(source|dependency|package)
+instead: its rule, file and title are written by the run and change from week to week (versions,
+advisory counts, package.json or lockfile), while the package does not. Reads findings.json (a list, or {"findings": [...]}) and prints it with the
 `fingerprint` of every entry recomputed. The input is a local scratch file the triage builds in $TMPDIR
 from the reports; it is never uploaded anywhere. Usage: fingerprint.py <scratch>.json
 """
@@ -17,10 +19,14 @@ def normalize(text: str) -> str:
 
 
 def fingerprint(finding: dict) -> str:
-    key = "|".join(
-        normalize(finding.get(k))
-        for k in ("source", "rule", "file", "title")
-    )
+    package = normalize(finding.get("package"))
+    if package:
+        key = "|".join((normalize(finding.get("source")), "dependency", package))
+    else:
+        key = "|".join(
+            normalize(finding.get(k))
+            for k in ("source", "rule", "file", "title")
+        )
     return hashlib.sha1(key.encode()).hexdigest()[:10]
 
 

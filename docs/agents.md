@@ -59,11 +59,11 @@ Three agents let an environment variable relocate their config directory, and th
 |-------|----------|-------------------------------|-------|
 | Claude Code | `CLAUDE_CONFIG_DIR` | `$CLAUDE_CONFIG_DIR/skills` | 3.2.14 |
 | Codex CLI | `CODEX_HOME` | `$CODEX_HOME/skills` | 3.2.12 |
-| OpenCode | `XDG_CONFIG_HOME` | `$XDG_CONFIG_HOME/opencode/skills` | 3.4.1 |
+| OpenCode | `XDG_CONFIG_HOME` | `$XDG_CONFIG_HOME/opencode/skills` | 3.4.2 |
 
 A blank value is ignored; a relative value is used as typed, against the directory the CLI runs in, so set it to an absolute path. Project installs are anchored at the project root and ignore the variable. `update`, `remove`, `uninstall`, `status` and agent detection use the relocated folder, and so does `somnio run`; `somnio hooks` writes under `$CLAUDE_CONFIG_DIR` too.
 
-Earlier releases installed to the default folder regardless of the variable. For Codex, `skills remove` and `uninstall --skills` also clean the default `~/.codex/skills` while `CODEX_HOME` points elsewhere, and for OpenCode the default `~/.config/opencode/skills` while `XDG_CONFIG_HOME` points elsewhere (no release before 3.4.1 wrote there; this covers an install made before the variable was set). For Claude Code they leave `~/.claude` alone (`cleansDefaultConfigHome: false` in the registry), because it is often another Claude Code account's live directory.
+Earlier releases installed to the default folder regardless of the variable. For Codex, `skills remove` and `uninstall --skills` also clean the default `~/.codex/skills` while `CODEX_HOME` points elsewhere, and for OpenCode the default `~/.config/opencode/skills` while `XDG_CONFIG_HOME` points elsewhere (no release before 3.4.2 wrote there; this covers an install made before the variable was set). For Claude Code they leave `~/.claude` alone (`cleansDefaultConfigHome: false` in the registry), because it is often another Claude Code account's live directory.
 
 ---
 
@@ -82,13 +82,13 @@ Several agents were installed in a layout or folder the agent does not read as s
 | Amazon Q | `~/.amazonq/prompts` | `~/.aws/amazonq/prompts`; project prompts stay in `.amazonq/prompts` | 3.2.17 |
 | Roo Code | `~/.roo/rules` (`markdown`) | `~/.roo/skills`, project `.roo/skills` | 3.3.2 |
 | Kilo Code | `~/.kilocode/rules` (`markdown`) | `~/.kilocode/skills`, project `.kilocode/skills` | 3.3.2 |
-| OpenCode | `~/.opencode/skills` (`skillDir`; `markdown` before 3.2.12) | `$XDG_CONFIG_HOME/opencode/skills` (default `~/.config/opencode/skills`); project installs stay in `.opencode/skills` | 3.4.1 |
+| OpenCode | `~/.opencode/skills` (`skillDir`; `markdown` before 3.2.12) | `$XDG_CONFIG_HOME/opencode/skills` (default `~/.config/opencode/skills`); project installs stay in `.opencode/skills` | 3.4.2 |
 
 The old folder is also checked in the project scope, anchored at the project root. Antigravity IDE workflows stopped working on 2026-10-19; Roo Code and Kilo Code add every file in their rules folders to the instructions of every request, which is why skills moved out of them.
 
 ### Same folder, new layout
 
-Seven agents kept their skills folder in 3.2.12 (OpenCode left its in 3.4.1, see above), but releases before 3.2.12 wrote flat `<name>.md` files there, plus the references in a separate `somnio_rules/` directory. The agents load skills only as `<name>/SKILL.md` directories, so they now use `skillDir`.
+Seven agents kept their skills folder in 3.2.12 (OpenCode left its in 3.4.2, see above), but releases before 3.2.12 wrote flat `<name>.md` files there, plus the references in a separate `somnio_rules/` directory. The agents load skills only as `<name>/SKILL.md` directories, so they now use `skillDir`.
 
 | Agent | Old rules folder | Release |
 |-------|------------------|---------|
