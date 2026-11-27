@@ -224,5 +224,243 @@ class TestCommandLine(ReportTest):
         self.assertIn("repo_config.py's output", result.stderr)
 
 
+# The `## ` headings of a security-audit report as its template writes them (skills/security-audit), with
+# the five scored sections ordered by score, as the 2026-11-16 run did.
+SECURITY_SECTIONS = [
+    "1. Security Scoring Breakdown",
+    "2. Executive Summary",
+    "3. Secret Detection",
+    "4. Sensitive File Protection",
+    "5. Dependency Security",
+    "6. Supply Chain Integrity",
+    "7. Security Automation & CI/CD",
+    "8. Consolidated Findings by Severity",
+    "9. Remediation Priority Matrix",
+    "10. Project Detection Results",
+    "11. Appendix: Evidence Index",
+    "Appendix: Scoring Methodology",
+    "12. Report Metadata",
+]
+PREVIOUS_DATE = "2026-11-16"
+REPO_SHA = "698e2950" + "a" * 32
+AI_REF = "e160a38" + "b" * 33
+
+
+def report(headings, notes=(), title="# Security Audit Report — closebook-finance-platform"):
+    """A report with a title, its run notes right under it (D6) and one paragraph per `## ` heading."""
+    body = "".join(f"\n## {heading}\n\nText of {heading}.\n" for heading in headings)
+    return "\n".join([title, *notes]) + "\n" + body
+
+
+def run_line(repo_sha=REPO_SHA, ref=AI_REF):
+    return f"> Run: {REPO} @ {repo_sha} · somnio-ai-tools @ {ref}"
+
+
+class PreviousTest(ReportTest):
+    NAME = f"{DATE}-{KEY}-security-audit.md"
+
+    def setUp(self):
+        super().setUp()
+        self.previous = os.path.join(self.tmp.name, "previous")
+        os.mkdir(self.previous)
+
+    def write_previous(self, name, text):
+        with open(os.path.join(self.previous, name), "w", encoding="utf-8") as fh:
+            fh.write(text)
+
+    def lines(self, text, name=None):
+        return report_check.section_lines(self.write(name or self.NAME, text), config(), DATE, self.previous)
+
+
+class TestSections(PreviousTest):
+    def setUp(self):
+        super().setUp()
+        self.write_previous(f"{PREVIOUS_DATE}-{KEY}-security-audit.md", report(SECURITY_SECTIONS))
+
+    def test_a_missing_section_fails_and_prints_the_note_to_add(self):
+        path = os.path.join(self.tmp.name, self.NAME)
+        current = [h for h in SECURITY_SECTIONS if h != "6. Supply Chain Integrity"]
+        self.assertEqual(self.lines(report(current)), [
+            f"FAIL {path}: sections missing since {PREVIOUS_DATE} not noted",
+            f"> ⚠️ Sections missing since {PREVIOUS_DATE}: Supply Chain Integrity",
+        ])
+
+    def test_the_noted_report_gives_a_warning(self):
+        path = os.path.join(self.tmp.name, self.NAME)
+        current = [h for h in SECURITY_SECTIONS if h not in ("2. Executive Summary", "6. Supply Chain Integrity")]
+        note = f"> ⚠️ Sections missing since {PREVIOUS_DATE}: Executive Summary; Supply Chain Integrity"
+        self.assertEqual(self.lines(report(current, [run_line(), note])), [
+            f"WARN {path}: sections missing since {PREVIOUS_DATE}: Executive Summary; Supply Chain Integrity"])
+
+    def test_a_note_for_other_sections_still_fails(self):
+        current = [h for h in SECURITY_SECTIONS if h != "6. Supply Chain Integrity"]
+        note = f"> ⚠️ Sections missing since {PREVIOUS_DATE}: Secret Detection"
+        self.assertTrue(self.lines(report(current, [note]))[0].startswith("FAIL "))
+
+    def test_renumbered_reordered_and_new_sections_give_nothing(self):
+        scored = ["Supply Chain Integrity", "Secret Detection", "Dependency Security",
+                  "Security Automation & CI/CD", "Sensitive File Protection"]
+        current = (SECURITY_SECTIONS[:2] + [f"{i}. {name}" for i, name in enumerate(scored, 3)]
+                   + ["8. Infrastructure"] + [f"{i}. {h.split('. ', 1)[1]}" for i, h in
+                                               enumerate(SECURITY_SECTIONS[7:11], 9)]
+                   + SECURITY_SECTIONS[11:])
+        self.assertEqual(self.lines(report(current)), [])
+
+    def test_a_report_without_sections_misses_every_one(self):
+        lines = self.lines("# Security Audit Report\n\nNothing.\n")
+        self.assertEqual(len(lines), 2)
+        self.assertTrue(lines[1].endswith(": Security Scoring Breakdown; Executive Summary; Secret Detection; "
+                                          "Sensitive File Protection; Dependency Security; Supply Chain Integrity;"
+                                          " Security Automation & CI/CD; Consolidated Findings by Severity; "
+                                          "Remediation Priority Matrix; Project Detection Results; Appendix: "
+                                          "Evidence Index; Appendix: Scoring Methodology; Report Metadata"), lines)
+
+    def test_headings_inside_code_fences_are_not_sections(self):
+        self.write_previous(f"{PREVIOUS_DATE}-{KEY}-security-audit.md",
+                            report(SECURITY_SECTIONS) + "\n```markdown\n## Example heading\n```\n")
+        self.assertEqual(self.lines(report(SECURITY_SECTIONS)), [])
+
+
+class TestPreviousSelection(PreviousTest):
+    def test_the_newest_earlier_report_of_the_same_key_and_type_is_used(self):
+        self.write_previous(f"2026-11-09-{KEY}-security-audit.md", report(SECURITY_SECTIONS + ["Older"]))
+        self.write_previous(f"{PREVIOUS_DATE}-{KEY}-security-audit.md", report(SECURITY_SECTIONS))
+        self.write_previous(f"{DATE}-{KEY}-security-audit.md", report(SECURITY_SECTIONS + ["Same day"]))
+        self.write_previous(f"2026-11-30-{KEY}-security-audit.md", report(SECURITY_SECTIONS + ["Later"]))
+        self.write_previous(f"2026-11-20-{KEY}-nestjs-health-audit.md", report(["Other type"]))
+        self.write_previous(f"2026-11-20-other-repo-security-audit.md", report(["Other key"]))
+        self.write_previous(f"2026-11-20-{KEY}-security-audit.json", report(["Not markdown"]))
+        self.assertEqual(self.lines(report(SECURITY_SECTIONS)), [])
+
+    def test_no_previous_report_is_a_note(self):
+        path = os.path.join(self.tmp.name, self.NAME)
+        self.write_previous(f"2026-11-20-{KEY}-nestjs-health-audit.md", report(["Other type"]))
+        self.assertEqual(self.lines(report(SECURITY_SECTIONS)), [f"NOTE {path}: no previous report"])
+
+    def test_an_empty_previous_report_counts_as_none(self):
+        path = os.path.join(self.tmp.name, self.NAME)
+        self.write_previous(f"2026-11-09-{KEY}-security-audit.md", report(SECURITY_SECTIONS + ["Older"]))
+        self.write_previous(f"{PREVIOUS_DATE}-{KEY}-security-audit.md", " \n")
+        self.assertEqual(self.lines(report(SECURITY_SECTIONS)), [f"NOTE {path}: no previous report"])
+
+    def test_a_report_whose_name_fails_is_not_compared(self):
+        self.write_previous(f"{PREVIOUS_DATE}-{KEY}-security-audit.md", report(SECURITY_SECTIONS))
+        self.assertEqual(self.lines("# x\n", name=f"{DATE}-{KEY}-nextjs-health-audit.md"), [])
+
+
+def health_config():
+    return config(audits=[
+        {"skill": "security-audit", "path": "."},
+        {"skill": "nestjs-health-audit", "path": "apps/api"},
+        {"skill": "react-health-audit", "path": "apps/web"},
+        {"skill": "dora-metrics", "path": "."},
+    ])
+
+
+class TestUnchanged(PreviousTest):
+    NEST = f"{KEY}-nestjs-health-audit"
+    REACT = f"{KEY}-react-health-audit"
+
+    def unchanged(self, repo_sha=REPO_SHA, ref=AI_REF):
+        return report_check.unchanged_lines(health_config(), DATE, self.previous, repo_sha, ref)
+
+    def write_health(self, notes, typ="nestjs-health-audit", date=PREVIOUS_DATE):
+        self.write_previous(f"{date}-{KEY}-{typ}.md", report(["1. Executive Summary"], notes, "# NestJS"))
+
+    def test_both_shas_and_no_warning_skip(self):
+        self.write_health([run_line()])
+        self.write_health([run_line()], "react-health-audit")
+        self.assertEqual(self.unchanged(), [
+            f"SKIP {self.NEST}: no changes since {REPO_SHA[:12]} (report of {PREVIOUS_DATE})",
+            f"SKIP {self.REACT}: no changes since {REPO_SHA[:12]} (report of {PREVIOUS_DATE})",
+        ])
+
+    def test_each_reason_to_run(self):
+        other = "1" * 40
+        cases = {
+            "another repository sha": ([run_line(repo_sha=other)], {},
+                                       f"the repository is at {REPO_SHA[:12]}, the report of {PREVIOUS_DATE} "
+                                       f"audited {other[:12]}"),
+            "another ref": ([run_line(ref=other)], {},
+                            f"somnio-ai-tools is at {AI_REF[:12]}, the report of {PREVIOUS_DATE} used {other[:12]}"),
+            "unpinned": ([run_line()], {"ref": "main"}, "somnio-ai-tools is not pinned"),
+            "no run line": ([], {}, f"the report of {PREVIOUS_DATE} has no '> Run:' line"),
+            "a warning": ([run_line(), "> ⚠️ Service not started: postgres (exit 1)."], {},
+                          f"the report of {PREVIOUS_DATE} has a '> ⚠️' line"),
+        }
+        for case, (notes, args, reason) in cases.items():
+            with self.subTest(case=case):
+                self.write_health(notes)
+                self.assertEqual(self.unchanged(**args)[0], f"RUN {self.NEST}: {reason}")
+
+    def test_no_previous_report_runs(self):
+        self.write_health([run_line()], date=DATE)  # the same day is never "previous"
+        self.assertEqual(self.unchanged(), [f"RUN {self.NEST}: no previous report",
+                                            f"RUN {self.REACT}: no previous report"])
+
+    def test_security_and_dora_are_never_listed(self):
+        for typ in ("security-audit", "dora-metrics"):
+            self.write_previous(f"{PREVIOUS_DATE}-{KEY}-{typ}.md", report(["x"], [run_line()]))
+        lines = self.unchanged()
+        self.assertEqual([line.split(":")[0] for line in lines], [f"RUN {self.NEST}", f"RUN {self.REACT}"])
+
+
+class TestPreviousCommandLine(PreviousTest):
+    def run_script(self, *args):
+        return subprocess.run([sys.executable, SCRIPT_PATH, *args], capture_output=True, text=True)
+
+    def test_a_missing_section_exits_2_and_the_noted_report_passes_with_a_warning(self):
+        self.write_previous(f"{PREVIOUS_DATE}-{KEY}-security-audit.md", report(SECURITY_SECTIONS))
+        cfg = self.write("config.json", json.dumps(config()))
+        current = [h for h in SECURITY_SECTIONS if h != "6. Supply Chain Integrity"]
+        path = self.write(self.NAME, report(current, [run_line()]))
+        result = self.run_script("--previous", self.previous, cfg, DATE, path)
+        note = f"> ⚠️ Sections missing since {PREVIOUS_DATE}: Supply Chain Integrity"
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stdout.splitlines(),
+                         [f"FAIL {path}: sections missing since {PREVIOUS_DATE} not noted", note])
+        self.write(self.NAME, report(current, [run_line(), note]))
+        result = self.run_script("--previous", self.previous, cfg, DATE, path)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertEqual(result.stdout.splitlines(), [
+            f"WARN {path}: sections missing since {PREVIOUS_DATE}: Supply Chain Integrity", f"PASS {path}"])
+        result = self.run_script(cfg, DATE, path)  # without --previous: CLOS-413's output
+        self.assertEqual((result.returncode, result.stdout.splitlines()), (0, [f"PASS {path}"]))
+
+    def test_no_previous_report_notes_and_passes(self):
+        cfg = self.write("config.json", json.dumps(config()))
+        path = self.write(self.NAME, report(SECURITY_SECTIONS))
+        result = self.run_script("--previous", self.previous, cfg, DATE, path)
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(result.stdout.splitlines(), [f"NOTE {path}: no previous report", f"PASS {path}"])
+
+    def test_unchanged_prints_one_line_per_health_audit_and_exits_0(self):
+        cfg = self.write("config.json", json.dumps(health_config()))
+        result = self.run_script("--previous", self.previous, "--unchanged", REPO_SHA, "main", cfg, DATE)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.splitlines(), [
+            f"RUN {KEY}-nestjs-health-audit: somnio-ai-tools is not pinned",
+            f"RUN {KEY}-react-health-audit: somnio-ai-tools is not pinned",
+        ])
+
+    def test_usage_errors_of_the_new_options_exit_2(self):
+        cfg = self.write("config.json", json.dumps(config()))
+        cases = (
+            ("--unchanged", REPO_SHA, AI_REF, cfg, DATE),  # without --previous
+            ("--previous", self.previous, "--unchanged", REPO_SHA, AI_REF, cfg, DATE, "x.md"),  # with reports
+            ("--previous", self.previous, "--unchanged", REPO_SHA[:12], AI_REF, cfg, DATE),
+            ("--previous", self.previous, "--unchanged", REPO_SHA, "develop", cfg, DATE),
+            ("--previous",),
+        )
+        for args in cases:
+            with self.subTest(args=args):
+                result = self.run_script(*args)
+                self.assertEqual(result.returncode, 2)
+                self.assertIn("Usage", result.stderr)
+        result = self.run_script("--previous", os.path.join(self.tmp.name, "nowhere"), cfg, DATE, "x.md")
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("no directory", result.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()
