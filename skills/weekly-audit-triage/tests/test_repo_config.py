@@ -207,6 +207,70 @@ class TestRoutineFields(unittest.TestCase):
         self.assertIn("'dora' must be a dict", errors)
 
 
+SHA = "e160a38" + "0" * 33
+PINS = {
+    "ai_tools_ref": SHA,
+    "tools": {"gitleaks": ".github/workflows/ci.yml", "trivy": ".github/actions/setup-trivy/action.yml"},
+    "services": [{"name": "postgres", "run": "service postgresql start", "env": {"DATABASE_URL": "postgres://x"}},
+                 {"name": "redis", "run": "redis-server --daemonize yes"}],
+}
+
+
+class TestPinFields(unittest.TestCase):
+    """ai_tools_ref, tools and services (CLOS-419)."""
+
+    def errors(self, **fields):
+        return repo_config.validate(routine(**{**PINS, **fields}))[1]
+
+    def test_valid_fields_are_kept_without_defaults(self):
+        config, errors = repo_config.validate(routine(**PINS))
+        self.assertEqual(errors, [])
+        for key, value in PINS.items():
+            self.assertEqual(config[key], value)
+        config, _ = repo_config.validate(routine())
+        self.assertFalse({"ai_tools_ref", "tools", "services"} & set(config))
+
+    def test_ai_tools_ref_must_be_a_full_lowercase_sha(self):
+        for ref in ("e160a38", SHA.upper(), "main", SHA + "0"):
+            with self.subTest(ref=ref):
+                self.assertEqual(self.errors(ai_tools_ref=ref), [
+                    "'ai_tools_ref' must be the 40-character lowercase hex SHA of a somnio-ai-tools commit"])
+
+    def test_tools_are_checked(self):
+        self.assertEqual(self.errors(tools={"semgrep": "ci.yml"}),
+                         ["'tools.semgrep' is not a tool the routine installs (gitleaks, trivy)"])
+        for path in ("/etc/ci.yml", "../other/ci.yml", ".github/../../ci.yml"):
+            with self.subTest(path=path):
+                self.assertEqual(self.errors(tools={"gitleaks": path}), [
+                    "'tools.gitleaks' must be a path relative to the repository root, without '..'"])
+        self.assertEqual(self.errors(tools={"trivy": ""}), ["'tools.trivy' must be a non-empty string"])
+        self.assertEqual(self.errors(tools={}), ["'tools' must list at least one tool, or be left out"])
+        self.assertEqual(self.errors(tools=[]), ["'tools' must be a dict"])
+
+    def test_services_are_checked(self):
+        errors = self.errors(services=[
+            {"name": "postgres", "run": "a"},
+            {"name": "postgres", "run": " "},
+            {"name": "redis", "run": "b", "env": {"PORT": 6379}},
+            {"run": "c", "timeout": 5},
+            "postgres",
+        ])
+        self.assertEqual(errors, [
+            "'services[1].run' must be a non-empty string",
+            "'services[1].name' repeats 'postgres'",
+            "'services[2].env' must be an object of strings",
+            "'services[3].name' must be a non-empty string",
+            "unknown field 'services[3].timeout'",
+            "'services[4]' must be an object with 'name' and 'run'",
+        ])
+        self.assertEqual(self.errors(services=[]), ["'services' must list at least one service, or be left out"])
+        self.assertEqual(self.errors(services=[{"name": "pg", "run": "x", "env": []}]),
+                         ["'services[0].env' must be an object of strings"])
+
+    def test_the_fields_need_no_audits(self):
+        self.assertEqual(repo_config.validate(valid(**PINS))[1], [])
+
+
 class TestCommandLine(unittest.TestCase):
     def run_script(self, *args):
         return subprocess.run([sys.executable, SCRIPT_PATH, *args], capture_output=True, text=True)
@@ -228,6 +292,22 @@ class TestCommandLine(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         audits = json.loads(result.stdout)["audits"]
         self.assertEqual(audits[0], {"skill": "security-audit", "path": ".", "report_name": "widgets-platform"})
+
+    def test_the_pin_fields_exit_0_when_valid_and_2_naming_each_error(self):
+        result = self.run_script(self.write(json.dumps(routine(**PINS))))
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(json.loads(result.stdout)["ai_tools_ref"], SHA)
+        bad = routine(ai_tools_ref=SHA[:12], tools={"gitleaks": "/ci.yml"},
+                      services=[{"name": "pg", "run": "a"}, {"name": "pg", "run": "", "env": {"X": 1}}])
+        result = self.run_script(self.write(json.dumps(bad)))
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(result.stderr.splitlines(), [
+            "'ai_tools_ref' must be the 40-character lowercase hex SHA of a somnio-ai-tools commit",
+            "'tools.gitleaks' must be a path relative to the repository root, without '..'",
+            "'services[1].run' must be a non-empty string",
+            "'services[1].name' repeats 'pg'",
+            "'services[1].env' must be an object of strings",
+        ])
 
     def test_invalid_file_lists_errors_and_exits_2(self):
         result = self.run_script(self.write(json.dumps({"version": 1})))
