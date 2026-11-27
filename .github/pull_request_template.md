@@ -47,7 +47,7 @@
 ### General
 
 - [ ] 🧪 Manual verification performed (describe below) — not just type-checking/tests
-- [ ] 📝 Commit messages follow Conventional Commits
+- [ ] 📝 Commit messages follow the `git-commit-format` skill
 - [ ] 🌿 Branch name follows `{type}/{description}`
 - [ ] 🙅 No environment variables or secrets committed into source control
 

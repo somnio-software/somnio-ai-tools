@@ -71,7 +71,7 @@ Each `SKILL.md` starts with YAML frontmatter (`name`, `description`, `allowed-to
 
 ## Conventions
 
-- **Commits:** Conventional Commits. **Branches:** `{type}/{TICKET}_{description}`. **PRs:** Conventional Commits title, no AI attribution. (Dedicated `git-commit-format` / `git-branch-format` / `git-pr-format` skills exist for these.)
+- **Commits:** every commit written on a branch takes its message from the `git-commit-format` skill (`skills/git-commit-format/SKILL.md`): Conventional Commits title, past-tense bullets, no `Co-Authored-By`, `Signed-off-by` or AI attribution trailers. Merge commits git generates and squash commits, whose message comes from the PR title and body, are outside this rule. **Branches:** `{type}/{TICKET}_{description}`. **PRs:** Conventional Commits title, no AI attribution. (Dedicated `git-branch-format` / `git-pr-format` skills exist for these.)
 - Markdown skills should not invent data — audits are explicitly evidence-based; the same applies when authoring skill instructions.
 
 <!-- BEGIN SOMNIO RULES — do not edit this block manually -->

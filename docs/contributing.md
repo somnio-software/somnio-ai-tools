@@ -246,7 +246,7 @@ Version is stored in two files — keep them in sync:
 This project includes skills for consistent Git conventions:
 
 - **Branches:** `{type}/{TICKET}_{description}` — see [Git Branch Format](skills.md#git-branch-format)
-- **Commits:** Conventional Commits — see [Git Commit Format](skills.md#git-commit-format)
+- **Commits:** every commit written on a branch follows the [`git-commit-format` skill](../skills/git-commit-format/SKILL.md): Conventional Commits title, past-tense bullets, no `Co-Authored-By`, `Signed-off-by` or AI attribution trailers. Agents invoke the skill (install it with `somnio skills install --agent <id> --skills git-commit-format`); people write the same format by hand. Merge commits git generates and squash commits, whose message comes from the PR title and body, are outside this rule. See [Git Commit Format](skills.md#git-commit-format)
 - **Pull requests:** Conventional Commits title, no AI attribution — see [Git PR Format](skills.md#git-pr-format)
 
 ---
@@ -257,7 +257,7 @@ This project includes skills for consistent Git conventions:
 2. Create a feature branch: `git checkout -b feat/your-feature`
 3. Make your changes
 4. Run `dart analyze` and `dart test` from `cli/`
-5. Commit using Conventional Commits format
+5. Commit with a message that follows the `git-commit-format` skill
 6. Push and open a pull request
 
 ---
