@@ -69,6 +69,7 @@ class AgentConfig {
     this.configHome,
     this.configHomeVariable,
     this.cleansDefaultConfigHome = true,
+    this.hasPreManifestSkillDirs = false,
     this.legacyInstallFormat,
     this.legacyInstallPath,
     this.legacyExecutionRulesPath,
@@ -178,7 +179,8 @@ class AgentConfig {
 
   /// The agent's global config directory as a template prefix of
   /// [installPath] (e.g. `{home}/.codex`), relocatable through
-  /// [configHomeVariable].
+  /// [configHomeVariable]. It may be a parent shared with other programs
+  /// (OpenCode: `{home}/.config`, its own folder being `opencode/` below).
   ///
   /// Both must be set for the override to apply.
   final String? configHome;
@@ -199,6 +201,16 @@ class AgentConfig {
   /// `~/.claude` is often a second Claude Code account next to the one
   /// `CLAUDE_CONFIG_DIR` selects, so its skills are left alone.
   final bool cleansDefaultConfigHome;
+
+  /// Whether a release from before the `.somnio-skills.json` manifest (2.10.0)
+  /// wrote this agent's skills as directories in its default install folder.
+  ///
+  /// Only there does `uninstall --skills` remove by name a directory no
+  /// manifest records. Claude Code alone did: the other agents had flat files
+  /// then, or were not supported yet, and `CLAUDE_CONFIG_DIR` was honoured only
+  /// after the manifest, so a directory anywhere else is treated as the user's
+  /// even when its `SKILL.md` names a Somnio skill.
+  final bool hasPreManifestSkillDirs;
 
   /// The [InstallFormat] an earlier CLI release installed this agent's
   /// skills in, when that differs from [installFormat].

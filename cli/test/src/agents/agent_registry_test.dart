@@ -20,6 +20,18 @@ void main() {
       );
     });
 
+    test('only Claude Code wrote skill folders before the manifest', () {
+      expect(
+        AgentRegistry.agents
+            .where((a) => a.hasPreManifestSkillDirs)
+            .map((a) => a.id),
+        ['claude'],
+        reason: 'uninstall --skills removes unrecorded folders by name for '
+            "these agents, where a user's own skill can't be told from an "
+            'install; a later agent never had an install without a manifest',
+      );
+    });
+
     test('agents list is not empty', () {
       expect(AgentRegistry.agents, isNotEmpty);
     });
@@ -198,6 +210,95 @@ void main() {
         antigravity.resolvedExecutionRulesPath(home: '/h'),
         '/h/.gemini/antigravity/somnio_rules',
       );
+    });
+
+    group('opencode', () {
+      final opencode = AgentRegistry.findById('opencode')!;
+
+      test('installs into ~/.config/opencode/skills by default', () {
+        expect(
+          opencode.resolvedInstallPath(home: '/h', environment: const {}),
+          '/h/.config/opencode/skills',
+        );
+      });
+
+      test('follows \$XDG_CONFIG_HOME for the global scope', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/xdg/opencode/skills',
+        );
+      });
+
+      test('also cleans the default folder while the variable relocates it',
+          () {
+        expect(
+          opencode.resolvedGlobalInstallPaths(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          ['/xdg/opencode/skills', '/h/.config/opencode/skills'],
+        );
+        expect(
+          opencode.resolvedProtectedInstallPaths(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          isEmpty,
+        );
+      });
+
+      test('uses a relative \$XDG_CONFIG_HOME as typed', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': 'cfg'},
+          ),
+          'cfg/opencode/skills',
+        );
+      });
+
+      test('ignores a blank \$XDG_CONFIG_HOME', () {
+        expect(
+          opencode.resolvedInstallPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '  '},
+          ),
+          '/h/.config/opencode/skills',
+        );
+      });
+
+      test('keeps project installs in .opencode/skills', () {
+        expect(
+          opencode.resolvedScopedInstallPath(
+            scope: InstallScope.project,
+            home: '/h',
+            projectRoot: '/repo',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/repo/.opencode/skills',
+        );
+      });
+
+      test('records ~/.opencode/skills as its legacy folder', () {
+        expect(
+          opencode.resolvedScopedLegacyInstallPath(
+            scope: InstallScope.global,
+            home: '/h',
+            projectRoot: '/repo',
+          ),
+          '/h/.opencode/skills',
+        );
+        expect(
+          opencode.resolvedExecutionRulesPath(
+            home: '/h',
+            environment: const {'XDG_CONFIG_HOME': '/xdg'},
+          ),
+          '/h/.opencode/somnio_rules',
+        );
+      });
     });
 
     test('codex has correct configuration', () {
