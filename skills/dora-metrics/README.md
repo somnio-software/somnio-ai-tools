@@ -167,7 +167,9 @@ so it's easy to open and read without re-parsing the JSON):
 ```markdown
 # DORA Metrics — Example Project
 
-## `example-org/example-frontend` (web, mobile) — deploy_source: release
+## example-org/example-frontend
+
+Type: web, mobile — deploy_source: release
 
 - **Deployment Frequency** (window 14d): 2
 - **Median Lead Time**: 4.3h (n=3)
