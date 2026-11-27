@@ -1635,6 +1635,26 @@ class TestReportMetadata(unittest.TestCase):
             dora_metrics.write_output(result, window_days=14, out_dir=tmp, now=dt(self.NOW))
             self.assertEqual([f for f in os.listdir(tmp) if f.endswith(".json")], [])
 
+    def test_each_per_repo_file_passes_the_weekly_report_check(self):
+        """The Weekly checks routine uploads a DORA report only when weekly-audit-triage's
+        report_check.py passes it (CLOS-413 AC-4)."""
+        path = os.path.join(os.path.dirname(__file__), "..", "..", "weekly-audit-triage", "scripts",
+                            "report_check.py")
+        spec = importlib.util.spec_from_file_location("report_check", path)
+        report_check = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(report_check)
+        unmeasured = {"repo": "example-org/example-backend", "type": [], "deploy_source": "release",
+                      "measured": False, "issues": [], "warnings": []}
+        with tempfile.TemporaryDirectory() as tmp:
+            dora_metrics.write_output(self._result([self._repo(), unmeasured]), window_days=14, out_dir=tmp,
+                                      now=dt(self.NOW))
+            for repo in ("example-org/example-frontend", "example-org/example-backend"):
+                key = repo.split("/")[1]
+                config = {"repo": repo, "report_name": key, "dora": {"window_days": 14},
+                          "audits": [{"skill": "dora-metrics", "path": ".", "report_name": key}]}
+                report = os.path.join(tmp, f"2026-09-14-{key}-dora-metrics.md")
+                self.assertEqual(report_check.check(report, config, "2026-09-14"), [], repo)
+
 
 class TestAzureDevOpsFunctions(unittest.TestCase):
     def test_repo_parts_require_org_project_repository(self):
