@@ -1,7 +1,7 @@
 ---
 description: >-
   Execute a Modular Architecture Audit against a written standard, in
-  proportion to the codebase's size and team. Measures the profile, maps
+  proportion to the codebase's size. Measures the profile, maps
   every module into a role, extracts the import graph with a fixed metrics
   script, inspects composition and navigation, checks which rules tools
   enforce, and scores four contours out of 100 with a maturity band and a

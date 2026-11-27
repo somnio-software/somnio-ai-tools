@@ -73,4 +73,4 @@ Write under `reports/.artifacts/architecture-audit/` (create it first with `mkdi
 - **No feature directory**: if the application has no capability-level split, map the product code as one feature module named `app` (one row per directory) and say so; the scoring step treats that by profile. Do not invent features.
 - **Several apps in one repository**: audit the one the user named, or the one most packages serve, and say which.
 - **Unsupported language**: write `data/edges.in.tsv` by hand and run with `--lang none`.
-- **No git history or a shallow clone**: the script leaves the history facts and change locality `null`; the profile is then measured on lines and features alone. Say so.
+- **No git history or a shallow clone**: the script leaves the history facts and change locality `null` (M4 and M5 are then not measured). Say so.
